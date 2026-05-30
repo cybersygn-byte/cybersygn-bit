@@ -35,7 +35,7 @@ export async function sendInvite(env, { to, name, docTitle, magicLink, senderNam
     '',
     'This link is unique to you. Do not forward it; anyone with the link can sign as you.',
     '',
-    'CyberSygn. The signature tool engineers actually like.',
+    'CyberSygn. The signature tool you\'ll actually like. Built in Colorado.',
   ].filter(Boolean).join('\n');
   const html = renderInviteHtml({ name, senderName, docTitle, magicLink });
 

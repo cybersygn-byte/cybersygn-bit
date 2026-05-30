@@ -1,6 +1,6 @@
 # CyberSygn
 
-> The signature tool engineers actually like. Upload a PDF or Word document, CyberSygn finds every signature line, initial, date, and checkbox automatically. Sign in person on the same device or route private links to remote signers. Two minutes, not ten.
+> The signature tool you'll actually like. Upload a PDF or Word document, CyberSygn finds every signature line, initial, date, and checkbox automatically. Sign in person on the same device or route private links to remote signers. Two minutes, not ten.
 
 CyberSygn is an e-signature service for independent professionals and small services businesses. The differentiator is field detection: every competitor (DocuSign, Dropbox Sign, SignWell) makes you place signature fields by hand. CyberSygn reads the document and places them for you, then highlights them for confirmation.
 

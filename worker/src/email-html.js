@@ -83,7 +83,7 @@ function shell({ preheader, body }) {
               <span class="cs-title">CYBERSYGN</span>
             </td>
             <td align="right" style="font-family:${FONT_STACK};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:${MUTED};" class="cs-muted">
-              Built in Parker, Colorado
+              Built in Colorado
             </td>
           </tr>
         </table>

@@ -6,7 +6,7 @@
 
 ---
 
-The signature tool engineers actually like. You upload a PDF, we find every signature line, initial, date, and checkbox. You route it to your signers. They sign on any device. You get the signed PDF and a tamper-evident audit certificate the moment the last signer completes.
+The signature tool you'll actually like. You upload a PDF, we find every signature line, initial, date, and checkbox. You route it to your signers. They sign on any device. You get the signed PDF and a tamper-evident audit certificate the moment the last signer completes.
 
 This repository contains the full working prototype: detection pipeline, signing experience, multi-signer routing, magic-link email, audit-certificate generation, reminder system, sender dashboard, and workspaces.
 
