@@ -224,12 +224,11 @@
         <a class="masthead__link" href="#how">How it works</a>
         <a class="masthead__link" href="#pricing">Pricing</a>
         <a class="masthead__link masthead__link--cta" href="./preview/">Launch preview</a>
-        <span id="owner-pill" class="owner-pill" data-active="false" title="Owner mode active">
-          <span class="owner-pill__dot"></span>
-          Owner
-          <button type="button" class="owner-pill__close" aria-label="Exit owner mode">×</button>
-        </span>
-        
+        <!-- Owner pill intentionally NOT rendered on the marketing page.
+             Silent activation triggers (URL ?owner=, "owner:" email gesture)
+             still work because marketing.js loads preview/owner.js; the
+             visible pill / X control lives on /preview/ and /dashboard/
+             where owner work happens. -->
       </nav>
     </div>
   </header>
