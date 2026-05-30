@@ -9,9 +9,14 @@
     "enabled": true
   },
 
-  "limits": {
-    "cpu_ms": 30000
-  },
+  "//limits": [
+    "Custom CPU limits require the Workers Paid plan ($5/mo). On Free,",
+    "Cloudflare enforces 10ms CPU per invocation. Detection runs in the",
+    "browser, so most Worker endpoints fit comfortably; audit certificate",
+    "generation may push close to the ceiling and is a candidate to",
+    "revisit if it errors in practice. Uncomment after upgrading."
+  ],
+  "//limits-paid": { "cpu_ms": 30000 },
 
   "//assets": [
     "Static site lives under web/dist. With run_worker_first: ['/api/*'],",
@@ -33,8 +38,8 @@
     "the IDs back. No manual `wrangler kv namespace create` needed."
   ],
   "kv_namespaces": [
-    { "binding": "CYBERSYGN_DOCS" },
-    { "binding": "CYBERSYGN_PDFS" }
+    { "binding": "CYBERSYGN_DOCS", "id": "e487c2c3baaf4e2ebfd01a55d6112b88" },
+    { "binding": "CYBERSYGN_PDFS", "id": "1246e5be8c8a496795d2817959bce9fe" }
   ],
 
   "//vars": [
@@ -42,7 +47,7 @@
     "by setting the CYBERSYGN_APP_URL secret in the dashboard."
   ],
   "vars": {
-    "CYBERSYGN_APP_URL": "http://localhost:8787"
+    "CYBERSYGN_APP_URL": "https://cybersygn.nathanavogt.workers.dev"
   },
 
   "//secrets": [
