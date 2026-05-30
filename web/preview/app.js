@@ -225,9 +225,10 @@ function saveEditsToStorage() {
 function applyStoredEditsToFields(fields) {
   if (senderEdits.size === 0) return fields;
   const out = [];
+  const seenIds = new Set();
   for (const f of fields) {
     const overlay = senderEdits.get(f.id);
-    if (!overlay) { out.push(f); continue; }
+    if (!overlay) { out.push(f); seenIds.add(f.id); continue; }
     if (overlay.deleted) continue;
     const next = { ...f };
     if (typeof overlay.type === 'string') next.type = overlay.type;
@@ -239,6 +240,29 @@ function applyStoredEditsToFields(fields) {
     if (Number.isFinite(overlay.width))  next.width  = overlay.width;
     if (Number.isFinite(overlay.height)) next.height = overlay.height;
     out.push(next);
+    seenIds.add(f.id);
+  }
+  // Restore manually-added fields that the heuristic detector does NOT
+  // find on its own. Without this, every reload of the same PDF loses
+  // every field the user dropped manually. Match on overlay.added flag
+  // set by the sticky add-field handler.
+  for (const [fieldId, overlay] of senderEdits.entries()) {
+    if (seenIds.has(fieldId)) continue;
+    if (!overlay || !overlay.added) continue;
+    if (overlay.deleted) continue;
+    out.push({
+      id: fieldId,
+      type: overlay.type || 'text',
+      page: Number(overlay.page) || 1,
+      x: Number(overlay.x) || 0,
+      y: Number(overlay.y) || 0,
+      width:  Number(overlay.width)  || 180,
+      height: Number(overlay.height) || 28,
+      label: overlay.label || '',
+      confidence: 1.0,
+      source: overlay.source || 'user-added',
+      primary: overlay.primary !== false,
+    });
   }
   return out;
 }
@@ -327,10 +351,10 @@ function refreshDetectionSummary() {
   const primary = docState.fields.filter(f => f.primary !== false);
   const secondary = docState.fields.length - primary.length;
   const fieldWord = primary.length === 1 ? 'field' : 'fields';
-  setStatus('done',
-    secondary > 0
-      ? `${primary.length} ${fieldWord}, ${secondary} more in body.`
-      : `${primary.length} ${fieldWord}.`);
+  // Pill text just confirms readiness; the sidebar carries the precise
+  // counts. The previous "X fields, Y more in body." was noisy and
+  // misleading when the heuristic + manual adds + template applied.
+  setStatus('done', 'Ready to sign.');
   renderFieldToggle(secondary);
 }
 
@@ -579,6 +603,26 @@ documentStrip.addEventListener('click', (e) => {
   };
   newField.id = idFor(newField);
   docState.fields = [...docState.fields, newField];
+
+  // CRITICAL: persist this manually-added field to senderEdits so the
+  // next upload of the same PDF (same docId) restores it. Without this,
+  // every reload starts from heuristic detection only and the user's
+  // manual additions disappear. The 'added: true' flag distinguishes
+  // a brand-new field from an overlay on an existing detected field.
+  senderEdits.set(newField.id, {
+    added: true,
+    type: newField.type,
+    page: newField.page,
+    x: newField.x,
+    y: newField.y,
+    width: newField.width,
+    height: newField.height,
+    label: newField.label || '',
+    primary: true,
+    source: 'user-added',
+    history: [{ at: new Date().toISOString(), change: { added: true } }],
+  });
+  saveEditsToStorage();
 
   const box = document.createElement('div');
   box.className = 'field-box';
@@ -1091,10 +1135,10 @@ async function handleFile(file) {
   const primary = detection.fields.filter(f => f.primary !== false);
   const secondary = detection.fields.length - primary.length;
   const fieldWord = primary.length === 1 ? 'field' : 'fields';
-  setStatus('done',
-    secondary > 0
-      ? `${primary.length} ${fieldWord}, ${secondary} more in body.`
-      : `${primary.length} ${fieldWord}.`);
+  // Pill text just confirms readiness; the sidebar carries the precise
+  // counts. The previous "X fields, Y more in body." was noisy and
+  // misleading when the heuristic + manual adds + template applied.
+  setStatus('done', 'Ready to sign.');
   renderFieldToggle(secondary);
   track('preview_detection_completed', {
     pages: detection.pageCount,
