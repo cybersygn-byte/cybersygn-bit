@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy policy. CyberSygn.</title>
+  <meta name="description" content="What CyberSygn collects, what we do with it, what we never do with it. Plain English, current as of May 2026." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cybersygn.io/privacy/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
+      { "@type": "ListItem", "position": 2, "name": "Privacy policy", "item": "https://cybersygn.io/privacy/" }
+    ]
+  }
+  </script>
+  <script>(function(){try{var s=localStorage.getItem('cybersygn.theme');if(s==='light'||s==='dark')document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" />
+      </a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <a class="masthead__link" href="../#how">How it works</a>
+        <a class="masthead__link" href="../#pricing">Pricing</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try detection</a>
+      </nav>
+    </div>
+  </header>
+
+  <nav class="breadcrumb container" aria-label="Breadcrumb">
+    <a href="../">CyberSygn</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">Privacy policy</span>
+  </nav>
+
+  <main class="legal">
+    <div class="container legal__container">
+      <p class="kicker">Privacy policy.</p>
+      <h1 class="h-display legal__title">What we collect. <em>What we never do.</em></h1>
+      <p class="legal__meta">Last updated: May 30, 2026. Effective immediately for new users and on your next billing cycle for existing ones.</p>
+
+      <aside class="legal__notice">
+        <p>
+          <strong>This is not legal advice.</strong> It is the practical, honest description
+          of what CyberSygn does with your information. We built this from common privacy
+          patterns and our actual technical architecture. Before you rely on it in a dispute
+          or regulatory filing, have a lawyer review it.
+        </p>
+      </aside>
+
+      <h2>Summary in one paragraph.</h2>
+      <p>
+        CyberSygn collects the smallest amount of information needed to make signing work.
+        Detection runs in your browser; the PDF never leaves your device during that step.
+        When you invite remote signers, we store the PDF encrypted in Cloudflare KV for
+        thirty days. We use Resend to send transactional emails, Stripe to process payments,
+        and Cloudflare to host everything. We do not use cookies for tracking, we do not
+        sell your data, we do not run ad networks, we do not share contact lists with
+        anyone, and we do not train AI models on your contracts.
+      </p>
+
+      <h2>1. What we collect.</h2>
+      <p><strong>Account data.</strong> Name, email, password hash (if you create a paid account), and a stable sender ID we generate in your browser localStorage. Used to identify you in the dashboard and tie documents to your account.</p>
+      <p><strong>Document data.</strong> Uploaded PDFs and Word documents when you invite remote signers. Stored encrypted at rest in Cloudflare KV with a thirty-day TTL, then auto-deleted unless you download them. Detection itself runs in your browser; the document does not leave your device during detection.</p>
+      <p><strong>Signer data.</strong> Names and email addresses of people you route documents to. Stored on the document record. Signers themselves do not need a CyberSygn account.</p>
+      <p><strong>Audit metadata.</strong> Every signing event captures a timestamp, the signer's IP address, and their user agent string. This is what makes the signed document evidentiary. The audit certificate page includes this data.</p>
+      <p><strong>Payment data.</strong> When you pay, your card information goes directly to Stripe. We never see card numbers or CVCs. We do see your subscription tier, status, current period end, and a Stripe customer ID.</p>
+      <p><strong>Telemetry.</strong> Page views, feature events (upload, send, sign, complete), and caught errors. Stored in Cloudflare Workers Analytics Engine, our own first-party storage. Linked to a hashed sender ID, not your name or email. No cookies, no third-party tracking, no advertising identifiers.</p>
+
+      <h2>2. What we do not collect.</h2>
+      <ul class="legal__list">
+        <li>Card numbers, CVCs, or bank details. Those go directly to Stripe.</li>
+        <li>Browsing history outside CyberSygn.</li>
+        <li>Location beyond country and city (resolved from your IP by Cloudflare).</li>
+        <li>Anything from third-party data brokers.</li>
+        <li>Biometric data.</li>
+        <li>Contents of your other documents, calendar, or contacts.</li>
+      </ul>
+
+      <h2>3. Why we collect what we collect.</h2>
+      <ul class="legal__list">
+        <li>Account data: to let you sign in, see your documents, and contact you about your account.</li>
+        <li>Document and signer data: to deliver the signing service you asked for.</li>
+        <li>Audit metadata: because a signature without a trail is just a picture.</li>
+        <li>Payment data: to charge you the right amount and keep your subscription accurate.</li>
+        <li>Telemetry: to know which pages convert, which features get used, and where the product breaks. Aggregated, never to profile individuals.</li>
+      </ul>
+
+      <h2>4. Who we share data with.</h2>
+      <p>Three vendors, all listed below. Each is a subprocessor under standard data-processing agreements. We do not share data with anyone else.</p>
+      <ul class="legal__list">
+        <li><strong>Cloudflare</strong> (hosting, storage, DNS, analytics). All your data lives on Cloudflare infrastructure.</li>
+        <li><strong>Resend</strong> (transactional email). Your name and email address get sent to Resend when we deliver magic links and completion emails.</li>
+        <li><strong>Stripe</strong> (payments). Card data goes here. Stripe gets your email and the subscription details.</li>
+      </ul>
+      <p>We do not share data with advertising networks, data brokers, marketing platforms, or AI model providers.</p>
+
+      <h2>5. How long we keep it.</h2>
+      <ul class="legal__list">
+        <li>Account data: until you ask us to delete it. Within thirty days of deletion request, removed from production systems; encrypted backups roll off after ninety days.</li>
+        <li>Document files: thirty days after upload, then auto-deleted. You can delete sooner from the dashboard.</li>
+        <li>Audit metadata: kept with the document record; deleted when the document record is deleted.</li>
+        <li>Payment records: as long as Stripe and our accountants need them for tax law (typically seven years).</li>
+        <li>Telemetry: ninety days, then aggregated and the raw events deleted.</li>
+      </ul>
+
+      <h2>6. Your rights.</h2>
+      <p>Wherever you live, you can:</p>
+      <ul class="legal__list">
+        <li>Ask what we have about you. We will send a JSON export within thirty days.</li>
+        <li>Ask us to correct or delete it. Same thirty-day window.</li>
+        <li>Cancel and walk away. Your subscription stops at the end of your billing period; your data deletes within thirty days unless you say keep it.</li>
+        <li>Opt out of telemetry. We do not currently surface a toggle in the UI; email us and we will exclude your sender ID from collection within seven days.</li>
+      </ul>
+      <p>If you live in the EU, UK, or California, you also have rights under GDPR, UK GDPR, and CCPA respectively. They overlap heavily with what we already do above. Specific requests: <a href="mailto:privacy@cybersygn.io">privacy@cybersygn.io</a>.</p>
+
+      <h2>7. Cookies.</h2>
+      <p>We do not use cookies for tracking. We use one localStorage key (cybersygn.senderId) to identify your browser as belonging to one user, one key for your theme preference, and a token key when you are signed in. None of these leave your device except as documented above.</p>
+
+      <h2>8. AI training.</h2>
+      <p>We do not use your contracts to train AI models. We do not allow our vendors to use your contracts to train AI models. Our robots.txt deliberately welcomes AI crawlers to our public marketing pages because we want to be cited when someone asks ChatGPT for a DocuSign alternative, but no AI crawler ever has access to documents you upload.</p>
+
+      <h2>9. Children.</h2>
+      <p>CyberSygn is not for children. We do not knowingly collect data from anyone under thirteen.</p>
+
+      <h2>10. Security.</h2>
+      <p>Documents are encrypted at rest. Sessions are scoped to the device that signed in. Magic links are 256-bit random tokens. Audit certificates carry a SHA-256 fingerprint of the original document. No system is perfectly secure; if we discover a breach affecting you, we will notify you within seventy-two hours of confirming it.</p>
+
+      <h2>11. Changes.</h2>
+      <p>If we change this policy in a way that affects you, we will email you before the change takes effect. Material changes also surface on this page with the updated date at the top.</p>
+
+      <h2>Contact.</h2>
+      <p>
+        <a href="mailto:privacy@cybersygn.io">privacy@cybersygn.io</a> for privacy questions.
+        <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> for everything else.
+        We answer.
+      </p>
+    </div>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Parker, Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/refund/">Refund</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>

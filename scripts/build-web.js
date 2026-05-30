@@ -127,6 +127,18 @@ async function main() {
     }
   }
 
+  // 2d. Legal pages. Privacy, Terms, Refund. Each in its own subdirectory
+  // with a clean trailing-slash URL.
+  for (const name of ['privacy', 'terms', 'refund']) {
+    const src = join(SRC, name);
+    const dst = join(OUT, name);
+    if (await exists(join(src, 'index.html'))) {
+      await mkdir(dst, { recursive: true });
+      await copyFile(join(src, 'index.html'), join(dst, 'index.html'));
+      console.log(`  wrote dist/${name}/index.html`);
+    }
+  }
+
   // 3. Preview subfolder: index.html unchanged (it already uses ../ paths
   //    that match the dist structure), app.js gets its detect.js import
   //    rewritten so the bundle is self-contained.

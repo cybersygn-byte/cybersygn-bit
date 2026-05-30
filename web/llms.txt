@@ -23,6 +23,12 @@ CyberSygn is an e-signature service for independent professionals and small serv
 - [DocuSign alternative for coaches](https://cybersygn.io/alternatives/docusign-alternative-for-coaches/)
 - [DocuSign alternative for freelancers](https://cybersygn.io/alternatives/docusign-alternative-for-freelancers/)
 
+## Legal
+
+- [Privacy policy](https://cybersygn.io/privacy/)
+- [Terms of service](https://cybersygn.io/terms/)
+- [Refund policy](https://cybersygn.io/refund/)
+
 ## Reference
 
 - [Full product description](https://cybersygn.io/llms-full.txt): the long-form plain-text version of every page, intended for ingestion

@@ -1430,6 +1430,76 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ========================================================================
+   13e. LEGAL PAGES (privacy, terms, refund)
+   ======================================================================== */
+
+.legal {
+  padding-block: var(--s-6) var(--s-7);
+}
+.legal__container {
+  max-width: 760px;
+}
+.legal__title {
+  margin-top: var(--s-3);
+}
+.legal__meta {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin-block: var(--s-3) var(--s-6);
+}
+.legal__notice {
+  border: 1px solid var(--accent-line, var(--line-strong));
+  background: color-mix(in srgb, var(--accent-text) 6%, transparent);
+  border-radius: var(--r);
+  padding: var(--s-4) var(--s-5);
+  margin-block: var(--s-5);
+  color: var(--text);
+  line-height: 1.65;
+}
+.legal__notice strong { color: var(--accent-text); }
+.legal h2 {
+  font-family: var(--display, var(--sans));
+  font-weight: 500;
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  margin-top: var(--s-7);
+  margin-bottom: var(--s-3);
+  letter-spacing: -0.01em;
+}
+.legal p {
+  color: var(--text-2);
+  line-height: 1.7;
+  margin-bottom: var(--s-3);
+}
+.legal p strong { color: var(--text); }
+.legal__list {
+  list-style: none;
+  padding: 0;
+  margin-block: var(--s-3) var(--s-4);
+}
+.legal__list li {
+  padding-left: 1.5em;
+  position: relative;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: var(--s-2);
+}
+.legal__list li::before {
+  content: "›";
+  position: absolute;
+  left: 0.4em;
+  color: var(--accent-text);
+}
+.legal a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.legal a:hover { text-decoration-thickness: 2px; }
+
+/* ========================================================================
    14. FOOTER
    ======================================================================== */
 
