@@ -5,9 +5,8 @@
  * in dark mode. Transitional serif display, geometric sans body, mono
  * for technical labels. One accent color, used sparingly.
  *
- * Color-scheme follows the user's system preference automatically.
- * A manual toggle in the header sets data-theme="light" or "dark" on
- * <html> and persists the choice in localStorage.
+ * Color scheme follows the user's operating system preference
+ * automatically via prefers-color-scheme. There is no manual toggle.
  *
  * Used by every page: marketing (/), preview (/preview/), dashboard
  * (/dashboard/), and the invite acceptance page.
@@ -113,15 +112,13 @@
 }
 
 /* ========================================================================
-   2. DARK MODE. Native via prefers-color-scheme. No manual toggle; the
-   site follows the operating-system setting. Legacy data-theme overrides
-   remain below as dead code; they never match since nothing sets the
-   attribute, but they're kept to avoid disturbing the parallel block
-   structure across the file.
+   2. DARK MODE. Native via prefers-color-scheme. No JS, no toggle.
+   Honors the operating system setting automatically and updates live
+   when the user changes their OS appearance.
    ======================================================================== */
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root {
     --bg:           #011434;
     --bg-2:         #07193D;
     --bg-3:         #0C1F46;
@@ -159,45 +156,6 @@
     --shadow-glow:  0 0 0 1px var(--accent-line),
                     0 4px 32px -4px var(--accent-glow);
   }
-}
-
-:root[data-theme="dark"] {
-  --bg:           #011434;
-  --bg-2:         #07193D;
-  --bg-3:         #0C1F46;
-  --surface:      #061838;
-  --surface-2:    #0A1C40;
-
-  --text:         #F0F3FA;
-  --text-2:       #BFC6D9;
-  --text-3:       #828AA3;
-  --text-on-dark: #011434;
-
-  --line:         rgba(240, 243, 250, 0.08);
-  --line-2:       rgba(240, 243, 250, 0.14);
-  --line-strong:  rgba(240, 243, 250, 0.32);
-
-  --accent:       #00CBF6;
-  --accent-soft:  rgba(0, 203, 246, 0.14);
-  --accent-line:  rgba(0, 203, 246, 0.36);
-  --accent-text:  #6EDEFA;
-  --accent-glow:  rgba(0, 203, 246, 0.42);
-
-  --accent-2:     #C36BFF;
-  --accent-2-soft: rgba(195, 107, 255, 0.14);
-
-  --ok:           #46D097;
-  --ok-soft:      rgba(70, 208, 151, 0.14);
-  --warn:         #F4B850;
-  --warn-soft:    rgba(244, 184, 80, 0.14);
-  --danger:       #FF5D6D;
-  --danger-soft:  rgba(255, 93, 109, 0.14);
-
-  --shadow-card:  0 1px 2px rgba(0,0,0,0.36), 0 8px 24px -12px rgba(0,0,0,0.54);
-  --shadow-pop:   0 1px 2px rgba(0,0,0,0.44), 0 24px 48px -16px rgba(0,0,0,0.64);
-  --shadow-doc:   0 1px 2px rgba(0,0,0,0.40), 0 20px 50px -24px rgba(0,0,0,0.64);
-  --shadow-glow:  0 0 0 1px var(--accent-line),
-                  0 4px 32px -4px var(--accent-glow);
 }
 
 /* color-scheme is set by <meta name="color-scheme" content="light dark"> on
@@ -391,11 +349,9 @@ button { font: inherit; cursor: pointer; }
   border-color: var(--accent);
 }
 .btn--primary:hover { background: var(--accent-text); border-color: var(--accent-text); color: #fff; }
-:root[data-theme="dark"] .btn--primary,
-:root[data-theme="dark"] .btn--primary:hover { color: #0A0E1A; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .btn--primary,
-  :root:not([data-theme="light"]) .btn--primary:hover { color: #0A0E1A; }
+  :root .btn--primary,
+  :root .btn--primary:hover { color: #0A0E1A; }
 }
 
 .btn--ink {
@@ -423,9 +379,9 @@ button { font: inherit; cursor: pointer; }
    7. WORDMARK. CyberSygn lockup.
    The brand mark is the image lockup (S-mark + CYBERSYGN type), shipped
    in two color variants. The light-mode page uses the navy variant; the
-   dark-mode page uses the white variant. CSS swaps between them via
-   image-set + prefers-color-scheme, with a data-theme override so the
-   manual theme toggle in the masthead picks the right one too.
+   dark-mode page uses the white variant. CSS swaps between them via the
+   prefers-color-scheme media query so the swap is automatic with the OS
+   appearance setting.
    ======================================================================== */
 
 .wordmark {
@@ -450,12 +406,9 @@ button { font: inherit; cursor: pointer; }
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .wordmark__img {
+  :root .wordmark__img {
     content: url("./brand/lockup-white@2x.png");
   }
-}
-:root[data-theme="dark"] .wordmark__img {
-  content: url("./brand/lockup-white@2x.png");
 }
 
 .wordmark:hover .wordmark__img {
@@ -681,9 +634,8 @@ button { font: inherit; cursor: pointer; }
   padding: 3px 6px;
   border-radius: 3px 3px 0 0;
 }
-:root[data-theme="dark"] .demo-field__tag { color: #0A0E1A; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .demo-field__tag { color: #0A0E1A; }
+  :root .demo-field__tag { color: #0A0E1A; }
 }
 
 .demo-field--date .demo-field__hl  { border-color: var(--field-date); background: var(--ok-soft); }
@@ -1004,9 +956,8 @@ button { font: inherit; cursor: pointer; }
   box-shadow: var(--shadow-pop);
 }
 .tier--featured:hover { transform: translateY(-8px); }
-:root[data-theme="dark"] .tier--featured { background: var(--accent); color: #0A0E1A; border-color: var(--accent); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier--featured { background: var(--accent); color: #0A0E1A; border-color: var(--accent); }
+  :root .tier--featured { background: var(--accent); color: #0A0E1A; border-color: var(--accent); }
 }
 
 .tier--featured .tier__name,
@@ -1028,9 +979,8 @@ button { font: inherit; cursor: pointer; }
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
-:root[data-theme="dark"] .tier__badge { background: var(--bg); color: var(--text); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier__badge { background: var(--bg); color: var(--text); }
+  :root .tier__badge { background: var(--bg); color: var(--text); }
 }
 
 .tier__name {
@@ -1043,9 +993,8 @@ button { font: inherit; cursor: pointer; }
   font-weight: 500;
 }
 .tier--featured .tier__name { color: rgba(251, 248, 241, 0.6); }
-:root[data-theme="dark"] .tier--featured .tier__name { color: rgba(20, 20, 26, 0.72); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier--featured .tier__name { color: rgba(20, 20, 26, 0.72); }
+  :root .tier--featured .tier__name { color: rgba(20, 20, 26, 0.72); }
 }
 
 .tier__price { display: flex; align-items: baseline; gap: 4px; }
@@ -1064,16 +1013,14 @@ button { font: inherit; cursor: pointer; }
   color: var(--text-3);
 }
 .tier--featured .tier__price-unit { color: rgba(251, 248, 241, 0.6); }
-:root[data-theme="dark"] .tier--featured .tier__price-unit { color: rgba(20, 20, 26, 0.72); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier--featured .tier__price-unit { color: rgba(20, 20, 26, 0.72); }
+  :root .tier--featured .tier__price-unit { color: rgba(20, 20, 26, 0.72); }
 }
 
 .tier__hook { font-size: var(--t-s); color: var(--text-2); margin: 0; line-height: 1.55; }
 .tier--featured .tier__hook { color: rgba(251, 248, 241, 0.78); }
-:root[data-theme="dark"] .tier--featured .tier__hook { color: rgba(20, 20, 26, 0.82); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier--featured .tier__hook { color: rgba(20, 20, 26, 0.82); }
+  :root .tier--featured .tier__hook { color: rgba(20, 20, 26, 0.82); }
 }
 
 .tier__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); font-size: var(--t-s); }
@@ -1135,11 +1082,9 @@ button { font: inherit; cursor: pointer; }
   border-color: var(--bg);
   color: var(--text);
 }
-:root[data-theme="dark"] .tier--featured .tier__list li { color: rgba(20, 20, 26, 0.82); }
-:root[data-theme="dark"] .tier--featured .tier__list li::before { color: rgba(20, 20, 26, 0.62); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tier--featured .tier__list li { color: rgba(20, 20, 26, 0.82); }
-  :root:not([data-theme="light"]) .tier--featured .tier__list li::before { color: rgba(20, 20, 26, 0.62); }
+  :root .tier--featured .tier__list li { color: rgba(20, 20, 26, 0.82); }
+  :root .tier--featured .tier__list li::before { color: rgba(20, 20, 26, 0.62); }
 }
 
 /* ========================================================================
@@ -1160,9 +1105,8 @@ button { font: inherit; cursor: pointer; }
   border-radius: var(--r-lg);
   padding: var(--s-6);
 }
-:root[data-theme="dark"] .founding-form { background: var(--surface-2); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .founding-form { background: var(--surface-2); }
+  :root .founding-form { background: var(--surface-2); }
 }
 
 .founding-form__head {
@@ -1503,7 +1447,6 @@ button { font: inherit; cursor: pointer; }
   box-shadow: 0 -10px 24px -12px rgba(1, 20, 52, 0.32);
   animation: stickyIn 280ms var(--ease-spring);
 }
-:root[data-theme="dark"] .sticky-cta { background: var(--bg-2); color: var(--text); border-top-color: var(--line-strong); }
 @keyframes stickyIn {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
@@ -1552,10 +1495,6 @@ button { font: inherit; cursor: pointer; }
   background: transparent;
   border-color: rgba(255, 255, 255, 0.28);
   color: var(--bg);
-}
-:root[data-theme="dark"] .sticky-cta .btn--ghost {
-  border-color: var(--line);
-  color: var(--text);
 }
 .sticky-cta .btn--ghost:hover {
   background: rgba(255, 255, 255, 0.08);
