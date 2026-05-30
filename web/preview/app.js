@@ -1639,6 +1639,25 @@ function attachDragResize(box, field, shell) {
     box.appendChild(h);
   }
 
+  // Double-click to delete. Fast gesture for cleaning up misfires.
+  // Routes through applyFieldEdit so the deletion persists in
+  // senderEdits (localStorage) the same way the right-click "Remove"
+  // menu item does, and so the sidebar + fillStore + assignments
+  // all stay consistent.
+  box.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const fieldId = box.dataset.fieldId;
+    if (!fieldId) return;
+    applyFieldEdit(fieldId, { deleted: true });
+    populateSidebar(
+      { fields: docState.fields, pageCount: Math.max(1, ...docState.fields.map(f => f.page)) },
+      docState.filename || ''
+    );
+    updateFillUI();
+    track('preview_field_deleted_dblclick', { type: field.type, source: field.source || 'unknown' });
+  });
+
   let drag = null;
   box.addEventListener('pointerdown', (e) => {
     // Skip if the press hit an interactive child (edit button, signer chip).
@@ -2011,48 +2030,30 @@ function updateFillUI() {
     row.classList.toggle('field-row--filled', Boolean(fillStore.get(id)));
   });
 
-  // Sign button: changes label and intent based on whether anything is filled.
+  // Sign button: always enabled once any field exists, always downloads
+  // what's filled. Label is a fixed "Download PDF" with a dynamic
+  // "(X of N fields)" subline rendered inside the button so the user
+  // sees progress without the button locking them out.
   const filledCount = fillStore.size();
   const totalCount = docState.fields.length;
   if (totalCount === 0) {
     signButton.disabled = true;
-    signButton.textContent = 'Send for signature';
+    signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>';
     return;
   }
-  if (filledCount === 0) {
-    signButton.disabled = false;
-    signButton.textContent = 'Click a field to sign';
-    signButton.classList.remove('btn--ready');
-  } else if (filledCount < totalCount) {
-    // Partial fill. The button still works (downloads what is filled),
-    // but make it clear how many remain rather than the cryptic "1 of 80".
-    signButton.disabled = false;
-    const remaining = totalCount - filledCount;
-    signButton.textContent = `Download signed PDF. ${remaining} field${remaining === 1 ? '' : 's'} left.`;
-    signButton.classList.add('btn--ready');
-  } else {
-    signButton.disabled = false;
-    signButton.textContent = `Download signed PDF. All ${totalCount} fields filled.`;
-    signButton.classList.add('btn--ready');
-  }
+  signButton.disabled = false;
+  signButton.classList.add('btn--ready');
+  signButton.innerHTML =
+    `<span class="sign-btn__label">Download PDF</span>` +
+    `<span class="sign-btn__sub">(${filledCount} of ${totalCount} fields filled)</span>`;
 }
 
 async function onSignClick() {
   track('preview_send_clicked');
 
-  // Signer mode: the click submits fills back to the Worker, not the
-  // sender send-modal.
+  // Signer mode (magic-link): submit fills back to the Worker.
   if (signButton.dataset.signerMode === 'true') {
     return submitSignerFills();
-  }
-
-  if (fillStore.size() === 0 && signers.list().length === 1) {
-    // Single signer, nothing filled yet: nudge them to fill a field.
-    showToast(
-      'Click any highlighted field on the document to sign or stamp it. ' +
-      'Once you have filled at least one field, this button opens the send flow.',
-    );
-    return;
   }
 
   if (!docState.originalBytes || docState.fields.length === 0) {
@@ -2060,7 +2061,39 @@ async function onSignClick() {
     return;
   }
 
-  openSendModal();
+  // Multi-signer mode: still goes through the send-by-email modal so
+  // each signer gets their own magic link. Single-signer (just "You"):
+  // the click directly downloads the flattened PDF with whatever is
+  // filled. No more "X fields left" gate; the user controls when
+  // they're done.
+  const isMultiSigner = signers.list().length > 1;
+  if (isMultiSigner) {
+    openSendModal();
+    return;
+  }
+
+  try {
+    signButton.disabled = true;
+    const originalHtml = signButton.innerHTML;
+    signButton.innerHTML = '<span class="sign-btn__label">Preparing PDF...</span>';
+    await flattenAndDownload({
+      originalBytes: freshCopy(docState.originalBytes),
+      fields: docState.fields,
+      fillStore,
+      filename: docState.filename || 'signed.pdf',
+    });
+    track('preview_downloaded_direct', {
+      fieldsTotal: docState.fields.length,
+      fieldsFilled: fillStore.size(),
+    });
+    signButton.innerHTML = originalHtml;
+  } catch (err) {
+    report(err, 'direct_download');
+    showToast(`Could not generate PDF: ${err.message || err}`);
+  } finally {
+    signButton.disabled = false;
+    updateFillUI();  // restore the button state to "X of N filled"
+  }
 }
 
 /**

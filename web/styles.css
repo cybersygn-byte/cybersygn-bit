@@ -3696,7 +3696,34 @@ details[open] > .field-list__group--toggle::after {
   z-index: 3;
 }
 
-.field-box--filled { background: rgba(0, 150, 200, 0.04); border-style: solid; }
+/* Two-line "Download PDF" button: bold label + dynamic progress sub. */
+#sign-button .sign-btn__label {
+  display: block;
+  font-weight: 600;
+  line-height: 1.15;
+}
+#sign-button .sign-btn__sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  opacity: 0.78;
+  font-weight: 500;
+  text-transform: none;
+}
+
+/* Filled-field appearance. The box sits on top of the WHITE rendered
+   PDF page; the goal is ink-on-paper. Backdrop reduces to almost
+   transparent so the fill content (typed text, checkmark, signature
+   image) is what reads. Border thins to a subtle outline so the user
+   can still click to edit. */
+.field-box--filled {
+  background: rgba(1, 20, 52, 0.02);
+  border-style: solid;
+  border-color: rgba(1, 20, 52, 0.18);
+}
+.field-box--filled .field-box__tag { opacity: 0; }
 .field-box--other-signer { opacity: 0.35; }
 .field-box.is-focused { box-shadow: 0 0 0 3px var(--accent-line); }
 
@@ -3708,11 +3735,20 @@ details[open] > .field-list__group--toggle::after {
   padding: 0 4px;
   font-family: var(--display);
   font-size: 13px;
-  color: var(--text);
+  /* Hard-coded navy ink: the fill is rendered on the WHITE PDF page,
+     not on the page background. var(--text) flips to white in dark
+     mode and made fills unreadable. Ink is always dark on paper. */
+  color: #011434;
   pointer-events: none;
 }
 .field-box__fill--text   { font-style: italic; }
-.field-box__fill--check  { justify-content: center; font-size: 16px; color: var(--ok); }
+.field-box__fill--check  {
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #011434;
+  line-height: 1;
+}
 .field-box__signature {
   max-width: 100%;
   max-height: 100%;
