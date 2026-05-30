@@ -9,6 +9,19 @@
     "enabled": true
   },
 
+  "//routes": [
+    "Production custom domains. Both the apex and www point at this Worker;",
+    "Cloudflare auto-provisions DNS and SSL. The .workers.dev URL stays live",
+    "alongside (workers_dev defaults to true)."
+  ],
+  "routes": [
+    { "pattern": "cybersygn.io", "custom_domain": true },
+    { "pattern": "www.cybersygn.io", "custom_domain": true }
+  ],
+
+  "workers_dev": true,
+  "preview_urls": true,
+
   "//limits": [
     "Custom CPU limits require the Workers Paid plan ($5/mo). On Free,",
     "Cloudflare enforces 10ms CPU per invocation. Detection runs in the",
@@ -47,7 +60,7 @@
     "by setting the CYBERSYGN_APP_URL secret in the dashboard."
   ],
   "vars": {
-    "CYBERSYGN_APP_URL": "https://cybersygn.nathanavogt.workers.dev"
+    "CYBERSYGN_APP_URL": "https://cybersygn.io"
   },
 
   "//secrets": [
