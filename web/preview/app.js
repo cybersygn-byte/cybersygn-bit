@@ -91,6 +91,8 @@ const status = $('status-indicator');
 const errorBanner = $('error-banner');
 const resetButton = $('reset-button');
 const signButton = $('sign-button');
+const addFieldButton = $('add-field-button');
+const aiConsentCheckbox = $('ai-training-consent');
 const toast = $('toast');
 
 // Signers panel DOM
@@ -473,6 +475,111 @@ resetButton.addEventListener('click', resetApp);
 
 signButton.addEventListener('click', onSignClick);
 
+// "Add a missed field" mode. Click the button to toggle. While active,
+// clicking anywhere on a page-shell adds a new text-type field at that
+// location. The user can right-click the new box afterwards to change
+// its type via the existing context menu.
+const AI_CONSENT_KEY = 'cybersygn.aiTrainingConsent';
+let _addMode = false;
+function toggleAddMode(on) {
+  _addMode = on === undefined ? !_addMode : !!on;
+  document.body.dataset.addMode = _addMode ? 'true' : 'false';
+  if (addFieldButton) addFieldButton.textContent = _addMode ? 'Cancel adding field' : '+ Add a missed field';
+}
+if (addFieldButton) {
+  addFieldButton.addEventListener('click', () => toggleAddMode());
+}
+// Cancel on Esc.
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && _addMode) toggleAddMode(false); });
+// Page-shell click handler. Delegated on documentStrip so it works for
+// every page including those rendered later. Convert CSS click coords to
+// PDF-space coords using the viewport metadata we stashed during render
+// (renderDocument sets data-viewport-{width,height} on each shell).
+documentStrip.addEventListener('click', (e) => {
+  if (!_addMode) return;
+  const shell = e.target.closest('.page-shell');
+  if (!shell) return;
+  if (e.target.closest('.field-box')) return;  // click landed on an existing box
+  const overlay = shell.querySelector('.overlay');
+  if (!overlay) return;
+
+  const rect = overlay.getBoundingClientRect();
+  const cssX = e.clientX - rect.left;
+  const cssY = e.clientY - rect.top;
+
+  const pageNum = parseInt(shell.dataset.pageNum || '1', 10);
+  const vpW = parseFloat(shell.dataset.viewportWidth);
+  const vpH = parseFloat(shell.dataset.viewportHeight);
+  const scaleFactor = parseFloat(shell.dataset.scale) || RENDER_SCALE;
+  if (!Number.isFinite(vpW) || !Number.isFinite(vpH)) return;
+
+  // Default box size in CSS px; tuned to match the detector's typical
+  // signature-line height. User can resize later via right-click.
+  const W = 180, H = 28;
+
+  // PDF coords: PDF origin is bottom-left, CSS origin top-left.
+  // viewport.height is in CSS px at scaleFactor zoom; the rendered shell
+  // width should equal viewport.width, so the conversion is a pure divide.
+  const pdfX = cssX / scaleFactor;
+  const pdfY = (rect.height - cssY - H) / scaleFactor;
+  const pdfW = W / scaleFactor;
+  const pdfH = H / scaleFactor;
+
+  const newField = {
+    type: 'text',
+    label: '',
+    page: pageNum,
+    x: pdfX,
+    y: pdfY,
+    width: pdfW,
+    height: pdfH,
+    confidence: 1.0,
+    source: 'user-added',
+    primary: true,
+  };
+  newField.id = idFor(newField);
+  docState.fields = [...docState.fields, newField];
+
+  // Append a visible box for it immediately. Position in CSS pixels;
+  // we already know the click coordinates.
+  const box = document.createElement('div');
+  box.className = 'field-box';
+  box.dataset.type = newField.type;
+  box.dataset.fieldId = newField.id;
+  box.dataset.primary = 'true';
+  box.dataset.confidence = '100';
+  box.style.left = `${cssX}px`;
+  box.style.top = `${cssY}px`;
+  box.style.width = `${W}px`;
+  box.style.height = `${H}px`;
+  const tag = document.createElement('span');
+  tag.className = 'field-box__tag';
+  tag.textContent = 'text';
+  box.appendChild(tag);
+  box.addEventListener('click', () => onFieldBoxClick(newField));
+  overlay.appendChild(box);
+  fieldElements.set(newField.id, box);
+
+  populateSidebar({ fields: docState.fields, pageCount: Math.max(...docState.fields.map(f => f.page)) }, docState.filename || '');
+  toggleAddMode(false);
+  track('preview_field_added_manually', { page: pageNum });
+});
+
+// AI training consent: persist the user's choice across sessions.
+// Default is OFF (privacy by default). The current build does not
+// actually send anything; the value is read by the create-doc payload
+// path so the worker can record consent alongside the document.
+if (aiConsentCheckbox) {
+  try {
+    const saved = localStorage.getItem(AI_CONSENT_KEY);
+    aiConsentCheckbox.checked = saved === '1';
+  } catch (e) {}
+  aiConsentCheckbox.addEventListener('change', () => {
+    try { localStorage.setItem(AI_CONSENT_KEY, aiConsentCheckbox.checked ? '1' : '0'); } catch (e) {}
+    track('ai_training_consent_toggled', { value: aiConsentCheckbox.checked });
+  });
+}
+
 // Drag-drop on the whole page so the user does not have to aim.
 ['dragenter', 'dragover'].forEach(name => {
   window.addEventListener(name, e => {
@@ -729,9 +836,11 @@ async function handleFile(file) {
   }
 
   // Reset signer state and seed a single default signer (the sender).
+  // Name is empty so the input ships with its "Your name" placeholder
+  // and the avatar shows an em-dash instead of duplicating "You" + "YO".
   signers.reset();
   assignments.reset();
-  const sender = signers.add({ name: 'You', email: '' });
+  const sender = signers.add({ name: '', email: '' });
   assignments.setDefault(sender.id);
   signingAs.set(sender.id);
 
@@ -990,6 +1099,14 @@ async function renderDocument(data, detection, opts = {}) {
       const overlay = document.createElement('div');
       overlay.className = 'overlay';
       shell.appendChild(overlay);
+
+      // Stash viewport metadata on the shell DOM so the manual
+      // "Add a field" path can convert click coordinates back to PDF
+      // space without holding onto the pdfjs page object.
+      shell.dataset.pageNum = String(pageNum);
+      shell.dataset.viewportWidth = String(viewport.width);
+      shell.dataset.viewportHeight = String(viewport.height);
+      shell.dataset.scale = String(RENDER_SCALE);
 
       documentStrip.appendChild(shell);
 
@@ -1347,9 +1464,22 @@ function groupBy(arr, keyFn) {
 }
 
 function meanConfidencePct(fields) {
-  if (fields.length === 0) return '0%';
-  const sum = fields.reduce((s, f) => s + (f.confidence || 0), 0);
-  return `${Math.round((sum / fields.length) * 100)}%`;
+  // Confidence-of-record is the average confidence of PRIMARY fields only:
+  // the dedicated signature block (signature, initial, date in the
+  // signer area). These are what matter for whether the document can be
+  // signed; body inline fill-in blanks are advisory.
+  //
+  // Earlier this function averaged ALL detected fields, which is honest
+  // but misleading: a contract whose signature block scores 90% but
+  // whose body has 60 inline blanks at 50% would show "55%" overall.
+  // The signer reading "55% confidence" reasonably assumes detection
+  // is unreliable, when in fact the only fields they need to sign are
+  // at 90%. We now report the number that actually matters.
+  if (!Array.isArray(fields) || fields.length === 0) return '0%';
+  const primary = fields.filter(f => f.primary !== false);
+  const pool = primary.length > 0 ? primary : fields;
+  const sum = pool.reduce((s, f) => s + (f.confidence || 0), 0);
+  return `${Math.round((sum / pool.length) * 100)}%`;
 }
 
 function formatBytes(bytes) {
@@ -1423,9 +1553,16 @@ function updateFillUI() {
     signButton.disabled = false;
     signButton.textContent = 'Click a field to sign';
     signButton.classList.remove('btn--ready');
+  } else if (filledCount < totalCount) {
+    // Partial fill. The button still works (downloads what is filled),
+    // but make it clear how many remain rather than the cryptic "1 of 80".
+    signButton.disabled = false;
+    const remaining = totalCount - filledCount;
+    signButton.textContent = `Download signed PDF. ${remaining} field${remaining === 1 ? '' : 's'} left.`;
+    signButton.classList.add('btn--ready');
   } else {
     signButton.disabled = false;
-    signButton.textContent = `Download signed PDF (${filledCount} of ${totalCount})`;
+    signButton.textContent = `Download signed PDF. All ${totalCount} fields filled.`;
     signButton.classList.add('btn--ready');
   }
 }
@@ -1617,7 +1754,7 @@ function updateSignersUI(list) {
     const nameInput = document.createElement('input');
     nameInput.className = 'signer-row__name';
     nameInput.value = signer.name;
-    nameInput.placeholder = 'Name';
+    nameInput.placeholder = 'Your name';
     nameInput.addEventListener('input', e => signers.update(signer.id, { name: e.target.value }));
 
     const emailInput = document.createElement('input');
@@ -1655,15 +1792,17 @@ function updateSignersUI(list) {
     signersList.appendChild(li);
   }
 
-  // 2. Rebuild the "Signing as" dropdown to match.
+  // 2. Rebuild the "Signing as" dropdown to match. Empty-name signers
+  // get an ordinal fallback ("Signer 1") so the dropdown never reads
+  // as a blank option until the user types a name.
   const currentAs = signingAs.get();
   signingAsSelect.innerHTML = '';
-  for (const signer of list) {
+  list.forEach((signer, idx) => {
     const opt = document.createElement('option');
     opt.value = signer.id;
-    opt.textContent = signer.name;
+    opt.textContent = signer.name.trim() || `Signer ${idx + 1}`;
     signingAsSelect.appendChild(opt);
-  }
+  });
   signingAsSelect.value = currentAs && list.some(s => s.id === currentAs)
     ? currentAs : (list[0] && list[0].id);
 

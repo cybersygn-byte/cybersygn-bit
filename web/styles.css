@@ -2544,6 +2544,48 @@ button { font: inherit; cursor: pointer; }
 .modal-card__footer-left,
 .modal-card__footer-right { display: inline-flex; gap: var(--s-2); }
 
+/* ----- Add-field mode (manual field placement on the preview page) ----- */
+body[data-add-mode="true"] .page-shell { cursor: crosshair; }
+body[data-add-mode="true"] .overlay { pointer-events: auto; }
+body[data-add-mode="true"] .page-shell::after {
+  content: "Click a spot to place a new field. Esc to cancel.";
+  position: absolute;
+  top: -22px;
+  right: 0;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-text);
+}
+
+/* ----- AI-training consent checkbox (preview empty state) ----- */
+.consent-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: var(--s-4);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  cursor: pointer;
+  transition: border-color 160ms var(--ease);
+}
+.consent-row:hover { border-color: var(--line-strong); }
+.consent-row input[type="checkbox"] {
+  flex: 0 0 16px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--accent-text);
+}
+.consent-row__text {
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.consent-row__text strong { color: var(--text); font-weight: 600; }
+
 /* ----- Signature pad (signing modal) -----
    The pad is intentionally paper-white in BOTH light and dark mode so the
    user's ink is always visible. A signature pad is a piece of paper on a

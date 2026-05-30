@@ -193,9 +193,14 @@ export function createSigningAsStore(initial) {
 // ---------------------------------------------------------------------------
 
 export function initialsFor(name) {
-  if (!name) return '?';
-  const parts = String(name).trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  // Single-word names get one initial, not two. Returning two letters
+  // ("YO" from "You", "AL" from "Alex") read like duplicates next to
+  // the name field on the signer card. Two-word names get the
+  // conventional first-last initials.
+  if (!name) return '—';
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '—';
+  if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 

@@ -96,6 +96,14 @@
             <li>Max 25 MB per file. Multiple photos compose into one document.</li>
             <li>Detection runs locally. Your file never reaches a server.</li>
           </ul>
+          <label class="consent-row" for="ai-training-consent">
+            <input type="checkbox" id="ai-training-consent" />
+            <span class="consent-row__text">
+              <strong>Help us improve detection.</strong> Share anonymized field
+              positions (no document content, no PII) when CyberSygn misses or
+              misplaces a field. Off by default. You can change this anytime.
+            </span>
+          </label>
         </div>
 
         <aside class="dropzone-card__demo" aria-hidden="true">
@@ -176,6 +184,9 @@
             <button id="sign-button" class="btn btn--primary btn--block" type="button" disabled>
               Send for signature
               <span class="btn-arrow" aria-hidden="true">→</span>
+            </button>
+            <button id="add-field-button" class="btn btn--ghost btn--block btn--sm" type="button">
+              + Add a missed field
             </button>
             <button id="reset-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Load another document
