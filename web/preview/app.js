@@ -95,6 +95,7 @@ const signButton = $('sign-button');
 const addFieldButtons = document.querySelectorAll('.add-field-btn');
 const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
+const saveTemplateButton = $('save-template-button');
 const toast = $('toast');
 
 // Signers panel DOM
@@ -657,6 +658,73 @@ function promptAddFieldType(clientX, clientY) {
   });
 }
 
+// Save-template button: persists the current field set as a template
+// indexed by the document's SHA-256 hash. Next upload of the exact same
+// PDF (by anyone, if AI consent is on; otherwise by this sender) starts
+// from these labels instead of re-running heuristic detection.
+if (saveTemplateButton) {
+  saveTemplateButton.addEventListener('click', async () => {
+    if (!docState.docId) {
+      showToast('Cannot save: no document loaded.');
+      return;
+    }
+    if (!Array.isArray(docState.fields) || docState.fields.length === 0) {
+      showToast('Cannot save: no fields detected or added.');
+      return;
+    }
+    const consent = (() => {
+      try { return localStorage.getItem(AI_CONSENT_KEY) === '1'; }
+      catch (e) { return false; }
+    })();
+    const scope = consent ? 'public' : 'private';
+
+    saveTemplateButton.disabled = true;
+    const originalText = saveTemplateButton.textContent;
+    saveTemplateButton.textContent = 'Saving template.';
+    try {
+      // Strip filled-in values; templates carry POSITIONS only.
+      const fieldsToSave = docState.fields.map(f => ({
+        type: f.type,
+        page: f.page,
+        x: f.x,
+        y: f.y,
+        width: f.width,
+        height: f.height,
+        label: f.label || '',
+        primary: f.primary !== false,
+        source: f.source || 'user-saved',
+      }));
+      const res = await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          docId: docState.docId,
+          senderId: getSenderId(),
+          fields: fieldsToSave,
+          scope,
+          consent,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        showToast(`Could not save template: ${data && data.error ? data.error : 'unknown error'}`);
+        return;
+      }
+      const scopeLabel = data.scope === 'public'
+        ? 'Saved publicly. Every future upload of this exact PDF (by you or anyone) auto-loads these labels.'
+        : 'Saved privately. Your future uploads of this exact PDF auto-load these labels. Toggle AI training consent on the upload page to share publicly.';
+      showToast(`Template saved (${data.fieldCount} fields). ${scopeLabel}`);
+      track('template_saved', { scope: data.scope, fieldCount: data.fieldCount });
+    } catch (err) {
+      report(err, 'save_template');
+      showToast(`Could not save template: ${err.message || err}`);
+    } finally {
+      saveTemplateButton.disabled = false;
+      saveTemplateButton.textContent = originalText;
+    }
+  });
+}
+
 // AI training consent: persist the user's choice across sessions.
 // Default is OFF (privacy by default). The current build does not
 // actually send anything; the value is read by the create-doc payload
@@ -925,6 +993,49 @@ async function handleFile(file) {
   } catch (e) {
     console.warn('[cybersygn:edits] could not compute docId', e);
     docState.docId = null;
+  }
+
+  // Document template lookup. If anyone previously saved labels for a
+  // PDF with this exact SHA-256, those labels become the starting point
+  // (replacing the heuristic detection) — the saved set is human-
+  // verified and therefore strictly better. Heuristic fields the
+  // template doesn't cover are kept; template fields the heuristic
+  // missed are added.
+  if (docState.docId) {
+    try {
+      const senderId = getSenderId();
+      const lookupRes = await fetch(`/api/templates?docId=${encodeURIComponent(docState.docId)}&senderId=${encodeURIComponent(senderId)}`);
+      if (lookupRes.ok) {
+        const lookup = await lookupRes.json();
+        if (lookup.ok && lookup.template && Array.isArray(lookup.template.fields) && lookup.template.fields.length > 0) {
+          // The saved fields ARE the right answer for this PDF. Replace
+          // heuristic with template. Re-apply senderEdits on top in case
+          // the local user has further-refined this template before.
+          const templateFields = lookup.template.fields.map(f => ({
+            ...f,
+            id: f.id || idFor(f),
+          }));
+          docState.fields = templateFields;
+          detection.fields = docState.fields;
+          if (senderEdits.size > 0) {
+            docState.fields = applyStoredEditsToFields(docState.fields);
+            detection.fields = docState.fields;
+          }
+          showToast(
+            `Loaded a saved template (${templateFields.length} fields, ${lookup.scope}). ` +
+            `Saved labels replace auto-detection.`
+          );
+          track('template_applied', {
+            scope: lookup.scope,
+            fieldCount: templateFields.length,
+            savedCount: (lookup.template.stats && lookup.template.stats.savedCount) || 1,
+          });
+        }
+      }
+    } catch (e) {
+      // Lookup failed; not blocking. Use heuristic detection as before.
+      report(e, 'template_lookup');
+    }
   }
 
   // Reset signer state and seed a single default signer (the sender).

@@ -31,6 +31,7 @@ import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
+import { saveTemplate, lookupTemplate } from './templates.js';
 import {
   TIERS,
   getSubscription,
@@ -76,6 +77,13 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/api/detect-vision') {
       return handleDetectVision(request, env);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/templates') {
+      return handleSaveTemplate(request, env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/templates') {
+      return handleLookupTemplate(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
@@ -904,6 +912,54 @@ async function handleDetectVision(request, env, url) {
     usageThisMonth: usage.used,
     capThisMonth: usage.cap,
     apiUsage: result.usage || null,
+  });
+}
+
+// ---- /api/templates --------------------------------------------------------
+//
+// Persist a labeled field set for a specific PDF (keyed by SHA-256 of
+// original bytes). The point: once any user has corrected detection
+// for a recurring form, every future upload of the same PDF starts
+// with the correct labels.
+//
+// POST /api/templates  body { docId, senderId, fields, scope, consent }
+//   -> { ok, template }
+// GET  /api/templates?docId=...&senderId=...
+//   -> { ok, template, scope } or { ok: false } if no match
+
+async function handleSaveTemplate(request, env) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { docId, senderId, fields, scope, consent } = body.value || {};
+  const result = await saveTemplate(env, {
+    docId,
+    senderId,
+    fields,
+    scope,
+    consentGiven: consent === true,
+  });
+  if (!result.ok) return jsonResponse(400, { error: result.error || 'save_failed' });
+  return jsonResponse(200, {
+    ok: true,
+    scope: result.template.scope,
+    fieldCount: result.template.fields.length,
+    savedCount: result.template.stats.savedCount,
+  });
+}
+
+async function handleLookupTemplate(request, env, url) {
+  const docId = url.searchParams.get('docId');
+  const senderId = url.searchParams.get('senderId') || '';
+  const result = await lookupTemplate(env, { docId, senderId });
+  if (!result.ok) return jsonResponse(200, { ok: false });
+  return jsonResponse(200, {
+    ok: true,
+    scope: result.scope,
+    template: {
+      fields: result.template.fields,
+      stats: result.template.stats,
+      updatedAt: result.template.updatedAt,
+    },
   });
 }
 
