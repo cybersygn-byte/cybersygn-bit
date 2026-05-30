@@ -1,6 +1,6 @@
 # CyberSygn.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/REPLACE-WITH-YOUR-GITHUB-USERNAME/cybersygn)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cybersygn-byte/cybersygn-bit)
 
 **Want to deploy this yourself?** Read **[INSTALL.md](./INSTALL.md)** for the plain-English five-step guide (fifteen minutes, no terminal). For exhaustive reference detail, see [INSTALL-detailed.md](./INSTALL-detailed.md).
 
