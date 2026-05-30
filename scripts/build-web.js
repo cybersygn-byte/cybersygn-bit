@@ -188,6 +188,12 @@ async function main() {
   await copyFile(join(SRC, 'preview', 'docx-to-pdf.js'), join(OUT, 'preview', 'docx-to-pdf.js'));
   console.log('  wrote dist/preview/docx-to-pdf.js');
 
+  // cv-detect.js: Phase 2a classical computer-vision pass on rendered
+  // canvas. Finds unlabeled signature lines, underscore runs, and
+  // checkbox outlines the text-heuristic detector misses.
+  await copyFile(join(SRC, 'preview', 'cv-detect.js'), join(OUT, 'preview', 'cv-detect.js'));
+  console.log('  wrote dist/preview/cv-detect.js');
+
   // Dashboard subfolder: imports from ../preview/, so the relative
   // paths work both in dev (web/dashboard/ -> web/preview/) and in
   // dist (dist/dashboard/ -> dist/preview/).

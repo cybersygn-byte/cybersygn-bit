@@ -2544,6 +2544,24 @@ button { font: inherit; cursor: pointer; }
 .modal-card__footer-left,
 .modal-card__footer-right { display: inline-flex; gap: var(--s-2); }
 
+/* ----- CV-detected field box: small AI badge ----- */
+.field-box[data-source="cv"]::before {
+  content: "AI";
+  position: absolute;
+  top: -8px;
+  right: -4px;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--bg);
+  background: var(--accent-2, var(--accent));
+  padding: 1px 4px;
+  border-radius: 3px;
+  z-index: 3;
+  pointer-events: none;
+}
+
 /* ----- Field-box drag + resize handles ----- */
 .field-box {
   cursor: move;

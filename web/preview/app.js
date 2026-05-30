@@ -36,6 +36,7 @@ import {
 } from './api.js';
 import { getSenderId, rememberDocToken, getActiveWorkspace } from './identity.js';
 import * as ownerMod from './owner.js';
+import * as cvDetect from './cv-detect.js';
 
 // pdf.js needs a worker script. We point it at the self-hosted vendor
 // copy so the browser parses PDFs off the main thread without making
@@ -1189,10 +1190,35 @@ async function renderDocument(data, detection, opts = {}) {
 
       await page.render({ canvasContext: ctx, viewport }).promise;
 
+      // Phase 2a: pixel-based CV pass on the rendered canvas. Finds
+      // unlabeled signature lines, isolated underscore runs, and empty
+      // checkbox outlines that the text-heuristic detector cannot see.
+      // Merges results into docState.fields (drops CV candidates that
+      // overlap >50% with an existing field). All in-browser, no API.
+      try {
+        const cvFields = cvDetect.detectVisually(canvas, {
+          width: viewport.width,
+          height: viewport.height,
+          scale: RENDER_SCALE,
+        }, pageNum);
+        if (cvFields.length > 0) {
+          const before = docState.fields.length;
+          docState.fields = cvDetect.mergeWithHeuristic(docState.fields, cvFields);
+          detection.fields = docState.fields;  // keep detection arg in sync
+          const added = docState.fields.length - before;
+          if (added > 0) {
+            track('cv_fields_added', { page: pageNum, added });
+          }
+        }
+      } catch (e) {
+        report(e, `cv-detect:page-${pageNum}`);
+      }
+
       // Draw field boxes for this page, staggered so they "discover"
       // one at a time. Per-page step caps at 80ms and total stagger
-      // for any single page caps at 700ms.
-      const pageFields = detection.fields.filter(f => f.page === pageNum);
+      // for any single page caps at 700ms. After the CV merge above,
+      // pageFields includes both heuristic and CV-detected entries.
+      const pageFields = docState.fields.filter(f => f.page === pageNum);
       const pageStepMs = pageFields.length > 0
         ? Math.min(PER_STEP_CAP_MS, Math.floor(REVEAL_TOTAL_PER_PAGE_MS / Math.max(1, pageFields.length)))
         : 0;
@@ -1246,6 +1272,13 @@ function drawFieldBox(overlay, field, viewport, pageNum, revealIndex = 0, stepMs
   box.className = 'field-box';
   box.dataset.type = field.type;
   box.dataset.fieldId = idFor(field);
+  // CV-detected fields carry source 'cv-line' / 'cv-underscore' /
+  // 'cv-checkbox'. We surface this on the box dataset so the CSS can
+  // mark them with a small "AI" indicator and the user knows what came
+  // from the visual pass.
+  if (field.source && String(field.source).startsWith('cv-')) {
+    box.dataset.source = 'cv';
+  }
   // Staggered detection reveal: the CSS keyframe runs immediately, the
   // index-driven animation-delay creates the one-at-a-time effect.
   // stepMs=0 (e.g. single-field case) means render with no delay.
