@@ -1204,12 +1204,8 @@ async function renderDocument(data, detection, opts = {}) {
 
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Phase 2a pixel-based CV. DISABLED by default after slice 28
-      // overfired on real-world contracts (treated every text descender
-      // as a signature line). Tighter thresholds shipped in slice 30 but
-      // the approach needs more tuning before it can replace pure
-      // heuristic detection. Owner can opt-in for testing by setting
-      // localStorage.cybersygn.cvEnabled = '1' in devtools.
+      // Phase 2a pixel-based CV. DISABLED by default (overfires).
+      // Owner can opt-in via localStorage.cybersygn.cvEnabled = '1'.
       try {
         const cvEnabled = (() => {
           try { return localStorage.getItem('cybersygn.cvEnabled') === '1'; }
@@ -1222,17 +1218,59 @@ async function renderDocument(data, detection, opts = {}) {
             scale: RENDER_SCALE,
           }, pageNum);
           if (cvFields.length > 0) {
-            const before = docState.fields.length;
             docState.fields = cvDetect.mergeWithHeuristic(docState.fields, cvFields);
             detection.fields = docState.fields;
-            const added = docState.fields.length - before;
-            if (added > 0) {
-              track('cv_fields_added', { page: pageNum, added });
-            }
           }
         }
       } catch (e) {
         report(e, `cv-detect:page-${pageNum}`);
+      }
+
+      // Phase 2b: LLM vision detection via /api/detect-vision (Claude).
+      // Opt-in this slice via localStorage.cybersygn.visionEnabled = '1'.
+      // Escalation logic (auto-trigger on low-detection pages) is slice 32.
+      // Runs AFTER pixel-walk merge so any heuristic + cv-line fields are
+      // already in docState.fields and the vision merge can de-duplicate.
+      try {
+        const visionEnabled = (() => {
+          try { return localStorage.getItem('cybersygn.visionEnabled') === '1'; }
+          catch (e) { return false; }
+        })();
+        if (visionEnabled) {
+          const visionFields = await callVisionDetection(canvas, viewport, pageNum);
+          if (Array.isArray(visionFields) && visionFields.length > 0) {
+            // Convert vision pixel coords (top-left origin) to PDF coords
+            // (bottom-left). Same math as field-box drag-resize commit.
+            const scale = RENDER_SCALE;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const ks = scale * dpr;
+            const pdfFields = visionFields.map(vf => {
+              const id = `vision-${pageNum}-${Math.round(vf.x)}-${Math.round(vf.y)}-${vf.type}`;
+              const cx = vf.x / ks;
+              const cy = vf.y / ks;
+              const cw = vf.width  / ks;
+              const ch = vf.height / ks;
+              return {
+                id,
+                type: vf.type,
+                page: pageNum,
+                x: cx,
+                y: (viewport.height - cy - ch),
+                width: cw,
+                height: ch,
+                confidence: vf.confidence,
+                label: vf.label || '',
+                source: 'vision',
+                primary: vf.confidence >= 0.70,
+              };
+            });
+            docState.fields = cvDetect.mergeWithHeuristic(docState.fields, pdfFields);
+            detection.fields = docState.fields;
+            track('vision_fields_added', { page: pageNum, added: pdfFields.length });
+          }
+        }
+      } catch (e) {
+        report(e, `vision-detect:page-${pageNum}`);
       }
 
       // Draw field boxes for this page, staggered so they "discover"
@@ -1383,6 +1421,91 @@ function drawFieldBox(overlay, field, viewport, pageNum, revealIndex = 0, stepMs
 
   overlay.appendChild(box);
   fieldElements.set(box.dataset.fieldId, box);
+}
+
+/**
+ * Phase 2b vision detection client. Converts a rendered page canvas
+ * to a base64 PNG and POSTs to /api/detect-vision. Returns an array
+ * of vision-detected field candidates in pixel coordinates (canvas
+ * space), or [] on any failure. Caller is responsible for translating
+ * pixel coords to PDF coords using the current viewport.
+ *
+ * Cost: each call hits Claude Sonnet 4.5 via the worker, ~$0.01 per
+ * page. Worker enforces a per-sender monthly cap (default 1000 pages,
+ * configurable via env.VISION_MONTHLY_CAP_PAGES).
+ */
+async function callVisionDetection(canvas, viewport, pageNum) {
+  // Downsample the source canvas so the upload stays small. Claude
+  // accepts up to 8000 px on the long edge, but the model uses
+  // 1568x1568 internally; sending bigger images wastes bandwidth
+  // and tokens without improving accuracy.
+  const maxSide = 1568;
+  const sourceW = canvas.width;
+  const sourceH = canvas.height;
+  let scale = 1;
+  if (Math.max(sourceW, sourceH) > maxSide) {
+    scale = maxSide / Math.max(sourceW, sourceH);
+  }
+  const targetW = Math.round(sourceW * scale);
+  const targetH = Math.round(sourceH * scale);
+
+  let pngBlob;
+  if (scale === 1) {
+    pngBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  } else {
+    const off = document.createElement('canvas');
+    off.width = targetW;
+    off.height = targetH;
+    const offCtx = off.getContext('2d');
+    offCtx.drawImage(canvas, 0, 0, targetW, targetH);
+    pngBlob = await new Promise(resolve => off.toBlob(resolve, 'image/png'));
+  }
+  if (!pngBlob) return [];
+
+  const imageBase64 = await blobToBase64(pngBlob);
+
+  const senderId = (typeof getSenderId === 'function') ? getSenderId() : '';
+  const res = await fetch('/api/detect-vision', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      senderId,
+      pageNum,
+      imageBase64,
+      imageWidth: targetW,
+      imageHeight: targetH,
+    }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`vision endpoint ${res.status}: ${detail.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  if (!data || !Array.isArray(data.fields)) return [];
+
+  // Adjust pixel coords back to the FULL canvas resolution because
+  // the caller's downstream math assumes canvas-space coordinates.
+  const inv = scale === 1 ? 1 : (1 / scale);
+  return data.fields.map(f => ({
+    ...f,
+    x: f.x * inv,
+    y: f.y * inv,
+    width:  f.width  * inv,
+    height: f.height * inv,
+  }));
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const s = String(r.result || '');
+      const comma = s.indexOf(',');
+      resolve(comma >= 0 ? s.slice(comma + 1) : s);
+    };
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
 }
 
 /**

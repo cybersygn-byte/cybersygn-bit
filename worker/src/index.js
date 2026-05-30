@@ -30,6 +30,7 @@ import { sendInvite, sendCompletion, sendReminder } from './email.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
+import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
 import {
   TIERS,
   getSubscription,
@@ -71,6 +72,10 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/detect') {
       return handleDetect(request);
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/detect-vision') {
+      return handleDetectVision(request, env);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
@@ -806,6 +811,100 @@ async function handleOwnerTestEmail(request, env, url) {
       message: err && err.message ? err.message : 'unknown error',
     });
   }
+}
+
+// ---- /api/detect-vision ----------------------------------------------------
+//
+// Phase 2b: LLM vision field detection. Accepts a single rendered page
+// as base64 PNG, calls Claude Sonnet 4.5 via the Anthropic API, returns
+// bounding boxes in pixel coordinates. Per-sender monthly cap enforced
+// via KV before the paid API call burns.
+//
+// Body:
+//   {
+//     senderId:   string,    // for usage tracking and cap enforcement
+//     pageNum:    number,    // 1-based page index, for the prompt
+//     imageBase64: string,   // PNG, no data: prefix
+//     imageWidth:  number,
+//     imageHeight: number
+//   }
+//
+// Response:
+//   { ok: true, fields: [{type, x, y, width, height, label, confidence}], cost, usage }
+//   On error: 4xx/5xx with { error, message }
+
+const MAX_VISION_IMAGE_BYTES = 8 * 1024 * 1024;  // 8 MB base64; ~6 MB binary
+
+async function handleDetectVision(request, env, url) {
+  if (!env || !env.ANTHROPIC_API_KEY) {
+    return jsonResponse(503, {
+      error: 'vision_not_configured',
+      message: 'ANTHROPIC_API_KEY not set on this Worker. Set it with wrangler secret put ANTHROPIC_API_KEY to enable Phase 2b vision detection.',
+    });
+  }
+
+  const body = await readJsonBody(request, MAX_VISION_IMAGE_BYTES);
+  if (body.error) return jsonResponse(400, body.error);
+
+  const { senderId, pageNum, imageBase64, imageWidth, imageHeight } = body.value || {};
+  if (typeof senderId !== 'string' || senderId.length === 0) {
+    return jsonResponse(400, { error: 'invalid_sender', message: 'senderId required' });
+  }
+  if (typeof imageBase64 !== 'string' || imageBase64.length === 0) {
+    return jsonResponse(400, { error: 'invalid_image', message: 'imageBase64 required' });
+  }
+  if (!Number.isFinite(imageWidth) || !Number.isFinite(imageHeight)) {
+    return jsonResponse(400, { error: 'invalid_dimensions', message: 'imageWidth and imageHeight required' });
+  }
+
+  // Enforce per-sender monthly cap BEFORE calling the paid API.
+  const capPages = parseInt(env.VISION_MONTHLY_CAP_PAGES, 10) || undefined;
+  const usage = await checkAndIncrementVisionUsage(env, senderId, capPages);
+  if (!usage.ok) {
+    return jsonResponse(429, {
+      error: 'monthly_cap_reached',
+      message: `Vision usage cap of ${usage.cap} pages this month reached for this sender. Increment resets on the 1st.`,
+      used: usage.used,
+      cap: usage.cap,
+    });
+  }
+
+  const result = await detectFieldsViaVision(env, {
+    imageBase64,
+    imageWidth,
+    imageHeight,
+    pageNum: typeof pageNum === 'number' ? pageNum : 1,
+  });
+
+  // Track regardless of ok/error: we always paid for the call (unless
+  // the call itself errored before reaching Anthropic, which the
+  // estimateCost handles as 0).
+  try {
+    await trackEvent(env, result.ok ? 'vision_detect_ok' : 'vision_detect_failed', {
+      request,
+      senderId,
+      value: result.cost || 0,
+      durationMs: 0,
+    });
+  } catch (e) {}
+
+  if (!result.ok) {
+    return jsonResponse(502, {
+      error: 'vision_failed',
+      message: result.error || 'unknown',
+      cost: result.cost || 0,
+      usage: { used: usage.used, cap: usage.cap },
+    });
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    fields: result.fields,
+    cost: result.cost,
+    usageThisMonth: usage.used,
+    capThisMonth: usage.cap,
+    apiUsage: result.usage || null,
+  });
 }
 
 // ---- /api/event ------------------------------------------------------------
@@ -2035,14 +2134,16 @@ function base64ToBytes(b64) {
 
 // ---- JSON body parsing -----------------------------------------------------
 
-async function readJsonBody(request) {
+async function readJsonBody(request, maxBytes) {
   // Stream the body and enforce a true byte cap. Trusting the
   // content-length header lets a hostile client declare a tiny size and
   // ship a much larger payload; by reading the stream chunk-by-chunk we
   // bail the moment the cap is exceeded, regardless of what the headers
-  // claim.
+  // claim. Caller can override the default MAX_JSON_BYTES per-endpoint
+  // (e.g. /api/detect-vision needs ~8 MB to accept a rendered page PNG).
   if (!request.body) return { value: {} };
 
+  const cap = Number.isFinite(maxBytes) && maxBytes > 0 ? maxBytes : MAX_JSON_BYTES;
   const reader = request.body.getReader();
   const chunks = [];
   let total = 0;
@@ -2052,10 +2153,10 @@ async function readJsonBody(request) {
       if (done) break;
       if (!value) continue;
       total += value.byteLength;
-      if (total > MAX_JSON_BYTES) {
+      if (total > cap) {
         try { await reader.cancel(); } catch {}
         return {
-          error: { error: 'payload_too_large', message: `Body exceeds ${MAX_JSON_BYTES} bytes.` },
+          error: { error: 'payload_too_large', message: `Body exceeds ${cap} bytes.` },
         };
       }
       chunks.push(value);
