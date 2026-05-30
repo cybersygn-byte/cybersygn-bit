@@ -215,6 +215,22 @@ async function main() {
   }
   console.log(`  copied ${fonts.length} font files`);
 
+  // 4a. pdf.js CMaps and standard_fonts. Needed at runtime when pdf.js
+  // encounters CJK fonts (Hiragino common on macOS exports) or PDFs that
+  // reference the 14 standard PostScript fonts without embedding them.
+  for (const subdir of ['cmaps', 'standard_fonts']) {
+    const src = join(VENDOR, subdir);
+    if (await exists(src)) {
+      const dst = join(OUT, 'vendor', subdir);
+      await mkdir(dst, { recursive: true });
+      const files = await readdir(src);
+      for (const f of files) await copyFile(join(src, f), join(dst, f));
+      console.log(`  copied ${files.length} ${subdir} files`);
+    } else {
+      console.log(`  skip ${subdir} (run \`npm run vendor\` to populate)`);
+    }
+  }
+
   // 4b. Brand assets: logos, lockups, favicons, OG card. Lives at
   // web/brand/ in source and is shipped verbatim to dist/brand/. The
   // HTML <head> blocks reference these paths directly; CSS resolves

@@ -13,7 +13,7 @@
  * Idempotent. Safe to rerun.
  */
 
-import { readFile, writeFile, mkdir, rm, copyFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, copyFile, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -63,6 +63,33 @@ async function main() {
     await copyFile(join(NODE_MODULES, f.src), join(VENDOR, f.dest));
     console.log(`  pdfjs: ${f.dest}`);
   }
+
+  // 1a. pdf.js CMaps. Required for CJK fonts (Hiragino, NotoSansCJK,
+  // etc.). Without these, pdf.js throws at render time on any PDF whose
+  // text uses a CJK font even if the surrounding content is English
+  // (common when a PDF is authored on macOS, which embeds Hiragino as
+  // a fallback for missing glyphs).
+  const cmapsSrc = join(NODE_MODULES, 'pdfjs-dist', 'cmaps');
+  const cmapsDst = join(VENDOR, 'cmaps');
+  await mkdir(cmapsDst, { recursive: true });
+  const cmapFiles = await readdir(cmapsSrc);
+  for (const f of cmapFiles) {
+    await copyFile(join(cmapsSrc, f), join(cmapsDst, f));
+  }
+  console.log(`  pdfjs cmaps: ${cmapFiles.length} files`);
+
+  // 1b. pdf.js standard fonts. Required for PDFs that reference one of
+  // the 14 standard PostScript fonts without embedding them (Times,
+  // Helvetica, Courier, Symbol, ZapfDingbats). pdf.js fetches these on
+  // demand from standardFontDataUrl when disableFontFace is false.
+  const stdFontsSrc = join(NODE_MODULES, 'pdfjs-dist', 'standard_fonts');
+  const stdFontsDst = join(VENDOR, 'standard_fonts');
+  await mkdir(stdFontsDst, { recursive: true });
+  const stdFontFiles = await readdir(stdFontsSrc);
+  for (const f of stdFontFiles) {
+    await copyFile(join(stdFontsSrc, f), join(stdFontsDst, f));
+  }
+  console.log(`  pdfjs standard_fonts: ${stdFontFiles.length} files`);
 
   // 2. pdf-lib (signing flatten)
   for (const f of PDFLIB_FILES) {

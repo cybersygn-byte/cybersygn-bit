@@ -876,13 +876,15 @@ async function renderDocument(data, detection) {
 
   // pdfjs requires a fresh Uint8Array because detectFields consumes the buffer.
   const renderData = new Uint8Array(data);
-  // Font handling: we previously set disableFontFace:true and useSystemFonts:false
-  // for security conservatism. That broke real-world PDFs created on macOS,
-  // which embed Hiragino and other Apple system fonts. With both disabled,
-  // pdfjs had no glyph source and threw on render. We now allow @font-face
-  // (so pdfjs can use the embedded subset) and system-font fallback (so
-  // pages with non-embedded fonts still render). isEvalSupported stays false
-  // since we never want pdfjs evaluating any embedded script.
+  // Font handling: allow @font-face so pdf.js can use embedded subsets,
+  // allow system-font fallback for pages with non-embedded fonts. Provide
+  // cmaps for CJK fonts (Hiragino, Noto CJK, etc.) — without these, pdf.js
+  // throws on any PDF whose text uses CJK encoding, which is common when
+  // the PDF was authored on macOS and Hiragino is embedded as a fallback
+  // even on English contracts. Also provide standardFontDataUrl for the
+  // 14 standard PostScript fonts (Times, Helvetica, Courier, etc.) which
+  // pdf.js fetches on demand for PDFs that reference but do not embed them.
+  // isEvalSupported stays false; we never want pdfjs evaluating embedded JS.
   const doc = await pdfjsLib.getDocument({
     data: renderData,
     isEvalSupported: false,
@@ -890,6 +892,9 @@ async function renderDocument(data, detection) {
     disableFontFace: false,
     disableAutoFetch: true,
     disableStream: true,
+    cMapUrl: '/vendor/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: '/vendor/standard_fonts/',
   }).promise;
 
   // Per-page staggered "detection reveal": each field box pops in
