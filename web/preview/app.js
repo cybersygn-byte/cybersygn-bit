@@ -1142,57 +1142,118 @@ function populateSidebar(detection, filename) {
     return;
   }
 
-  const byPage = groupBy(detection.fields, f => f.page);
+  // Split into the dedicated signature block (primary) and body inline
+  // fill-ins (secondary). Primary fields render expanded by page; secondary
+  // fields collapse into a single click-to-expand group at the bottom with
+  // duplicate labels merged. This keeps a 80-field contract from drowning
+  // the sidebar while still preserving every detection result.
+  const primary = detection.fields.filter(f => f.primary !== false);
+  const secondary = detection.fields.filter(f => f.primary === false);
+
+  // ---- Primary section (always expanded, grouped by page) ------------------
+  const byPage = groupBy(primary, f => f.page);
   const sortedPages = [...byPage.keys()].sort((a, b) => a - b);
 
-  for (const page of sortedPages) {
-    const fields = byPage.get(page).sort((a, b) => b.y - a.y); // top-down on the page
-
-    const header = document.createElement('li');
-    header.className = 'field-list__group';
-    const groupLabel = document.createElement('span');
-    groupLabel.textContent = `Page ${page}`;
-    const groupCount = document.createElement('span');
-    groupCount.textContent = `${fields.length} ${fields.length === 1 ? 'field' : 'fields'}`;
-    header.appendChild(groupLabel);
-    header.appendChild(groupCount);
-    fieldList.appendChild(header);
-
-    for (const field of fields) {
-      const row = document.createElement('li');
-      row.className = 'field-row';
-      row.dataset.type = field.type;
-      row.dataset.fieldId = idFor(field);
-
-      const dot = document.createElement('span');
-      dot.className = 'field-row__dot';
-
-      const body = document.createElement('div');
-      body.className = 'field-row__body';
-
-      const typeEl = document.createElement('span');
-      typeEl.className = 'field-row__type';
-      typeEl.textContent = field.type;
-
-      const labelEl = document.createElement('span');
-      labelEl.className = 'field-row__label';
-      labelEl.textContent = field.label ? field.label : '(no label nearby)';
-
-      body.appendChild(typeEl);
-      body.appendChild(labelEl);
-
-      const conf = document.createElement('span');
-      conf.className = 'field-row__conf';
-      conf.textContent = `${Math.round(field.confidence * 100)}%`;
-
-      row.appendChild(dot);
-      row.appendChild(body);
-      row.appendChild(conf);
-
-      row.addEventListener('click', () => focusField(row.dataset.fieldId));
-      fieldList.appendChild(row);
+  if (primary.length > 0) {
+    for (const page of sortedPages) {
+      const fields = byPage.get(page).sort((a, b) => b.y - a.y);
+      const header = document.createElement('li');
+      header.className = 'field-list__group';
+      const groupLabel = document.createElement('span');
+      groupLabel.textContent = `Page ${page}`;
+      const groupCount = document.createElement('span');
+      groupCount.textContent = `${fields.length} ${fields.length === 1 ? 'field' : 'fields'}`;
+      header.appendChild(groupLabel);
+      header.appendChild(groupCount);
+      fieldList.appendChild(header);
+      for (const field of fields) fieldList.appendChild(buildFieldRow(field, 1));
     }
+  } else {
+    const note = document.createElement('li');
+    note.className = 'field-list__empty';
+    note.textContent = 'No signature block detected. Body fields are shown below.';
+    fieldList.appendChild(note);
   }
+
+  // ---- Secondary section (collapsed by default, duplicates merged) ---------
+  if (secondary.length > 0) {
+    // Group by normalized label so the user sees "Client Primary Phone × 4"
+    // instead of four identical-looking rows. Empty labels stay separate
+    // because they refer to different anchors.
+    const groups = new Map();
+    for (const f of secondary) {
+      const key = (f.label || '').trim().toLowerCase().slice(0, 80) || `__noLabel_${idFor(f)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(f);
+    }
+
+    const collapse = document.createElement('li');
+    collapse.className = 'field-list__collapsible';
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.className = 'field-list__group field-list__group--toggle';
+    const summaryLabel = document.createElement('span');
+    summaryLabel.textContent = 'Body fields';
+    const summaryCount = document.createElement('span');
+    summaryCount.textContent = `${secondary.length} found, ${groups.size} unique`;
+    summary.appendChild(summaryLabel);
+    summary.appendChild(summaryCount);
+    details.appendChild(summary);
+
+    const inner = document.createElement('ul');
+    inner.className = 'field-list__inner';
+    // Stable order: by page then by first appearance y.
+    const sortedGroups = [...groups.values()].sort((a, b) => {
+      if (a[0].page !== b[0].page) return a[0].page - b[0].page;
+      return b[0].y - a[0].y;
+    });
+    for (const group of sortedGroups) inner.appendChild(buildFieldRow(group[0], group.length));
+    details.appendChild(inner);
+    collapse.appendChild(details);
+    fieldList.appendChild(collapse);
+  }
+}
+
+/**
+ * Build a single field-row <li>. count > 1 indicates a deduplicated body
+ * group; we annotate the row with the count so the user can tell repeated
+ * blanks at a glance (e.g. "Client Primary Phone × 4").
+ */
+function buildFieldRow(field, count) {
+  const row = document.createElement('li');
+  row.className = 'field-row';
+  row.dataset.type = field.type;
+  row.dataset.fieldId = idFor(field);
+  if (count > 1) row.dataset.count = String(count);
+
+  const dot = document.createElement('span');
+  dot.className = 'field-row__dot';
+
+  const body = document.createElement('div');
+  body.className = 'field-row__body';
+
+  const typeEl = document.createElement('span');
+  typeEl.className = 'field-row__type';
+  typeEl.textContent = field.type;
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'field-row__label';
+  const labelText = field.label ? field.label : '(no label nearby)';
+  labelEl.textContent = count > 1 ? `${labelText} × ${count}` : labelText;
+
+  body.appendChild(typeEl);
+  body.appendChild(labelEl);
+
+  const conf = document.createElement('span');
+  conf.className = 'field-row__conf';
+  conf.textContent = `${Math.round(field.confidence * 100)}%`;
+
+  row.appendChild(dot);
+  row.appendChild(body);
+  row.appendChild(conf);
+
+  row.addEventListener('click', () => focusField(row.dataset.fieldId));
+  return row;
 }
 
 // ---- Field focus -----------------------------------------------------------

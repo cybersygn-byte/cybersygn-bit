@@ -2317,6 +2317,72 @@ body[data-in-person="true"] .signers-panel__as-select {
 }
 
 /* ========================================================================
+   Detection sidebar: collapsible "Body fields" group. Long, dense
+   contracts (Native Roofing etc.) can produce 60+ inline body blanks
+   alongside the dedicated signature block. Primary fields render
+   inline above; secondary fields collapse into a click-to-expand
+   group below with duplicate labels merged (e.g. "Phone × 4").
+   ======================================================================== */
+
+.field-list__collapsible {
+  list-style: none;
+  margin-top: var(--s-3);
+}
+.field-list__collapsible details {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.field-list__collapsible details[open] {
+  border-color: var(--line-strong);
+}
+.field-list__group--toggle {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s-3) var(--s-4);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  transition: background 180ms var(--ease);
+}
+.field-list__group--toggle:hover {
+  background: color-mix(in srgb, var(--accent-text) 6%, transparent);
+  color: var(--accent-text);
+}
+.field-list__group--toggle::-webkit-details-marker { display: none; }
+.field-list__group--toggle::after {
+  content: "+";
+  margin-left: 8px;
+  font-size: 16px;
+  font-weight: 300;
+  color: var(--accent-text);
+  transition: transform 200ms var(--ease-spring);
+  display: inline-block;
+}
+details[open] > .field-list__group--toggle::after {
+  content: "−";
+}
+.field-list__inner {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Annotate deduplicated body rows with their repeat count via the row's data
+   attribute. The "× N" is already inlined into the label by the JS, so the
+   styling is just visual contrast: dashed bottom border so the eye can
+   distinguish unique groupings inside the body list. */
+.field-row[data-count] {
+  border-bottom: 1px dashed var(--line);
+}
+
+/* ========================================================================
    Per-page render error placeholder. Shown when one page fails to
    render but the document is otherwise usable. The rest of the
    document still renders, the detection sidebar is still accurate,
