@@ -113,9 +113,11 @@
 }
 
 /* ========================================================================
-   2. DARK MODE. Two pathways:
-      a) Automatic via prefers-color-scheme when no manual choice exists
-      b) Manual via data-theme on <html>, set by the theme toggle
+   2. DARK MODE. Native via prefers-color-scheme. No manual toggle; the
+   site follows the operating-system setting. Legacy data-theme overrides
+   remain below as dead code; they never match since nothing sets the
+   attribute, but they're kept to avoid disturbing the parallel block
+   structure across the file.
    ======================================================================== */
 
 @media (prefers-color-scheme: dark) {
@@ -198,8 +200,9 @@
                   0 4px 32px -4px var(--accent-glow);
 }
 
-:root[data-theme="dark"]  { color-scheme: dark; }
-:root[data-theme="light"] { color-scheme: light; }
+/* color-scheme is set by <meta name="color-scheme" content="light dark"> on
+   each HTML page, so the browser knows to honor the system preference for
+   form controls and scrollbars natively. */
 
 /* ========================================================================
    3. RESET + BASE
@@ -532,32 +535,6 @@ button { font: inherit; cursor: pointer; }
 @media (max-width: 640px) {
   .masthead__nav { gap: var(--s-3); }
   .masthead__link:not(.masthead__link--cta):not(.theme-toggle) { display: none; }
-}
-
-/* Theme toggle */
-.theme-toggle {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--line);
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: border-color 160ms var(--ease), color 160ms var(--ease), background 160ms var(--ease);
-}
-.theme-toggle:hover { border-color: var(--line-strong); color: var(--text); background: var(--bg-2); }
-.theme-toggle__icon { width: 18px; height: 18px; }
-.theme-toggle__sun  { display: none; }
-.theme-toggle__moon { display: block; }
-:root[data-theme="dark"] .theme-toggle__sun  { display: block; }
-:root[data-theme="dark"] .theme-toggle__moon { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .theme-toggle__sun  { display: block; }
-  :root:not([data-theme="light"]) .theme-toggle__moon { display: none; }
 }
 
 /* ========================================================================
