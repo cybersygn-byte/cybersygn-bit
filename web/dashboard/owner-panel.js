@@ -2,17 +2,23 @@
  * Owner-only analytics panel on the dashboard.
  *
  * Activates when an owner token is present in localStorage. Fetches
- * /api/analytics/summary (server validates the token; on 401 we hide
- * the panel). Renders compact KPI cards with totals plus a few top-N
- * lists for paths, referrers, countries, and errors.
+ * /api/analytics/summary (server validates the token). Renders compact
+ * KPI cards with totals plus a few top-N lists for paths, referrers,
+ * countries, and errors.
+ *
+ * Also hydrates the masthead's owner-pill on this page by booting the
+ * shared owner module (which the marketing page already does). Without
+ * this hydration the pill would never appear on /dashboard/ even when
+ * the token is present, which is exactly the issue users hit before.
  *
  * Fails gracefully:
- *   - no owner token -> panel hidden entirely
- *   - 401 from server -> panel hidden entirely
- *   - 200 but AE not configured -> panel renders a "configure to
- *       see live data" notice instead of empty cards
- *   - 500 -> panel renders the error message
+ *   - no owner token -> panel hidden entirely (and pill hidden)
+ *   - 401 from server -> render a "re-activate" prompt with a button
+ *   - 200 but AE not configured -> "configure to enable" notice
+ *   - 500 -> error message inline
  */
+
+import * as ownerMod from '../preview/owner.js';
 
 const PANEL_ID = 'owner-panel';
 const BODY_ID  = 'owner-panel-body';
@@ -61,6 +67,18 @@ function render(state) {
         <p><strong>Analytics storage not enabled yet.</strong></p>
         <p>Events are being accepted at /api/event and /api/error but Cloudflare Analytics Engine has not been turned on for this account. Enable at <a href="https://dash.cloudflare.com/workers/analytics-engine" target="_blank" rel="noopener">dash.cloudflare.com/workers/analytics-engine</a>, then uncomment the analytics_engine_datasets block in wrangler.jsonc and redeploy. Live data will start flowing within minutes of the next event.</p>
       </div>`;
+    return;
+  }
+
+  if (state.kind === 'reauth') {
+    body.innerHTML = `
+      <div class="owner-panel__notice">
+        <p><strong>Owner token no longer valid.</strong></p>
+        <p>Your browser has an owner token but the server rejected it (HTTP 401). This usually means the owner phrase changed, the token record expired, or the worker was redeployed in a way that lost the token. Re-activate to fix:</p>
+        <p style="margin-top:12px;"><button type="button" id="owner-panel-reauth" class="btn btn--primary">Re-activate owner mode</button></p>
+      </div>`;
+    const btn = document.getElementById('owner-panel-reauth');
+    if (btn) btn.addEventListener('click', reauthPrompt);
     return;
   }
 
@@ -129,7 +147,11 @@ async function refresh() {
       headers: { [OWNER_HEADER]: token },
     });
     if (res.status === 401) {
-      panel.hidden = true;
+      // Token in localStorage no longer validates against the worker. Don't
+      // silently hide the panel; render a re-activation prompt so the owner
+      // knows what to do. Common causes: owner hash was rotated, KV record
+      // expired, or the token was minted against an older deploy.
+      render({ kind: 'reauth' });
       return;
     }
     if (!res.ok) {
@@ -161,6 +183,30 @@ async function sendTestEmail(to) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
   return data;
+}
+
+// Re-activation flow. Prompts for the owner phrase, POSTs to /api/owner/claim,
+// saves the new token, then refreshes. Lets the owner fix a stale token
+// without leaving the dashboard.
+async function reauthPrompt() {
+  const phrase = window.prompt('Paste your owner phrase to re-activate:');
+  if (!phrase || phrase.trim().length === 0) return;
+  try {
+    const res = await fetch('/api/owner/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ phrase: phrase.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.token) {
+      alert('Activation failed. Check the phrase and try again.');
+      return;
+    }
+    try { localStorage.setItem(OWNER_KEY, data.token); } catch (e) {}
+    refresh();
+  } catch (err) {
+    alert('Activation failed: ' + (err && err.message ? err.message : err));
+  }
 }
 
 async function runHealth() {
@@ -202,6 +248,13 @@ function wireTools() {
 }
 
 function mount() {
+  // Hydrate the masthead owner-pill from localStorage. Without this, the
+  // pill stays data-active="false" on the dashboard even when the user is
+  // signed in as owner. Side effects: also re-verifies the token against
+  // the server and wires the pill's close button.
+  ownerMod.bootOwner('').then(() => ownerMod.wirePillControls());
+  ownerMod.watchActivation('');
+
   const panel = $(PANEL_ID);
   if (!panel) return;
   if (!getOwnerToken()) {

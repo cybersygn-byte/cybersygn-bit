@@ -1592,6 +1592,177 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ========================================================================
+   13d1. DASHBOARD EMPTY STATE (stats strip, welcome, utility row)
+   ----
+   Shown when the doc list is empty. Even with zero documents and no owner
+   token, the page reads as a real dashboard: live founding count, free-tier
+   counter, real-world-test stat, three-step checklist, utility row.
+   ======================================================================== */
+
+.dash-empty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  margin-top: var(--s-3);
+}
+
+/* Stats strip: 4 cards in a responsive grid. */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s-3);
+}
+.dash-stats__card {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 200ms var(--ease), transform 200ms var(--ease-spring);
+}
+.dash-stats__card:hover { border-color: var(--line-strong); }
+.dash-stats__num {
+  font-family: var(--display);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--text);
+}
+.dash-stats__num-mini {
+  font-size: 0.55em;
+  font-weight: 500;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+.dash-stats__label {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin-top: 6px;
+}
+.dash-stats__hint {
+  font-size: var(--t-xs);
+  color: var(--text-3);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.dash-stats__hint a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+.dash-stats__hint a:hover { text-decoration: underline; }
+
+/* Welcome hero with three numbered steps on the right. */
+.dash-welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s-6);
+  align-items: start;
+  padding: var(--s-6);
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-text) 4%, var(--bg)) 0%,
+    var(--bg) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+@media (max-width: 880px) {
+  .dash-welcome { grid-template-columns: 1fr; gap: var(--s-5); padding: var(--s-5); }
+}
+.dash-welcome__copy h2 {
+  margin: var(--s-2) 0 var(--s-3);
+}
+.dash-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
+}
+.dash-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+.dash-step {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  transition: border-color 200ms var(--ease);
+}
+.dash-step:hover { border-color: var(--line-strong); }
+.dash-step__num {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent-text);
+  display: inline-flex;
+  align-items: flex-start;
+  padding-top: 2px;
+}
+.dash-step__title {
+  margin: 0 0 4px;
+  font-family: var(--sans);
+  font-size: var(--t);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+}
+.dash-step__detail {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+.dash-step__detail a { color: var(--accent-text); }
+
+/* Quick-reference utility row at the bottom of empty state. */
+.dash-util {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-3);
+}
+.dash-util__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 200ms var(--ease), transform 200ms var(--ease-spring), background 200ms;
+}
+.dash-util__item:hover {
+  border-color: var(--accent-text);
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--accent-text) 4%, var(--bg));
+}
+.dash-util__kicker {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+.dash-util__title {
+  color: var(--text);
+  font-size: var(--t-sm);
+  font-weight: 500;
+}
+
+/* ========================================================================
    13d2. OWNER ANALYTICS PANEL (dashboard, owner-only)
    ======================================================================== */
 

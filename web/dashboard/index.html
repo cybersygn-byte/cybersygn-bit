@@ -207,15 +207,90 @@
         <button id="state-error-retry" class="btn btn--ghost btn--sm" type="button">Try again</button>
       </section>
 
-      <section id="state-empty" class="state-card" hidden>
-        <p class="kicker">No documents yet.</p>
-        <h2 class="h-section">Send your first document to see it here.</h2>
-        <p class="lede">
-          Upload a PDF, route it to the signers who need to sign it, and the document
-          will appear on this dashboard the moment you click Send.
-        </p>
-        <div class="state-card__actions">
-          <a class="btn btn--primary" href="../">Send a document</a>
+      <section id="state-empty" class="dash-empty" hidden>
+        <!-- Stats strip: always meaningful even at zero docs. -->
+        <div class="dash-stats">
+          <div class="dash-stats__card">
+            <span class="dash-stats__num" id="dash-stat-docs">0</span>
+            <span class="dash-stats__label">Documents sent</span>
+            <span class="dash-stats__hint">Increments on every send</span>
+          </div>
+          <div class="dash-stats__card">
+            <span class="dash-stats__num"><span id="dash-stat-free-used">0</span><span class="dash-stats__num-mini">/3</span></span>
+            <span class="dash-stats__label">Free tier this month</span>
+            <span class="dash-stats__hint">Resets on the first of the month</span>
+          </div>
+          <div class="dash-stats__card">
+            <span class="dash-stats__num" id="dash-stat-founding">—</span>
+            <span class="dash-stats__label">Founding spots open</span>
+            <span class="dash-stats__hint"><a href="../#pricing">Lock $9/mo for life</a></span>
+          </div>
+          <div class="dash-stats__card">
+            <span class="dash-stats__num">37<span class="dash-stats__num-mini">/37</span></span>
+            <span class="dash-stats__label">Real-world contracts</span>
+            <span class="dash-stats__hint">Current detection regression</span>
+          </div>
+        </div>
+
+        <!-- Welcome hero with three concrete next-steps. -->
+        <div class="dash-welcome">
+          <div class="dash-welcome__copy">
+            <p class="kicker">First-document checklist.</p>
+            <h2 class="h-section">Three steps to your first signed contract.</h2>
+            <p class="lede">
+              You have not sent anything yet, so this list is empty. Walk through the
+              three steps below and the next time you visit, your sent documents
+              will be right here with per-signer status and download buttons.
+            </p>
+            <div class="dash-welcome__actions">
+              <a class="btn btn--primary btn--lg" href="../">Send your first document <span class="btn-arrow">→</span></a>
+              <a class="btn btn--ghost btn--lg" href="../preview/">Try detection first</a>
+            </div>
+          </div>
+
+          <ol class="dash-steps">
+            <li class="dash-step">
+              <span class="dash-step__num">01</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Drop a PDF or scan a paper copy.</h3>
+                <p class="dash-step__detail">Click <a href="../">Send a new document</a> above. Detection runs in your browser. The file never leaves your device.</p>
+              </div>
+            </li>
+            <li class="dash-step">
+              <span class="dash-step__num">02</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Confirm the detected fields, add signers.</h3>
+                <p class="dash-step__detail">CyberSygn finds every signature, initial, date, and checkbox automatically. Type a name and email for each remote signer. Up to three on the free tier.</p>
+              </div>
+            </li>
+            <li class="dash-step">
+              <span class="dash-step__num">03</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Send. The document lands here.</h3>
+                <p class="dash-step__detail">Magic links go out. Signers complete on any device. You get the signed PDF and an audit certificate in your inbox and on this dashboard.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Quick-reference utility row. -->
+        <div class="dash-util">
+          <a class="dash-util__item" href="../#pricing">
+            <span class="dash-util__kicker">Pricing</span>
+            <span class="dash-util__title">$9 founding, $12 Solo, $29 Team.</span>
+          </a>
+          <a class="dash-util__item" href="../preview/">
+            <span class="dash-util__kicker">Preview</span>
+            <span class="dash-util__title">Drop a PDF, see detection live.</span>
+          </a>
+          <a class="dash-util__item" href="/privacy/">
+            <span class="dash-util__kicker">Privacy</span>
+            <span class="dash-util__title">What we store. What we never do.</span>
+          </a>
+          <a class="dash-util__item" href="mailto:hello@cybersygn.io">
+            <span class="dash-util__kicker">Contact</span>
+            <span class="dash-util__title">hello@cybersygn.io. We answer.</span>
+          </a>
         </div>
       </section>
 
@@ -254,6 +329,29 @@
 
   <script type="module" src="./app.js"></script>
   <script type="module" src="./owner-panel.js"></script>
+  <script>
+    // Populate the dash-empty stats from public endpoints. Runs in parallel
+    // with app.js's doc-fetch; if app.js shows the list state instead, the
+    // empty section is hidden so these writes are harmless. Silent failure.
+    (async function () {
+      // Founding count: real, from KV.
+      try {
+        const r = await fetch('/api/billing/founding-count', { cache: 'no-store' });
+        if (r.ok) {
+          const d = await r.json();
+          const el = document.getElementById('dash-stat-founding');
+          if (el && typeof d.remaining === 'number') el.textContent = String(d.remaining);
+        }
+      } catch (e) {}
+      // Free-tier usage: try the owner-only summary if available, else show 0.
+      // The real per-sender usage is computed at /api/checkout endpoints but
+      // there is no public read endpoint for it; show 0 for new accounts.
+      try {
+        const el = document.getElementById('dash-stat-free-used');
+        if (el) el.textContent = '0';
+      } catch (e) {}
+    })();
+  </script>
   <script type="module" src="../checkout.js"></script>
   <script type="module">
     // Subscription banner. Reads /api/billing/subscription, populates the
