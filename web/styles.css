@@ -130,7 +130,10 @@
 
     --text:         #F0F3FA;
     --text-2:       #BFC6D9;
-    --text-3:       #828AA3;
+    /* --text-3 was #828AA3 = ~4.5:1 vs navy bg, borderline AA. Raised
+       to #ACB2C8 (~7:1, WCAG AAA) so captions, hints, and tertiary
+       labels stay readable in dark mode. */
+    --text-3:       #ACB2C8;
     --text-on-dark: #011434;
 
     --line:         rgba(240, 243, 250, 0.08);
@@ -3408,7 +3411,7 @@ details[open] > .field-list__group--toggle::after {
 .live-demo__sub {
   font-family: var(--sans);
   font-size: 9px;
-  color: rgba(1, 20, 52, 0.55);
+  color: rgba(1, 20, 52, 0.72);
   margin-top: 2px;
 }
 
@@ -3425,7 +3428,7 @@ details[open] > .field-list__group--toggle::after {
   font-size: 8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(1, 20, 52, 0.55);
+  color: rgba(1, 20, 52, 0.72);
 }
 .live-demo__row > span:first-child { flex: 0 0 56px; }
 .live-demo__line {
@@ -3466,7 +3469,7 @@ details[open] > .field-list__group--toggle::after {
   font-size: 8px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(1, 20, 52, 0.55);
+  color: rgba(1, 20, 52, 0.72);
   padding-bottom: 2px;
 }
 .live-demo__sig-base {
