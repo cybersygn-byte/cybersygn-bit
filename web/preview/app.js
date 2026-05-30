@@ -147,9 +147,31 @@ const EDITS_KEY_PREFIX = 'cybersygn.edits.';
 const EDITS_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;  // 30 days
 
 async function sha256Hex(bytes) {
-  const buf = await crypto.subtle.digest('SHA-256', bytes);
+  // sha256Hex's caller passes its own bytes; crypto.subtle.digest accepts a
+  // BufferSource. We pass bytes.slice() defensively so the digest call does
+  // not see a detached buffer if upstream transferred one.
+  const buf = await crypto.subtle.digest('SHA-256', bytes.slice());
   return Array.from(new Uint8Array(buf))
     .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Return a fresh, independent Uint8Array carrying the same bytes as `src`.
+ * Allocates a new ArrayBuffer so consumers that transfer ownership
+ * (pdf.js, pdf-lib) detach the new buffer instead of the caller's
+ * canonical copy. Use this before every getDocument-style call.
+ *
+ * Throws if `src` is already detached (caller has a bug); the message
+ * surfaces clearly to make the next debug step obvious.
+ */
+function freshCopy(src) {
+  if (!(src instanceof Uint8Array)) {
+    throw new TypeError('freshCopy: expected a Uint8Array');
+  }
+  // Reading .byteLength on a detached buffer is allowed and returns 0 in
+  // some engines, but src.slice() throws a clear TypeError on a detached
+  // buffer which is the diagnostic we want.
+  return src.slice();
 }
 
 function loadEditsFromStorage(docId) {
@@ -650,6 +672,13 @@ async function handleFile(file) {
   setStatus('busy', 'Reading PDF.');
   filenameEl.textContent = file.name;
 
+  // The pdf.js worker TRANSFERS (detaches) any ArrayBuffer it receives.
+  // detectFields, renderDocument, and the signing flatten step all call
+  // pdf.js or pdf-lib, each of which detaches its input. We therefore
+  // hold a single canonical copy in docState.originalBytes and pass a
+  // fresh per-call slice into every consumer. Without this, a TypeError
+  // ("Cannot perform Construct on a detached or out-of-bounds
+  // ArrayBuffer") fires the second time the same Uint8Array is read.
   let data;
   try {
     const buf = await file.arrayBuffer();
@@ -660,13 +689,12 @@ async function handleFile(file) {
     return;
   }
 
-  // Run detection and rendering in parallel. Detection is the slower step
-  // on large PDFs because it walks every operator, so kicking it off
-  // before render keeps the page from feeling stalled.
+  // Detection. Pass a fresh copy so the underlying buffer detachment by
+  // pdf.js stays scoped to this call.
   setStatus('busy', 'Finding fields.');
   let detection;
   try {
-    detection = await detectFields(data);
+    detection = await detectFields(freshCopy(data));
   } catch (err) {
     report(err, 'detection');
     showError('We could not parse that PDF. It may be encrypted or malformed.');
@@ -720,15 +748,17 @@ async function handleFile(file) {
   showResultLayout();
   let renderErr = null;
   try {
-    await renderDocument(data, detection);
+    // Fresh per-call copy: pdf.js's worker detaches the buffer, so re-using
+    // `data` directly would TypeError on the second pass below.
+    await renderDocument(freshCopy(data), detection);
   } catch (err) {
     renderErr = err;
     report(err, 'render:first-pass');
     // Second pass with conservative settings: drop @font-face, drop system
-    // fonts, drop streaming. This handles PDFs where the embedded font
-    // subset has a malformed glyph table or where the cmap fetch races.
+    // fonts. Handles PDFs whose embedded font subset has a malformed glyph
+    // table. Needs another fresh copy because pass one detached its own.
     try {
-      await renderDocument(data, detection, { conservative: true });
+      await renderDocument(freshCopy(data), detection, { conservative: true });
       renderErr = null; // recovered
     } catch (err2) {
       report(err2, 'render:second-pass');
