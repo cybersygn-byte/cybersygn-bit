@@ -3512,15 +3512,26 @@ details[open] > .field-list__group--toggle::after {
   100% { width: 0; }
 }
 
-/* Field-box overlays. Positioned absolute over the paper using
-   percentages so they scale with the demo width. */
+/* Field-box overlays now nest INSIDE their line / signature-base so
+   alignment is automatic regardless of font, padding, or wrap. Each
+   line is position: relative so the overlay's absolute positioning
+   resolves to the line itself. The overlay extends slightly above
+   and below the baseline so it visually "wraps" the line rather
+   than sitting on top of it. */
+.live-demo__line,
+.live-demo__sig-base,
+.live-demo__init-box {
+  position: relative;
+}
 .live-demo__field {
   position: absolute;
+  inset: -5px -2px;
   border: 1.5px solid transparent;
   background: transparent;
-  border-radius: 2px;
+  border-radius: 3px;
   opacity: 0;
-  animation: live-demo-field-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+  pointer-events: none;
+  animation: live-demo-field-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) var(--ld-delay, 2s) forwards,
              live-demo-field-loop 12s infinite linear;
 }
 .live-demo__field[data-type="text"]      { border-color: var(--accent); background: var(--accent-soft); }
@@ -3534,20 +3545,29 @@ details[open] > .field-list__group--toggle::after {
 }
 @keyframes live-demo-field-loop {
   0%    { opacity: 1; }
-  85%   { opacity: 1; }
-  88%   { opacity: 0; }
+  84%   { opacity: 1; }
+  87%   { opacity: 0; }
   100%  { opacity: 0; }
 }
 
-/* Position each field over the matching part of the paper.
-   The base-paper layout: masthead is ~36px tall, form starts ~58px
-   from top, signature block ~150px from top. Coordinates are
-   approximate; we lean on padding to keep them aligned. */
-.live-demo__field--owner  { top: 64px;  left: 80px;  width: 110px; height: 14px; animation-delay: 2.0s, 0s; }
-.live-demo__field--addr   { top: 80px;  left: 80px;  width: 150px; height: 14px; animation-delay: 2.3s, 0s; }
-.live-demo__field--phone  { top: 96px;  left: 80px;  width: 70px;  height: 14px; animation-delay: 2.6s, 0s; }
-.live-demo__field--client { bottom: 32px; left: 80px;  width: 150px; height: 16px; animation-delay: 3.2s, 0s; }
-.live-demo__field--date   { bottom: 12px; left: 80px;  width: 70px;  height: 14px; animation-delay: 3.5s, 0s; }
+/* Inline initial marker (small box mid-paragraph) */
+.live-demo__inline-init {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+}
+.live-demo__inline-init .live-demo__txt {
+  flex: 1;
+  margin: 0;
+}
+.live-demo__init-box {
+  flex: 0 0 22px;
+  height: 14px;
+  border: 1px solid rgba(1, 20, 52, 0.35);
+  border-radius: 2px;
+  background: rgba(1, 20, 52, 0.02);
+}
 
 /* Scan line. Sweeps top-to-bottom during phase 2. */
 .live-demo__scan {

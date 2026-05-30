@@ -128,18 +128,50 @@
                   <div class="live-demo__sub">Between Parker Studio &amp; Anders Insurance</div>
                 </div>
 
-                <!-- Top form fields -->
+                <!-- Top form fields. Each field-overlay nests INSIDE
+                     its line so it auto-aligns regardless of font size,
+                     padding, or line-height. Per-row animation delays
+                     produce the staggered pop-in during phase 2. -->
                 <div class="live-demo__form">
-                  <div class="live-demo__row"><span>Owner</span><span class="live-demo__line"></span></div>
-                  <div class="live-demo__row"><span>Address</span><span class="live-demo__line live-demo__line--long"></span></div>
-                  <div class="live-demo__row"><span>Phone</span><span class="live-demo__line live-demo__line--short"></span></div>
+                  <div class="live-demo__row">
+                    <span>Owner</span>
+                    <span class="live-demo__line">
+                      <span class="live-demo__field" data-type="text" style="--ld-delay: 2.0s"></span>
+                    </span>
+                  </div>
+                  <div class="live-demo__row">
+                    <span>Address</span>
+                    <span class="live-demo__line live-demo__line--long">
+                      <span class="live-demo__field" data-type="text" style="--ld-delay: 2.2s"></span>
+                    </span>
+                  </div>
+                  <div class="live-demo__row">
+                    <span>Phone</span>
+                    <span class="live-demo__line live-demo__line--short">
+                      <span class="live-demo__field" data-type="text" style="--ld-delay: 2.4s"></span>
+                    </span>
+                  </div>
+                  <div class="live-demo__row">
+                    <span>Email</span>
+                    <span class="live-demo__line">
+                      <span class="live-demo__field" data-type="text" style="--ld-delay: 2.6s"></span>
+                    </span>
+                  </div>
                 </div>
 
-                <!-- Body paragraph block -->
+                <!-- Body paragraph block: receives the scan line but no fields -->
                 <div class="live-demo__para">
                   <div class="live-demo__txt"></div>
                   <div class="live-demo__txt live-demo__txt--90"></div>
                   <div class="live-demo__txt live-demo__txt--70"></div>
+                </div>
+
+                <!-- Initial-on-page marker (small box for initials, mid-doc) -->
+                <div class="live-demo__inline-init">
+                  <div class="live-demo__txt live-demo__txt--90"></div>
+                  <span class="live-demo__init-box">
+                    <span class="live-demo__field" data-type="initial" style="--ld-delay: 2.8s"></span>
+                  </span>
                 </div>
 
                 <!-- Signature block at the bottom -->
@@ -148,22 +180,17 @@
                     <span class="live-demo__sig-label">Client signature</span>
                     <span class="live-demo__sig-base">
                       <span class="live-demo__sig-ink"></span>
+                      <span class="live-demo__field" data-type="signature" style="--ld-delay: 3.0s"></span>
                     </span>
                   </div>
                   <div class="live-demo__sigrow">
                     <span class="live-demo__sig-label">Date</span>
                     <span class="live-demo__sig-base live-demo__sig-base--short">
                       <span class="live-demo__sig-ink live-demo__sig-ink--date"></span>
+                      <span class="live-demo__field" data-type="date" style="--ld-delay: 3.2s"></span>
                     </span>
                   </div>
                 </div>
-
-                <!-- Field overlays (the "boxes" that pop in during detection) -->
-                <div class="live-demo__field live-demo__field--owner"   data-type="text"></div>
-                <div class="live-demo__field live-demo__field--addr"    data-type="text"></div>
-                <div class="live-demo__field live-demo__field--phone"   data-type="text"></div>
-                <div class="live-demo__field live-demo__field--client"  data-type="signature"></div>
-                <div class="live-demo__field live-demo__field--date"    data-type="date"></div>
 
                 <!-- Scan line (sweeps during detection phase) -->
                 <div class="live-demo__scan"></div>
