@@ -44,7 +44,23 @@ import * as cvDetect from './cv-detect.js';
 GlobalWorkerOptions.workerSrc = '../vendor/pdf.worker.mjs';
 
 const MAX_BYTES = 25 * 1024 * 1024; // matches Worker ceiling
-const RENDER_SCALE = 1.4;
+// Pick a render scale that fills the available column width on wide
+// screens. The result__pages column is everything left of the 380 px
+// sidebar; on a 1440 px monitor that's ~1000 px after padding, which
+// US-Letter at scale 1.0 (612 pt = 612 css px) does not fill, leaving
+// a dark gap. We compute the scale so the rendered page targets ~960 px
+// wide, capped to a sane range so a 32-inch monitor doesn't render a
+// 4K canvas. On narrow viewports we drop to 1.2x for fast load.
+function computeRenderScale() {
+  const vw = (typeof window !== 'undefined' && window.innerWidth) || 1280;
+  const sidebarWidth = vw > 980 ? 380 : 0;     // sidebar collapses on narrow
+  const horizontalPadding = 64;                 // result__pages padding
+  const target = Math.max(560, Math.min(1100, vw - sidebarWidth - horizontalPadding));
+  const usLetterPt = 612;                       // standard PDF page width in points
+  const scale = target / usLetterPt;
+  return Math.max(1.0, Math.min(2.4, scale));
+}
+const RENDER_SCALE = computeRenderScale();
 
 // Field types that trigger a capture flow when clicked. "checkbox"
 // toggles inline without a modal; "text" gets a small text input modal.
@@ -96,6 +112,35 @@ const addFieldButtons = document.querySelectorAll('.add-field-btn');
 const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const saveTemplateButton = $('save-template-button');
+const templateStateEl = $('template-state');
+
+/**
+ * Surface template state in the sidebar so the user knows whether
+ * prior labeling loaded. States:
+ *   applied-public  -> a public template auto-applied (anyone-shared)
+ *   applied-private -> the user's own saved template auto-applied
+ *   restored-edits  -> no template, but local senderEdits restored N adds
+ *   none            -> heuristic-only result; no prior labels exist
+ *   hidden          -> empty state (between documents)
+ */
+function setTemplateState(kind, detail) {
+  if (!templateStateEl) return;
+  if (!kind || kind === 'hidden') {
+    templateStateEl.hidden = true;
+    templateStateEl.removeAttribute('data-state');
+    templateStateEl.textContent = '';
+    return;
+  }
+  templateStateEl.hidden = false;
+  templateStateEl.dataset.state = kind;
+  const messages = {
+    'applied-public':  `Template loaded (public, ${detail || 0} fields). Anyone uploading this PDF gets these labels.`,
+    'applied-private': `Your saved template loaded (${detail || 0} fields).`,
+    'restored-edits':  `Restored ${detail || 0} manual fields from your previous session on this PDF.`,
+    'none':            `No saved template for this PDF. Detection is heuristic only. Add missing fields and click "Save as template" to lock them in.`,
+  };
+  templateStateEl.textContent = messages[kind] || '';
+}
 const toast = $('toast');
 
 // Signers panel DOM
@@ -647,8 +692,26 @@ documentStrip.addEventListener('click', (e) => {
     docState.filename || ''
   );
   track('preview_field_added_manually', { page: pageNum, type: newField.type });
+
+  // Nudge toward saving a template once the user has invested real
+  // labeling work (8+ manual adds in this session, only prompt once
+  // per document load).
+  _manualAddsThisSession = (_manualAddsThisSession || 0) + 1;
+  if (_manualAddsThisSession === 8 && !_templateNudgeShown) {
+    _templateNudgeShown = true;
+    showToast(
+      'You\'ve added 8 fields manually. Save as a template so the next ' +
+      'upload of this exact PDF auto-loads them. Click "Save this ' +
+      'document\'s fields as a template" in the sidebar.'
+    );
+  }
   // Stay in add-mode for the next click.
 });
+
+// Per-session counters for the auto-save-template nudge. Reset in
+// resetApp so a fresh document gets a fresh count.
+let _manualAddsThisSession = 0;
+let _templateNudgeShown = false;
 
 /**
  * Show a small popover chooser anchored near the click. Resolves with
@@ -1045,6 +1108,8 @@ async function handleFile(file) {
   // verified and therefore strictly better. Heuristic fields the
   // template doesn't cover are kept; template fields the heuristic
   // missed are added.
+  let templateHit = false;
+  let restoredEditsCount = 0;
   if (docState.docId) {
     try {
       const senderId = getSenderId();
@@ -1052,9 +1117,6 @@ async function handleFile(file) {
       if (lookupRes.ok) {
         const lookup = await lookupRes.json();
         if (lookup.ok && lookup.template && Array.isArray(lookup.template.fields) && lookup.template.fields.length > 0) {
-          // The saved fields ARE the right answer for this PDF. Replace
-          // heuristic with template. Re-apply senderEdits on top in case
-          // the local user has further-refined this template before.
           const templateFields = lookup.template.fields.map(f => ({
             ...f,
             id: f.id || idFor(f),
@@ -1065,9 +1127,10 @@ async function handleFile(file) {
             docState.fields = applyStoredEditsToFields(docState.fields);
             detection.fields = docState.fields;
           }
-          showToast(
-            `Loaded a saved template (${templateFields.length} fields, ${lookup.scope}). ` +
-            `Saved labels replace auto-detection.`
+          templateHit = true;
+          setTemplateState(
+            lookup.scope === 'public' ? 'applied-public' : 'applied-private',
+            templateFields.length,
           );
           track('template_applied', {
             scope: lookup.scope,
@@ -1077,8 +1140,22 @@ async function handleFile(file) {
         }
       }
     } catch (e) {
-      // Lookup failed; not blocking. Use heuristic detection as before.
       report(e, 'template_lookup');
+    }
+  }
+  // If no template was found, count how many manual-add edits were
+  // restored from senderEdits earlier in the upload flow so the
+  // sidebar badge tells the truth instead of going silent.
+  if (!templateHit) {
+    if (senderEdits.size > 0) {
+      for (const [, overlay] of senderEdits.entries()) {
+        if (overlay && overlay.added && !overlay.deleted) restoredEditsCount++;
+      }
+    }
+    if (restoredEditsCount > 0) {
+      setTemplateState('restored-edits', restoredEditsCount);
+    } else {
+      setTemplateState('none');
     }
   }
 
@@ -2034,6 +2111,9 @@ function resetApp() {
   documentStrip.innerHTML = '';
   fieldList.innerHTML = '';
   fieldElements.clear();
+  _manualAddsThisSession = 0;
+  _templateNudgeShown = false;
+  setTemplateState('hidden');
   fileInput.value = '';
   signButton.disabled = true;
   signButton.textContent = 'Send for signature';
