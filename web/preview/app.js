@@ -718,11 +718,27 @@ async function handleFile(file) {
 
   setStatus('busy', 'Rendering pages.');
   showResultLayout();
+  let renderErr = null;
   try {
     await renderDocument(data, detection);
   } catch (err) {
-    report(err, 'render');
-    showError('The PDF parsed but failed to render. Detection results are still listed.');
+    renderErr = err;
+    report(err, 'render:first-pass');
+    // Second pass with conservative settings: drop @font-face, drop system
+    // fonts, drop streaming. This handles PDFs where the embedded font
+    // subset has a malformed glyph table or where the cmap fetch races.
+    try {
+      await renderDocument(data, detection, { conservative: true });
+      renderErr = null; // recovered
+    } catch (err2) {
+      report(err2, 'render:second-pass');
+      renderErr = err2;
+    }
+  }
+  if (renderErr) {
+    const cls = (renderErr && renderErr.constructor && renderErr.constructor.name) || 'Error';
+    const msg = (renderErr && renderErr.message) ? String(renderErr.message).slice(0, 200) : String(renderErr);
+    showError(`Render failed (${cls}). The detection results below are still accurate and signing still works. Cause: ${msg}`);
     populateSidebar(detection, file.name);
     setStatus('error', 'Render failed.');
     return;
@@ -870,26 +886,27 @@ function updateSliderCount(countEl) {
 
 // ---- Rendering -------------------------------------------------------------
 
-async function renderDocument(data, detection) {
+async function renderDocument(data, detection, opts = {}) {
   documentStrip.innerHTML = '';
   fieldElements.clear();
 
   // pdfjs requires a fresh Uint8Array because detectFields consumes the buffer.
   const renderData = new Uint8Array(data);
-  // Font handling: allow @font-face so pdf.js can use embedded subsets,
-  // allow system-font fallback for pages with non-embedded fonts. Provide
-  // cmaps for CJK fonts (Hiragino, Noto CJK, etc.) — without these, pdf.js
-  // throws on any PDF whose text uses CJK encoding, which is common when
-  // the PDF was authored on macOS and Hiragino is embedded as a fallback
-  // even on English contracts. Also provide standardFontDataUrl for the
-  // 14 standard PostScript fonts (Times, Helvetica, Courier, etc.) which
-  // pdf.js fetches on demand for PDFs that reference but do not embed them.
-  // isEvalSupported stays false; we never want pdfjs evaluating embedded JS.
+  // Two render modes:
+  //   default: allow @font-face + system fonts, cmaps active. Handles macOS
+  //     PDFs with embedded Hiragino (common) by providing the CMap files
+  //     pdf.js needs to translate CIDs to Unicode glyphs.
+  //   conservative (opts.conservative): used as a second pass when the
+  //     default fails. Drops @font-face entirely and uses a coarser DPI.
+  //     Slower and less visually faithful but renders successfully on
+  //     pathological PDFs where the embedded font subset has a malformed
+  //     glyph table or where cmap fetch fails (offline / 503 / etc).
+  const conservative = opts.conservative === true;
   const doc = await pdfjsLib.getDocument({
     data: renderData,
     isEvalSupported: false,
-    useSystemFonts: true,
-    disableFontFace: false,
+    useSystemFonts: !conservative,
+    disableFontFace: conservative,
     disableAutoFetch: true,
     disableStream: true,
     cMapUrl: '/vendor/cmaps/',
