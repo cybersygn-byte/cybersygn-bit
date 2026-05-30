@@ -1204,24 +1204,31 @@ async function renderDocument(data, detection, opts = {}) {
 
       await page.render({ canvasContext: ctx, viewport }).promise;
 
-      // Phase 2a: pixel-based CV pass on the rendered canvas. Finds
-      // unlabeled signature lines, isolated underscore runs, and empty
-      // checkbox outlines that the text-heuristic detector cannot see.
-      // Merges results into docState.fields (drops CV candidates that
-      // overlap >50% with an existing field). All in-browser, no API.
+      // Phase 2a pixel-based CV. DISABLED by default after slice 28
+      // overfired on real-world contracts (treated every text descender
+      // as a signature line). Tighter thresholds shipped in slice 30 but
+      // the approach needs more tuning before it can replace pure
+      // heuristic detection. Owner can opt-in for testing by setting
+      // localStorage.cybersygn.cvEnabled = '1' in devtools.
       try {
-        const cvFields = cvDetect.detectVisually(canvas, {
-          width: viewport.width,
-          height: viewport.height,
-          scale: RENDER_SCALE,
-        }, pageNum);
-        if (cvFields.length > 0) {
-          const before = docState.fields.length;
-          docState.fields = cvDetect.mergeWithHeuristic(docState.fields, cvFields);
-          detection.fields = docState.fields;  // keep detection arg in sync
-          const added = docState.fields.length - before;
-          if (added > 0) {
-            track('cv_fields_added', { page: pageNum, added });
+        const cvEnabled = (() => {
+          try { return localStorage.getItem('cybersygn.cvEnabled') === '1'; }
+          catch (e) { return false; }
+        })();
+        if (cvEnabled) {
+          const cvFields = cvDetect.detectVisually(canvas, {
+            width: viewport.width,
+            height: viewport.height,
+            scale: RENDER_SCALE,
+          }, pageNum);
+          if (cvFields.length > 0) {
+            const before = docState.fields.length;
+            docState.fields = cvDetect.mergeWithHeuristic(docState.fields, cvFields);
+            detection.fields = docState.fields;
+            const added = docState.fields.length - before;
+            if (added > 0) {
+              track('cv_fields_added', { page: pageNum, added });
+            }
           }
         }
       } catch (e) {

@@ -33,30 +33,36 @@
  */
 
 // Pixel luminance threshold. Below this value (0-255), a pixel counts
-// as "dark." Tuned for our render settings: pdf.js draws ink as near-
-// black on white, so 90 catches anti-aliased edges without false
-// positives on light grey body text.
-const DARK_THRESHOLD = 90;
+// as "dark." Lowered to 60 (from 90 in slice 28) so anti-aliased text
+// edges no longer count; only true ink and lines fire.
+const DARK_THRESHOLD = 60;
 
-// Minimum continuous dark-pixel width (in canvas px) to consider a row
-// part of a horizontal line. Below this, the dark pixels are likely
-// just text glyphs in a paragraph.
-const MIN_LINE_WIDTH_PX = 80;
+// Minimum continuous dark-pixel width (in canvas px) for a horizontal
+// line candidate. Raised from 80 to 220 after slice 28 overfired:
+// 80 px caught typed words like "Notes" as fake signature lines.
+// Real signature lines on a 1.4x viewport are routinely 280-600 px wide.
+const MIN_LINE_WIDTH_PX = 220;
 
-// Maximum height (rows) for a horizontal line candidate. Above this,
-// the band is too tall to be a signature line; it's probably a heading
-// rule or a table border.
-const MAX_LINE_HEIGHT_PX = 4;
+// Maximum height (rows) for a horizontal line candidate. Tightened to
+// 3 (from 4) so even thick paragraph rules are excluded.
+const MAX_LINE_HEIGHT_PX = 3;
 
-// Underscore-run detector parameters.
+// Underscore-run detector parameters. Raised aggressively: real
+// underscore runs like `__________________` are 200+ px wide and have
+// 6+ short dark segments with clean gaps. Body text rarely matches.
 const UNDERSCORE_SEGMENT_MIN_PX = 4;
 const UNDERSCORE_SEGMENT_MAX_GAP_PX = 6;
-const UNDERSCORE_MIN_TOTAL_WIDTH_PX = 60;
+const UNDERSCORE_MIN_TOTAL_WIDTH_PX = 250;
+const UNDERSCORE_MIN_SEGMENT_COUNT = 6;  // new: filters out word-shaped clusters
 
 // Checkbox detector parameters.
 const CHECKBOX_MIN_PX = 10;
 const CHECKBOX_MAX_PX = 24;
-const CHECKBOX_INTERIOR_DARK_RATIO_MAX = 0.18;  // mostly empty inside
+const CHECKBOX_INTERIOR_DARK_RATIO_MAX = 0.10;  // tighter: was 0.18, true empty checkboxes have ~0.02
+
+// Safety cap. Even with the tightened thresholds, no more than this
+// many CV candidates per page. Slice 28 painted 200+ boxes; never again.
+const MAX_CV_PER_PAGE = 6;
 
 /**
  * Main entry. Returns CV-detected field candidates in PDF coordinates.
@@ -94,7 +100,11 @@ export function detectVisually(canvas, viewport, pageNum) {
   for (const band of lineBands) {
     if (band.bestRunWidth >= MIN_LINE_WIDTH_PX && band.height <= MAX_LINE_HEIGHT_PX) {
       candidates.push(canvasBandToField(band, viewport, dprScale, pageNum, 'cv-line'));
-    } else if (band.bestRunIsUnderscoreShape && band.totalDarkPx >= UNDERSCORE_MIN_TOTAL_WIDTH_PX) {
+    } else if (
+      band.bestRunIsUnderscoreShape &&
+      band.totalDarkPx >= UNDERSCORE_MIN_TOTAL_WIDTH_PX &&
+      band.segmentCount >= UNDERSCORE_MIN_SEGMENT_COUNT
+    ) {
       candidates.push(canvasBandToField(band, viewport, dprScale, pageNum, 'cv-underscore'));
     }
   }
@@ -104,11 +114,17 @@ export function detectVisually(canvas, viewport, pageNum) {
   // coarser grid to keep this O(W·H/64).
   candidates.push(...detectCheckboxes(px, W, H, viewport, dprScale, pageNum));
 
-  // Step 5: stable id per candidate so merge can deduplicate.
-  return candidates.filter(Boolean).map(c => ({
+  // Step 5: stable id per candidate, then cap. Even with tight
+  // thresholds, the cap prevents a worst-case PDF from painting more
+  // than MAX_CV_PER_PAGE boxes. We keep the candidates with the
+  // highest confidence (signature lines tend to outrank underscore
+  // and checkbox candidates).
+  const all = candidates.filter(Boolean).map(c => ({
     ...c,
     id: cvId(c),
   }));
+  all.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+  return all.slice(0, MAX_CV_PER_PAGE);
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +203,8 @@ function startBand(y, big, row) {
     bestRunWidth: big.w,
     totalDarkPx: row.totalDark,
     runRows: 1,
-    bestRunIsUnderscoreShape: row.runs.length >= 3,  // multi-segment row suggests underscores
+    segmentCount: row.runs.length,  // tracks underscore-style multi-segment rows
+    bestRunIsUnderscoreShape: row.runs.length >= 6,  // tightened from 3
   };
 }
 
