@@ -78,6 +78,8 @@ async function main() {
   // installs window.cybersygn.track/report before page scripts read them.
   await copyFile(join(SRC, 'telemetry.js'), join(OUT, 'telemetry.js'));
   console.log('  wrote dist/telemetry.js');
+  await copyFile(join(SRC, 'polish.js'), join(OUT, 'polish.js'));
+  console.log('  wrote dist/polish.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));
   console.log('  wrote dist/styles.css');
   // 404.html surfaces when not_found_handling: '404-page' fires in Workers.
