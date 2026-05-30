@@ -74,6 +74,49 @@ const FILLABLE_TYPES = new Set(['signature', 'initial', 'date', 'checkbox', 'tex
 // editing the bodies below. The Worker also exposes a stub /api/event
 // endpoint for self-hosted telemetry without any third-party service.
 
+// Live demo (preview empty state): the CSS owns every motion. JS only
+// updates the human-readable status text so it tracks the 4-phase loop.
+// Paused entirely when prefers-reduced-motion is set; the static state
+// from CSS already shows what the product produces.
+(function liveDemoStatusDriver() {
+  if (typeof window === 'undefined') return;
+  const PHASES = [
+    { at: 0,    text: 'Drop a PDF.' },
+    { at: 1.6,  text: 'Finding fields.' },
+    { at: 4.4,  text: 'Signing.' },
+    { at: 8.4,  text: 'Done.' },
+  ];
+  const PERIOD_MS = 12000;
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Lazy-wire after DOMContentLoaded so the status node exists.
+  const wire = () => {
+    const root = document.querySelector('.live-demo');
+    const textEl = root && root.querySelector('.live-demo__status-text');
+    if (!root || !textEl) return;
+    const startedAt = performance.now();
+    let lastPhaseIdx = -1;
+    function tick() {
+      const t = ((performance.now() - startedAt) % PERIOD_MS) / 1000;
+      let phaseIdx = 0;
+      for (let i = PHASES.length - 1; i >= 0; i--) {
+        if (t >= PHASES[i].at) { phaseIdx = i; break; }
+      }
+      if (phaseIdx !== lastPhaseIdx) {
+        lastPhaseIdx = phaseIdx;
+        textEl.textContent = PHASES[phaseIdx].text;
+        root.dataset.phase = String(phaseIdx);
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wire);
+  } else {
+    wire();
+  }
+})();
+
 const cybersygn = (window.cybersygn = window.cybersygn || {});
 
 const track = cybersygn.track || function track(event, props) {

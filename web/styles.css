@@ -3306,6 +3306,368 @@ details[open] > .field-list__group--toggle::after {
   pointer-events: none;
 }
 
+/* ==========================================================================
+   LIVE DEMO (preview empty state). Auto-playing 4-phase loop:
+     Phase 1 (0.0s - 1.6s): paper slides into view ("upload")
+     Phase 2 (1.6s - 4.4s): scan line sweeps + field boxes pop in ("detect")
+     Phase 3 (4.4s - 8.4s): ink flows into the signature line ("sign")
+     Phase 4 (8.4s - 10.4s): green check overlays + status reads "Done"
+     Loop restart at 12s.
+   Honors prefers-reduced-motion: keyframes pause and final state freezes.
+   ========================================================================== */
+
+.live-demo {
+  width: 100%;
+  max-width: 360px;
+  position: relative;
+}
+.live-demo__stage {
+  position: relative;
+  perspective: 1200px;
+}
+
+/* Corner filename tag */
+.live-demo__corner {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: var(--text);
+  color: var(--text-on-dark);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 2px;
+  z-index: 4;
+}
+
+/* Phase status (top-right of stage) */
+.live-demo__status {
+  position: absolute;
+  top: -12px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  z-index: 4;
+}
+.live-demo__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent);
+  animation: live-demo-pulse 1.6s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes live-demo-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent); }
+  70%      { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+/* Paper. White, soft drop-shadow, slight tilt for depth */
+.live-demo__paper {
+  position: relative;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 22px 22px 30px;
+  box-shadow:
+    0 1px 2px rgba(1, 20, 52, 0.10),
+    0 18px 38px -18px rgba(1, 20, 52, 0.28);
+  transform: translateY(28px) rotateX(6deg);
+  opacity: 0;
+  animation: live-demo-paper-in 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) 0.1s forwards,
+             live-demo-loop 12s infinite 12s linear;
+  color: rgba(1, 20, 52, 0.86);
+}
+@keyframes live-demo-paper-in {
+  to { transform: translateY(0) rotateX(0deg); opacity: 1; }
+}
+@keyframes live-demo-loop {
+  0%, 100% { /* held by paper-in */ }
+}
+
+.live-demo__masthead {
+  border-bottom: 1px solid rgba(1, 20, 52, 0.10);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+.live-demo__title {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: #011434;
+  margin: 0;
+}
+.live-demo__sub {
+  font-family: var(--sans);
+  font-size: 9px;
+  color: rgba(1, 20, 52, 0.55);
+  margin-top: 2px;
+}
+
+.live-demo__form {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.live-demo__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(1, 20, 52, 0.55);
+}
+.live-demo__row > span:first-child { flex: 0 0 56px; }
+.live-demo__line {
+  flex: 1;
+  height: 1px;
+  background: rgba(1, 20, 52, 0.30);
+}
+.live-demo__line--long  { flex: 1.4; }
+.live-demo__line--short { flex: 0.6; }
+
+.live-demo__para {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0;
+}
+.live-demo__txt {
+  height: 3px;
+  background: rgba(1, 20, 52, 0.10);
+  border-radius: 1px;
+}
+.live-demo__txt--90 { width: 90%; }
+.live-demo__txt--70 { width: 70%; }
+
+.live-demo__sigblock {
+  border-top: 1px solid rgba(1, 20, 52, 0.10);
+  padding-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+.live-demo__sigrow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.live-demo__sig-label {
+  flex: 0 0 70px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(1, 20, 52, 0.55);
+  padding-bottom: 2px;
+}
+.live-demo__sig-base {
+  flex: 1;
+  height: 18px;
+  border-bottom: 1px solid rgba(1, 20, 52, 0.45);
+  position: relative;
+}
+.live-demo__sig-base--short { flex: 0.5; }
+.live-demo__sig-ink {
+  position: absolute;
+  bottom: 1px;
+  left: 4px;
+  width: 0;
+  height: 11px;
+  /* SVG signature-like squiggle drawn as a clip-path. The ink "draws"
+     by animating width from 0 to 100% during phase 3. */
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 18'><path d='M2,14 C8,8 14,2 22,6 C30,10 32,16 40,14 C48,12 50,4 58,8 C66,12 68,16 76,12 C84,8 86,2 94,8 C102,14 106,16 114,10 C122,4 126,8 138,12' fill='none' stroke='%23011434' stroke-width='1.6' stroke-linecap='round'/></svg>")
+    no-repeat left center / 100% 100%;
+  animation: live-demo-ink 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) 4.6s forwards,
+             live-demo-ink-loop 12s infinite linear;
+}
+.live-demo__sig-ink--date {
+  /* For the date field, replace the squiggle with typed-text look. */
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 14'><text x='2' y='11' font-family='monospace' font-size='10' fill='%23011434'>05 / 30 / 2026</text></svg>")
+    no-repeat left center / 100% 100%;
+  animation: live-demo-ink 1.4s ease-out 6.0s forwards,
+             live-demo-ink-loop 12s infinite linear;
+}
+@keyframes live-demo-ink {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes live-demo-ink-loop {
+  /* Reset to 0 at the start of each loop. Setting width:0 on the
+     0% keyframe and letting the per-phase animation re-fill is what
+     produces the loop. */
+  0%   { width: 100%; }
+  88%  { width: 100%; }
+  90%  { width: 0; }
+  100% { width: 0; }
+}
+
+/* Field-box overlays. Positioned absolute over the paper using
+   percentages so they scale with the demo width. */
+.live-demo__field {
+  position: absolute;
+  border: 1.5px solid transparent;
+  background: transparent;
+  border-radius: 2px;
+  opacity: 0;
+  animation: live-demo-field-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             live-demo-field-loop 12s infinite linear;
+}
+.live-demo__field[data-type="text"]      { border-color: var(--accent); background: var(--accent-soft); }
+.live-demo__field[data-type="signature"] { border-color: var(--accent); background: var(--accent-soft); }
+.live-demo__field[data-type="date"]      { border-color: var(--ok);     background: var(--ok-soft); }
+.live-demo__field[data-type="initial"]   { border-color: var(--warn);   background: var(--warn-soft); }
+
+@keyframes live-demo-field-in {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes live-demo-field-loop {
+  0%    { opacity: 1; }
+  85%   { opacity: 1; }
+  88%   { opacity: 0; }
+  100%  { opacity: 0; }
+}
+
+/* Position each field over the matching part of the paper.
+   The base-paper layout: masthead is ~36px tall, form starts ~58px
+   from top, signature block ~150px from top. Coordinates are
+   approximate; we lean on padding to keep them aligned. */
+.live-demo__field--owner  { top: 64px;  left: 80px;  width: 110px; height: 14px; animation-delay: 2.0s, 0s; }
+.live-demo__field--addr   { top: 80px;  left: 80px;  width: 150px; height: 14px; animation-delay: 2.3s, 0s; }
+.live-demo__field--phone  { top: 96px;  left: 80px;  width: 70px;  height: 14px; animation-delay: 2.6s, 0s; }
+.live-demo__field--client { bottom: 32px; left: 80px;  width: 150px; height: 16px; animation-delay: 3.2s, 0s; }
+.live-demo__field--date   { bottom: 12px; left: 80px;  width: 70px;  height: 14px; animation-delay: 3.5s, 0s; }
+
+/* Scan line. Sweeps top-to-bottom during phase 2. */
+.live-demo__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent) 20%,
+    var(--accent) 80%,
+    transparent 100%);
+  box-shadow:
+    0 0 6px 0 var(--accent),
+    0 0 20px 4px color-mix(in srgb, var(--accent) 40%, transparent);
+  opacity: 0;
+  animation: live-demo-scan 2.4s cubic-bezier(0.4, 0, 0.6, 1) 1.6s forwards,
+             live-demo-scan-loop 12s infinite linear;
+}
+@keyframes live-demo-scan {
+  0%   { opacity: 0; top: 0; }
+  10%  { opacity: 0.95; }
+  90%  { opacity: 0.95; }
+  100% { opacity: 0; top: 100%; }
+}
+@keyframes live-demo-scan-loop {
+  0%   { top: 0; opacity: 0; }
+  100% { top: 0; opacity: 0; }
+}
+
+/* Final completion check, appears in phase 4 */
+.live-demo__done {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ok) 12%, transparent);
+  opacity: 0;
+  animation: live-demo-done-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) 8.4s forwards,
+             live-demo-done-out 0.5s ease-in 10.8s forwards,
+             live-demo-done-loop 12s infinite linear;
+  border-radius: 4px;
+}
+.live-demo__done svg {
+  width: 56px;
+  height: 56px;
+  color: var(--ok);
+  transform: scale(0.4);
+  opacity: 0;
+  animation: live-demo-check 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 8.6s forwards,
+             live-demo-check-loop 12s infinite linear;
+}
+@keyframes live-demo-done-in   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes live-demo-done-out  { from { opacity: 1; } to { opacity: 0; } }
+@keyframes live-demo-done-loop { 0%, 100% { opacity: 0; } }
+@keyframes live-demo-check     { to { transform: scale(1); opacity: 1; } }
+@keyframes live-demo-check-loop { 0%, 100% { transform: scale(0.4); opacity: 0; } }
+
+/* Phase indicator dots */
+.live-demo__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.live-demo__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(1, 20, 52, 0.18);
+  transition: background 240ms var(--ease);
+}
+.live-demo__dot[data-step="1"] { animation: live-demo-dot1 12s infinite linear 0s; }
+.live-demo__dot[data-step="2"] { animation: live-demo-dot2 12s infinite linear 0s; }
+.live-demo__dot[data-step="3"] { animation: live-demo-dot3 12s infinite linear 0s; }
+.live-demo__dot[data-step="4"] { animation: live-demo-dot4 12s infinite linear 0s; }
+@keyframes live-demo-dot1 {
+  0%, 13%   { background: var(--accent); transform: scale(1.3); }
+  14%, 100% { background: rgba(1, 20, 52, 0.18); transform: scale(1); }
+}
+@keyframes live-demo-dot2 {
+  0%, 13%   { background: rgba(1, 20, 52, 0.18); }
+  14%, 36%  { background: var(--accent); transform: scale(1.3); }
+  37%, 100% { background: rgba(1, 20, 52, 0.18); transform: scale(1); }
+}
+@keyframes live-demo-dot3 {
+  0%, 36%   { background: rgba(1, 20, 52, 0.18); }
+  37%, 69%  { background: var(--accent); transform: scale(1.3); }
+  70%, 100% { background: rgba(1, 20, 52, 0.18); transform: scale(1); }
+}
+@keyframes live-demo-dot4 {
+  0%, 69%   { background: rgba(1, 20, 52, 0.18); }
+  70%, 92%  { background: var(--ok); transform: scale(1.3); }
+  93%, 100% { background: rgba(1, 20, 52, 0.18); transform: scale(1); }
+}
+
+/* Reduced motion: pause every animation; show the final state of the
+   doc as a still (paper visible, all field overlays visible, no
+   scanning, no ink animation). Visitor still sees what the product
+   produces, just without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .live-demo__paper,
+  .live-demo__field,
+  .live-demo__scan,
+  .live-demo__done,
+  .live-demo__done svg,
+  .live-demo__dot,
+  .live-demo__sig-ink,
+  .live-demo__status-dot {
+    animation: none !important;
+  }
+  .live-demo__paper { transform: none; opacity: 1; }
+  .live-demo__field { opacity: 1; }
+  .live-demo__scan  { opacity: 0; }
+  .live-demo__done  { opacity: 0; }
+  .live-demo__sig-ink { width: 100%; }
+}
+
 /* ---- Result layout (loaded state) ---- */
 .result {
   grid-template-columns: minmax(0, 1fr) 380px;

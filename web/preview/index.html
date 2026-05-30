@@ -107,39 +107,83 @@
         </div>
 
         <aside class="dropzone-card__demo" aria-hidden="true">
-          <div class="demo-doc" style="transform: rotate(0deg); max-width: 340px; width: 100%;">
-            <span class="demo-doc__corner">SAMPLE.PDF</span>
-            <h3 class="demo-doc__title">SERVICE AGREEMENT</h3>
-            <div class="demo-doc__line"></div>
-            <div class="demo-doc__line demo-doc__line--mid"></div>
-            <div class="demo-doc__line demo-doc__line--short"></div>
-            <div class="demo-doc__section">
-              <div class="demo-doc__row">
-                <span class="demo-doc__row-label">Client</span>
-                <span class="demo-doc__row-baseline">
-                  <span class="demo-doc__sig demo-doc__sig--1">
-                    <span class="demo-doc__sig-tag">signature</span>
-                  </span>
-                </span>
+          <!-- Live auto-playing demo: 4-phase loop. Each phase reveals
+               itself with motion, the doc stays parked on screen the
+               whole time so the visitor can re-watch any step.
+               Respects prefers-reduced-motion (CSS pauses every keyframe). -->
+          <div class="live-demo" data-phase="0">
+            <div class="live-demo__stage">
+
+              <!-- Stage chrome: corner tag + phase status text -->
+              <div class="live-demo__corner">CONTRACT.PDF</div>
+              <div class="live-demo__status" aria-hidden="true">
+                <span class="live-demo__status-dot"></span>
+                <span class="live-demo__status-text">Drop a PDF</span>
               </div>
-              <div class="demo-doc__row">
-                <span class="demo-doc__row-label">Provider</span>
-                <span class="demo-doc__row-baseline">
-                  <span class="demo-doc__sig demo-doc__sig--sig2">
-                    <span class="demo-doc__sig-tag">signature</span>
-                  </span>
-                </span>
+
+              <!-- The paper itself -->
+              <div class="live-demo__paper">
+                <div class="live-demo__masthead">
+                  <div class="live-demo__title">CONSULTING AGREEMENT</div>
+                  <div class="live-demo__sub">Between Parker Studio &amp; Anders Insurance</div>
+                </div>
+
+                <!-- Top form fields -->
+                <div class="live-demo__form">
+                  <div class="live-demo__row"><span>Owner</span><span class="live-demo__line"></span></div>
+                  <div class="live-demo__row"><span>Address</span><span class="live-demo__line live-demo__line--long"></span></div>
+                  <div class="live-demo__row"><span>Phone</span><span class="live-demo__line live-demo__line--short"></span></div>
+                </div>
+
+                <!-- Body paragraph block -->
+                <div class="live-demo__para">
+                  <div class="live-demo__txt"></div>
+                  <div class="live-demo__txt live-demo__txt--90"></div>
+                  <div class="live-demo__txt live-demo__txt--70"></div>
+                </div>
+
+                <!-- Signature block at the bottom -->
+                <div class="live-demo__sigblock">
+                  <div class="live-demo__sigrow">
+                    <span class="live-demo__sig-label">Client signature</span>
+                    <span class="live-demo__sig-base">
+                      <span class="live-demo__sig-ink"></span>
+                    </span>
+                  </div>
+                  <div class="live-demo__sigrow">
+                    <span class="live-demo__sig-label">Date</span>
+                    <span class="live-demo__sig-base live-demo__sig-base--short">
+                      <span class="live-demo__sig-ink live-demo__sig-ink--date"></span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Field overlays (the "boxes" that pop in during detection) -->
+                <div class="live-demo__field live-demo__field--owner"   data-type="text"></div>
+                <div class="live-demo__field live-demo__field--addr"    data-type="text"></div>
+                <div class="live-demo__field live-demo__field--phone"   data-type="text"></div>
+                <div class="live-demo__field live-demo__field--client"  data-type="signature"></div>
+                <div class="live-demo__field live-demo__field--date"    data-type="date"></div>
+
+                <!-- Scan line (sweeps during detection phase) -->
+                <div class="live-demo__scan"></div>
+
+                <!-- Completion check (final phase) -->
+                <div class="live-demo__done">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
               </div>
-              <div class="demo-doc__row">
-                <span class="demo-doc__row-label">Date</span>
-                <span class="demo-doc__row-baseline">
-                  <span class="demo-doc__sig demo-doc__sig--date">
-                    <span class="demo-doc__sig-tag">date</span>
-                  </span>
-                </span>
+
+              <!-- Phase indicator (4 dots) -->
+              <div class="live-demo__dots" aria-hidden="true">
+                <span class="live-demo__dot" data-step="1"></span>
+                <span class="live-demo__dot" data-step="2"></span>
+                <span class="live-demo__dot" data-step="3"></span>
+                <span class="live-demo__dot" data-step="4"></span>
               </div>
             </div>
-            <div class="demo-doc__scan"></div>
           </div>
         </aside>
 
