@@ -68,6 +68,31 @@
         </div>
       </div>
 
+      <!-- Owner-only analytics panel. Rendered by owner-panel.js when an
+           owner token is present in localStorage; hidden otherwise. -->
+      <section id="owner-panel" class="owner-panel" hidden aria-labelledby="owner-panel-title">
+        <header class="owner-panel__head">
+          <div>
+            <p class="kicker kicker--muted">Owner only.</p>
+            <h2 class="h-card" id="owner-panel-title">Live counters.</h2>
+          </div>
+          <div class="owner-panel__controls">
+            <label class="owner-panel__window">
+              Window
+              <select id="owner-panel-window">
+                <option value="INTERVAL '24' HOUR">Last 24 hours</option>
+                <option value="INTERVAL '7' DAY" selected>Last 7 days</option>
+                <option value="INTERVAL '30' DAY">Last 30 days</option>
+              </select>
+            </label>
+            <button type="button" id="owner-panel-refresh" class="btn btn--ghost owner-panel__refresh">Refresh</button>
+          </div>
+        </header>
+        <div id="owner-panel-body" class="owner-panel__body" aria-live="polite">
+          <p class="owner-panel__empty">Loading.</p>
+        </div>
+      </section>
+
       <header class="dashboard__head">
         <div>
           <p class="kicker">Documents you have sent.</p>
@@ -200,6 +225,7 @@
   </footer>
 
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./owner-panel.js"></script>
   <script type="module" src="../checkout.js"></script>
   <script type="module">
     // Subscription banner. Reads /api/billing/subscription, populates the

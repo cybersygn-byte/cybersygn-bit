@@ -196,6 +196,8 @@ async function main() {
   console.log('  wrote dist/dashboard/index.html');
   await copyFile(join(SRC, 'dashboard', 'app.js'), join(OUT, 'dashboard', 'app.js'));
   console.log('  wrote dist/dashboard/app.js');
+  await copyFile(join(SRC, 'dashboard', 'owner-panel.js'), join(OUT, 'dashboard', 'owner-panel.js'));
+  console.log('  wrote dist/dashboard/owner-panel.js');
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
   console.log('  wrote dist/dashboard/join.html');
 

@@ -1430,6 +1430,152 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ========================================================================
+   13d2. OWNER ANALYTICS PANEL (dashboard, owner-only)
+   ======================================================================== */
+
+.owner-panel {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--accent-text) 8%, var(--bg)) 0%,
+    var(--bg) 100%);
+  border: 1px solid color-mix(in srgb, var(--accent-text) 30%, var(--line));
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  margin-bottom: var(--s-6);
+}
+.owner-panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+  flex-wrap: wrap;
+}
+.owner-panel__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.owner-panel__window {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+.owner-panel__window select {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+}
+.owner-panel__refresh {
+  padding: 6px 14px;
+  font-size: var(--t-xs);
+}
+.owner-panel__body { min-height: 80px; }
+.owner-panel__empty {
+  color: var(--text-3);
+  font-style: italic;
+  margin: 0;
+}
+.owner-panel__notice {
+  padding: var(--s-3) var(--s-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text-2);
+  line-height: 1.6;
+}
+.owner-panel__notice p { margin: 0 0 var(--s-2); }
+.owner-panel__notice p:last-child { margin-bottom: 0; }
+.owner-panel__notice a { color: var(--accent-text); }
+
+.owner-panel__kpis {
+  display: flex;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-5);
+}
+.owner-panel__kpi {
+  flex: 1 1 140px;
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.owner-panel__kpi-num {
+  font-family: var(--display);
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.owner-panel__kpi-label {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+.owner-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-4);
+}
+.owner-panel__col--wide { grid-column: span 2; }
+@media (max-width: 720px) {
+  .owner-panel__col--wide { grid-column: span 1; }
+}
+.owner-panel__col {
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.owner-panel__h {
+  margin: 0 0 var(--s-3);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.owner-panel__list { list-style: none; padding: 0; margin: 0; }
+.owner-panel__list-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+  font-size: var(--t-sm);
+}
+.owner-panel__list-row:last-child { border-bottom: none; }
+.owner-panel__list-key {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+.owner-panel__list-val {
+  color: var(--accent-text);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+/* ========================================================================
    13e. LEGAL PAGES (privacy, terms, refund)
    ======================================================================== */
 
