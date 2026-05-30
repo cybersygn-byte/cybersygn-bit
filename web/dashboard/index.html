@@ -91,6 +91,34 @@
         <div id="owner-panel-body" class="owner-panel__body" aria-live="polite">
           <p class="owner-panel__empty">Loading.</p>
         </div>
+
+        <details class="owner-panel__tools">
+          <summary class="owner-panel__tools-summary">Diagnostic tools</summary>
+          <div class="owner-panel__tools-body">
+            <form id="owner-test-email" class="owner-panel__form" autocomplete="off">
+              <label class="owner-panel__form-label" for="owner-test-email-to">
+                Send a real signing-style email to verify Resend
+              </label>
+              <div class="owner-panel__form-row">
+                <input
+                  type="email"
+                  id="owner-test-email-to"
+                  class="owner-panel__form-input"
+                  placeholder="you@example.com"
+                  required
+                />
+                <button type="submit" class="btn btn--primary owner-panel__form-btn">Send test</button>
+              </div>
+              <p id="owner-test-email-status" class="owner-panel__form-status" aria-live="polite"></p>
+            </form>
+
+            <p class="owner-panel__form-label" style="margin-top: var(--s-4);">
+              Subsystem health
+            </p>
+            <pre id="owner-health-output" class="owner-panel__pre">Click "Run health check" to probe KV, Resend, Stripe, Analytics Engine, and the owner secret.</pre>
+            <button type="button" id="owner-health-run" class="btn btn--ghost">Run health check</button>
+          </div>
+        </details>
       </section>
 
       <header class="dashboard__head">

@@ -65,6 +65,10 @@ export default {
       });
     }
 
+    if (request.method === 'GET' && url.pathname === '/api/health') {
+      return handleHealth(env);
+    }
+
     if (request.method === 'POST' && url.pathname === '/detect') {
       return handleDetect(request);
     }
@@ -81,6 +85,9 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/verify') {
       return handleOwnerVerify(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/test-email') {
+      return handleOwnerTestEmail(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/event') {
@@ -626,6 +633,179 @@ async function handleFoundingCount(env) {
     cap,
     remaining: Math.max(0, cap - taken),
   });
+}
+
+// ---- /api/health -----------------------------------------------------------
+//
+// Deep, no-side-effect probe of every subsystem we depend on. Each subsystem
+// reports { ok: boolean, mode/detail: ... }. Every probe is wrapped in
+// try/catch with a short timeout so one bad backend cannot hang the
+// response. Public endpoint (no owner gate) because uptime monitors and
+// status-page widgets need to hit it freely; the response contains no
+// secrets or PII.
+//
+// Designed for:
+//   - cron uptime monitors (every minute, expect 200 + ok:true)
+//   - quick CLI debugging during a deploy ("did the secret upload?")
+//   - rendering on the owner dashboard's diagnostic strip
+
+async function handleHealth(env) {
+  const startedAt = Date.now();
+
+  // ---- KV (CYBERSYGN_DOCS) ---------------------------------------------------
+  // Round-trip a tiny key. The probe key is namespaced so it never collides
+  // with real data and TTL'd to 60 seconds so it auto-cleans.
+  async function probeKv() {
+    if (!env || !env.CYBERSYGN_DOCS || typeof env.CYBERSYGN_DOCS.put !== 'function') {
+      return { ok: false, mode: 'unbound', detail: 'binding not configured' };
+    }
+    const key = `health:probe:${Date.now()}`;
+    try {
+      await withTimeout(env.CYBERSYGN_DOCS.put(key, '1', { expirationTtl: 60 }), 3000);
+      const read = await withTimeout(env.CYBERSYGN_DOCS.get(key), 3000);
+      return { ok: read === '1', mode: 'kv', latencyMs: Date.now() - startedAt };
+    } catch (err) {
+      return { ok: false, mode: 'kv', detail: shortErr(err) };
+    }
+  }
+
+  // ---- Resend (transactional email) -----------------------------------------
+  // Does NOT send. Hits the Resend domains API as a cheap auth probe.
+  async function probeResend() {
+    if (!env || !env.RESEND_API_KEY) {
+      return { ok: false, mode: 'console-fallback', detail: 'RESEND_API_KEY not set' };
+    }
+    try {
+      const res = await withTimeout(
+        fetch('https://api.resend.com/domains', {
+          headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}` },
+        }),
+        4000,
+      );
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, mode: 'auth-failed', detail: `HTTP ${res.status}` };
+      }
+      if (!res.ok) return { ok: false, mode: 'resend', detail: `HTTP ${res.status}` };
+      const data = await res.json();
+      const domains = Array.isArray(data && data.data) ? data.data : [];
+      const verified = domains.filter(d => d && d.status === 'verified').length;
+      return { ok: verified > 0, mode: 'resend', domains: domains.length, verified };
+    } catch (err) {
+      return { ok: false, mode: 'resend', detail: shortErr(err) };
+    }
+  }
+
+  // ---- Stripe (payments) ----------------------------------------------------
+  // Probes /v1/balance. No mutation, low quota cost.
+  async function probeStripe() {
+    if (!env || !env.STRIPE_SECRET_KEY) {
+      return { ok: false, mode: 'unconfigured', detail: 'STRIPE_SECRET_KEY not set' };
+    }
+    try {
+      const res = await withTimeout(
+        fetch('https://api.stripe.com/v1/balance', {
+          headers: { 'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}` },
+        }),
+        4000,
+      );
+      if (res.status === 401) return { ok: false, mode: 'auth-failed', detail: 'HTTP 401' };
+      if (!res.ok) return { ok: false, mode: 'stripe', detail: `HTTP ${res.status}` };
+      return { ok: true, mode: env.STRIPE_SECRET_KEY.startsWith('sk_test_') ? 'test' : 'live' };
+    } catch (err) {
+      return { ok: false, mode: 'stripe', detail: shortErr(err) };
+    }
+  }
+
+  // ---- Analytics Engine (no probe possible; report binding presence) --------
+  function probeAnalytics() {
+    if (env && env.CYBERSYGN_EVENTS && typeof env.CYBERSYGN_EVENTS.writeDataPoint === 'function') {
+      return { ok: true, mode: 'bound', detail: 'CYBERSYGN_EVENTS active' };
+    }
+    return { ok: false, mode: 'unbound', detail: 'enable Analytics Engine in dashboard, then uncomment binding' };
+  }
+
+  // ---- Owner backdoor secret ------------------------------------------------
+  function probeOwner() {
+    const isDevHash = !env || !env.CYBERSYGN_OWNER_HASH || env.CYBERSYGN_OWNER_HASH.length !== 64;
+    if (isDevHash) {
+      return { ok: false, mode: 'dev-hash', detail: 'CYBERSYGN_OWNER_HASH not set (the publicly documented dev phrase will work)' };
+    }
+    return { ok: true, mode: 'custom-hash' };
+  }
+
+  // Run probes in parallel; each has its own timeout so the overall
+  // response time is bounded by the slowest single probe.
+  const [kv, resend, stripe] = await Promise.all([probeKv(), probeResend(), probeStripe()]);
+  const ae = probeAnalytics();
+  const owner = probeOwner();
+
+  // Overall health: KV is required; resend, stripe, and AE are optional
+  // for the base service to work (the worker degrades gracefully without
+  // them), so they don't fail the top-level ok flag, just surface their
+  // own ok=false. KV failure = service is broken.
+  const overallOk = kv.ok === true;
+
+  return jsonResponse(overallOk ? 200 : 503, {
+    ok: overallOk,
+    service: 'cybersygn',
+    version: VERSION,
+    checkedAt: new Date().toISOString(),
+    durationMs: Date.now() - startedAt,
+    subsystems: {
+      kv, resend, stripe,
+      analytics_engine: ae,
+      owner_backdoor: owner,
+    },
+  });
+}
+
+function shortErr(err) {
+  const m = err && err.message ? String(err.message) : String(err || 'unknown');
+  return m.slice(0, 200);
+}
+
+// ---- /api/owner/test-email -------------------------------------------------
+//
+// Owner-only. Sends a real signing-style email via the configured Resend
+// account so the owner can verify end-to-end deliverability and template
+// rendering without staging a fake document with a fake signer. Honors
+// CYBERSYGN_FROM if set; falls back to the default From in email.js.
+//
+// Body: { to: "address@example.com" }
+
+async function handleOwnerTestEmail(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { to } = body.value || {};
+  if (typeof to !== 'string' || to.length === 0 || to.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    return jsonResponse(400, { error: 'invalid_recipient', message: 'A valid "to" email address is required.' });
+  }
+
+  const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
+  try {
+    const result = await sendInvite(env, {
+      to,
+      name: 'Test signer',
+      senderName: 'CyberSygn deploy check',
+      docTitle: 'Production pipeline check, ' + new Date().toISOString().slice(0, 19) + 'Z',
+      magicLink: `${appUrl}/preview/?test=1`,
+    });
+    return jsonResponse(200, {
+      ok: !!(result && result.delivered),
+      mode: result && result.mode ? result.mode : 'unknown',
+      providerId: (result && result.id) || null,
+      delivered: !!(result && result.delivered),
+      error: result && result.error ? result.error : null,
+    });
+  } catch (err) {
+    return jsonResponse(500, {
+      error: 'send_failed',
+      message: err && err.message ? err.message : 'unknown error',
+    });
+  }
 }
 
 // ---- /api/event ------------------------------------------------------------

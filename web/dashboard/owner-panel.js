@@ -150,6 +150,57 @@ async function refresh() {
   }
 }
 
+async function sendTestEmail(to) {
+  const token = getOwnerToken();
+  if (!token) throw new Error('not owner');
+  const res = await fetch('/api/owner/test-email', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', [OWNER_HEADER]: token },
+    body: JSON.stringify({ to }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+  return data;
+}
+
+async function runHealth() {
+  const out = $('owner-health-output');
+  if (out) out.textContent = 'Running.';
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    if (out) out.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    if (out) out.textContent = 'Health check failed: ' + (err && err.message ? err.message : err);
+  }
+}
+
+function wireTools() {
+  const form = $('owner-test-email');
+  const status = $('owner-test-email-status');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = $('owner-test-email-to');
+      const to = input && input.value && input.value.trim();
+      if (!to) return;
+      if (status) status.textContent = 'Sending.';
+      try {
+        const data = await sendTestEmail(to);
+        if (status) {
+          status.textContent = data.mode === 'resend'
+            ? `Delivered via Resend. Provider id: ${data.providerId || 'unknown'}.`
+            : `Sent in ${data.mode || 'fallback'} mode (check Worker logs).`;
+        }
+      } catch (err) {
+        if (status) status.textContent = 'Failed: ' + (err && err.message ? err.message : err);
+      }
+    });
+  }
+  const healthBtn = $('owner-health-run');
+  if (healthBtn) healthBtn.addEventListener('click', runHealth);
+}
+
 function mount() {
   const panel = $(PANEL_ID);
   if (!panel) return;
@@ -164,6 +215,7 @@ function mount() {
   if (refreshBtn) refreshBtn.addEventListener('click', refresh);
   const winSel = $(WINDOW_ID);
   if (winSel) winSel.addEventListener('change', refresh);
+  wireTools();
 
   refresh();
 }

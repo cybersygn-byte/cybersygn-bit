@@ -724,6 +724,143 @@ button { font: inherit; cursor: pointer; }
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* ---- Interactive hero demo loop --------------------------------------
+   8-second cycle: scan → detect → sign → "Signed" → reset. Replaces
+   the one-time field-reveal on .demo-doc--live so the hero stays alive
+   without a real user interacting. Respects prefers-reduced-motion.
+
+   Phase timeline (8s total):
+     0.0–0.5s   Clean. Filename and title only.
+     0.5–1.6s   Scan line sweeps top-to-bottom.
+     0.7–2.0s   Fields fade in one by one with the existing reveal.
+     2.0–3.4s   Counter ticks 0 → 4 (handled by JS).
+     3.4–4.6s   Signature ink draws inside the Landlord box.
+     4.6–6.0s   "Signed" badge pops in.
+     6.0–8.0s   Hold. Fade everything back to clean. Loop.
+*/
+
+.demo-doc--live .demo-field__hl {
+  animation: demo-hl-cycle 8s var(--ease-spring) infinite both;
+}
+.demo-doc--live .demo-field:nth-of-type(1) .demo-field__hl { animation-delay: 0.70s; }
+.demo-doc--live .demo-field:nth-of-type(2) .demo-field__hl { animation-delay: 0.95s; }
+.demo-doc--live .demo-field:nth-of-type(3) .demo-field__hl { animation-delay: 1.20s; }
+.demo-doc--live .demo-field:nth-of-type(4) .demo-field__hl { animation-delay: 1.45s; }
+@keyframes demo-hl-cycle {
+  0%, 4%      { opacity: 0; transform: scale(0.88); }   /* delay 0% / 4% = pre-cycle clean state */
+  10%         { opacity: 1; transform: scale(1.04); }   /* pop */
+  18%, 70%    { opacity: 1; transform: scale(1); }      /* held */
+  78%, 100%   { opacity: 0; transform: scale(0.92); }   /* fade for next cycle */
+}
+
+/* Scan line: a thin cyan bar that drops from the top of the document
+   during the detection phase. */
+.demo-doc__scan {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--accent) 30%,
+    var(--accent) 70%,
+    transparent 100%);
+  box-shadow: 0 0 24px 4px color-mix(in srgb, var(--accent) 50%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: demo-scan 8s infinite linear;
+}
+@keyframes demo-scan {
+  0%, 4%   { opacity: 0; transform: translateY(0); }
+  6%       { opacity: 1; transform: translateY(0); }
+  18%      { opacity: 1; transform: translateY(280px); }
+  20%      { opacity: 0; transform: translateY(280px); }
+  100%     { opacity: 0; transform: translateY(280px); }
+}
+
+/* Signature ink: SVG path drawn left-to-right inside the Landlord
+   signature box. The stroke uses dasharray + dashoffset for the
+   handwriting effect. */
+.demo-field__ink {
+  position: absolute;
+  inset: -10px -4px -8px -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 18px);
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+}
+.demo-field__ink path {
+  stroke-dasharray: 360;
+  stroke-dashoffset: 360;
+  animation: demo-ink 8s infinite ease-out;
+}
+@keyframes demo-ink {
+  0%, 40%    { stroke-dashoffset: 360; opacity: 0; }
+  42%        { stroke-dashoffset: 360; opacity: 1; }
+  60%        { stroke-dashoffset: 0; opacity: 1; }
+  75%, 100%  { stroke-dashoffset: 0; opacity: 1; }
+}
+.demo-doc--live .demo-field:nth-of-type(1) .demo-field__ink {
+  animation: demo-ink-visibility 8s infinite linear;
+}
+@keyframes demo-ink-visibility {
+  0%, 40%    { opacity: 0; }
+  42%, 75%   { opacity: 1; }
+  78%, 100%  { opacity: 0; }
+}
+
+/* "Signed" badge: pops in at the end of the cycle. */
+.demo-doc__signed {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--ok);
+  color: var(--text-on-dark, #fff);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+  animation: demo-signed 8s infinite ease-out;
+  box-shadow: 0 8px 22px -6px color-mix(in srgb, var(--ok) 70%, transparent);
+}
+.demo-doc__signed svg {
+  width: 12px;
+  height: 12px;
+}
+@keyframes demo-signed {
+  0%, 60%    { opacity: 0; transform: scale(0.85); }
+  62%        { opacity: 1; transform: scale(1.15); }
+  68%, 88%   { opacity: 1; transform: scale(1); }
+  92%, 100%  { opacity: 0; transform: scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-doc--live .demo-field__hl,
+  .demo-doc__scan,
+  .demo-field__ink path,
+  .demo-doc--live .demo-field:nth-of-type(1) .demo-field__ink,
+  .demo-doc__signed {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .demo-doc__scan { display: none; }
+}
+
 .demo-doc__counter {
   position: absolute;
   bottom: -16px;
@@ -981,8 +1118,33 @@ button { font: inherit; cursor: pointer; }
   margin: 0;
   text-align: center;
   color: var(--text-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .tier--featured .tier__remaining { color: rgba(251, 248, 241, 0.78); }
+.tier__remaining-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ok);
+  flex: 0 0 7px;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 70%, transparent);
+  animation: founding-pulse 2.2s infinite cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.tier__remaining-dot--full {
+  background: var(--text-3);
+  animation: none;
+}
+@keyframes founding-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 70%, transparent); }
+  70%  { box-shadow: 0 0 0 10px color-mix(in srgb, var(--ok) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tier__remaining-dot { animation: none; }
+}
 
 /* On the featured (navy) tier, btn--primary needs an inverse treatment so
    it does not blend into the card. We use the bright accent instead. */
@@ -1573,6 +1735,78 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent-text);
   font-weight: 600;
   flex: 0 0 auto;
+}
+
+/* Owner diagnostic tools (test-email + health check) */
+.owner-panel__tools {
+  margin-top: var(--s-5);
+  border-top: 1px dashed var(--line);
+  padding-top: var(--s-4);
+}
+.owner-panel__tools-summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  padding: 6px 0;
+}
+.owner-panel__tools-summary::-webkit-details-marker { display: none; }
+.owner-panel__tools-summary::before {
+  content: "▸ ";
+  color: var(--accent-text);
+}
+.owner-panel__tools[open] .owner-panel__tools-summary::before { content: "▾ "; }
+.owner-panel__tools-body {
+  margin-top: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.owner-panel__form-label {
+  font-size: var(--t-sm);
+  color: var(--text-2);
+  margin: 0 0 6px;
+}
+.owner-panel__form-row {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+.owner-panel__form-input {
+  flex: 1 1 220px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--t-sm);
+}
+.owner-panel__form-input:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.owner-panel__form-btn { padding: 8px 18px; font-size: var(--t-sm); }
+.owner-panel__form-status {
+  margin: 6px 0 0;
+  font-size: var(--t-xs);
+  font-family: var(--mono);
+  color: var(--text-3);
+}
+.owner-panel__pre {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.5;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--s-3);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 320px;
+  overflow-y: auto;
+  color: var(--text-2);
 }
 
 /* ========================================================================

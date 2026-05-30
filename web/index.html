@@ -288,7 +288,7 @@
           </span>
         </div>
 
-        <div class="demo-doc" aria-hidden="true">
+        <div class="demo-doc demo-doc--live" aria-hidden="true">
           <span class="demo-doc__filename">CONTRACT.PDF</span>
           <h3 class="demo-doc__title">Residential tenancy agreement</h3>
           <div class="demo-doc__lines">
@@ -297,12 +297,23 @@
             <div class="demo-doc__line demo-doc__line--60"></div>
             <div class="demo-doc__line demo-doc__line--70"></div>
           </div>
+
+          <!-- Scan line sweeps across the document during the detection phase. -->
+          <div class="demo-doc__scan" aria-hidden="true"></div>
+
           <div class="demo-field">
             <span class="demo-field__label">Landlord</span>
             <span class="demo-field__box">
               <span class="demo-field__hl">
                 <span class="demo-field__tag">signature</span>
               </span>
+              <!-- Hand-drawn signature stroke. Renders inside the landlord box
+                   during the sign phase. SVG path: a short signature flourish.
+                   Stroke-dasharray + offset animate it drawing left-to-right. -->
+              <svg class="demo-field__ink" viewBox="0 0 240 60" preserveAspectRatio="none">
+                <path d="M8 38 C 28 8, 50 50, 72 28 S 110 8, 130 38 C 152 14, 178 42, 200 26 C 218 14, 226 30, 232 28"
+                      fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </span>
           </div>
           <div class="demo-field">
@@ -329,8 +340,17 @@
               </span>
             </span>
           </div>
+
+          <!-- "Signed" badge fades in at the end of each cycle. -->
+          <div class="demo-doc__signed" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12l5 5L20 7"/>
+            </svg>
+            <span>Signed</span>
+          </div>
+
           <div class="demo-doc__counter">
-            <span class="demo-doc__counter-num">04</span>
+            <span class="demo-doc__counter-num" id="demo-counter-num">0</span>
             <span class="demo-doc__counter-label">fields<br>found</span>
           </div>
         </div>
@@ -471,8 +491,9 @@
           <button class="btn btn--primary btn--block" type="button" data-checkout-tier="founding">
             Claim a founding spot
           </button>
-          <p class="caption tier__remaining" id="founding-remaining" hidden>
-            <span id="founding-remaining-count">100</span> of 100 spots remaining.
+          <p class="caption tier__remaining" id="founding-remaining">
+            <span class="tier__remaining-dot" aria-hidden="true"></span>
+            <span id="founding-remaining-count">100</span> of 100 spots open.
           </p>
         </article>
 
@@ -784,26 +805,67 @@
   <script type="module" src="./checkout.js"></script>
   <script type="module">
     // Live founding-spots remaining. Silent failure: if the endpoint is
-    // unreachable, the badge stays at its hardcoded copy. We never
-    // invent numbers.
+    // unreachable, the badge stays at its hardcoded copy. We never invent
+    // numbers. Shown always when reachable so visitors see real supply.
     (async () => {
       try {
         const res = await fetch('/api/billing/founding-count');
         if (!res.ok) return;
         const data = await res.json();
         if (typeof data.remaining !== 'number') return;
+        const cap = typeof data.cap === 'number' ? data.cap : 100;
         const badge = document.getElementById('founding-badge');
         const remainingEl = document.getElementById('founding-remaining');
         const remainingCount = document.getElementById('founding-remaining-count');
+        const remainingTextNode = remainingEl ? remainingEl.querySelector('#founding-remaining-count')?.nextSibling : null;
+
+        if (remainingCount) remainingCount.textContent = String(data.remaining);
+
         if (data.remaining === 0) {
-          if (badge) badge.textContent = 'All 100 spots taken';
+          if (badge) badge.textContent = 'All ' + cap + ' spots taken';
+          if (remainingEl) {
+            remainingEl.innerHTML = '<span class="tier__remaining-dot tier__remaining-dot--full" aria-hidden="true"></span>All ' + cap + ' spots claimed.';
+          }
           const btn = document.querySelector('[data-checkout-tier="founding"]');
           if (btn) { btn.disabled = true; btn.textContent = 'Founding full'; }
-        } else if (data.remaining < 100) {
-          if (remainingCount) remainingCount.textContent = String(data.remaining);
-          if (remainingEl) remainingEl.hidden = false;
+        } else if (data.remaining < cap) {
+          // Some taken, some left. Update text to say "remaining" not "open".
+          if (remainingEl) {
+            remainingEl.innerHTML = '<span class="tier__remaining-dot" aria-hidden="true"></span>' +
+              '<span id="founding-remaining-count">' + data.remaining + '</span> of ' + cap + ' spots remaining.';
+          }
         }
+        // remaining === cap: leave the default "X of 100 spots open." text.
       } catch (e) {}
+    })();
+  </script>
+  <script>
+    // Hero demo counter: ticks 0 → 4 in sync with the CSS field-reveal
+    // animation. Respects prefers-reduced-motion (shows the final state
+    // and stops). Pauses while the document is hidden so phones don't
+    // chew battery in the background.
+    (function () {
+      var el = document.getElementById('demo-counter-num');
+      if (!el) return;
+      var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) { el.textContent = '04'; return; }
+      var CYCLE_MS = 8000;
+      var FIELD_STEPS_MS = [700, 950, 1200, 1450];  // matches demo-hl-cycle delays
+      function tickCycle() {
+        if (document.hidden) return;  // visibility handler will restart
+        el.textContent = '0';
+        FIELD_STEPS_MS.forEach(function (offset, i) {
+          setTimeout(function () { el.textContent = String(i + 1).padStart(2, '0'); }, offset + 180);
+        });
+        // Reset for next cycle (between cycles, counter holds at 04
+        // until the next loop starts and we set it back to 0 above).
+      }
+      tickCycle();
+      var loopId = setInterval(tickCycle, CYCLE_MS);
+      document.addEventListener('visibilitychange', function () {
+        clearInterval(loopId);
+        if (!document.hidden) { tickCycle(); loopId = setInterval(tickCycle, CYCLE_MS); }
+      });
     })();
   </script>
   <script>

@@ -17,6 +17,8 @@
  * Both return { delivered: bool, mode: 'resend' | 'console', id?, error? }.
  */
 
+import { renderInviteHtml, renderReminderHtml, renderCompletionHtml } from './email-html.js';
+
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
 const REPLY_TO_DEFAULT = 'hello@cybersygn.io';
 
@@ -35,8 +37,9 @@ export async function sendInvite(env, { to, name, docTitle, magicLink, senderNam
     '',
     'CyberSygn. The signature tool engineers actually like.',
   ].filter(Boolean).join('\n');
+  const html = renderInviteHtml({ name, senderName, docTitle, magicLink });
 
-  return deliver(env, { to, subject, text });
+  return deliver(env, { to, subject, text, html });
 }
 
 export async function sendCompletion(env, { to, name, docTitle, downloadUrl, auditUrl }) {
@@ -55,8 +58,9 @@ export async function sendCompletion(env, { to, name, docTitle, downloadUrl, aud
     '',
     'CyberSygn.',
   ].filter(Boolean).join('\n');
+  const html = renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl });
 
-  return deliver(env, { to, subject, text });
+  return deliver(env, { to, subject, text, html });
 }
 
 /**
@@ -96,25 +100,30 @@ export async function sendReminder(env, { to, name, docTitle, magicLink, senderN
     '',
     'CyberSygn.',
   ].filter(Boolean).join('\n');
+  const html = renderReminderHtml({ name, senderName, docTitle, magicLink, tone: t });
 
-  return deliver(env, { to, subject, text });
+  return deliver(env, { to, subject, text, html });
 }
 
-async function deliver(env, { to, subject, text }) {
+async function deliver(env, { to, subject, text, html }) {
   const apiKey = env && env.RESEND_API_KEY;
   if (!apiKey) {
     // Console fallback: print the would-have-sent message.
-    console.log('[cybersygn:email:dev]', JSON.stringify({ to, subject, text }, null, 2));
+    console.log('[cybersygn:email:dev]', JSON.stringify({ to, subject, text, hasHtml: !!html }, null, 2));
     return { delivered: true, mode: 'console' };
   }
 
-  const body = JSON.stringify({
+  // Resend accepts both text and html; clients render HTML when present and
+  // fall through to text on text-only clients. We always send both.
+  const resendBody = {
     from: env.CYBERSYGN_FROM || FROM_DEFAULT,
     reply_to: env.CYBERSYGN_REPLY_TO || REPLY_TO_DEFAULT,
     to: [to],
     subject,
     text,
-  });
+  };
+  if (html) resendBody.html = html;
+  const body = JSON.stringify(resendBody);
   const headers = {
     'Authorization': `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
