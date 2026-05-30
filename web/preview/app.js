@@ -1236,7 +1236,12 @@ async function handleFile(file) {
 // Default starting floor (percent). Most secondary body fields have
 // confidence 0.45-0.55 and most primary signature-block fields have
 // confidence >= 0.78, so 65 hides the body without touching the block.
-const DEFAULT_CONFIDENCE_FLOOR = 65;
+// Show every detected field by default. The slider stays in place for
+// users who want to hide low-confidence noise, but the default reveals
+// all 71-ish fields a typical contract has rather than only the ~10
+// primary signature-block fields. The user can double-click any box
+// they don't want to remove it.
+const DEFAULT_CONFIDENCE_FLOOR = 0;
 
 function currentConfidenceFloor() {
   const raw = document.body.dataset.confidenceFloor;
