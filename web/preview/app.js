@@ -92,7 +92,8 @@ const status = $('status-indicator');
 const errorBanner = $('error-banner');
 const resetButton = $('reset-button');
 const signButton = $('sign-button');
-const addFieldButton = $('add-field-button');
+const addFieldButtons = document.querySelectorAll('.add-field-btn');
+const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const toast = $('toast');
 
@@ -489,28 +490,50 @@ resetButton.addEventListener('click', resetApp);
 
 signButton.addEventListener('click', onSignClick);
 
-// "Add a missed field" mode. Click the button to toggle. While active,
-// clicking anywhere on a page-shell adds a new text-type field at that
-// location. The user can right-click the new box afterwards to change
-// its type via the existing context menu.
+// Sticky add-field mode. Click one of the 5 type buttons to enter
+// add-mode pinned to that type. While active, every click on a page
+// drops a new field of that type and STAYS in add-mode for the next
+// click — Photoshop brush behavior. Click the same type button again
+// to exit, click a different type button to switch, or press Esc.
 const AI_CONSENT_KEY = 'cybersygn.aiTrainingConsent';
-let _addMode = false;
-function toggleAddMode(on) {
-  _addMode = on === undefined ? !_addMode : !!on;
-  document.body.dataset.addMode = _addMode ? 'true' : 'false';
-  if (addFieldButton) addFieldButton.textContent = _addMode ? 'Cancel adding field' : '+ Add a missed field';
+let _addModeType = null;   // 'signature' | 'initial' | 'date' | 'checkbox' | 'text' | null
+
+function setAddType(type) {
+  _addModeType = type;
+  document.body.dataset.addMode = type ? 'true' : 'false';
+  document.body.dataset.addModeType = type || '';
+
+  addFieldButtons.forEach(btn => {
+    btn.dataset.active = btn.dataset.addType === type ? 'true' : 'false';
+  });
+
+  if (addFieldHint) {
+    if (type) {
+      const plural = type === 'checkbox' ? 'checkboxes' : `${type}s`;
+      addFieldHint.textContent = `Adding ${plural}. Click anywhere on the page. Press Esc to stop.`;
+    } else {
+      addFieldHint.textContent = '';
+    }
+  }
 }
-if (addFieldButton) {
-  addFieldButton.addEventListener('click', () => toggleAddMode());
-}
-// Cancel on Esc.
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && _addMode) toggleAddMode(false); });
-// Page-shell click handler. Delegated on documentStrip so it works for
-// every page including those rendered later. Convert CSS click coords to
-// PDF-space coords using the viewport metadata we stashed during render
-// (renderDocument sets data-viewport-{width,height} on each shell).
+
+addFieldButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const t = btn.dataset.addType;
+    setAddType(_addModeType === t ? null : t);
+  });
+});
+
+// Esc exits add-mode entirely.
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && _addModeType) setAddType(null);
+});
+
+// Page click handler: while in add-mode, drop a field of the pinned type
+// and KEEP add-mode active for the next click. Delegated on documentStrip
+// so it works for every rendered page.
 documentStrip.addEventListener('click', (e) => {
-  if (!_addMode) return;
+  if (!_addModeType) return;
   const shell = e.target.closest('.page-shell');
   if (!shell) return;
   if (e.target.closest('.field-box')) return;  // click landed on an existing box
@@ -522,25 +545,27 @@ documentStrip.addEventListener('click', (e) => {
   const cssY = e.clientY - rect.top;
 
   const pageNum = parseInt(shell.dataset.pageNum || '1', 10);
-  const vpW = parseFloat(shell.dataset.viewportWidth);
   const vpH = parseFloat(shell.dataset.viewportHeight);
   const scaleFactor = parseFloat(shell.dataset.scale) || RENDER_SCALE;
-  if (!Number.isFinite(vpW) || !Number.isFinite(vpH)) return;
+  if (!Number.isFinite(vpH)) return;
 
-  // Default box size in CSS px; tuned to match the detector's typical
-  // signature-line height. User can resize later via right-click.
-  const W = 180, H = 28;
+  // Default box size depends on type. Checkboxes are squares; everything
+  // else is a wide rectangle sized to typical signature-line dimensions.
+  const isCheckbox = _addModeType === 'checkbox';
+  const W = isCheckbox ? 22 : 180;
+  const H = isCheckbox ? 22 : 28;
+  // Center the box on the click for checkboxes (small), left-anchor for
+  // wider fields (so the start of the line tracks the click).
+  const anchorX = isCheckbox ? cssX - W / 2 : cssX;
+  const anchorY = isCheckbox ? cssY - H / 2 : cssY;
 
-  // PDF coords: PDF origin is bottom-left, CSS origin top-left.
-  // viewport.height is in CSS px at scaleFactor zoom; the rendered shell
-  // width should equal viewport.width, so the conversion is a pure divide.
-  const pdfX = cssX / scaleFactor;
-  const pdfY = (rect.height - cssY - H) / scaleFactor;
+  const pdfX = anchorX / scaleFactor;
+  const pdfY = (rect.height - anchorY - H) / scaleFactor;
   const pdfW = W / scaleFactor;
   const pdfH = H / scaleFactor;
 
   const newField = {
-    type: 'text',
+    type: _addModeType,
     label: '',
     page: pageNum,
     x: pdfX,
@@ -554,41 +579,30 @@ documentStrip.addEventListener('click', (e) => {
   newField.id = idFor(newField);
   docState.fields = [...docState.fields, newField];
 
-  // Append a visible box for it immediately. Position in CSS pixels;
-  // we already know the click coordinates.
   const box = document.createElement('div');
   box.className = 'field-box';
   box.dataset.type = newField.type;
   box.dataset.fieldId = newField.id;
   box.dataset.primary = 'true';
   box.dataset.confidence = '100';
-  box.style.left = `${cssX}px`;
-  box.style.top = `${cssY}px`;
-  box.style.width = `${W}px`;
+  box.style.left = `${anchorX}px`;
+  box.style.top  = `${anchorY}px`;
+  box.style.width  = `${W}px`;
   box.style.height = `${H}px`;
-  // Pop a tiny chooser near the click so the user picks the type instead
-  // of always defaulting to text. After the choice, the field is committed
-  // and made drag/resize-able like any AI-detected field.
-  promptAddFieldType(e.clientX, e.clientY).then(chosen => {
-    if (!chosen) {
-      // User cancelled or pressed Esc; nothing committed.
-      toggleAddMode(false);
-      return;
-    }
-    newField.type = chosen;
-    const tag = document.createElement('span');
-    tag.className = 'field-box__tag';
-    tag.textContent = chosen;
-    box.dataset.type = chosen;
-    box.appendChild(tag);
-    overlay.appendChild(box);
-    fieldElements.set(newField.id, box);
-    attachDragResize(box, newField, shell);
+  const tag = document.createElement('span');
+  tag.className = 'field-box__tag';
+  tag.textContent = newField.type;
+  box.appendChild(tag);
+  overlay.appendChild(box);
+  fieldElements.set(newField.id, box);
+  attachDragResize(box, newField, shell);
 
-    populateSidebar({ fields: docState.fields, pageCount: Math.max(...docState.fields.map(f => f.page)) }, docState.filename || '');
-    toggleAddMode(false);
-    track('preview_field_added_manually', { page: pageNum, type: chosen });
-  });
+  populateSidebar(
+    { fields: docState.fields, pageCount: Math.max(...docState.fields.map(f => f.page)) },
+    docState.filename || ''
+  );
+  track('preview_field_added_manually', { page: pageNum, type: newField.type });
+  // Stay in add-mode for the next click.
 });
 
 /**

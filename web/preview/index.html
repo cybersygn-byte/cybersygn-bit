@@ -185,9 +185,17 @@
               Send for signature
               <span class="btn-arrow" aria-hidden="true">→</span>
             </button>
-            <button id="add-field-button" class="btn btn--ghost btn--block btn--sm" type="button">
-              + Add a missed field
-            </button>
+            <div class="add-field-group" role="group" aria-label="Add a missed field">
+              <p class="add-field-group__label">Add a missed field. Pick one then click on the page.</p>
+              <div class="add-field-group__buttons">
+                <button class="add-field-btn" data-add-type="signature" type="button">Signature</button>
+                <button class="add-field-btn" data-add-type="initial"   type="button">Initial</button>
+                <button class="add-field-btn" data-add-type="date"      type="button">Date</button>
+                <button class="add-field-btn" data-add-type="checkbox"  type="button">Checkbox</button>
+                <button class="add-field-btn" data-add-type="text"      type="button">Text</button>
+              </div>
+              <p class="add-field-group__hint" id="add-field-hint" aria-live="polite"></p>
+            </div>
             <button id="reset-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Load another document
             </button>
