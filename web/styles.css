@@ -2317,6 +2317,42 @@ body[data-in-person="true"] .signers-panel__as-select {
 }
 
 /* ========================================================================
+   Per-page render error placeholder. Shown when one page fails to
+   render but the document is otherwise usable. The rest of the
+   document still renders, the detection sidebar is still accurate,
+   and the signed PDF still includes this page.
+   ======================================================================== */
+
+.page-shell--error {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  padding: var(--s-5);
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  color: var(--text-2);
+}
+.page-shell--error .page-shell__index {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--warn);
+}
+.page-shell__error-body p {
+  margin: 0 0 var(--s-2);
+  line-height: 1.55;
+}
+.page-shell__error-body .caption {
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  word-break: break-word;
+}
+
+/* ========================================================================
    Field-box overlay. Drawn on top of each rendered PDF page in the
    preview app. Pass 6 in detect.js classifies fields as primary
    (dedicated signature block) or secondary (body inline fill-ins).

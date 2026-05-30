@@ -876,11 +876,20 @@ async function renderDocument(data, detection) {
 
   // pdfjs requires a fresh Uint8Array because detectFields consumes the buffer.
   const renderData = new Uint8Array(data);
+  // Font handling: we previously set disableFontFace:true and useSystemFonts:false
+  // for security conservatism. That broke real-world PDFs created on macOS,
+  // which embed Hiragino and other Apple system fonts. With both disabled,
+  // pdfjs had no glyph source and threw on render. We now allow @font-face
+  // (so pdfjs can use the embedded subset) and system-font fallback (so
+  // pages with non-embedded fonts still render). isEvalSupported stays false
+  // since we never want pdfjs evaluating any embedded script.
   const doc = await pdfjsLib.getDocument({
     data: renderData,
     isEvalSupported: false,
-    useSystemFonts: false,
-    disableFontFace: true,
+    useSystemFonts: true,
+    disableFontFace: false,
+    disableAutoFetch: true,
+    disableStream: true,
   }).promise;
 
   // Per-page staggered "detection reveal": each field box pops in
@@ -892,51 +901,80 @@ async function renderDocument(data, detection) {
   const REVEAL_TOTAL_PER_PAGE_MS = 700;
   const PER_STEP_CAP_MS = 80;
 
+  // Per-page resilience: if one page fails to render (font issue, image
+  // decode failure, malformed content stream), surface a placeholder and
+  // keep going so the user sees the rest of the document plus all detected
+  // field boxes. The previous all-or-nothing behavior surfaced a generic
+  // "failed to render" toast even when 99% of the document was fine.
+  const pageErrors = [];
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-    const page = await doc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: RENDER_SCALE });
+    try {
+      const page = await doc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: RENDER_SCALE });
 
-    // Cap canvas to a sane device pixel ratio so very large pages do not
-    // blow up memory on retina displays.
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(viewport.width * dpr);
-    canvas.height = Math.round(viewport.height * dpr);
-    canvas.style.width = `${Math.round(viewport.width)}px`;
-    canvas.style.height = `${Math.round(viewport.height)}px`;
+      // Cap canvas to a sane device pixel ratio so very large pages do not
+      // blow up memory on retina displays.
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(viewport.width * dpr);
+      canvas.height = Math.round(viewport.height * dpr);
+      canvas.style.width = `${Math.round(viewport.width)}px`;
+      canvas.style.height = `${Math.round(viewport.height)}px`;
 
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
 
-    const shell = document.createElement('div');
-    shell.className = 'page-shell';
-    shell.style.width = `${Math.round(viewport.width)}px`;
+      const shell = document.createElement('div');
+      shell.className = 'page-shell';
+      shell.style.width = `${Math.round(viewport.width)}px`;
 
-    const indexLabel = document.createElement('span');
-    indexLabel.className = 'page-shell__index';
-    indexLabel.textContent = `Page ${pageNum} of ${doc.numPages}.`;
-    shell.appendChild(indexLabel);
+      const indexLabel = document.createElement('span');
+      indexLabel.className = 'page-shell__index';
+      indexLabel.textContent = `Page ${pageNum} of ${doc.numPages}.`;
+      shell.appendChild(indexLabel);
 
-    shell.appendChild(canvas);
+      shell.appendChild(canvas);
 
-    const overlay = document.createElement('div');
-    overlay.className = 'overlay';
-    shell.appendChild(overlay);
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      shell.appendChild(overlay);
 
-    documentStrip.appendChild(shell);
+      documentStrip.appendChild(shell);
 
-    await page.render({ canvasContext: ctx, viewport }).promise;
+      await page.render({ canvasContext: ctx, viewport }).promise;
 
-    // Draw field boxes for this page, staggered so they "discover"
-    // one at a time. Per-page step caps at 80ms and total stagger
-    // for any single page caps at 700ms.
-    const pageFields = detection.fields.filter(f => f.page === pageNum);
-    const pageStepMs = pageFields.length > 0
-      ? Math.min(PER_STEP_CAP_MS, Math.floor(REVEAL_TOTAL_PER_PAGE_MS / Math.max(1, pageFields.length)))
-      : 0;
-    pageFields.forEach((field, i) => {
-      drawFieldBox(overlay, field, viewport, pageNum, i, pageStepMs);
-    });
+      // Draw field boxes for this page, staggered so they "discover"
+      // one at a time. Per-page step caps at 80ms and total stagger
+      // for any single page caps at 700ms.
+      const pageFields = detection.fields.filter(f => f.page === pageNum);
+      const pageStepMs = pageFields.length > 0
+        ? Math.min(PER_STEP_CAP_MS, Math.floor(REVEAL_TOTAL_PER_PAGE_MS / Math.max(1, pageFields.length)))
+        : 0;
+      pageFields.forEach((field, i) => {
+        drawFieldBox(overlay, field, viewport, pageNum, i, pageStepMs);
+      });
+    } catch (err) {
+      // One page failed; record and continue. The user sees a placeholder
+      // for this page with the detected fields list still accurate.
+      pageErrors.push({ pageNum, message: err && err.message ? err.message : String(err) });
+      report(err, `render:page-${pageNum}`);
+
+      const placeholder = document.createElement('div');
+      placeholder.className = 'page-shell page-shell--error';
+      placeholder.innerHTML = `
+        <span class="page-shell__index">Page ${pageNum} of ${doc.numPages}. Render failed.</span>
+        <div class="page-shell__error-body">
+          <p>This page would not render in your browser. Detection results for this page are still listed in the side panel and the page is still part of the signed PDF.</p>
+          <p class="caption">Reason: ${(err && err.message ? err.message : 'unknown')}</p>
+        </div>
+      `;
+      documentStrip.appendChild(placeholder);
+    }
+  }
+
+  if (pageErrors.length === doc.numPages) {
+    // Every page failed: throw so the outer handler shows a real error.
+    throw new Error(`All ${doc.numPages} pages failed to render. Last error: ${pageErrors[pageErrors.length - 1].message}`);
   }
 }
 
