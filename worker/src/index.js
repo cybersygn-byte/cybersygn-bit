@@ -29,6 +29,7 @@ import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder } from './email.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest } from './owner.js';
+import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import {
   TIERS,
   getSubscription,
@@ -84,6 +85,12 @@ export default {
 
     if (request.method === 'POST' && url.pathname === '/api/event') {
       return handleEvent(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/error') {
+      return handleClientError(request, env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/analytics/summary') {
+      return handleAnalyticsSummary(request, env, url);
     }
 
     // ---- Billing -------------------------------------------------------
@@ -635,31 +642,67 @@ async function handleEvent(request, env) {
     });
   }
 
-  // The intended binding here is a Workers Analytics Engine dataset, set
-  // up in wrangler.toml as ANALYTICS = analytics_engine_dataset. When
-  // bound, we write a single data point per event. When not bound, we
-  // log to stdout so dev still sees what is happening.
-  const point = {
-    event,
-    props: props && typeof props === 'object' ? props : {},
-    receivedAt: new Date().toISOString(),
-    ip: request.headers.get('cf-connecting-ip') || null,
-  };
-
-  try {
-    if (env && env.ANALYTICS && typeof env.ANALYTICS.writeDataPoint === 'function') {
-      env.ANALYTICS.writeDataPoint({
-        indexes: [event.slice(0, 32)],
-        blobs: [JSON.stringify(point.props)],
-      });
-    } else {
-      console.log('[event]', JSON.stringify(point));
-    }
-  } catch (err) {
-    console.error('[event] sink failed:', err);
-  }
+  // Pull a few standard fields out of props for first-class storage in
+  // the Analytics Engine schema. Everything else is dropped (we deliberately
+  // do not store arbitrary props as JSON blobs to keep cardinality sane).
+  const p = props && typeof props === 'object' ? props : {};
+  await trackEvent(env, event, {
+    request,
+    senderId: typeof p.senderId === 'string' ? p.senderId : '',
+    source:   typeof p.source   === 'string' ? p.source   : '',
+    path:     typeof p.path     === 'string' ? p.path     : '',
+    tier:     typeof p.tier     === 'string' ? p.tier     : 'free',
+    value:    typeof p.value    === 'number' ? p.value    : 0,
+    durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
+  });
 
   return jsonResponse(200, { ok: true });
+}
+
+// ---- /api/error ------------------------------------------------------------
+
+async function handleClientError(request, env) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+
+  const { context, message, name, stack, props } = body.value || {};
+  if (typeof context !== 'string' || context.length === 0 || context.length > 80) {
+    return jsonResponse(400, {
+      error: 'invalid_error',
+      message: 'A "context" string between 1 and 80 characters is required.',
+    });
+  }
+  const fakeErr = new Error(typeof message === 'string' ? message : 'unknown');
+  fakeErr.name = typeof name === 'string' ? name : 'ClientError';
+  if (typeof stack === 'string') fakeErr.stack = stack;
+
+  const p = props && typeof props === 'object' ? props : {};
+  await trackError(env, context, fakeErr, {
+    request,
+    senderId: typeof p.senderId === 'string' ? p.senderId : '',
+    source:   typeof p.source   === 'string' ? p.source   : '',
+    path:     typeof p.path     === 'string' ? p.path     : '',
+    tier:     typeof p.tier     === 'string' ? p.tier     : 'free',
+  });
+  return jsonResponse(200, { ok: true });
+}
+
+// ---- /api/analytics/summary ------------------------------------------------
+
+async function handleAnalyticsSummary(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) {
+    return jsonResponse(401, {
+      error: 'unauthorized',
+      message: 'Owner mode required to query the analytics summary.',
+    });
+  }
+  const windowParam = url.searchParams.get('window');
+  const safeWindow = /^INTERVAL\s+'\d{1,3}'\s+(MINUTE|HOUR|DAY)$/i.test(windowParam || '')
+    ? windowParam
+    : "INTERVAL '7' DAY";
+  const data = await analyticsSummary(env, { window: safeWindow });
+  return jsonResponse(200, { ok: true, ...data });
 }
 
 // ---- Multi-signer handlers -------------------------------------------------

@@ -55,6 +55,21 @@
     { "binding": "CYBERSYGN_PDFS", "id": "1246e5be8c8a496795d2817959bce9fe" }
   ],
 
+  "//analytics_engine": [
+    "First-party event analytics. Free tier 10M writes/day, no cookies,",
+    "no third-party vendor. Worker writes via env.CYBERSYGN_EVENTS.writeDataPoint().",
+    "Owner queries the dataset via SQL API (see /api/analytics/summary).",
+    "",
+    "DISABLED UNTIL ACCOUNT OPT-IN. Cloudflare requires a one-click enable",
+    "at /workers/analytics-engine in the dashboard. Until then, deploys fail",
+    "with error 10089 if this binding is active. Uncomment after enabling.",
+    "The Worker's trackEvent/trackError no-op safely without the binding,",
+    "so the rest of telemetry (/api/event, /api/error endpoints) ships today."
+  ],
+  "//analytics_engine_datasets": [
+    { "binding": "CYBERSYGN_EVENTS", "dataset": "cybersygn_events" }
+  ],
+
   "//vars": [
     "Default app URL for magic links in local dev. Override in production",
     "by setting the CYBERSYGN_APP_URL secret in the dashboard."

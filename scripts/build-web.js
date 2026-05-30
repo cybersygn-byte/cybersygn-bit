@@ -73,6 +73,11 @@ async function main() {
   console.log('  wrote dist/marketing.js');
   await copyFile(join(SRC, 'checkout.js'), join(OUT, 'checkout.js'));
   console.log('  wrote dist/checkout.js');
+
+  // First-party telemetry. Loaded synchronously from every HTML page so it
+  // installs window.cybersygn.track/report before page scripts read them.
+  await copyFile(join(SRC, 'telemetry.js'), join(OUT, 'telemetry.js'));
+  console.log('  wrote dist/telemetry.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));
   console.log('  wrote dist/styles.css');
   // 404.html surfaces when not_found_handling: '404-page' fires in Workers.
