@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn preview. Drop a PDF, see the fields.</title>
+  <meta name="description" content="Drop a PDF and CyberSygn locates every signature line, initial, date, and checkbox. The detection runs entirely in your browser." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/preview/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../brand/favicon-16.png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <meta property="og:title" content="CyberSygn preview. Drop a PDF, see the fields." />
+  <meta property="og:description" content="Drop a PDF and CyberSygn locates every signature line, initial, date, and checkbox. The detection runs entirely in your browser." />
+  <meta property="og:image" content="../brand/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('cybersygn.theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "pdfjs-dist/legacy/build/pdf.mjs": "../vendor/pdf.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="Back to CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">preview</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Preview">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../dashboard/">Dashboard</a>
+        <span id="status-indicator" class="pill" data-state="idle">Ready</span>
+        <span id="owner-pill" class="owner-pill" data-active="false" title="Owner mode active">
+          <span class="owner-pill__dot"></span>
+          Owner
+          <button type="button" class="owner-pill__close" aria-label="Exit owner mode">×</button>
+        </span>
+        <button class="theme-toggle" type="button" aria-label="Toggle theme" id="theme-toggle">
+          <svg class="theme-toggle__icon theme-toggle__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="theme-toggle__icon theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app" class="layout layout--empty" aria-live="polite">
+
+    <!-- ============================ EMPTY STATE ============================ -->
+    <div class="dropzone-wrap" id="dropzone">
+      <div class="dropzone-card">
+
+        <div class="dropzone-card__copy">
+          <p class="dropzone-card__kicker">Field detection, in your browser.</p>
+          <h1 class="dropzone-card__headline">
+            Drop a PDF. Watch the fields appear.
+          </h1>
+          <p class="dropzone-card__lede">
+            Every signature line, initial, date, and checkbox in your document, located before you
+            start placing them by hand. Detection runs locally. Nothing leaves this page.
+          </p>
+          <div class="dropzone-card__actions upload-choices">
+            <label for="file-input" class="btn btn--primary upload-choice">
+              <svg class="upload-choice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              Choose a PDF
+            </label>
+            <input id="file-input" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,image/*" hidden multiple />
+
+            <label for="camera-input" class="btn btn--ghost upload-choice">
+              <svg class="upload-choice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Scan with camera
+            </label>
+            <input id="camera-input" type="file" accept="image/*" capture="environment" hidden multiple />
+
+            <span class="dropzone-card__or">or drag onto this page</span>
+          </div>
+          <ul class="dropzone-card__hints">
+            <li>PDFs work best. Camera scans become PDFs in your browser.</li>
+            <li>Max 25 MB per file. Multiple photos compose into one document.</li>
+            <li>Detection runs locally. Your file never reaches a server.</li>
+          </ul>
+        </div>
+
+        <aside class="dropzone-card__demo" aria-hidden="true">
+          <div class="demo-doc" style="transform: rotate(0deg); max-width: 340px; width: 100%;">
+            <span class="demo-doc__corner">SAMPLE.PDF</span>
+            <h3 class="demo-doc__title">SERVICE AGREEMENT</h3>
+            <div class="demo-doc__line"></div>
+            <div class="demo-doc__line demo-doc__line--mid"></div>
+            <div class="demo-doc__line demo-doc__line--short"></div>
+            <div class="demo-doc__section">
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Client</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--1">
+                    <span class="demo-doc__sig-tag">signature</span>
+                  </span>
+                </span>
+              </div>
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Provider</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--sig2">
+                    <span class="demo-doc__sig-tag">signature</span>
+                  </span>
+                </span>
+              </div>
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Date</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--date">
+                    <span class="demo-doc__sig-tag">date</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+            <div class="demo-doc__scan"></div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+
+    <!-- ============================ RESULT ============================ -->
+    <section id="result" class="result" hidden>
+
+      <div class="result__pages" id="document-strip" role="region" aria-label="Rendered pages"></div>
+
+      <aside class="sidebar" aria-label="Detected fields">
+
+        <header class="sidebar__head">
+          <p class="sidebar__crumb">Detection report</p>
+          <h2 id="result-filename" class="sidebar__file">document.pdf</h2>
+
+          <dl class="sidebar__stats">
+            <div class="sidebar__stat">
+              <dt>Pages</dt>
+              <dd id="stat-pages">0</dd>
+            </div>
+            <div class="sidebar__stat">
+              <dt>Fields</dt>
+              <dd id="stat-fields">0</dd>
+            </div>
+            <div class="sidebar__stat">
+              <dt>Confidence</dt>
+              <dd id="stat-confidence">0%</dd>
+            </div>
+          </dl>
+
+          <div class="sidebar__legend" aria-label="Field types">
+            <span class="legend-chip" data-type="signature"><i></i>Signature</span>
+            <span class="legend-chip" data-type="date"><i></i>Date</span>
+            <span class="legend-chip" data-type="initial"><i></i>Initial</span>
+            <span class="legend-chip" data-type="checkbox"><i></i>Checkbox</span>
+            <span class="legend-chip" data-type="text"><i></i>Text</span>
+          </div>
+
+          <div class="sidebar__actions">
+            <button id="sign-button" class="btn btn--primary btn--block" type="button" disabled>
+              Send for signature
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </button>
+            <button id="reset-button" class="btn btn--ghost btn--block btn--sm" type="button">
+              Load another document
+            </button>
+          </div>
+        </header>
+
+        <!--
+          Signers panel. Populated dynamically by app.js once a document
+          loads. Shows each signer with a colour swatch, name, email,
+          field count, and a control to switch perspective.
+        -->
+        <section id="signers-panel" class="signers-panel" aria-label="Signers">
+          <div class="signers-panel__head">
+            <h3 class="signers-panel__title">Signers.</h3>
+            <button id="add-signer" class="btn btn--ghost btn--sm" type="button">+ Add</button>
+          </div>
+          <ol id="signers-list" class="signers-list"></ol>
+          <p class="signers-panel__as">
+            <span class="signers-panel__as-label">Signing as</span>
+            <select id="signing-as" class="signers-panel__as-select" aria-label="Signing as"></select>
+          </p>
+        </section>
+
+        <ol id="field-list" class="field-list" aria-label="Detected fields"></ol>
+      </aside>
+    </section>
+
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </main>
+
+  <footer class="preview-colophon">
+    Detection logic identical to the production worker. Self-hosted assets. No third-party calls.
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      function current() {
+        var attr = document.documentElement.getAttribute('data-theme');
+        if (attr === 'light' || attr === 'dark') return attr;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      btn.addEventListener('click', function () {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try {
+          localStorage.setItem('cybersygn.theme', next);
+        } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

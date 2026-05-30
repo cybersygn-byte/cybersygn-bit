@@ -1,0 +1,28 @@
+# CyberSygn
+
+> The signature tool engineers actually like. Upload a PDF or Word document, CyberSygn finds every signature line, initial, date, and checkbox automatically. Sign in person on the same device or route private links to remote signers. Two minutes, not ten.
+
+CyberSygn is an e-signature service for independent professionals and small services businesses. The differentiator is field detection: every competitor (DocuSign, Dropbox Sign, SignWell) makes you place signature fields by hand. CyberSygn reads the document and places them for you, then highlights them for confirmation.
+
+## Pricing
+
+- Free: 3 documents per month, single signer per document, no card required.
+- Solo: $12 per month, unlimited documents, multi-signer routing, in-person mode, camera scan upload, audit certificate.
+- Founding: $9 per month locked for life, first 100 customers only, everything in Solo plus a direct line to the founder.
+- Team: $29 per month for 3 seats, shared workspace, aggregated dashboard.
+
+## Core docs
+
+- [Homepage](https://cybersygn.io/): product overview, the three-step flow, founding-member signup
+- [Try detection](https://cybersygn.io/preview/): upload a PDF and see fields detected in your browser, no account required
+- [Sender dashboard](https://cybersygn.io/dashboard/): document index with per-signer status (account required)
+
+## Alternatives pages
+
+- [DocuSign alternative for consultants](https://cybersygn.io/alternatives/docusign-alternative-for-consultants/)
+- [DocuSign alternative for coaches](https://cybersygn.io/alternatives/docusign-alternative-for-coaches/)
+- [DocuSign alternative for freelancers](https://cybersygn.io/alternatives/docusign-alternative-for-freelancers/)
+
+## Reference
+
+- [Full product description](https://cybersygn.io/llms-full.txt): the long-form plain-text version of every page, intended for ingestion

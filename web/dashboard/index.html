@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn dashboard. Documents you have sent.</title>
+  <meta name="description" content="Track the documents you have routed through CyberSygn, remind pending signers, and download signed PDFs and audit certificates." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../brand/favicon-16.png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <meta property="og:title" content="CyberSygn dashboard." />
+  <meta property="og:description" content="Track the documents you have routed through CyberSygn, remind pending signers, and download signed PDFs and audit certificates." />
+  <meta property="og:image" content="../brand/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('cybersygn.theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">dashboard</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Dashboard">
+        <a class="masthead__link" href="../">Send a document</a>
+        <a class="masthead__link" href="../../">Home</a>
+        <span id="owner-pill" class="owner-pill" data-active="false" title="Owner mode active">
+          <span class="owner-pill__dot"></span>
+          Owner
+          <button type="button" class="owner-pill__close" aria-label="Exit owner mode">×</button>
+        </span>
+        <button class="theme-toggle" type="button" aria-label="Toggle theme" id="theme-toggle">
+          <svg class="theme-toggle__icon theme-toggle__moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="theme-toggle__icon theme-toggle__sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="container">
+
+      <div class="toast" id="checkout-toast" hidden role="status" aria-live="polite" style="position: relative; top: 0; margin-bottom: var(--s-5);">
+        <div class="toast__inner">
+          <span class="toast__text" id="checkout-toast-text"></span>
+          <button class="toast__close" type="button" id="checkout-toast-close" aria-label="Dismiss">×</button>
+        </div>
+      </div>
+
+      <header class="dashboard__head">
+        <div>
+          <p class="kicker">Documents you have sent.</p>
+          <h1 class="h-section" id="dashboard-title">Every contract you have routed through CyberSygn.</h1>
+          <p class="lede" id="dashboard-lede">
+            Active documents are waiting on at least one signer. Completed documents
+            include the audit certificate and the signed PDF, ready to download.
+          </p>
+        </div>
+        <div class="dashboard__actions">
+          <!--
+            Workspace switcher. Defaults to "Personal" (the per-sender
+            index, no workspace). Members of one or more workspaces see
+            them listed; selecting a workspace flips the doc list to
+            that workspace's aggregated view.
+          -->
+          <div class="ws-switcher" id="workspace-switcher">
+            <label class="ws-switcher__label">Viewing</label>
+            <select id="workspace-select" class="ws-switcher__select" aria-label="Active workspace">
+              <option value="">Personal</option>
+            </select>
+            <button id="ws-manage" class="btn btn--ghost btn--sm" type="button">Manage</button>
+          </div>
+          <a class="btn btn--primary" href="../">
+            Send a new document
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <button id="billing-portal" class="btn btn--ghost btn--sm" type="button" hidden>Manage billing</button>
+          <button id="identity-toggle" class="btn btn--ghost btn--sm" type="button">Backup identity</button>
+        </div>
+      </header>
+
+      <!--
+        Subscription banner. Hidden until we know the sender's tier.
+        Shows current plan, monthly usage for free tier, founding number
+        for founding members, and a one-click upgrade for free senders.
+      -->
+      <aside class="sub-banner" id="sub-banner" hidden aria-live="polite">
+        <div class="sub-banner__left">
+          <span class="sub-banner__tier" id="sub-banner-tier"></span>
+          <span class="sub-banner__detail" id="sub-banner-detail"></span>
+        </div>
+        <div class="sub-banner__right" id="sub-banner-actions"></div>
+      </aside>
+
+      <!--
+        Sender backup panel. The senderId lives in localStorage; if a
+        sender wants to access their dashboard from another browser, they
+        copy this value and paste it on the new device. Mirrors the "set
+        a recovery code" pattern used by other self-hosted-identity apps.
+      -->
+      <section id="identity-panel" class="identity-panel" hidden>
+        <div class="identity-panel__head">
+          <div>
+            <p class="kicker kicker--ink">Your sender identity.</p>
+            <p class="identity-panel__body">
+              CyberSygn uses this token to find your documents. Copy it
+              and store it somewhere safe. To access this dashboard from
+              another browser, paste the token below on that device.
+            </p>
+          </div>
+          <button id="identity-close" class="identity-panel__close" type="button" aria-label="Close">×</button>
+        </div>
+        <label class="identity-panel__field">
+          <span class="identity-panel__label">Sender token</span>
+          <input id="identity-input" class="identity-panel__input" type="text" readonly />
+        </label>
+        <div class="identity-panel__buttons">
+          <button id="identity-copy" class="btn btn--ghost btn--sm" type="button">Copy</button>
+          <button id="identity-paste" class="btn btn--ghost btn--sm" type="button">Paste from clipboard</button>
+          <button id="identity-save" class="btn btn--ink btn--sm" type="button" hidden>Use this token</button>
+        </div>
+      </section>
+
+      <!-- States: loading, error, empty, list. We render exactly one at a time. -->
+      <section id="state-loading" class="state-card">
+        <p class="state-card__kicker">Loading.</p>
+        <p class="state-card__body">Fetching your documents.</p>
+      </section>
+
+      <section id="state-error" class="state-card state-card--error" hidden>
+        <p class="state-card__kicker">Could not load.</p>
+        <p class="state-card__body" id="state-error-message">Something went wrong.</p>
+        <button id="state-error-retry" class="btn btn--ghost btn--sm" type="button">Try again</button>
+      </section>
+
+      <section id="state-empty" class="state-card" hidden>
+        <p class="kicker">No documents yet.</p>
+        <h2 class="h-section">Send your first document to see it here.</h2>
+        <p class="lede">
+          Upload a PDF, route it to the signers who need to sign it, and the document
+          will appear on this dashboard the moment you click Send.
+        </p>
+        <div class="state-card__actions">
+          <a class="btn btn--primary" href="../">Send a document</a>
+        </div>
+      </section>
+
+      <section id="state-list" hidden>
+        <div class="dashboard__filters">
+          <button class="filter-chip filter-chip--active" data-filter="all"     type="button">All <span class="filter-chip__count" id="count-all">0</span></button>
+          <button class="filter-chip"                    data-filter="active"  type="button">Active <span class="filter-chip__count" id="count-active">0</span></button>
+          <button class="filter-chip"                    data-filter="complete" type="button">Signed <span class="filter-chip__count" id="count-complete">0</span></button>
+        </div>
+        <ol id="docs-list" class="docs-list" aria-label="Documents"></ol>
+      </section>
+
+      <!-- Workspace management modal. Hidden by default; opened from
+           the "Manage" button or the "Create workspace" prompt. -->
+      <div id="ws-modal" class="modal-overlay" hidden>
+        <div class="modal-card modal-card--wide ws-modal" role="dialog" aria-label="Workspace settings">
+          <header class="modal-card__head">
+            <span class="modal-card__kicker" id="ws-modal-kicker">Workspace.</span>
+            <h2 class="modal-card__title" id="ws-modal-title">Manage members.</h2>
+            <button class="modal-card__close" type="button" aria-label="Close" id="ws-modal-close">×</button>
+          </header>
+          <div class="modal-card__body" id="ws-modal-body"></div>
+          <footer class="modal-card__footer">
+            <div class="modal-card__footer-left" id="ws-modal-footer-left"></div>
+            <div class="modal-card__footer-right" id="ws-modal-footer-right"></div>
+          </footer>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="preview-colophon">
+    Your sender identity lives in this browser. Click "Backup identity" to copy it for use on another device.
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+  <script type="module" src="../checkout.js"></script>
+  <script type="module">
+    // Subscription banner. Reads /api/billing/subscription, populates the
+    // tier name, monthly usage (free tier), and renders the right
+    // primary action: "Choose Solo" if free, "Manage billing" if paid.
+    import { getSenderId } from '../preview/identity.js';
+
+    const OWNER_HEADER = 'X-CyberSygn-Owner';
+    const OWNER_KEY = 'cybersygn.owner.token';
+
+    function ownerToken() {
+      try { return localStorage.getItem(OWNER_KEY) || null; } catch { return null; }
+    }
+
+    async function load() {
+      const banner = document.getElementById('sub-banner');
+      const tierEl = document.getElementById('sub-banner-tier');
+      const detailEl = document.getElementById('sub-banner-detail');
+      const actionsEl = document.getElementById('sub-banner-actions');
+      const portalBtn = document.getElementById('billing-portal');
+      if (!banner || !tierEl || !detailEl || !actionsEl) return;
+
+      const senderId = getSenderId();
+      const headers = {};
+      const tok = ownerToken();
+      if (tok) headers[OWNER_HEADER] = tok;
+
+      let data;
+      try {
+        const res = await fetch(`/api/billing/subscription?senderId=${encodeURIComponent(senderId)}`, { headers });
+        if (!res.ok) return;
+        data = await res.json();
+      } catch { return; }
+      if (!data) return;
+
+      const tier = data.tier;
+      const tierLabels = {
+        owner:    'Owner mode',
+        free:     'Free plan',
+        solo:     'Solo plan',
+        founding: 'Founding member',
+        team:     'Team plan',
+      };
+      tierEl.textContent = tierLabels[tier] || tier;
+      banner.dataset.tier = tier;
+
+      if (tier === 'owner') {
+        detailEl.textContent = 'Unmetered. Demo-ready. No charges.';
+      } else if (tier === 'free') {
+        const u = data.usage || {};
+        const used = u.used || 0;
+        const cap = u.cap || 3;
+        const remaining = Math.max(0, cap - used);
+        detailEl.textContent = remaining === 0
+          ? `You have used all ${cap} free documents this month. Upgrade to keep signing.`
+          : `${used} of ${cap} free documents used this month. ${remaining} remaining.`;
+      } else if (tier === 'founding' && data.foundingNumber) {
+        detailEl.textContent = `Founding member #${data.foundingNumber} of 100. $9 / mo locked for life.`;
+      } else if (data.currentPeriodEnd) {
+        const d = new Date(data.currentPeriodEnd);
+        detailEl.textContent = `Active. Next renewal ${d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}.`;
+      } else {
+        detailEl.textContent = 'Active.';
+      }
+
+      // Primary action
+      actionsEl.innerHTML = '';
+      if (tier === 'free') {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn--primary btn--sm';
+        btn.type = 'button';
+        btn.dataset.checkoutTier = 'solo';
+        btn.textContent = 'Upgrade to Solo';
+        actionsEl.appendChild(btn);
+        // Re-bind checkout buttons we just injected.
+        import('../checkout.js').then(mod => mod.initCheckoutButtons(actionsEl)).catch(() => {});
+      }
+      if (tier !== 'free' && portalBtn) {
+        portalBtn.hidden = false;
+        portalBtn.addEventListener('click', async () => {
+          portalBtn.disabled = true;
+          const original = portalBtn.textContent;
+          portalBtn.textContent = 'Opening.';
+          try {
+            const res = await fetch(`/api/billing/portal?senderId=${encodeURIComponent(senderId)}`, { headers });
+            const j = await res.json().catch(() => ({}));
+            if (res.ok && j.url) window.location.assign(j.url);
+            else { portalBtn.textContent = original; portalBtn.disabled = false; }
+          } catch { portalBtn.textContent = original; portalBtn.disabled = false; }
+        });
+      }
+
+      banner.hidden = false;
+    }
+
+    load();
+  </script>
+  <script>
+    // Checkout-return toast. Stripe redirects here on success; we read
+    // the query param, celebrate, and clean the URL.
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var state = params.get('checkout');
+      var portal = params.get('portal');
+      var messages = {
+        success: 'Welcome aboard. Your subscription is active. Pick a document to send first.',
+        owner:   'Owner mode active. Demo-ready. No real payment was processed.',
+      };
+      var msg = messages[state] || (portal === 'owner' ? messages.owner : null);
+      if (!msg) return;
+      var toast = document.getElementById('checkout-toast');
+      var text = document.getElementById('checkout-toast-text');
+      var close = document.getElementById('checkout-toast-close');
+      if (!toast || !text) return;
+      text.textContent = msg;
+      toast.hidden = false;
+      toast.dataset.state = state === 'owner' || portal === 'owner' ? 'owner' : 'success';
+      if (close) close.addEventListener('click', function () { toast.hidden = true; });
+      params.delete('checkout'); params.delete('portal'); params.delete('session_id'); params.delete('tier');
+      var clean = location.pathname + (params.toString() ? '?' + params : '') + location.hash;
+      history.replaceState(null, '', clean);
+    })();
+  </script>
+  <script>
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      if (!btn) return;
+      function current() {
+        var attr = document.documentElement.getAttribute('data-theme');
+        if (attr === 'light' || attr === 'dark') return attr;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      btn.addEventListener('click', function () {
+        var next = current() === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try {
+          localStorage.setItem('cybersygn.theme', next);
+        } catch (e) {}
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+# robots.txt for CyberSygn
+#
+# Indexable site by default. Private and auth-only paths are blocked.
+# AI crawlers are explicitly welcomed because we want to be cited and
+# recommended by ChatGPT, Claude, Perplexity, and similar assistants
+# when users ask about e-signature alternatives.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /preview/?
+Disallow: /preview/index.html?
+Crawl-delay: 1
+
+# AI assistant crawlers (training and grounding).
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /preview/?
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: meta-externalagent
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Bytespider
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Amazonbot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: YouBot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+User-agent: Diffbot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard/
+
+Sitemap: https://cybersygn.io/sitemap.xml

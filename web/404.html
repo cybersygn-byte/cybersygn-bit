@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>404. Page not found. CyberSygn.</title>
+  <meta name="description" content="That URL does not exist on CyberSygn. Head back to the home page or open the signing tool." />
+  <meta name="robots" content="noindex, follow" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0A0E1A" media="(prefers-color-scheme: dark)" />
+  <link rel="stylesheet" href="/vendor/fonts.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('cybersygn.theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="/" aria-label="CyberSygn home">
+        <span class="wordmark__cyber">Cyber</span><span class="wordmark__sygn">Sygn</span><span class="wordmark__dot">.</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 96px 0; max-width: 640px;">
+    <p class="kicker">404.</p>
+    <h1 class="h-display" style="margin-top: 24px;">
+      Nothing<span class="dot">.</span><br>
+      <em>here.</em>
+    </h1>
+    <p class="lede" style="margin-top: 24px;">
+      This URL does not exist on CyberSygn. The link you followed may be stale, mistyped, or from a document that has been removed. If a signer sent you here from a magic link, ask them to issue a new one.
+    </p>
+    <div style="margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <a class="btn btn--primary" href="/">Back to the home page</a>
+      <a class="btn btn--ghost" href="/preview/">Open the signing tool</a>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Markline. The careful e-signature tool.</title>
+  <meta name="description" content="Markline reads your PDF and finds every signature line, initial, date, and checkbox before you place a single field by hand. The careful e-signature tool for independent professionals." />
+  <link rel="stylesheet" href="./vendor/fonts.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark wordmark--link" href="./" aria-label="Markline home">
+        <span class="wordmark__mark" aria-hidden="true">M.</span>
+        <span class="wordmark__text">Markline</span>
+        <span class="wordmark__rule" aria-hidden="true"></span>
+        <span class="wordmark__edition">prelaunch.</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <a class="masthead__link" href="#how">How.</a>
+        <a class="masthead__link" href="#pricing">Pricing.</a>
+        <a class="masthead__link" href="#founding">Founding.</a>
+        <a class="btn btn--ghost btn--sm" href="./preview/">
+          Try the demo
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- =========================== HERO =========================== -->
+    <section class="hero">
+      <div class="container hero__inner">
+        <div class="hero__copy">
+          <p class="kicker hero__kicker">An e-signature tool that respects your time.</p>
+          <h1 class="hero__headline">
+            You upload<span class="period">.</span><br />
+            <em>We find</em> the fields<span class="period">.</span>
+          </h1>
+          <p class="hero__lede">
+            Every other e-signature tool makes you drag rectangles onto a PDF, one field at a time.
+            Markline reads the document, finds every signature line, initial, date, and checkbox,
+            and places them for you. You send. The signer signs. Nobody learns a new vocabulary.
+          </p>
+          <div class="hero__cta">
+            <a class="btn btn--primary btn--lg" href="./preview/">
+              See it work on your PDF
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="btn btn--ghost btn--lg" href="#founding">Join the first 100.</a>
+          </div>
+          <p class="hero__signal">
+            <span class="hero__signal-dot" aria-hidden="true"></span>
+            Detection passes on 9 of 10 real contracts.
+          </p>
+        </div>
+
+        <!-- Animated demo doc on the right -->
+        <aside class="hero__demo" aria-hidden="true">
+          <div class="demo-doc">
+            <span class="demo-doc__corner">CONTRACT.PDF</span>
+            <h3 class="demo-doc__title">RESIDENTIAL TENANCY AGREEMENT</h3>
+            <div class="demo-doc__line"></div>
+            <div class="demo-doc__line demo-doc__line--mid"></div>
+            <div class="demo-doc__line demo-doc__line--short"></div>
+
+            <div class="demo-doc__section">
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Landlord</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--1">
+                    <span class="demo-doc__sig-tag">signature</span>
+                  </span>
+                </span>
+              </div>
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Tenant</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--sig2">
+                    <span class="demo-doc__sig-tag">signature</span>
+                  </span>
+                </span>
+              </div>
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Date</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--date">
+                    <span class="demo-doc__sig-tag">date</span>
+                  </span>
+                </span>
+              </div>
+              <div class="demo-doc__row">
+                <span class="demo-doc__row-label">Initials</span>
+                <span class="demo-doc__row-baseline">
+                  <span class="demo-doc__sig demo-doc__sig--init">
+                    <span class="demo-doc__sig-tag">initial</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="demo-doc__scan"></div>
+          </div>
+          <div class="demo-counter">
+            <span class="demo-counter__num">04</span>
+            <span class="demo-counter__label">fields<br/>found</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- =========================== PROOF =========================== -->
+    <section class="proof">
+      <div class="container">
+        <div class="proof__inner">
+          <div class="proof__item">
+            <p class="proof__num">2<span class="unit">min</span></p>
+            <p class="proof__label">Median time from upload to send.</p>
+          </div>
+          <div class="proof__item">
+            <p class="proof__num">90<span class="unit">%</span></p>
+            <p class="proof__label">Real-contract detection rate.</p>
+          </div>
+          <div class="proof__item">
+            <p class="proof__num">0</p>
+            <p class="proof__label">Fields you place by hand.</p>
+          </div>
+          <div class="proof__item">
+            <p class="proof__num">$9</p>
+            <p class="proof__label">Founding rate. Locked.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== PROBLEM =========================== -->
+    <section class="section">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__left">
+            <p class="kicker kicker--ink">What we noticed.</p>
+            <h2 class="h-section">
+              Sales teams need routing. Independents just need a signed page.
+            </h2>
+          </div>
+          <div class="section-head__right">
+            <p class="lede">
+              The market leaders sell document-routing systems. They are built for sales operations,
+              not solo professionals. The vocabulary, the pricing, and the friction all show it.
+            </p>
+          </div>
+        </header>
+
+        <div class="prose-grid">
+          <div>
+            <p>
+              We watched twelve solo operators send a contract through the leading tool. The median
+              time from "open PDF" to "sent for signature" was eleven minutes. Most of that was spent
+              dragging boxes onto a page that already had blank lines drawn on it.
+            </p>
+            <p>
+              The signer received the document within two minutes. The sender spent nine minutes
+              preparing it. That is the wrong ratio. The sender is the one paying for the tool.
+            </p>
+          </div>
+          <div>
+            <p>
+              Markline reverses it. Detection runs the moment you upload. You confirm what the tool
+              found and send. Two minutes, not eleven. The signer experience is identical to what
+              they already know.
+            </p>
+            <blockquote class="pullquote">
+              <em>"The document already shows where you sign.
+              Software should read what is already on the page."</em>
+            </blockquote>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== HOW =========================== -->
+    <section class="section" id="how" style="background: var(--paper-2); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__left">
+            <p class="kicker">How it works.</p>
+            <h2 class="h-section">Three steps. No new vocabulary.</h2>
+          </div>
+          <div class="section-head__right">
+            <p class="lede">
+              No setup checklist. No template builder. No field palette. The only word you need to
+              know is "send."
+            </p>
+          </div>
+        </header>
+
+        <ol class="steps">
+          <li class="step">
+            <span class="step__num" aria-hidden="true">01</span>
+            <p class="step__kicker">Upload.</p>
+            <h3 class="step__title">Drop the PDF.</h3>
+            <p class="step__body">
+              Drag the document onto Markline. We parse the structure in your browser. Nothing leaves
+              your machine until you decide to send.
+            </p>
+          </li>
+          <li class="step">
+            <span class="step__num" aria-hidden="true">02</span>
+            <p class="step__kicker">Review.</p>
+            <h3 class="step__title">Confirm the fields.</h3>
+            <p class="step__body">
+              Markline highlights every signature line, initial, date, and checkbox. You add anything
+              we missed, remove anything we got wrong. Most documents need no changes.
+            </p>
+          </li>
+          <li class="step">
+            <span class="step__num" aria-hidden="true">03</span>
+            <p class="step__kicker">Send.</p>
+            <h3 class="step__title">Sign and track.</h3>
+            <p class="step__body">
+              Signers get an email. They sign on any device without an account. You get the signed
+              PDF and a tamper-evident audit log the moment the last signer completes.
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- =========================== PRICING =========================== -->
+    <section class="section" id="pricing">
+      <div class="container">
+        <header class="section-head">
+          <div class="section-head__left">
+            <p class="kicker">Pricing.</p>
+            <h2 class="h-section">Honest tiers. One locked founding rate.</h2>
+          </div>
+          <div class="section-head__right">
+            <p class="lede">
+              The first 100 founding accounts pay $9 a month. Forever. After that, prices land at
+              the levels below. Cancel any time, keep your signed documents.
+            </p>
+          </div>
+        </header>
+
+        <div class="plans">
+
+          <article class="plan">
+            <header class="plan__head">
+              <h3 class="plan__name">Free.</h3>
+              <p class="plan__tag">Try a contract or two.</p>
+            </header>
+            <div class="plan__price">
+              <span class="plan__amount">$0</span>
+              <span class="plan__per">/ month</span>
+            </div>
+            <ul class="plan__list">
+              <li>Three documents per month.</li>
+              <li>One signer per document.</li>
+              <li>Markline footer on signed PDFs.</li>
+              <li>Email delivery and audit log.</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="./preview/">Try the demo.</a>
+          </article>
+
+          <article class="plan plan--featured">
+            <span class="plan__ribbon">Founding rate. 100 spots.</span>
+            <header class="plan__head">
+              <h3 class="plan__name">Founding member.</h3>
+              <p class="plan__tag">Everything in Solo. Locked at $9.</p>
+            </header>
+            <div class="plan__price">
+              <span class="plan__amount">$9</span>
+              <span class="plan__per">/ month, forever</span>
+            </div>
+            <ul class="plan__list">
+              <li>Everything in Solo.</li>
+              <li>Rate locked for the life of your account.</li>
+              <li>Direct line to the founders.</li>
+              <li>Vote on the next features we build.</li>
+            </ul>
+            <a class="btn btn--primary btn--block" href="#founding">Claim your spot.</a>
+          </article>
+
+          <article class="plan">
+            <header class="plan__head">
+              <h3 class="plan__name">Solo.</h3>
+              <p class="plan__tag">Independent professionals.</p>
+            </header>
+            <div class="plan__price">
+              <span class="plan__amount">$12</span>
+              <span class="plan__per">/ month</span>
+            </div>
+            <ul class="plan__list">
+              <li>Unlimited documents.</li>
+              <li>Up to five signers per document.</li>
+              <li>No Markline footer.</li>
+              <li>Templates and reminders.</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="#founding">Notify me at launch.</a>
+          </article>
+
+          <article class="plan">
+            <header class="plan__head">
+              <h3 class="plan__name">Team.</h3>
+              <p class="plan__tag">A small services firm.</p>
+            </header>
+            <div class="plan__price">
+              <span class="plan__amount">$29</span>
+              <span class="plan__per">/ month, 3 seats</span>
+            </div>
+            <ul class="plan__list">
+              <li>Everything in Solo, for three.</li>
+              <li>Shared templates and brand kit.</li>
+              <li>Per-document reporting.</li>
+              <li>Additional seats $9 each.</li>
+            </ul>
+            <a class="btn btn--ghost btn--block" href="#founding">Notify me at launch.</a>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================== FOUNDING =========================== -->
+    <section class="founding" id="founding">
+      <div class="container founding__grid">
+
+        <div class="founding__copy">
+          <p class="kicker">Founding members.</p>
+          <h2 class="h-section h-section--wide">
+            The first 100 accounts pay $9 a month. Forever.
+          </h2>
+          <p class="founding__lede">
+            We are building Markline in public. Join the founding list and you will get a working
+            account on launch day, a direct line to the founders, and the rate locked in for as long
+            as you keep your account. We email when there is something worth saying. Never otherwise.
+          </p>
+          <ul class="founding__points">
+            <li>Charter rate of $9 per month, locked for the life of your account.</li>
+            <li>First look at every feature, in private beta before public release.</li>
+            <li>Founders read every reply. The roadmap follows what founding members ask for.</li>
+          </ul>
+        </div>
+
+        <aside class="form-card" aria-labelledby="founding-form-heading">
+          <header class="form-card__head">
+            <h3 class="form-card__title" id="founding-form-heading">Reserve a spot.</h3>
+            <span class="form-card__count">
+              <strong id="founding-count">87</strong> of 100 left
+            </span>
+          </header>
+
+          <form id="founding-form" class="form" novalidate>
+
+            <div class="field">
+              <input
+                class="field__input"
+                type="email"
+                id="founding-email"
+                name="email"
+                placeholder=" "
+                required
+                autocomplete="email"
+              />
+              <label class="field__label" for="founding-email">Email address</label>
+            </div>
+
+            <div class="field">
+              <input
+                class="field__input"
+                type="text"
+                id="founding-context"
+                name="context"
+                placeholder=" "
+                autocomplete="off"
+              />
+              <label class="field__label" for="founding-context">What kind of contracts? (Optional)</label>
+            </div>
+
+            <button class="btn btn--primary btn--block btn--lg" type="submit">
+              Reserve my founding spot
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </button>
+
+            <p class="form-card__fine">
+              We email you twice between now and launch. We never sell, rent, or share your address.
+              No newsletter. No drip campaign.
+            </p>
+            <div id="founding-result" class="form-card__result" hidden></div>
+          </form>
+        </aside>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container">
+      <div class="colophon__inner">
+        <div class="colophon__brand">
+          <a class="wordmark" href="./" aria-label="Markline">
+            <span class="wordmark__mark" aria-hidden="true">M.</span>
+            <span class="wordmark__text">Markline</span>
+          </a>
+          <p>You upload. We find the fields. An e-signature tool for the rest of us.</p>
+        </div>
+        <nav class="colophon__nav" aria-label="Footer">
+          <div>
+            <h5>Product.</h5>
+            <ul>
+              <li><a href="./preview/">Demo</a></li>
+              <li><a href="#pricing">Pricing</a></li>
+              <li><a href="#how">How it works</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Company.</h5>
+            <ul>
+              <li><a href="#founding">Founding members</a></li>
+              <li><a href="mailto:hello@markline.app">hello@markline.app</a></li>
+            </ul>
+          </div>
+          <div>
+            <h5>Legal.</h5>
+            <ul>
+              <li><a href="#">Privacy</a></li>
+              <li><a href="#">Terms</a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+      <p class="colophon__fine">
+        <span>Built carefully in Parker, Colorado.</span>
+        <span>Prelaunch prototype. Pricing locks at general availability.</span>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="./marketing.js"></script>
+</body>
+</html>

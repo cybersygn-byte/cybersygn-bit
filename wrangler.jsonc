@@ -1,0 +1,84 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cybersygn",
+  "main": "worker/src/index.js",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "observability": {
+    "enabled": true
+  },
+
+  "limits": {
+    "cpu_ms": 30000
+  },
+
+  "//assets": [
+    "Static site lives under web/dist. With run_worker_first: ['/api/*'],",
+    "Cloudflare always invokes the Worker for API paths and serves static",
+    "assets directly for everything else. The Worker's assets fall-through",
+    "(env.ASSETS.fetch) is a safety net for any non-API path that somehow",
+    "reaches the worker."
+  ],
+  "assets": {
+    "directory": "./web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+
+  "//kv": [
+    "These bindings are declared without IDs. On first Deploy via the",
+    "Cloudflare button, Workers auto-provisions both namespaces and writes",
+    "the IDs back. No manual `wrangler kv namespace create` needed."
+  ],
+  "kv_namespaces": [
+    { "binding": "CYBERSYGN_DOCS" },
+    { "binding": "CYBERSYGN_PDFS" }
+  ],
+
+  "//vars": [
+    "Default app URL for magic links in local dev. Override in production",
+    "by setting the CYBERSYGN_APP_URL secret in the dashboard."
+  ],
+  "vars": {
+    "CYBERSYGN_APP_URL": "http://localhost:8787"
+  },
+
+  "//secrets": [
+    "Set these via `wrangler secret put <NAME>` (or the dashboard).",
+    "Never commit values.",
+    "",
+    "  CYBERSYGN_OWNER_HASH    SHA-256 hex of your owner backdoor phrase.",
+    "  RESEND_API_KEY          Resend API key.",
+    "",
+    "Stripe (hosted checkout, subscription billing):",
+    "  STRIPE_SECRET_KEY       sk_live_... or sk_test_...",
+    "  STRIPE_WEBHOOK_SECRET   whsec_... (after creating the webhook endpoint)",
+    "  STRIPE_PRICE_SOLO       price_... for $12 / mo Solo plan",
+    "  STRIPE_PRICE_FOUNDING   price_... for $9 / mo Founding 100 plan",
+    "  STRIPE_PRICE_TEAM       price_... for $29 / mo Team plan",
+    "",
+    "Webhook endpoint to register in Stripe dashboard:",
+    "  https://<your-domain>/api/stripe/webhook",
+    "Events: checkout.session.completed, customer.subscription.created,",
+    "  customer.subscription.updated, customer.subscription.deleted"
+  ],
+
+  "//triggers": [
+    "Reminder sweep runs hourly. Walks every active doc; emails pending",
+    "signers whose backoff window (24h / 72h / 7d) has elapsed."
+  ],
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+
+  "//build": [
+    "Workers Builds runs this command on every push to main. It vendors",
+    "fonts and pdf libraries, then assembles the static site into web/dist.",
+    "No user action needed."
+  ],
+  "build": {
+    "command": "npm install && npm run vendor && npm run build"
+  }
+}

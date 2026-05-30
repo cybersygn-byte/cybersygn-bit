@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Join a CyberSygn workspace.</title>
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../brand/favicon-16.png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('cybersygn.theme');
+        if (saved === 'light' || saved === 'dark') {
+          document.documentElement.setAttribute('data-theme', saved);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">invitation</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="container" style="max-width: 560px;">
+      <div id="state-loading" class="state-card">
+        <p class="state-card__kicker">Loading.</p>
+        <p class="state-card__body">Reading your invitation.</p>
+      </div>
+
+      <div id="state-invalid" class="state-card state-card--error" hidden>
+        <p class="state-card__kicker">This invitation is no longer valid.</p>
+        <p class="state-card__body" id="invalid-message">It may have expired or already been used.</p>
+        <a class="btn btn--ghost" href="../">Open CyberSygn</a>
+      </div>
+
+      <div id="state-form" class="state-card" hidden>
+        <p class="state-card__kicker" id="form-kicker">You've been invited.</p>
+        <h2 class="h-section" id="form-title">Join <em>workspace</em> on CyberSygn.</h2>
+        <p class="lede">
+          Workspaces let multiple CyberSygn senders share a document index. Every member
+          can send documents and see every other member's documents.
+        </p>
+        <div class="ws-invite-form" style="margin-top: 24px;">
+          <div class="field">
+            <input id="join-name" class="field__input" type="text" placeholder=" " />
+            <label class="field__label" for="join-name">Your name</label>
+          </div>
+          <div class="field">
+            <input id="join-email" class="field__input" type="email" placeholder=" " />
+            <label class="field__label" for="join-email">Your email (optional)</label>
+          </div>
+          <button id="join-btn" class="btn btn--primary btn--lg btn--block" type="button">
+            Join workspace
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </button>
+          <p id="join-error" class="modal-card__lede" style="color: var(--red-deep);" hidden></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { readInvite, acceptInvite } from '../preview/api.js';
+    import { getSenderId, saveWorkspace, setActiveWorkspaceId } from '../preview/identity.js';
+
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(window.location.search);
+    const inviteId = params.get('invite');
+
+    if (!inviteId) {
+      $('state-loading').hidden = true;
+      $('state-invalid').hidden = false;
+      $('invalid-message').textContent = 'No invitation token in the URL.';
+    } else {
+      load();
+    }
+
+    async function load() {
+      const res = await readInvite(inviteId);
+      $('state-loading').hidden = true;
+      if (!res.ok) {
+        $('state-invalid').hidden = false;
+        $('invalid-message').textContent = res.error || 'This invitation cannot be opened.';
+        return;
+      }
+      const invite = res.data;
+      $('state-form').hidden = false;
+      $('form-title').innerHTML = `Join <em>${escapeHtml(invite.workspaceName)}</em> on CyberSygn.`;
+      if (invite.invitedName) $('join-name').value = invite.invitedName;
+      if (invite.invitedEmail) $('join-email').value = invite.invitedEmail;
+    }
+
+    $('join-btn').addEventListener('click', async () => {
+      const name = $('join-name').value.trim();
+      const email = $('join-email').value.trim();
+      if (!name) {
+        $('join-error').hidden = false;
+        $('join-error').textContent = 'A name is required so other members can recognise you.';
+        return;
+      }
+      $('join-btn').disabled = true;
+      $('join-btn').textContent = 'Joining.';
+      $('join-error').hidden = true;
+
+      const res = await acceptInvite(inviteId, { senderId: getSenderId(), name, email });
+      if (!res.ok) {
+        $('join-btn').disabled = false;
+        $('join-btn').textContent = 'Try again';
+        $('join-error').hidden = false;
+        $('join-error').textContent = res.error || 'Could not accept the invitation.';
+        return;
+      }
+      saveWorkspace({
+        id: res.data.workspaceId,
+        token: res.data.workspaceToken,
+        name: res.data.workspaceName,
+        memberId: res.data.memberId,
+      });
+      setActiveWorkspaceId(res.data.workspaceId);
+      window.location.href = `./?joined=${encodeURIComponent(res.data.workspaceId)}`;
+    });
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s == null ? '' : String(s);
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

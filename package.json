@@ -1,0 +1,30 @@
+{
+  "name": "cybersygn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate-pdfs": "python3 scripts/generate-pdfs.py",
+    "test": "node scripts/run-detection.js",
+    "test:real": "node scripts/run-real-detection.js",
+    "test:worker": "node scripts/test-multi-signer.js",
+    "test:stripe": "node scripts/test-stripe.js",
+    "test:docx": "node scripts/test-docx-pipeline.js",
+    "test:templates": "node scripts/test-templates.js",
+    "build:templates": "node scripts/generate-templates.js",
+    "vendor": "node scripts/vendor.js",
+    "preview": "node scripts/serve-web.js",
+    "build": "node scripts/build-web.js"
+  },
+  "dependencies": {
+    "@fontsource/fraunces": "^5.0.20",
+    "@fontsource/inter": "^5.0.18",
+    "@fontsource/jetbrains-mono": "^5.0.20",
+    "mammoth": "^1.12.0",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "4.0.379"
+  },
+  "devDependencies": {
+    "docx": "^9.7.0"
+  }
+}
