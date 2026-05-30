@@ -229,6 +229,12 @@ function applyStoredEditsToFields(fields) {
     const next = { ...f };
     if (typeof overlay.type === 'string') next.type = overlay.type;
     if (typeof overlay.primary === 'boolean') next.primary = overlay.primary;
+    // Geometry overrides from drag/resize. Applied after the base field
+    // so the user's manual adjustments win over the detector's coords.
+    if (Number.isFinite(overlay.x)) next.x = overlay.x;
+    if (Number.isFinite(overlay.y)) next.y = overlay.y;
+    if (Number.isFinite(overlay.width))  next.width  = overlay.width;
+    if (Number.isFinite(overlay.height)) next.height = overlay.height;
     out.push(next);
   }
   return out;
@@ -282,6 +288,13 @@ function applyFieldEdit(fieldId, edit) {
   } else {
     if (typeof edit.type === 'string') field.type = edit.type;
     if (typeof edit.primary === 'boolean') field.primary = edit.primary;
+    // Geometry edits from drag/resize. Coordinates are stored in PDF
+    // space; the box's CSS position is updated separately so the visible
+    // result matches the new field bounds when flatten runs.
+    if (Number.isFinite(edit.x)) field.x = edit.x;
+    if (Number.isFinite(edit.y)) field.y = edit.y;
+    if (Number.isFinite(edit.width))  field.width  = edit.width;
+    if (Number.isFinite(edit.height)) field.height = edit.height;
     const existing = senderEdits.get(fieldId) || {};
     senderEdits.set(fieldId, {
       ...existing,
@@ -552,18 +565,82 @@ documentStrip.addEventListener('click', (e) => {
   box.style.top = `${cssY}px`;
   box.style.width = `${W}px`;
   box.style.height = `${H}px`;
-  const tag = document.createElement('span');
-  tag.className = 'field-box__tag';
-  tag.textContent = 'text';
-  box.appendChild(tag);
-  box.addEventListener('click', () => onFieldBoxClick(newField));
-  overlay.appendChild(box);
-  fieldElements.set(newField.id, box);
+  // Pop a tiny chooser near the click so the user picks the type instead
+  // of always defaulting to text. After the choice, the field is committed
+  // and made drag/resize-able like any AI-detected field.
+  promptAddFieldType(e.clientX, e.clientY).then(chosen => {
+    if (!chosen) {
+      // User cancelled or pressed Esc; nothing committed.
+      toggleAddMode(false);
+      return;
+    }
+    newField.type = chosen;
+    const tag = document.createElement('span');
+    tag.className = 'field-box__tag';
+    tag.textContent = chosen;
+    box.dataset.type = chosen;
+    box.appendChild(tag);
+    overlay.appendChild(box);
+    fieldElements.set(newField.id, box);
+    attachDragResize(box, newField, shell);
 
-  populateSidebar({ fields: docState.fields, pageCount: Math.max(...docState.fields.map(f => f.page)) }, docState.filename || '');
-  toggleAddMode(false);
-  track('preview_field_added_manually', { page: pageNum });
+    populateSidebar({ fields: docState.fields, pageCount: Math.max(...docState.fields.map(f => f.page)) }, docState.filename || '');
+    toggleAddMode(false);
+    track('preview_field_added_manually', { page: pageNum, type: chosen });
+  });
 });
+
+/**
+ * Show a small popover chooser anchored near the click. Resolves with
+ * the chosen field type ('signature' | 'initial' | 'date' | 'checkbox'
+ * | 'text') or null if cancelled. Dismisses on outside-click or Esc.
+ */
+function promptAddFieldType(clientX, clientY) {
+  return new Promise(resolve => {
+    const TYPES = [
+      { id: 'signature', label: 'Signature' },
+      { id: 'initial',   label: 'Initial' },
+      { id: 'date',      label: 'Date' },
+      { id: 'checkbox',  label: 'Checkbox' },
+      { id: 'text',      label: 'Text' },
+    ];
+    const wrap = document.createElement('div');
+    wrap.className = 'add-type-chooser';
+    const hint = document.createElement('p');
+    hint.className = 'add-type-chooser__hint';
+    hint.textContent = 'What kind of field?';
+    wrap.appendChild(hint);
+    TYPES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'add-type-chooser__btn';
+      btn.textContent = t.label;
+      btn.addEventListener('click', () => { cleanup(); resolve(t.id); });
+      wrap.appendChild(btn);
+    });
+
+    // Position near the click, clamped to viewport.
+    document.body.appendChild(wrap);
+    const r = wrap.getBoundingClientRect();
+    const pad = 8;
+    const maxLeft = window.innerWidth - r.width - pad;
+    const maxTop  = window.innerHeight - r.height - pad;
+    wrap.style.left = Math.min(maxLeft, Math.max(pad, clientX)) + 'px';
+    wrap.style.top  = Math.min(maxTop,  Math.max(pad, clientY)) + 'px';
+
+    function onOutside(e) { if (!wrap.contains(e.target)) { cleanup(); resolve(null); } }
+    function onKey(e)     { if (e.key === 'Escape') { cleanup(); resolve(null); } }
+    function cleanup() {
+      document.removeEventListener('mousedown', onOutside, true);
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+    }
+    setTimeout(() => {
+      document.addEventListener('mousedown', onOutside, true);
+      document.addEventListener('keydown', onKey, true);
+    }, 0);
+  });
+}
 
 // AI training consent: persist the user's choice across sessions.
 // Default is OFF (privacy by default). The current build does not
@@ -1242,12 +1319,117 @@ function drawFieldBox(overlay, field, viewport, pageNum, revealIndex = 0, stepMs
 
   box.title = `${field.type} on page ${pageNum}` +
     (field.label ? `: ${field.label}` : '') +
-    ` (confidence ${Math.round(field.confidence * 100)}%). Click to fill.`;
+    ` (confidence ${Math.round(field.confidence * 100)}%). Drag to move, corners to resize, click to fill.`;
 
-  box.addEventListener('click', () => onFieldBoxClick(field));
+  // Click-to-fill is replaced by the drag-aware interaction helper, which
+  // distinguishes click (movement under 3 px) from drag/resize. Click
+  // dispatches the existing onFieldBoxClick; drag and resize commit new
+  // PDF-space geometry to senderEdits.
+  attachDragResize(box, field, overlay.parentElement);
 
   overlay.appendChild(box);
   fieldElements.set(box.dataset.fieldId, box);
+}
+
+/**
+ * Wire pointer interactions on a field-box so the user can:
+ *   - click to fill (existing behavior)
+ *   - drag to move the field anywhere on the page
+ *   - resize via 4 corner handles
+ *
+ * Distinguishes click from drag using a 3-pixel movement threshold.
+ * On commit (drag end / resize end), converts CSS pixels back to PDF
+ * coordinates using the shell's stashed viewport dimensions, then
+ * applyFieldEdit persists the new geometry to senderEdits.
+ */
+function attachDragResize(box, field, shell) {
+  // Add 4 corner resize handles.
+  for (const corner of ['nw','ne','sw','se']) {
+    const h = document.createElement('div');
+    h.className = `field-box__handle field-box__handle--${corner}`;
+    h.dataset.handle = corner;
+    box.appendChild(h);
+  }
+
+  let drag = null;
+  box.addEventListener('pointerdown', (e) => {
+    // Skip if the press hit an interactive child (edit button, signer chip).
+    if (e.target.closest('.field-box__edit, .field-box__chip')) return;
+    e.stopPropagation();
+    box.setPointerCapture(e.pointerId);
+    const handle = e.target.dataset && e.target.dataset.handle ? e.target.dataset.handle : null;
+    drag = {
+      mode: handle ? 'resize' : 'move',
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: parseFloat(box.style.left) || 0,
+      startTop:  parseFloat(box.style.top)  || 0,
+      startW:    parseFloat(box.style.width)  || box.offsetWidth,
+      startH:    parseFloat(box.style.height) || box.offsetHeight,
+      moved: false,
+    };
+  });
+
+  box.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    if (!drag.moved) return;
+    if (drag.mode === 'move') {
+      box.style.left = `${drag.startLeft + dx}px`;
+      box.style.top  = `${drag.startTop  + dy}px`;
+    } else {
+      // Resize from one of the four corners.
+      let L = drag.startLeft, T = drag.startTop;
+      let W = drag.startW,    H = drag.startH;
+      if (drag.handle.includes('e')) W = Math.max(20, drag.startW + dx);
+      if (drag.handle.includes('s')) H = Math.max(12, drag.startH + dy);
+      if (drag.handle.includes('w')) { L = drag.startLeft + dx; W = Math.max(20, drag.startW - dx); }
+      if (drag.handle.includes('n')) { T = drag.startTop  + dy; H = Math.max(12, drag.startH - dy); }
+      box.style.left = `${L}px`;
+      box.style.top  = `${T}px`;
+      box.style.width  = `${W}px`;
+      box.style.height = `${H}px`;
+    }
+  });
+
+  function endDrag(e) {
+    if (!drag) return;
+    const wasMoved = drag.moved;
+    try { box.releasePointerCapture(e.pointerId); } catch (err) {}
+    drag = null;
+    if (!wasMoved) return;  // bubble to click handler
+    // Stash a one-shot flag so the click event we know is coming gets
+    // swallowed instead of triggering fill capture.
+    box.dataset.justMoved = 'true';
+    // Convert CSS px back to PDF coords using the shell's stashed viewport.
+    if (!shell) return;
+    const scale = parseFloat(shell.dataset.scale) || 1;
+    const vpH   = parseFloat(shell.dataset.viewportHeight);
+    const cssL = parseFloat(box.style.left);
+    const cssT = parseFloat(box.style.top);
+    const cssW = parseFloat(box.style.width);
+    const cssH = parseFloat(box.style.height);
+    if (![cssL, cssT, cssW, cssH, vpH, scale].every(Number.isFinite)) return;
+    const pdfX = cssL / scale;
+    const pdfY = (vpH - cssT - cssH) / scale;
+    const pdfW = cssW / scale;
+    const pdfH = cssH / scale;
+    applyFieldEdit(field.id, { x: pdfX, y: pdfY, width: pdfW, height: pdfH });
+    track('preview_field_geometry_changed', { mode: 'drag-or-resize', fieldId: field.id });
+  }
+  box.addEventListener('pointerup', endDrag);
+  box.addEventListener('pointercancel', endDrag);
+
+  box.addEventListener('click', () => {
+    if (box.dataset.justMoved === 'true') {
+      delete box.dataset.justMoved;
+      return;
+    }
+    onFieldBoxClick(field);
+  });
 }
 
 // ---- Field interaction (click to fill) -------------------------------------
