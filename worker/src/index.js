@@ -114,6 +114,9 @@ export default {
     if (request.method === 'GET' && url.pathname === '/api/owner/dataset/stats') {
       return handleOwnerDatasetStats(request, env, url);
     }
+    if (request.method === 'GET' && url.pathname === '/api/owner/report/preview') {
+      return handleOwnerReportPreview(request, env, url);
+    }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
       return handleSignup(request, env);
@@ -1070,6 +1073,38 @@ async function handleOwnerDatasetStats(request, env, url) {
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
   const result = await getDatasetStats(env);
   return jsonResponse(result.ok ? 200 : 500, result);
+}
+
+/**
+ * Owner-only monthly report preview / on-demand trigger.
+ *
+ *   GET /api/owner/report/preview              -> renders HTML, no send (default)
+ *   GET /api/owner/report/preview?send=true    -> renders HTML AND emails it now
+ *
+ * Same renderer the cron uses, so the preview is byte-identical to
+ * what arrives in your inbox on the 1st of next month.
+ */
+async function handleOwnerReportPreview(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const send = url.searchParams.get('send') === 'true';
+  if (send) {
+    // Real send via the existing pipeline.
+    await runMonthlyOwnerReport(env, { scheduledTime: Date.now() });
+    return jsonResponse(200, {
+      ok: true,
+      sent: true,
+      recipient: (env && env.OWNER_EMAIL) || 'hello@cybersygn.io',
+      message: 'Report sent. Check your inbox.',
+    });
+  }
+  // Preview: render HTML in-line, return as HTML response.
+  const { renderReportHtmlForPreview } = await import('./owner-report.js');
+  const html = await renderReportHtmlForPreview(env);
+  return new Response(html, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
+  });
 }
 
 // ---- /api/event ------------------------------------------------------------

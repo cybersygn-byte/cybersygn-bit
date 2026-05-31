@@ -83,6 +83,29 @@ export async function runMonthlyOwnerReport(env, event) {
   }
 }
 
+/**
+ * Standalone HTML preview. Gathers the same stats the cron-sent
+ * report uses and returns ready-to-render HTML. Owner uses this to
+ * verify the report format without waiting for the 1st of the month.
+ */
+export async function renderReportHtmlForPreview(env) {
+  const now = new Date();
+  const stats = await getDatasetStats(env).catch(() => null);
+  let foundingTaken = 0;
+  let foundingCapValue = 100;
+  try {
+    foundingTaken = await getFoundingCount(env);
+    foundingCapValue = foundingCap();
+  } catch (e) {}
+  return renderReportHtml({
+    monthLabel: now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' }),
+    stats,
+    foundingTaken,
+    foundingCap: foundingCapValue,
+    generatedAt: now.toISOString(),
+  });
+}
+
 function renderReportHtml(ctx) {
   const s = ctx.stats && ctx.stats.ok ? ctx.stats : null;
   const corpus = s && s.corpus ? s.corpus : { totalExamples: 0, templates: 0, contributors: 0, byType: {} };
