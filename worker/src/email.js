@@ -105,7 +105,7 @@ export async function sendReminder(env, { to, name, docTitle, magicLink, senderN
   return deliver(env, { to, subject, text, html });
 }
 
-async function deliver(env, { to, subject, text, html }) {
+export async function deliver(env, { to, subject, text, html }) {
   const apiKey = env && env.RESEND_API_KEY;
   if (!apiKey) {
     // Console fallback: print the would-have-sent message.

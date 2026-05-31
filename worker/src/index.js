@@ -39,6 +39,8 @@ import {
   getDatasetCount,
   ownerDripList,
 } from './free-tier.js';
+import { exportDatasetJsonl, getDatasetStats } from './dataset.js';
+import { runMonthlyOwnerReport } from './owner-report.js';
 import {
   TIERS,
   getSubscription,
@@ -105,6 +107,12 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/drip-list') {
       return handleOwnerDripList(request, env, url);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/owner/dataset/export') {
+      return handleOwnerDatasetExport(request, env, url);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/owner/dataset/stats') {
+      return handleOwnerDatasetStats(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
@@ -292,9 +300,21 @@ export default {
    * skipped (their KV record will expire on its 30-day TTL anyway).
    */
   async scheduled(event, env, ctx) {
+    // Reminder sweep runs every hour. Monthly owner report only fires
+    // on the first day of the month between 00:00 and 00:59 UTC.
     ctx.waitUntil(runReminderSweep(env, event));
+    if (shouldRunMonthlyReport(event)) {
+      ctx.waitUntil(runMonthlyOwnerReport(env, event));
+    }
   },
 };
+
+function shouldRunMonthlyReport(event) {
+  try {
+    const now = event && event.scheduledTime ? new Date(event.scheduledTime) : new Date();
+    return now.getUTCDate() === 1 && now.getUTCHours() === 0;
+  } catch (e) { return false; }
+}
 
 async function handleDetect(request) {
   // 1. Pull the PDF bytes out of the request body.
@@ -1036,6 +1056,19 @@ async function handleOwnerDripList(request, env, url) {
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
   const cap = parseInt(url.searchParams.get('cap'), 10) || 200;
   const result = await ownerDripList(env, { cap });
+  return jsonResponse(result.ok ? 200 : 500, result);
+}
+
+async function handleOwnerDatasetExport(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  return exportDatasetJsonl(env);
+}
+
+async function handleOwnerDatasetStats(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const result = await getDatasetStats(env);
   return jsonResponse(result.ok ? 200 : 500, result);
 }
 
