@@ -1247,6 +1247,12 @@ async function handleFile(file) {
           const templateFields = lookup.template.fields.map(f => ({
             ...f,
             id: f.id || idFor(f),
+            // Template fields are human-verified labels for this exact
+            // PDF, so their confidence is 1.0 by definition. The save
+            // path historically dropped the confidence value, which
+            // gave a misleading 7% confidence stat on template loads.
+            // Default to 1.0 when missing; preserve any explicit value.
+            confidence: typeof f.confidence === 'number' ? f.confidence : 1.0,
           }));
           docState.fields = templateFields;
           detection.fields = docState.fields;

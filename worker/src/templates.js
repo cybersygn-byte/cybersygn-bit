@@ -198,6 +198,9 @@ function sanitizeFields(arr) {
     if (!Number.isFinite(page) || page < 1 || page > 200) continue;
     if (![x, y, w, h].every(n => Number.isFinite(n) && n >= 0)) continue;
     if (w < 1 || h < 1 || w > 5000 || h > 5000) continue;
+    const confidence = typeof f.confidence === 'number' && f.confidence >= 0 && f.confidence <= 1
+      ? f.confidence
+      : 1.0;  // human-verified template fields are 100% by definition
     out.push({
       type: f.type,
       page,
@@ -205,6 +208,7 @@ function sanitizeFields(arr) {
       label: typeof f.label === 'string' ? f.label.slice(0, MAX_LABEL_LEN) : '',
       primary: f.primary === false ? false : true,
       source: typeof f.source === 'string' ? f.source.slice(0, 32) : 'user-saved',
+      confidence,
     });
     if (out.length >= MAX_FIELDS_PER_TEMPLATE) break;
   }
