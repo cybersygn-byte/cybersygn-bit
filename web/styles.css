@@ -1458,17 +1458,10 @@ button { font: inherit; cursor: pointer; }
 }
 .sub-banner__right { display: flex; gap: var(--s-3); align-items: center; flex-wrap: wrap; }
 .toast__text { line-height: 1.45; }
-.toast__close {
-  background: transparent;
-  border: 0;
-  color: inherit;
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  padding: 4px 8px;
-  opacity: 0.7;
-}
-.toast__close:hover { opacity: 1; }
+/* Older .toast__close styles removed in favor of the canonical
+   definition above near .toast__message. Same selector, same
+   intent, but the duplicate was overriding with slightly heavier
+   padding. */
 
 .sticky-cta {
   position: fixed;
