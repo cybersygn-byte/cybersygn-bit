@@ -1282,7 +1282,9 @@ async function handleFile(file) {
     if (restoredEditsCount > 0) {
       setTemplateState('restored-edits', restoredEditsCount);
     } else {
-      setTemplateState('none');
+      // No template, no restored edits: keep the badge silent rather than
+      // showing the chatty 'detection is heuristic only' notice.
+      setTemplateState('hidden');
     }
   }
 
