@@ -1387,6 +1387,35 @@ button { font: inherit; cursor: pointer; }
   background: var(--accent-text);
   color: var(--text-on-dark, #fff);
 }
+.toast__message {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.5;
+  font-size: var(--t-sm);
+  color: inherit;
+}
+.toast__action {
+  flex: 0 0 auto;
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 500;
+  font-size: var(--t-sm);
+}
+.toast__close {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0 4px;
+  opacity: 0.78;
+  transition: opacity 160ms var(--ease);
+}
+.toast__close:hover { opacity: 1; }
+.toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 3px; }
 
 /* Dashboard subscription banner */
 .sub-banner {

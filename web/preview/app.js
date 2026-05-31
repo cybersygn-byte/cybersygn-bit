@@ -2411,24 +2411,35 @@ function currentSignerSession() {
 
 function showToast(message, opts = {}) {
   toast.innerHTML = '';
+  // .toast is the fixed positioning shell; .toast__inner gets the
+  // styled card (background, padding, max-width, shadow). Building
+  // children directly under .toast was the long-standing bug that
+  // caused unstyled text to flow across the page.
+  const inner = document.createElement('div');
+  inner.className = 'toast__inner';
+
   const p = document.createElement('p');
   p.className = 'toast__message';
   p.textContent = message;
-  toast.appendChild(p);
+  inner.appendChild(p);
+
   if (opts.action) {
     const a = document.createElement('a');
     a.className = 'toast__action';
     a.href = opts.action.href;
     a.textContent = opts.action.label;
-    toast.appendChild(a);
+    inner.appendChild(a);
   }
+
   const close = document.createElement('button');
   close.className = 'toast__close';
   close.type = 'button';
   close.setAttribute('aria-label', 'Dismiss');
-  close.textContent = 'Dismiss.';
+  close.textContent = '×';
   close.addEventListener('click', hideToast);
-  toast.appendChild(close);
+  inner.appendChild(close);
+
+  toast.appendChild(inner);
   toast.hidden = false;
 }
 
