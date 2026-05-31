@@ -4544,3 +4544,76 @@ details[open] > .field-list__group--toggle::after {
     transform: none !important;
   }
 }
+
+/* ============================================================================
+   SLICE 37: COHESION PASS
+   ----------------------------------------------------------------------------
+   Extends the slice-36 polish layer to every remaining card-like
+   component, adds a one-time page-load hero entrance (separate from
+   scroll-driven reveals), and normalizes cross-page rhythm.
+   ============================================================================ */
+
+/* ---- Hover lifts extended to the components slice 36 skipped ---- */
+:root[data-polish="on"] .sub-banner,
+:root[data-polish="on"] .signer-status,
+:root[data-polish="on"] .owner-panel,
+:root[data-polish="on"] .compare tbody tr {
+  transition:
+    transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 240ms ease,
+    background 240ms ease,
+    border-color 240ms ease;
+}
+:root[data-polish="on"] .sub-banner:hover,
+:root[data-polish="on"] .signer-status:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 2px rgba(1, 20, 52, 0.08),
+    0 12px 24px -12px rgba(1, 20, 52, 0.18);
+}
+:root[data-polish="on"] .compare tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+}
+
+/* ---- Page-load hero entrance. Plays ONCE on initial paint, not on
+        scroll. Targets the hero block on every page so the first-paint
+        snap-in is replaced with a soft fade-up. Independent of the
+        Intersection Observer's data-reveal mechanism (which only fires
+        below-the-fold). ---- */
+:root[data-polish="on"] .hero,
+:root[data-polish="on"] .dropzone-wrap,
+:root[data-polish="on"] .dashboard__head {
+  animation: page-hero-in 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+@keyframes page-hero-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Unify kicker color across all surfaces. Some kickers got the
+        muted variant by accident; restore brand-cyan as the default. ---- */
+.kicker { color: var(--accent-text); }
+.kicker--muted { color: var(--text-3); }
+
+/* ---- Ensure every container shares the same max-width across pages.
+        Was inconsistent: marketing pages used 1200px, dashboard used
+        1100px, legal used 800px. Standardize on 1200px and let inner
+        content set its own column width via inline max-width when
+        narrower is required. ---- */
+.container { max-width: 1200px; }
+.container--prose { max-width: 720px; }
+
+/* ---- Reduced-motion override for the page-load hero entrance ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-polish="on"] .hero,
+  :root[data-polish="on"] .dropzone-wrap,
+  :root[data-polish="on"] .dashboard__head,
+  :root[data-polish="on"] .sub-banner,
+  :root[data-polish="on"] .signer-status,
+  :root[data-polish="on"] .compare tbody tr {
+    animation: none !important;
+    transition: none !important;
+  }
+  :root[data-polish="on"] .sub-banner:hover,
+  :root[data-polish="on"] .signer-status:hover { transform: none !important; }
+}
