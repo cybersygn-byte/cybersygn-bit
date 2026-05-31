@@ -28,7 +28,7 @@ import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder } from './email.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
-import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest } from './owner.js';
+import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
@@ -130,6 +130,9 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/verify') {
       return handleOwnerVerify(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/login') {
+      return handleOwnerLogin(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/test-email') {
       return handleOwnerTestEmail(request, env, url);
@@ -516,6 +519,32 @@ async function handleOwnerVerify(request, env, url) {
       issuedAt: owner.issuedAt,
     },
   });
+}
+
+/**
+ * Username + password login for /control/. Returns the same token
+ * shape as /api/owner/claim so the client stores it under the
+ * existing localStorage key and every downstream owner-gated
+ * endpoint validates without a separate code path.
+ *
+ * Returns 503 if OWNER_USERNAME / OWNER_PASSWORD_HASH secrets are
+ * unset (initial deploy state). Returns 401 on credential mismatch.
+ */
+async function handleOwnerLogin(request, env) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { username, password } = body.value || {};
+  const result = await loginWithCredentials(username, password, env);
+  if (!result.ok) {
+    if (result.error === 'login_not_configured') {
+      return jsonResponse(503, {
+        error: 'login_not_configured',
+        message: 'OWNER_USERNAME and OWNER_PASSWORD_HASH must be set on the Worker. Run: wrangler secret put OWNER_USERNAME / OWNER_PASSWORD_SALT / OWNER_PASSWORD_HASH.',
+      });
+    }
+    return jsonResponse(401, { error: result.error });
+  }
+  return jsonResponse(200, { ok: true, token: result.token, issuedAt: result.issuedAt });
 }
 
 // ---- Billing handlers ------------------------------------------------------

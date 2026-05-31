@@ -209,6 +209,21 @@ async function main() {
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
   console.log('  wrote dist/dashboard/join.html');
 
+  // /control/: hidden owner workbench (login + analytics + demo + tools).
+  // robots-blocked, noindex meta. Copy index.html + control.js verbatim.
+  const ctrlSrc = join(SRC, 'control');
+  if (await exists(ctrlSrc)) {
+    const ctrlOut = join(OUT, 'control');
+    await mkdir(ctrlOut, { recursive: true });
+    for (const f of ['index.html', 'control.js']) {
+      const src = join(ctrlSrc, f);
+      if (await exists(src)) {
+        await copyFile(src, join(ctrlOut, f));
+        console.log(`  wrote dist/control/${f}`);
+      }
+    }
+  }
+
   // 4. Vendor: copy pdf.mjs, pdf.worker.mjs, pdf-lib.mjs, mammoth, fonts.css, font files.
   await copyFile(join(VENDOR, 'pdf.mjs'), join(OUT, 'vendor', 'pdf.mjs'));
   await copyFile(join(VENDOR, 'pdf.worker.mjs'), join(OUT, 'vendor', 'pdf.worker.mjs'));

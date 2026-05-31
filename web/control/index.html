@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Control. CyberSygn.</title>
+  <meta name="description" content="" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="/brand/favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="/vendor/fonts.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="/polish.js" defer></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="/" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="/brand/lockup-navy@2x.png" alt="CYBERSYGN" />
+        <span class="wordmark__context">control</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Control">
+        <button id="control-signout" class="btn btn--ghost btn--sm" type="button" hidden>Sign out</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="control container">
+
+    <!-- ============ Login state ============ -->
+    <section id="control-login" class="control-login" hidden>
+      <div class="control-login__card">
+        <p class="kicker">Owner only.</p>
+        <h1 class="h-section control-login__title">Sign in.</h1>
+        <p class="lede control-login__lede">
+          This portal is hidden from search engines and the public navigation.
+          Credentials are owner-only. Forgot them? Rotate via wrangler from
+          your terminal.
+        </p>
+
+        <form id="control-login-form" class="control-login__form" autocomplete="on">
+          <div class="field">
+            <input class="field__input" id="control-user" name="username" placeholder=" " type="text" autocomplete="username" required autofocus />
+            <label class="field__label" for="control-user">Username</label>
+          </div>
+          <div class="field">
+            <input class="field__input" id="control-pass" name="password" placeholder=" " type="password" autocomplete="current-password" required />
+            <label class="field__label" for="control-pass">Password</label>
+          </div>
+          <button class="btn btn--primary btn--block btn--lg" type="submit">
+            Sign in
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </button>
+          <p id="control-login-error" class="control-login__error" hidden></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ Authenticated state ============ -->
+    <section id="control-panel" class="control-panel" hidden>
+
+      <header class="control-panel__head">
+        <p class="kicker">Control.</p>
+        <h1 class="h-section">Owner workbench.</h1>
+        <p class="lede">
+          Live analytics, demo access, and a free-PDF zone that bypasses
+          the lifetime cap so you can show the product without burning real
+          customer counters.
+        </p>
+      </header>
+
+      <!-- ----- Tile 1: Live analytics ----- -->
+      <section class="control-tile control-tile--analytics">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Tile 1</p>
+            <h2 class="h-card">Live analytics</h2>
+          </div>
+          <div class="control-tile__controls">
+            <label class="control-tile__window">
+              Window
+              <select id="ctrl-window">
+                <option value="INTERVAL '24' HOUR">Last 24 hours</option>
+                <option value="INTERVAL '7' DAY" selected>Last 7 days</option>
+                <option value="INTERVAL '30' DAY">Last 30 days</option>
+              </select>
+            </label>
+            <button id="ctrl-refresh" class="btn btn--ghost btn--sm" type="button">Refresh</button>
+          </div>
+        </header>
+        <div id="ctrl-analytics-body" class="control-tile__body" aria-live="polite">
+          <p class="control-tile__empty">Loading.</p>
+        </div>
+      </section>
+
+      <!-- ----- Tile 2: Demo deep-links ----- -->
+      <section class="control-tile control-tile--demo">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Tile 2</p>
+            <h2 class="h-card">Demo as owner</h2>
+          </div>
+        </header>
+        <p class="control-tile__lede">
+          Owner mode is active on every page (your token is set). Click any
+          tile to open the public surface with full bypass, so you can show
+          the product to a prospect without their cap or your free-tier
+          counter being affected.
+        </p>
+        <div class="control-tile__grid">
+          <a class="control-link" href="/preview/" target="_blank" rel="noopener">
+            <p class="control-link__kicker">/preview/</p>
+            <p class="control-link__title">Open the signing tool</p>
+            <p class="control-link__detail">Upload, detect, sign, download — unlimited.</p>
+          </a>
+          <a class="control-link" href="/dashboard/" target="_blank" rel="noopener">
+            <p class="control-link__kicker">/dashboard/</p>
+            <p class="control-link__title">Open the sender dashboard</p>
+            <p class="control-link__detail">Sent docs, signers, reminders, downloads.</p>
+          </a>
+          <a class="control-link" href="/#pricing" target="_blank" rel="noopener">
+            <p class="control-link__kicker">/#pricing</p>
+            <p class="control-link__title">Show the pricing page</p>
+            <p class="control-link__detail">Live Stripe checkout buttons; bypass on owner click.</p>
+          </a>
+          <a class="control-link" href="/alternatives/" target="_blank" rel="noopener">
+            <p class="control-link__kicker">/alternatives/</p>
+            <p class="control-link__title">Profession landing pages</p>
+            <p class="control-link__detail">Consultant / coach / freelancer SEO pages.</p>
+          </a>
+        </div>
+      </section>
+
+      <!-- ----- Tile 3: Free PDF demo zone ----- -->
+      <section class="control-tile control-tile--demo-pdf">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Tile 3</p>
+            <h2 class="h-card">Free-PDF demo zone</h2>
+          </div>
+        </header>
+        <p class="control-tile__lede">
+          Drop a PDF here for a quick demo. Detection runs locally just like
+          on the public preview, but neither the 3-lifetime free cap nor any
+          email signup gate fires — owner bypass is active. Useful for
+          showing prospects without contaminating real-user counters.
+        </p>
+        <div class="control-demo">
+          <a class="btn btn--primary btn--lg" href="/preview/" target="_blank" rel="noopener">
+            Open preview in a new tab
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <p class="control-tile__hint">
+            The preview will see your owner token in localStorage and skip
+            the email-signup gate automatically.
+          </p>
+        </div>
+      </section>
+
+      <!-- ----- Tile 4: Owner tools (test email, dataset export, health) ----- -->
+      <section class="control-tile control-tile--tools">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Tile 4</p>
+            <h2 class="h-card">Tools</h2>
+          </div>
+        </header>
+        <div class="control-tile__grid control-tile__grid--tools">
+          <a class="control-link" href="/api/owner/report/preview" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Report</p>
+            <p class="control-link__title">Preview monthly report</p>
+            <p class="control-link__detail">Render the cron-sent HTML in the browser. No email.</p>
+          </a>
+          <a class="control-link" href="/api/owner/report/preview?send=true" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Report</p>
+            <p class="control-link__title">Send monthly report now</p>
+            <p class="control-link__detail">Real email via Resend to OWNER_EMAIL.</p>
+          </a>
+          <a class="control-link" href="/api/owner/dataset/stats" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Dataset</p>
+            <p class="control-link__title">Corpus stats</p>
+            <p class="control-link__detail">JSON: totals + by-type + training readiness.</p>
+          </a>
+          <a class="control-link" href="/api/owner/dataset/export" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Dataset</p>
+            <p class="control-link__title">Export corpus (JSONL)</p>
+            <p class="control-link__detail">Stream every labeled example for offline ML use.</p>
+          </a>
+          <a class="control-link" href="/api/owner/drip-list" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Marketing</p>
+            <p class="control-link__title">Drip-list export</p>
+            <p class="control-link__detail">Free-tier signups with email + name for outreach.</p>
+          </a>
+          <a class="control-link" href="/api/health" target="_blank" rel="noopener">
+            <p class="control-link__kicker">Health</p>
+            <p class="control-link__title">Subsystem check</p>
+            <p class="control-link__detail">KV / Resend / Stripe / AE / owner / vision.</p>
+          </a>
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Owner workbench.</span>
+      <span style="color: var(--text-3); font-family: var(--mono); font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em;">
+        Not linked anywhere. Not in search. Owner only.
+      </span>
+    </div>
+  </footer>
+
+  <script type="module" src="./control.js"></script>
+</body>
+</html>

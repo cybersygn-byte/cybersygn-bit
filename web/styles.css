@@ -4705,3 +4705,259 @@ body[data-free-gated="true"] .dropzone-card__actions,
 body[data-free-gated="true"] .dropzone-card__hints {
   display: none;
 }
+
+/* ============================================================================
+   SLICE 43: /control/ owner workbench
+   Hidden URL, robots-blocked, password-gated. UI uses the existing design
+   tokens so it feels like the rest of the site, no special owner-only theme.
+   ============================================================================ */
+
+.control {
+  padding-block: var(--s-7) var(--s-8);
+}
+
+/* ----- Login state ----- */
+.control-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.control-login__card {
+  width: 100%;
+  max-width: 460px;
+  padding: var(--s-6);
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  box-shadow: 0 1px 2px rgba(1,20,52,0.06), 0 20px 40px -20px rgba(1,20,52,0.14);
+}
+.control-login__title { margin: var(--s-2) 0 var(--s-3); }
+.control-login__lede { color: var(--text-2); margin: 0 0 var(--s-5); line-height: 1.55; font-size: var(--t-sm); }
+.control-login__form { display: grid; gap: var(--s-3); }
+.control-login__error {
+  margin: var(--s-2) 0 0;
+  padding: var(--s-3);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  color: var(--danger);
+  border-radius: var(--r);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* ----- Authenticated panel ----- */
+.control-panel { display: grid; gap: var(--s-6); }
+.control-panel__head { margin-bottom: var(--s-3); }
+
+.control-tile {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+}
+.control-tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  margin-bottom: var(--s-4);
+  flex-wrap: wrap;
+}
+.control-tile__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.control-tile__window {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.control-tile__window select {
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  color: var(--text);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 4px 10px;
+}
+.control-tile__lede {
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  margin: 0 0 var(--s-4);
+}
+.control-tile__hint {
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  font-family: var(--mono);
+  letter-spacing: 0.04em;
+  margin: var(--s-3) 0 0;
+}
+.control-tile__empty {
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  margin: 0;
+}
+.control-tile__notice {
+  padding: var(--s-3) var(--s-4);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+  border-radius: var(--r);
+  color: var(--warn);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+/* ----- Tile-grid layout for demo + tools tiles ----- */
+.control-tile__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-3);
+}
+.control-tile__grid--tools {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+.control-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--s-4);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  text-decoration: none;
+  color: inherit;
+  transition: background 200ms var(--ease), border-color 200ms var(--ease), transform 200ms var(--ease-spring);
+}
+.control-link:hover {
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-2));
+  border-color: var(--accent-text);
+  transform: translateY(-2px);
+}
+.control-link__kicker {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-text);
+  margin: 0;
+}
+.control-link__title {
+  font-weight: 600;
+  font-size: var(--t-sm);
+  color: var(--text);
+  margin: 2px 0 0;
+}
+.control-link__detail {
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  line-height: 1.4;
+  margin: 4px 0 0;
+}
+
+/* ----- Analytics tile rendering ----- */
+.control-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-5);
+}
+.control-stat {
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.control-stat__num {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.control-stat__label {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.control-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--s-3);
+}
+.control-list {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--s-3) var(--s-4);
+}
+.control-list ul {
+  list-style: none;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.control-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.control-list li > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+}
+.control-list__empty {
+  color: var(--text-3);
+  font-size: var(--t-xs);
+  margin: var(--s-2) 0 0;
+}
+.control-errors {
+  margin-top: var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  border-radius: var(--r);
+}
+.control-errors ul {
+  list-style: none;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: var(--t-xs);
+  color: var(--danger);
+}
+.control-errors code {
+  font-family: var(--mono);
+  background: rgba(0,0,0,0.04);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* ----- Free-PDF demo zone block ----- */
+.control-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}

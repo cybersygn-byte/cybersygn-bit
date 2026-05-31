@@ -155,6 +155,41 @@ export async function getOwnerForRequest(request, env, url) {
   return await validateOwnerToken(token, env);
 }
 
+/**
+ * Username + password login for the /control/ portal. Compares
+ * username against env.OWNER_USERNAME, and sha256(username + ':' +
+ * password + ':' + salt) against env.OWNER_PASSWORD_HASH where the
+ * salt is env.OWNER_PASSWORD_SALT (public). On match, mints the
+ * same long-lived token that the URL-phrase activation issues, so
+ * downstream auth (getOwnerForRequest) doesn't need a separate path.
+ *
+ * If OWNER_USERNAME or OWNER_PASSWORD_HASH is unset, the login
+ * endpoint refuses every attempt with 503 'login_not_configured'.
+ */
+export async function loginWithCredentials(username, password, env) {
+  if (!env || !env.OWNER_USERNAME || !env.OWNER_PASSWORD_HASH) {
+    return { ok: false, error: 'login_not_configured' };
+  }
+  if (typeof username !== 'string' || username.length === 0 || username.length > 64) {
+    return { ok: false, error: 'invalid_username' };
+  }
+  if (typeof password !== 'string' || password.length === 0 || password.length > 256) {
+    return { ok: false, error: 'invalid_password' };
+  }
+  if (!constantTimeEquals(username, env.OWNER_USERNAME)) {
+    return { ok: false, error: 'invalid_credentials' };
+  }
+  const salt = (env.OWNER_PASSWORD_SALT || '').slice(0, 64);
+  const candidate = username + ':' + password + ':' + salt;
+  const bytes = new TextEncoder().encode(candidate);
+  const hash = await sha256Hex(bytes);
+  if (!constantTimeEquals(hash, env.OWNER_PASSWORD_HASH.toLowerCase())) {
+    return { ok: false, error: 'invalid_credentials' };
+  }
+  const record = await issueOwnerToken(env);
+  return { ok: true, token: record.token, issuedAt: record.issuedAt };
+}
+
 export const __forTests = {
   DEV_OWNER_HASH,
   constantTimeEquals,
