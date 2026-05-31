@@ -33,6 +33,13 @@ import { trackEvent, trackError, summary as analyticsSummary } from './analytics
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
 import {
+  freeSignup,
+  freeConsume,
+  writeFreeTokenPointer,
+  getDatasetCount,
+  ownerDripList,
+} from './free-tier.js';
+import {
   TIERS,
   getSubscription,
   getUsageThisMonth,
@@ -84,6 +91,20 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/templates') {
       return handleLookupTemplate(request, env, url);
+    }
+
+    // Free tier (3 docs lifetime per email, lead capture, dataset consent)
+    if (request.method === 'POST' && url.pathname === '/api/free/signup') {
+      return handleFreeSignup(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/free/consume') {
+      return handleFreeConsume(request, env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/dataset/count') {
+      return handleDatasetCount(env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/owner/drip-list') {
+      return handleOwnerDripList(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
@@ -961,6 +982,61 @@ async function handleLookupTemplate(request, env, url) {
       updatedAt: result.template.updatedAt,
     },
   });
+}
+
+// ---- Free-tier endpoints ---------------------------------------------------
+
+async function handleFreeSignup(request, env) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { firstName, lastName, email } = body.value || {};
+  const result = await freeSignup(env, { firstName, lastName, email });
+  if (!result.ok) {
+    return jsonResponse(400, { error: result.error || 'signup_failed' });
+  }
+  if (!result.isReturning) {
+    // First signup for this email: write the token->emailHash pointer
+    // so /api/free/consume can resolve later.
+    const emailHash = await sha256Hex(new TextEncoder().encode(String(email).trim().toLowerCase()));
+    await writeFreeTokenPointer(env, result.freeToken, emailHash);
+  }
+  return jsonResponse(200, {
+    ok: true,
+    freeToken: result.freeToken,
+    used: result.used,
+    remaining: result.remaining,
+    cap: 3,
+    isReturning: result.isReturning,
+  });
+}
+
+async function handleFreeConsume(request, env) {
+  const token = request.headers.get('x-cybersygn-free') || '';
+  const result = await freeConsume(env, token);
+  if (!result.ok) {
+    const status = result.error === 'free_cap_reached' ? 402 : 401;
+    return jsonResponse(status, result);
+  }
+  return jsonResponse(200, result);
+}
+
+async function handleDatasetCount(env) {
+  const r = await getDatasetCount(env);
+  const res = jsonResponse(200, {
+    ok: true,
+    total: r.total,
+    contributors: r.contributors,
+  });
+  res.headers.set('cache-control', 'public, max-age=60');
+  return res;
+}
+
+async function handleOwnerDripList(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const cap = parseInt(url.searchParams.get('cap'), 10) || 200;
+  const result = await ownerDripList(env, { cap });
+  return jsonResponse(result.ok ? 200 : 500, result);
 }
 
 // ---- /api/event ------------------------------------------------------------

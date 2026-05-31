@@ -358,8 +358,8 @@
           <p class="proof__label">Manual field placement.</p>
         </div>
         <div>
-          <p class="proof__num">$9</p>
-          <p class="proof__label">Locked for life, first 100.</p>
+          <p class="proof__num" id="dataset-total">0</p>
+          <p class="proof__label">Labeled PDFs in our dataset, growing live.</p>
         </div>
       </div>
     </div>
@@ -427,15 +427,16 @@
           <p class="tier__name">Free</p>
           <div class="tier__price">
             <span class="tier__price-num">$0</span>
-            <span class="tier__price-unit">/mo</span>
+            <span class="tier__price-unit">forever</span>
           </div>
-          <p class="tier__hook">Try it on your real contracts.</p>
+          <p class="tier__hook">Three documents, ever, on the house.</p>
           <ul class="tier__list">
-            <li>3 documents per month</li>
-            <li>Single signer per document</li>
-            <li>Browser-side signing</li>
+            <li>3 documents <strong>lifetime</strong></li>
+            <li>Sign up with email to start</li>
+            <li>Your PDFs improve our detection dataset</li>
+            <li>Upgrade anytime; the same email keeps your history</li>
           </ul>
-          <a class="btn btn--ghost btn--block" href="./preview/">Start free</a>
+          <a class="btn btn--ghost btn--block" href="./preview/">Sign up and start</a>
         </article>
 
         <article class="tier" data-tier="solo">
@@ -820,6 +821,48 @@
         }
         // remaining === cap: leave the default "X of 100 spots open." text.
       } catch (e) {}
+    })();
+  </script>
+  <script>
+    // Live dataset counter. Pulls /api/dataset/count every 30s while
+    // the page is visible and animates the number toward the new value
+    // so the user perceives growth in real time. Honest framing:
+    // "Labeled PDFs in our dataset" — not "trained on our AI" because
+    // we don't run an active training pipeline today (CONSTITUTION
+    // truthfulness requirement).
+    (function liveDatasetCounter() {
+      const el = document.getElementById('dataset-total');
+      if (!el) return;
+      let current = 0;
+      function tween(target) {
+        const start = current;
+        const delta = target - start;
+        if (delta === 0) return;
+        const dur = Math.min(2000, Math.max(400, Math.abs(delta) * 12));
+        const t0 = performance.now();
+        function step(now) {
+          const p = Math.min(1, (now - t0) / dur);
+          // Ease-out cubic
+          const eased = 1 - Math.pow(1 - p, 3);
+          const v = Math.round(start + delta * eased);
+          el.textContent = v.toLocaleString();
+          if (p < 1) requestAnimationFrame(step);
+          else current = target;
+        }
+        requestAnimationFrame(step);
+      }
+      async function refresh() {
+        if (document.visibilityState !== 'visible') return;
+        try {
+          const r = await fetch('/api/dataset/count', { cache: 'no-store' });
+          if (!r.ok) return;
+          const d = await r.json();
+          if (typeof d.total === 'number' && d.total !== current) tween(d.total);
+        } catch (e) {}
+      }
+      refresh();
+      setInterval(refresh, 30000);
+      document.addEventListener('visibilitychange', refresh);
     })();
   </script>
   <script>

@@ -97,14 +97,65 @@
             <li>Max 25 MB per file. Multiple photos compose into one document.</li>
             <li>Detection runs locally. Your file never reaches a server.</li>
           </ul>
-          <label class="consent-row" for="ai-training-consent">
-            <input type="checkbox" id="ai-training-consent" />
-            <span class="consent-row__text">
-              <strong>Help us improve detection.</strong> Share anonymized field
-              positions (no document content, no PII) when CyberSygn misses or
-              misplaces a field. Off by default. You can change this anytime.
-            </span>
-          </label>
+          <!-- Free-tier signup gate. Hidden once the user has a freeToken
+               in localStorage; visible to first-time visitors. Three
+               documents lifetime, no card needed. Submitting the form
+               binds the email to a counter that survives cookie clears. -->
+          <form class="free-gate" id="free-gate" autocomplete="on">
+            <p class="free-gate__kicker">Start free.</p>
+            <h3 class="free-gate__title">Three documents, ever, on the house.</h3>
+            <p class="free-gate__lede">
+              Sign up once, sign three documents free, forever. Your email
+              binds the count so it survives cookie clears. Upgrade anytime;
+              the same email keeps your history.
+            </p>
+            <div class="free-gate__row">
+              <div class="field">
+                <input class="field__input" id="free-first" name="firstName" placeholder=" " type="text" autocomplete="given-name" required />
+                <label class="field__label" for="free-first">First name</label>
+              </div>
+              <div class="field">
+                <input class="field__input" id="free-last" name="lastName" placeholder=" " type="text" autocomplete="family-name" required />
+                <label class="field__label" for="free-last">Last name</label>
+              </div>
+            </div>
+            <div class="field">
+              <input class="field__input" id="free-email" name="email" placeholder=" " type="email" autocomplete="email" required />
+              <label class="field__label" for="free-email">Email</label>
+            </div>
+
+            <label class="consent-row consent-row--locked" for="free-consent">
+              <input type="checkbox" id="free-consent" checked disabled />
+              <span class="consent-row__text">
+                <strong>Free tier includes dataset use.</strong> Your three
+                free PDFs join our improvement dataset so detection gets
+                better for everyone. Field positions only, no document
+                content. Required for the free tier. Choose Solo or Founding
+                to opt out.
+              </span>
+            </label>
+
+            <button class="btn btn--primary btn--block btn--lg" type="submit">
+              Get my three free documents
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </button>
+
+            <p class="free-gate__small" id="free-gate-status">
+              No card. Email goes to the founder, nowhere else.
+            </p>
+          </form>
+
+          <!-- Returning users (freeToken in localStorage) see this instead,
+               with their remaining count. Reveals the upload buttons. -->
+          <div class="free-status" id="free-status" hidden>
+            <p class="free-status__line">
+              <span id="free-status-remaining">3</span> of 3 free documents remaining.
+            </p>
+            <p class="free-status__cap" id="free-status-cap" hidden>
+              You've used all 3 free documents.
+              <a href="/#pricing">Upgrade for unlimited →</a>
+            </p>
+          </div>
         </div>
 
         <aside class="dropzone-card__demo" aria-hidden="true">

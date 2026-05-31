@@ -4617,3 +4617,91 @@ details[open] > .field-list__group--toggle::after {
   :root[data-polish="on"] .sub-banner:hover,
   :root[data-polish="on"] .signer-status:hover { transform: none !important; }
 }
+
+/* ============================================================================
+   SLICE 38: free-tier signup gate + dataset counter
+   ============================================================================ */
+
+.free-gate {
+  margin-top: var(--s-4);
+  padding: var(--s-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--accent) 4%, var(--bg));
+  display: grid;
+  gap: var(--s-3);
+}
+.free-gate__kicker {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent-text);
+  margin: 0;
+}
+.free-gate__title {
+  margin: 0;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.free-gate__lede {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+.free-gate__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+}
+@media (max-width: 520px) {
+  .free-gate__row { grid-template-columns: 1fr; }
+}
+.free-gate__small {
+  margin: 0;
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--text-3);
+}
+
+.consent-row--locked {
+  opacity: 0.95;
+}
+.consent-row--locked input[disabled] { cursor: not-allowed; }
+
+.free-status {
+  margin-top: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  display: grid;
+  gap: var(--s-2);
+}
+.free-status__line {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+}
+.free-status__line span {
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: var(--t-sm);
+}
+.free-status__cap {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--danger);
+}
+.free-status__cap a { color: var(--accent-text); }
+
+/* Free-gated state: upload buttons hidden until signup completes. */
+body[data-free-gated="true"] .dropzone-card__actions,
+body[data-free-gated="true"] .dropzone-card__hints {
+  display: none;
+}

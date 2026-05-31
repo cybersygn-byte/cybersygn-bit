@@ -155,6 +155,90 @@ const addFieldButtons = document.querySelectorAll('.add-field-btn');
 const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const saveTemplateButton = $('save-template-button');
+
+// ---- Free-tier gate ---------------------------------------------------------
+// Three docs lifetime per email. The gate captures first name, last name,
+// email on first visit; subsequent uploads use the stored freeToken. The
+// /api/free/consume call inside the doc-creation flow enforces the cap.
+const FREE_TOKEN_KEY = 'cybersygn.freeToken';
+const FREE_USED_KEY  = 'cybersygn.freeUsed';
+
+function readFreeToken() {
+  try { return localStorage.getItem(FREE_TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+function writeFreeToken(token) {
+  try {
+    if (token) localStorage.setItem(FREE_TOKEN_KEY, token);
+    else localStorage.removeItem(FREE_TOKEN_KEY);
+  } catch (e) {}
+}
+function setFreeUsed(used, remaining) {
+  try { localStorage.setItem(FREE_USED_KEY, JSON.stringify({ used, remaining, at: Date.now() })); } catch (e) {}
+}
+function getFreeUsed() {
+  try {
+    const raw = localStorage.getItem(FREE_USED_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) { return null; }
+}
+
+function paintFreeStatus() {
+  const gate = $('free-gate');
+  const status = $('free-status');
+  const remainingEl = $('free-status-remaining');
+  const capEl = $('free-status-cap');
+  if (!gate || !status) return;
+  const token = readFreeToken();
+  if (!token) {
+    gate.hidden = false;
+    status.hidden = true;
+    document.body.dataset.freeGated = 'true';
+    return;
+  }
+  gate.hidden = true;
+  status.hidden = false;
+  document.body.dataset.freeGated = 'false';
+  const used = getFreeUsed();
+  const remaining = used && Number.isFinite(used.remaining) ? used.remaining : 3;
+  if (remainingEl) remainingEl.textContent = String(remaining);
+  if (capEl) capEl.hidden = remaining > 0;
+}
+
+const freeGateForm = $('free-gate');
+if (freeGateForm) {
+  freeGateForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const statusEl = $('free-gate-status');
+    const firstName = $('free-first').value.trim();
+    const lastName  = $('free-last').value.trim();
+    const email     = $('free-email').value.trim();
+    if (!firstName || !lastName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (statusEl) statusEl.textContent = 'Fill in first name, last name, and a valid email.';
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Creating your account.';
+    try {
+      const res = await fetch('/api/free/signup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        if (statusEl) statusEl.textContent = `Could not sign up: ${data.error || 'unknown error'}`;
+        return;
+      }
+      writeFreeToken(data.freeToken);
+      setFreeUsed(data.used || 0, data.remaining || 3);
+      paintFreeStatus();
+      track('free_signup_completed', { isReturning: !!data.isReturning, remaining: data.remaining });
+    } catch (err) {
+      if (statusEl) statusEl.textContent = `Network error: ${err.message || err}`;
+    }
+  });
+}
+paintFreeStatus();
 const templateStateEl = $('template-state');
 
 /**
