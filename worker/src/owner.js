@@ -167,7 +167,17 @@ export async function getOwnerForRequest(request, env, url) {
  * endpoint refuses every attempt with 503 'login_not_configured'.
  */
 export async function loginWithCredentials(username, password, env) {
-  if (!env || !env.OWNER_USERNAME || !env.OWNER_PASSWORD_HASH) {
+  // Trim whitespace on every secret value we read. wrangler secret put,
+  // depending on how the value was piped in, may store trailing newlines.
+  // We also trim the inbound username (clients often paste with stray
+  // whitespace). Passwords are NOT trimmed since legit passwords can
+  // contain leading/trailing spaces; instead the client is responsible
+  // for sending exactly the characters the user intended.
+  const storedUser = (env && typeof env.OWNER_USERNAME === 'string') ? env.OWNER_USERNAME.trim() : '';
+  const storedHash = (env && typeof env.OWNER_PASSWORD_HASH === 'string') ? env.OWNER_PASSWORD_HASH.trim().toLowerCase() : '';
+  const storedSalt = (env && typeof env.OWNER_PASSWORD_SALT === 'string') ? env.OWNER_PASSWORD_SALT.trim() : '';
+
+  if (!storedUser || !storedHash) {
     return { ok: false, error: 'login_not_configured' };
   }
   if (typeof username !== 'string' || username.length === 0 || username.length > 64) {
@@ -176,14 +186,14 @@ export async function loginWithCredentials(username, password, env) {
   if (typeof password !== 'string' || password.length === 0 || password.length > 256) {
     return { ok: false, error: 'invalid_password' };
   }
-  if (!constantTimeEquals(username, env.OWNER_USERNAME)) {
+  const candidateUser = username.trim();
+  if (!constantTimeEquals(candidateUser, storedUser)) {
     return { ok: false, error: 'invalid_credentials' };
   }
-  const salt = (env.OWNER_PASSWORD_SALT || '').slice(0, 64);
-  const candidate = username + ':' + password + ':' + salt;
+  const candidate = candidateUser + ':' + password + ':' + storedSalt.slice(0, 64);
   const bytes = new TextEncoder().encode(candidate);
   const hash = await sha256Hex(bytes);
-  if (!constantTimeEquals(hash, env.OWNER_PASSWORD_HASH.toLowerCase())) {
+  if (!constantTimeEquals(hash, storedHash)) {
     return { ok: false, error: 'invalid_credentials' };
   }
   const record = await issueOwnerToken(env);
