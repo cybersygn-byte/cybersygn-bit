@@ -89,6 +89,7 @@ scripts/
 
 Use `git log --oneline` for the full list. Highlights:
 
+- **44** Template-loaded confidence display: confidence now preserved through save (worker/src/templates.js sanitizeFields), client defaults missing values to 1.0 (web/preview/app.js handleFile), existing public template at `tpl:80cc1a28...` patched in KV. Native Roofing PDF detection report now reads 100% (was 7%).
 - **43** `/control/` owner workbench with username+password login, robots-blocked
 - **42** Monthly owner-report email, runs on the 1st of each UTC month
 - **41** Phase 3 ML scaffolding (export endpoint + readiness threshold). NOT the full pipeline. Heuristic detection still in production.
