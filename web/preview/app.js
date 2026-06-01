@@ -145,7 +145,11 @@ const documentStrip = $('document-strip');
 const filenameEl = $('result-filename');
 const statPages = $('stat-pages');
 const statFields = $('stat-fields');
-const statConfidence = $('stat-confidence');
+const statConfidence = $('stat-confidence');  // legacy — not in DOM after sidebar rebuild
+const fillProgress = $('fill-progress');
+const fillProgressFill = $('fill-progress-fill');
+const fillProgressText = $('fill-progress-text');
+const sidebarTools = $('sidebar-tools');
 const fieldList = $('field-list');
 const status = $('status-indicator');
 const errorBanner = $('error-banner');
@@ -256,17 +260,27 @@ function setTemplateState(kind, detail) {
     templateStateEl.hidden = true;
     templateStateEl.removeAttribute('data-state');
     templateStateEl.textContent = '';
+    templateStateEl.removeAttribute('title');
     return;
   }
   templateStateEl.hidden = false;
   templateStateEl.dataset.state = kind;
-  const messages = {
-    'applied-public':  `Template loaded (public, ${detail || 0} fields). Anyone uploading this PDF gets these labels.`,
-    'applied-private': `Your saved template loaded (${detail || 0} fields).`,
-    'restored-edits':  `Restored ${detail || 0} manual fields from your previous session on this PDF.`,
-    'none':            `No saved template for this PDF. Detection is heuristic only. Add missing fields and click "Save as template" to lock them in.`,
+  // Pill-form labels: short enough to read at a glance. Full sentence
+  // lives in the title= attribute so power users can hover for detail.
+  const labels = {
+    'applied-public':  `Public template · ${detail || 0} fields`,
+    'applied-private': `Saved template · ${detail || 0} fields`,
+    'restored-edits':  `${detail || 0} edits restored`,
+    'none':            `Heuristic detection · review before sending`,
   };
-  templateStateEl.textContent = messages[kind] || '';
+  const tooltips = {
+    'applied-public':  `Anyone uploading this PDF gets these labels. ${detail || 0} fields, human-verified.`,
+    'applied-private': `Your saved template for this PDF. Only you see it. ${detail || 0} fields.`,
+    'restored-edits':  `${detail || 0} manual fields restored from your previous session on this PDF.`,
+    'none':            `No saved template. Detection is best-guess; verify each field before sending.`,
+  };
+  templateStateEl.textContent = labels[kind] || '';
+  templateStateEl.title = tooltips[kind] || '';
 }
 const toast = $('toast');
 
@@ -2048,9 +2062,11 @@ async function onFieldBoxClick(field) {
 
 function populateSidebar(detection, filename) {
   filenameEl.textContent = filename;
-  statPages.textContent = String(detection.pageCount);
-  statFields.textContent = String(detection.fields.length);
-  statConfidence.textContent = meanConfidencePct(detection.fields);
+  if (statPages) statPages.textContent = String(detection.pageCount);
+  if (statFields) statFields.textContent = String(detection.fields.length);
+  // statConfidence: legacy element, no longer rendered in the sidebar.
+  // The reliability story lives in the template-state pill now.
+  if (statConfidence) statConfidence.textContent = meanConfidencePct(detection.fields);
 
   fieldList.innerHTML = '';
   if (detection.fields.length === 0) {
@@ -2256,8 +2272,10 @@ function resetApp() {
   setTemplateState('hidden');
   fileInput.value = '';
   signButton.disabled = true;
-  signButton.textContent = 'Send for signature';
+  signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
   signButton.classList.remove('btn--ready');
+  paintProgress(0, 0);
+  if (sidebarTools) sidebarTools.removeAttribute('open');
   fillStore.clear();
   signers.reset();
   assignments.reset();
@@ -2294,22 +2312,83 @@ function updateFillUI() {
     row.classList.toggle('field-row--filled', Boolean(fillStore.get(id)));
   });
 
-  // Sign button: always enabled once any field exists, always downloads
-  // what's filled. Label is a fixed "Download PDF" with a dynamic
-  // "(X of N fields)" subline rendered inside the button so the user
-  // sees progress without the button locking them out.
+  // Sign button: stays a clean single-line CTA. Progress lives in the
+  // progress bar above it now, so the button is just "Download PDF"
+  // with a download glyph. Enabled as soon as any field exists.
   const filledCount = fillStore.size();
   const totalCount = docState.fields.length;
+  paintSignButton(filledCount, totalCount);
+  paintProgress(filledCount, totalCount);
+}
+
+const SIGN_BTN_ARROW = (
+  '<span class="sign-btn__arrow" aria-hidden="true">' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>' +
+      '<polyline points="7 10 12 15 17 10"/>' +
+      '<line x1="12" y1="15" x2="12" y2="3"/>' +
+    '</svg>' +
+  '</span>'
+);
+
+function paintSignButton(filledCount, totalCount) {
+  // Signer mode is a separate path; that handler sets its own label.
+  if (signButton.dataset.signerMode === 'true') return;
+
   if (totalCount === 0) {
     signButton.disabled = true;
-    signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>';
+    signButton.classList.remove('btn--ready');
+    signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
     return;
   }
   signButton.disabled = false;
   signButton.classList.add('btn--ready');
-  signButton.innerHTML =
-    `<span class="sign-btn__label">Download PDF</span>` +
-    `<span class="sign-btn__sub">(${filledCount} of ${totalCount} fields filled)</span>`;
+  // Label changes meaning at completion: "Download PDF" until everything
+  // is filled, "Download signed PDF" once nothing's left to fill — small
+  // word, big confidence cue for the user.
+  const label = filledCount >= totalCount && totalCount > 0 ? 'Download signed PDF' : 'Download PDF';
+  signButton.innerHTML = `<span class="sign-btn__label">${label}</span>` + SIGN_BTN_ARROW;
+}
+
+/**
+ * Drive the progress bar + text under the doc-card. Three states:
+ *   • totalCount=0:    "Drop a PDF to begin."
+ *   • partial:         "X of Y filled" + bar fills proportionally
+ *   • complete:        "All N fields filled. Ready to download." +
+ *                       bar goes 100% and shifts to success green
+ */
+function paintProgress(filledCount, totalCount) {
+  if (!fillProgress) return;
+  fillProgress.setAttribute('aria-valuemax', String(totalCount));
+  fillProgress.setAttribute('aria-valuenow', String(filledCount));
+
+  if (totalCount === 0) {
+    if (fillProgressFill) fillProgressFill.style.width = '0%';
+    if (fillProgressText) fillProgressText.textContent = 'Drop a PDF to begin.';
+    fillProgress.classList.remove('progress--complete');
+    return;
+  }
+  const pct = Math.max(0, Math.min(100, Math.round((filledCount / totalCount) * 100)));
+  if (fillProgressFill) fillProgressFill.style.width = pct + '%';
+  if (filledCount === 0) {
+    if (fillProgressText) {
+      fillProgressText.innerHTML =
+        `<span>Ready to sign.</span><strong>${totalCount} field${totalCount === 1 ? '' : 's'}</strong>`;
+    }
+    fillProgress.classList.remove('progress--complete');
+  } else if (filledCount >= totalCount) {
+    if (fillProgressText) {
+      fillProgressText.innerHTML =
+        `<span>All filled. Ready to download.</span><strong>${filledCount}/${totalCount}</strong>`;
+    }
+    fillProgress.classList.add('progress--complete');
+  } else {
+    if (fillProgressText) {
+      fillProgressText.innerHTML =
+        `<span>Signing.</span><strong>${filledCount} of ${totalCount} fields</strong>`;
+    }
+    fillProgress.classList.remove('progress--complete');
+  }
 }
 
 async function onSignClick() {

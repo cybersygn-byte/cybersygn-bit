@@ -2571,20 +2571,21 @@ button { font: inherit; cursor: pointer; }
 
 /* ----- Sticky add-field group (5 type buttons in the sidebar) ----- */
 .add-field-group {
-  margin-top: var(--s-2);
+  margin: 0;
   padding: var(--s-3);
   border: 1px dashed var(--line-strong);
   border-radius: var(--r);
-  background: var(--bg-2);
+  background: var(--bg);
 }
 .add-field-group__label {
   margin: 0 0 var(--s-2);
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-3);
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
   line-height: 1.4;
+  text-transform: none;
 }
 .add-field-group__buttons {
   display: flex;
@@ -3800,77 +3801,205 @@ details[open] > .field-list__group--toggle::after {
   padding: var(--s-5) var(--s-5) var(--s-4);
   border-bottom: 1px solid var(--line);
 }
-.sidebar__crumb {
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--accent-text);
+
+/* ── Document identity card ─────────────────────────────
+   Filename + page/field meta + a small icon. Replaces the
+   old "Detection report" crumb + bare filename + 3-stat grid
+   pattern. The icon roots the visual hierarchy; meta line
+   carries pages·fields lightly so the eye moves down to the
+   progress bar and CTA rather than parking on cold numbers. */
+.doc-card {
   display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin: 0 0 var(--s-2);
+  gap: var(--s-3);
+  align-items: flex-start;
 }
-.sidebar__crumb::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-}
-.sidebar__file {
-  font-family: var(--display, var(--sans));
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-  margin: 0 0 var(--s-4);
-  word-break: break-all;
-  color: var(--text);
-}
-.sidebar__stats {
+.doc-card__icon {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  margin: 0 calc(var(--s-5) * -1) var(--s-3);
-  padding: 0 var(--s-5);
-  border-top: 1px solid var(--line);
+  place-items: center;
+  border-radius: var(--r);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border: 1px solid var(--accent-line);
+}
+.doc-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.doc-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.doc-card__title {
+  font-family: var(--display, var(--sans));
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+  margin: 0;
+  color: var(--text);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.doc-card__meta {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+.doc-card__sep {
+  margin: 0 6px;
+  color: var(--line-2);
+}
+
+/* ── Primary action zone ─────────────────────────────────
+   Progress bar on top tells the user where they are. Big
+   primary button below is the only action that matters.
+   Sits inside its own padded zone with bottom border so the
+   eye treats it as a single unit. */
+.sidebar__action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
   border-bottom: 1px solid var(--line);
 }
-.sidebar__stat {
-  padding: var(--s-3) 0;
-  border-right: 1px solid var(--line);
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-.sidebar__stat:last-child { border-right: 0; }
-.sidebar__stat dt {
-  font-family: var(--mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--text-3);
-  margin: 0 0 4px;
+.progress__bar {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  overflow: hidden;
 }
-.sidebar__stat dd {
-  font-family: var(--display, var(--sans));
-  font-size: 22px;
-  font-weight: 600;
+.progress__fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 80%, white));
+  transition: width 240ms var(--ease), background 240ms var(--ease);
+}
+.progress--complete .progress__fill {
+  background: var(--ok);
+}
+.progress__text {
   margin: 0;
-  letter-spacing: -0.015em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-2);
+  line-height: 1.4;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-2);
 }
-.sidebar__stat:nth-child(2) dd { color: var(--accent-text); }
-.sidebar__stat:nth-child(3) dd { color: var(--ok); }
+.progress__text strong {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.progress--complete .progress__text {
+  color: var(--ok);
+}
+.progress--complete .progress__text strong {
+  color: var(--ok);
+}
 
-.sidebar__legend {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px 14px;
-  margin-bottom: var(--s-3);
+/* Inline hint for "add a field, click on the page" — moved
+   here so it lives next to the primary action and the user
+   sees it without scrolling to the tools disclosure. */
+.add-field-hint {
+  margin: 0;
+  min-height: 0;
   font-family: var(--mono);
   font-size: var(--t-xs);
+  color: var(--accent-text);
+  line-height: 1.4;
+}
+.add-field-hint:empty {
+  display: none;
+}
+
+/* ── Compact legend ─────────────────────────────────────
+   Horizontal row, no longer a 2-column grid. Single line
+   when sidebar is wide, wraps gracefully when narrow. */
+.sidebar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: var(--s-3) var(--s-5);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-2);
+}
+
+/* ── Tools & templates disclosure ───────────────────────
+   Collapsed by default. Holds the "add missed field"
+   panel, save-template, and load-another buttons —
+   secondary actions that don't need to compete with the
+   primary CTA for visual real estate. */
+.sidebar__tools {
+  border-bottom: 1px solid var(--line);
+}
+.sidebar__tools-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+.sidebar__tools-summary::-webkit-details-marker { display: none; }
+.sidebar__tools-summary::marker { content: ""; }
+.sidebar__tools-summary:hover {
+  background: var(--bg-2);
+  color: var(--text);
+}
+.sidebar__tools-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.sidebar__tools[open] .sidebar__tools-summary {
+  color: var(--text);
+  background: var(--bg-2);
+}
+.sidebar__tools-chev {
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  transition: transform 200ms var(--ease);
+}
+.sidebar__tools[open] .sidebar__tools-chev {
+  transform: rotate(180deg);
+  color: var(--accent-text);
+}
+.sidebar__tools-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5) var(--s-4);
+  background: var(--bg-2);
 }
 .legend-chip {
   display: inline-flex;
@@ -4105,15 +4234,33 @@ details[open] > .field-list__group--toggle::after {
 
 /* Template-state badge in the sidebar head. Different intent colors
    tell the user whether prior work loaded without reading text. */
+/* Template reliability pill. Sits under the doc-card and
+   tells the user qualitatively how trustworthy the detected
+   field set is. Public template = trusted, saved = your own,
+   restored-edits = you have unsaved work, none = heuristic. */
 .template-state {
-  margin: var(--s-2) 0 var(--s-3);
-  padding: var(--s-2) var(--s-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--s-3) 0 0;
+  padding: 4px 10px 4px 8px;
   font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.02em;
-  line-height: 1.45;
-  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  border-radius: 999px;
   border: 1px solid transparent;
+  max-width: 100%;
+}
+.template-state::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 6px;
 }
 .template-state[data-state="applied-public"]  {
   background: color-mix(in srgb, var(--ok) 12%, transparent);
@@ -4136,31 +4283,35 @@ details[open] > .field-list__group--toggle::after {
   color: var(--text-3);
 }
 
-/* Two-line "Download PDF" button: bold label + dynamic progress sub.
-   .btn is inline-flex row by default; override so children stack and
-   wrap text wraps cleanly within the button width. */
+/* Single-line "Download PDF" button. Progress now lives in the
+   progress bar above, so the button stays a clean primary CTA. */
 #sign-button {
-  flex-direction: column;
+  flex-direction: row;
   white-space: normal;
-  gap: 0;
+  gap: var(--s-2);
   line-height: 1.2;
   padding-block: 14px;
-}
-#sign-button .sign-btn__label {
-  display: block;
   font-weight: 600;
   font-size: var(--t);
-  line-height: 1.15;
+  letter-spacing: -0.005em;
 }
-#sign-button .sign-btn__sub {
-  display: block;
-  margin-top: 4px;
-  font-family: var(--mono);
-  font-size: var(--t-xs);
-  letter-spacing: 0.04em;
-  opacity: 0.85;
-  font-weight: 500;
-  text-transform: none;
+#sign-button .sign-btn__label {
+  display: inline;
+  font-weight: 600;
+}
+#sign-button .sign-btn__arrow {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 200ms var(--ease);
+}
+#sign-button:not(:disabled):hover .sign-btn__arrow {
+  transform: translateY(1px);
+}
+/* Disabled primary button: keep it readable but unmistakeably off.
+   Default .btn--primary[disabled] state is fine; this just lifts
+   the contrast on the label so users see what's coming. */
+#sign-button:disabled {
+  opacity: 0.5;
 }
 
 /* Filled-field appearance. The box sits on top of the WHITE rendered

@@ -274,43 +274,71 @@
 
       <div class="result__pages" id="document-strip" role="region" aria-label="Rendered pages"></div>
 
-      <aside class="sidebar" aria-label="Detected fields">
+      <aside class="sidebar" aria-label="Document workspace">
 
+        <!-- Document identity: filename + light meta + reliability pill -->
         <header class="sidebar__head">
-          <p class="sidebar__crumb">Detection report</p>
-          <h2 id="result-filename" class="sidebar__file">document.pdf</h2>
-          <p id="template-state" class="template-state" hidden aria-live="polite"></p>
-
-          <dl class="sidebar__stats">
-            <div class="sidebar__stat">
-              <dt>Pages</dt>
-              <dd id="stat-pages">0</dd>
+          <div class="doc-card">
+            <span class="doc-card__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </span>
+            <div class="doc-card__body">
+              <h2 id="result-filename" class="doc-card__title">document.pdf</h2>
+              <p class="doc-card__meta">
+                <span id="stat-pages">0</span> pages
+                <span class="doc-card__sep" aria-hidden="true">·</span>
+                <span id="stat-fields">0</span> fields
+              </p>
             </div>
-            <div class="sidebar__stat">
-              <dt>Fields</dt>
-              <dd id="stat-fields">0</dd>
-            </div>
-            <div class="sidebar__stat">
-              <dt>Confidence</dt>
-              <dd id="stat-confidence">0%</dd>
-            </div>
-          </dl>
-
-          <div class="sidebar__legend" aria-label="Field types">
-            <span class="legend-chip" data-type="signature"><i></i>Signature</span>
-            <span class="legend-chip" data-type="date"><i></i>Date</span>
-            <span class="legend-chip" data-type="initial"><i></i>Initial</span>
-            <span class="legend-chip" data-type="checkbox"><i></i>Checkbox</span>
-            <span class="legend-chip" data-type="text"><i></i>Text</span>
           </div>
+          <p id="template-state" class="template-state" hidden aria-live="polite"></p>
+        </header>
 
-          <div class="sidebar__actions">
-            <button id="sign-button" class="btn btn--primary btn--block" type="button" disabled>
-              Send for signature
-              <span class="btn-arrow" aria-hidden="true">→</span>
-            </button>
+        <!-- Primary action: progress bar above, big Download below -->
+        <div class="sidebar__action">
+          <div class="progress" id="fill-progress" role="progressbar" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+            <div class="progress__bar"><div class="progress__fill" id="fill-progress-fill"></div></div>
+            <p class="progress__text" id="fill-progress-text">Drop a PDF to begin.</p>
+          </div>
+          <button id="sign-button" class="btn btn--primary btn--block btn--lg" type="button" disabled>
+            <span class="sign-btn__label">Download PDF</span>
+            <span class="sign-btn__arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </span>
+          </button>
+          <p id="add-field-hint" class="add-field-hint" aria-live="polite"></p>
+        </div>
+
+        <!-- Field-type legend, compact -->
+        <div class="sidebar__legend" aria-label="Field types">
+          <span class="legend-chip" data-type="signature"><i></i>Signature</span>
+          <span class="legend-chip" data-type="date"><i></i>Date</span>
+          <span class="legend-chip" data-type="initial"><i></i>Initial</span>
+          <span class="legend-chip" data-type="checkbox"><i></i>Checkbox</span>
+          <span class="legend-chip" data-type="text"><i></i>Text</span>
+        </div>
+
+        <!-- Secondary tools: collapsed by default. Open when user needs to
+             add a missing field, save a template, or load another doc. -->
+        <details class="sidebar__tools" id="sidebar-tools">
+          <summary class="sidebar__tools-summary">
+            <span class="sidebar__tools-label">Tools &amp; templates</span>
+            <span class="sidebar__tools-chev" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </summary>
+          <div class="sidebar__tools-body">
             <div class="add-field-group" role="group" aria-label="Add a missed field">
-              <p class="add-field-group__label">Add a missed field. Pick one then click on the page.</p>
+              <p class="add-field-group__label">Missed a field? Pick a type, then click on the page.</p>
               <div class="add-field-group__buttons">
                 <button class="add-field-btn" data-add-type="signature" type="button">Signature</button>
                 <button class="add-field-btn" data-add-type="initial"   type="button">Initial</button>
@@ -318,16 +346,15 @@
                 <button class="add-field-btn" data-add-type="checkbox"  type="button">Checkbox</button>
                 <button class="add-field-btn" data-add-type="text"      type="button">Text</button>
               </div>
-              <p class="add-field-group__hint" id="add-field-hint" aria-live="polite"></p>
             </div>
             <button id="save-template-button" class="btn btn--ghost btn--block btn--sm" type="button">
-              Save this document's fields as a template
+              Save fields as template
             </button>
             <button id="reset-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Load another document
             </button>
           </div>
-        </header>
+        </details>
 
         <!--
           Signers panel. Populated dynamically by app.js once a document
