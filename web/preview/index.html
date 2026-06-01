@@ -272,7 +272,46 @@
     <!-- ============================ RESULT ============================ -->
     <section id="result" class="result" hidden>
 
-      <div class="result__pages" id="document-strip" role="region" aria-label="Rendered pages"></div>
+      <div class="result__main">
+        <!-- Floating toolbar: jump between fields, toggle edit mode.
+             Sticky to the top of the scroll area so it follows the user
+             through the document. -->
+        <div class="doc-toolbar" id="doc-toolbar" role="toolbar" aria-label="Document controls">
+          <div class="doc-toolbar__group" role="group" aria-label="Field navigation">
+            <button class="doc-toolbar__btn" id="prev-field" type="button"
+                    aria-label="Previous field" title="Previous field (Shift+Tab)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+            <span class="doc-toolbar__pos" aria-live="polite">
+              <span id="field-pos" class="doc-toolbar__pos-current">—</span>
+              <span class="doc-toolbar__pos-sep" aria-hidden="true">/</span>
+              <span id="field-total" class="doc-toolbar__pos-total">—</span>
+              <span class="doc-toolbar__pos-label">fields</span>
+            </span>
+            <button class="doc-toolbar__btn" id="next-field" type="button"
+                    aria-label="Next field" title="Next field (Tab)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+
+          <span class="doc-toolbar__sep" aria-hidden="true"></span>
+
+          <button class="doc-toolbar__toggle" id="edit-toggle" type="button"
+                  aria-pressed="false" title="Toggle edit mode (E)">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+            </svg>
+            <span class="doc-toolbar__toggle-label">Edit fields</span>
+          </button>
+        </div>
+
+        <div class="result__pages" id="document-strip" role="region" aria-label="Rendered pages"></div>
+      </div>
 
       <aside class="sidebar" aria-label="Document workspace">
 

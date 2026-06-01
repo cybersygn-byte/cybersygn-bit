@@ -3724,15 +3724,138 @@ details[open] > .field-list__group--toggle::after {
   .result { grid-template-columns: 1fr; }
 }
 
-.result__pages {
-  padding: var(--s-6) var(--s-5) var(--s-8);
+.result__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   background: var(--bg-2);
   border-right: 1px solid var(--line);
+}
+.result__pages {
+  padding: var(--s-4) var(--s-5) var(--s-8);
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
   align-items: center;
   min-width: 0;
+}
+
+/* ── Floating document toolbar ─────────────────────────
+   Pinned to the top of the document scroll area.
+   Carries prev/next field navigation and edit-mode toggle.
+   Soft glass effect so the document underneath shows through. */
+.doc-toolbar {
+  position: sticky;
+  top: 64px;
+  z-index: 12;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--s-4) 0 0;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  -webkit-backdrop-filter: saturate(140%) blur(10px);
+  border: 1px solid var(--line-2);
+  box-shadow: 0 1px 2px rgba(1,20,52,0.06), 0 12px 28px -16px rgba(1,20,52,0.20);
+  font-family: var(--sans);
+}
+.doc-toolbar__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.doc-toolbar__btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+.doc-toolbar__btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.doc-toolbar__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.doc-toolbar__btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.doc-toolbar__pos {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  min-width: 84px;
+  justify-content: center;
+}
+.doc-toolbar__pos-current { font-weight: 600; color: var(--text); }
+.doc-toolbar__pos-sep { color: var(--line-2); }
+.doc-toolbar__pos-total { color: var(--text-3); }
+.doc-toolbar__pos-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+.doc-toolbar__sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line-2);
+  margin: 0 4px;
+}
+.doc-toolbar__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  color: var(--text-2);
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+.doc-toolbar__toggle:hover {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.doc-toolbar__toggle[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--bg);
+}
+.doc-toolbar__toggle[aria-pressed="true"]:hover {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+  color: var(--bg);
+}
+.doc-toolbar__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .doc-toolbar__toggle-label { display: none; }
+  .doc-toolbar__pos-label { display: none; }
+  .doc-toolbar__pos { min-width: 60px; }
 }
 
 .page-shell {
@@ -4203,7 +4326,18 @@ details[open] > .field-list__group--toggle::after {
   line-height: 1.2;
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0;
+  transition: opacity 160ms var(--ease);
 }
+/* Show the type tag in three cases:
+   (1) edit mode is on (user wants to see/manage field placements)
+   (2) the field is hovered
+   (3) the field is focused (clicked, or just navigated to via prev/next)
+   In sign-mode (default), tags stay invisible so the document reads
+   clean, exactly as the signer will see it after flatten. */
+.is-edit-mode .field-box__tag,
+.field-box:hover .field-box__tag,
+.field-box.is-focused .field-box__tag { opacity: 1; }
 .field-box[data-type="date"]     .field-box__tag { background: var(--ok); }
 .field-box[data-type="initial"]  .field-box__tag { background: var(--warn); }
 .field-box[data-type="checkbox"] .field-box__tag { background: var(--text-2); }
@@ -4230,6 +4364,18 @@ details[open] > .field-list__group--toggle::after {
   pointer-events: auto;
   line-height: 1;
   z-index: 3;
+  transition: opacity 160ms var(--ease);
+}
+/* Single-signer mode: there's nobody to assign TO, so the dots are
+   pure noise. Hide them unless the user is in edit mode or the field
+   itself is hovered/focused — the latter exposes the chip on demand
+   for the rare case where a user wants to add a second signer. */
+.is-single-signer .field-box__chip { opacity: 0; pointer-events: none; }
+.is-single-signer.is-edit-mode .field-box__chip,
+.is-single-signer .field-box:hover .field-box__chip,
+.is-single-signer .field-box.is-focused .field-box__chip {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Template-state badge in the sidebar head. Different intent colors
@@ -4327,6 +4473,20 @@ details[open] > .field-list__group--toggle::after {
 .field-box--filled .field-box__tag { opacity: 0; }
 .field-box--other-signer { opacity: 0.35; }
 .field-box.is-focused { box-shadow: 0 0 0 3px var(--accent-line); }
+
+/* Prev/Next nav landing pulse. Brief glow so the user spots where the
+   viewport just jumped to. Self-clearing after 700ms via JS. */
+.field-box--nav-pulse {
+  animation: fieldNavPulse 700ms var(--ease) both;
+}
+@keyframes fieldNavPulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent); }
+  40%  { box-shadow: 0 0 0 8px color-mix(in srgb, var(--accent) 30%, transparent); }
+  100% { box-shadow: 0 0 0 3px var(--accent-line); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .field-box--nav-pulse { animation: none; }
+}
 
 .field-box__fill {
   position: absolute;

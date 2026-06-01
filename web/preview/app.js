@@ -160,6 +160,18 @@ const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const saveTemplateButton = $('save-template-button');
 
+// Document toolbar: prev/next field nav + edit-mode toggle.
+const docToolbar = $('doc-toolbar');
+const prevFieldBtn = $('prev-field');
+const nextFieldBtn = $('next-field');
+const fieldPosEl = $('field-pos');
+const fieldTotalEl = $('field-total');
+const editToggle = $('edit-toggle');
+const layoutRoot = $('app');
+
+// Cursor for prev/next navigation. -1 means "nothing focused yet".
+let _navIndex = -1;
+
 // ---- Free-tier gate ---------------------------------------------------------
 // Three docs lifetime per email. The gate captures first name, last name,
 // email on first visit; subsequent uploads use the stored freeToken. The
@@ -700,6 +712,122 @@ if (cameraInput) {
 resetButton.addEventListener('click', resetApp);
 
 signButton.addEventListener('click', onSignClick);
+
+// ── Document toolbar wiring ──────────────────────────────────────────────
+// Edit mode toggle. Adds/removes the .is-edit-mode class on the layout
+// root, which CSS uses to reveal field-type tags and (in single-signer
+// mode) the signer chips. Persists for the session so the user doesn't
+// have to re-enter edit mode every doc.
+if (editToggle) {
+  editToggle.addEventListener('click', () => {
+    const isOn = editToggle.getAttribute('aria-pressed') === 'true';
+    setEditMode(!isOn);
+    track('preview_edit_mode_toggle', { on: !isOn });
+  });
+}
+// Prev/next field nav. Scrolls the next field into view and focuses it.
+if (prevFieldBtn) prevFieldBtn.addEventListener('click', () => navigateFields(-1));
+if (nextFieldBtn) nextFieldBtn.addEventListener('click', () => navigateFields(+1));
+
+// Keyboard shortcuts:
+//   E         toggle edit mode
+//   Tab       next field   (when result is loaded and focus isn't in a form input)
+//   Shift+Tab prev field
+document.addEventListener('keydown', e => {
+  if (result.hidden) return;
+  // Don't hijack typing in inputs / textareas / contenteditable.
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (t && t.closest && t.closest('.modal-card, .add-type-chooser')) return;
+
+  if ((e.key === 'e' || e.key === 'E') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    e.preventDefault();
+    if (editToggle) editToggle.click();
+    return;
+  }
+  if (e.key === 'Tab') {
+    if (!docState.fields.length) return;
+    e.preventDefault();
+    navigateFields(e.shiftKey ? -1 : +1);
+  }
+});
+
+function setEditMode(on) {
+  if (!editToggle || !layoutRoot) return;
+  editToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+  layoutRoot.classList.toggle('is-edit-mode', on);
+}
+
+/**
+ * Return field IDs in reading order: page → top-down → left-to-right.
+ * Cached per fields-array identity so prev/next clicks are O(1) after
+ * the first call.
+ */
+let _navOrderCache = { ref: null, order: [] };
+function getNavOrder() {
+  if (_navOrderCache.ref === docState.fields && _navOrderCache.order.length) {
+    return _navOrderCache.order;
+  }
+  const order = [...docState.fields]
+    .sort((a, b) => {
+      if (a.page !== b.page) return a.page - b.page;
+      // Treat fields within 10 PDF-points vertically as the same row.
+      const dy = a.y - b.y;
+      if (Math.abs(dy) > 10) return dy;
+      return a.x - b.x;
+    })
+    .map(f => f.id);
+  _navOrderCache = { ref: docState.fields, order };
+  return order;
+}
+
+function navigateFields(direction) {
+  const order = getNavOrder();
+  if (!order.length) return;
+  if (_navIndex < 0) {
+    _navIndex = direction > 0 ? 0 : order.length - 1;
+  } else {
+    _navIndex = (_navIndex + direction + order.length) % order.length;
+  }
+  focusFieldAtIndex(_navIndex);
+}
+
+function focusFieldAtIndex(idx) {
+  const order = getNavOrder();
+  if (!order.length) return;
+  if (idx < 0 || idx >= order.length) return;
+  const id = order[idx];
+  const box = fieldElements.get(id);
+  if (!box) return;
+  // Move focus highlight: remove from any other box, add to this one.
+  fieldElements.forEach(el => el.classList.remove('is-focused'));
+  box.classList.add('is-focused');
+  // Scroll the page-shell (parent of the overlay) into view so the
+  // field lands in the middle of the viewport.
+  const pageShell = box.closest('.page-shell');
+  const target = pageShell || box;
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  updateNavCounter();
+  // Briefly flash the box so the user sees where they landed.
+  box.classList.add('field-box--nav-pulse');
+  setTimeout(() => box.classList.remove('field-box--nav-pulse'), 700);
+}
+
+function updateNavCounter() {
+  const total = docState.fields.length;
+  if (fieldTotalEl) fieldTotalEl.textContent = total > 0 ? String(total) : '—';
+  if (fieldPosEl) {
+    fieldPosEl.textContent = total > 0 && _navIndex >= 0 ? String(_navIndex + 1) : (total > 0 ? '1' : '—');
+  }
+  if (prevFieldBtn) prevFieldBtn.disabled = total === 0;
+  if (nextFieldBtn) nextFieldBtn.disabled = total === 0;
+}
+
+function resetNavCursor() {
+  _navIndex = -1;
+  _navOrderCache = { ref: null, order: [] };
+  updateNavCounter();
+}
 
 // Sticky add-field mode. Click one of the 5 type buttons to enter
 // add-mode pinned to that type. While active, every click on a page
@@ -2068,6 +2196,10 @@ function populateSidebar(detection, filename) {
   // The reliability story lives in the template-state pill now.
   if (statConfidence) statConfidence.textContent = meanConfidencePct(detection.fields);
 
+  // Reset nav cursor on every doc load. Counter goes from "— / —" to
+  // "1 / N", prev/next become enabled, reading-order cache invalidates.
+  resetNavCursor();
+
   fieldList.innerHTML = '';
   if (detection.fields.length === 0) {
     const empty = document.createElement('li');
@@ -2205,6 +2337,15 @@ function focusField(id) {
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
   if (row) row.classList.add('is-focused');
+
+  // Sync the toolbar counter so prev/next picks up from wherever the
+  // user clicked. Find this field's position in the reading-order list.
+  const order = getNavOrder();
+  const idx = order.indexOf(id);
+  if (idx >= 0) {
+    _navIndex = idx;
+    updateNavCounter();
+  }
 }
 
 function cssEscape(s) {
@@ -2276,6 +2417,8 @@ function resetApp() {
   signButton.classList.remove('btn--ready');
   paintProgress(0, 0);
   if (sidebarTools) sidebarTools.removeAttribute('open');
+  resetNavCursor();
+  setEditMode(false);
   fillStore.clear();
   signers.reset();
   assignments.reset();
@@ -2592,6 +2735,13 @@ function onAddSigner() {
 }
 
 function updateSignersUI(list) {
+  // Toggle the layout-root single-signer flag. CSS uses this to hide
+  // signer-assignment chips on every field box when there's nobody
+  // else to assign to. The chips become noise in the common case.
+  if (layoutRoot) {
+    layoutRoot.classList.toggle('is-single-signer', list.length <= 1);
+  }
+
   // 1. Rebuild the signers list.
   signersList.innerHTML = '';
   for (const signer of list) {
