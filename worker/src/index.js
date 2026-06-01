@@ -1324,6 +1324,22 @@ async function handleCreateDoc(request, env, url) {
     completedAt: null,
   }));
 
+  // CC recipients: people who get notified (with the signed PDF link)
+  // when the doc completes, but DO NOT sign anything. Sender-supplied,
+  // de-duplicated against signers, max 10. Each must look like an email.
+  const ccCandidates = Array.isArray(payload.cc) ? payload.cc : [];
+  const ccSeen = new Set(signers.map(s => (s.email || '').toLowerCase()));
+  const cc = [];
+  for (const raw of ccCandidates) {
+    if (cc.length >= 10) break;
+    const trimmed = String(raw || '').trim().slice(0, 200);
+    if (!isValidEmail(trimmed)) continue;
+    const key = trimmed.toLowerCase();
+    if (ccSeen.has(key)) continue;
+    ccSeen.add(key);
+    cc.push(trimmed);
+  }
+
   const docRecord = {
     id: docId,
     createdAt: new Date().toISOString(),
@@ -1342,6 +1358,7 @@ async function handleCreateDoc(request, env, url) {
       : {},
     assignments: payload.assignments,
     signers,
+    cc,
     completedAt: null,
     events: [],
     pdfSha256: await sha256Hex(pdfBytes),
@@ -1564,20 +1581,34 @@ async function handleSubmitFills(request, env, docId, token, url) {
   }
 
   // Fire completion emails to every signer when the whole doc is done.
+  // CC recipients (sender-supplied notice-only addresses) get the same
+  // completion email so they have the signed PDF link in their inbox.
   let completionEmails = null;
   if (allDone) {
     const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
     const downloadUrl = `${baseUrl}/preview/?doc=${docId}&t=${doc.signers[0].token}`;
     const auditAbsoluteUrl = auditUrl ? `${baseUrl}${auditUrl}` : null;
-    completionEmails = await Promise.all(doc.signers.filter(s => isValidEmail(s.email)).map(s =>
+    const signerSends = doc.signers.filter(s => isValidEmail(s.email)).map(s =>
       sendCompletion(env, {
         to: s.email,
         name: s.name,
         docTitle: doc.title,
         downloadUrl,
         auditUrl: auditAbsoluteUrl,
-      }).then(r => ({ to: s.email, ...r })),
-    ));
+      }).then(r => ({ to: s.email, role: 'signer', ...r })),
+    );
+    const ccList = Array.isArray(doc.cc) ? doc.cc : [];
+    const ccSends = ccList.filter(e => isValidEmail(e)).map(email =>
+      sendCompletion(env, {
+        to: email,
+        name: '',
+        docTitle: doc.title,
+        downloadUrl,
+        auditUrl: auditAbsoluteUrl,
+        notice: true,
+      }).then(r => ({ to: email, role: 'cc', ...r })),
+    );
+    completionEmails = await Promise.all([...signerSends, ...ccSends]);
   }
 
   return jsonResponse(200, {

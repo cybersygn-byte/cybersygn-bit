@@ -190,13 +190,19 @@ export function renderReminderHtml({ name, senderName, docTitle, magicLink, tone
   });
 }
 
-export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl }) {
+export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice }) {
+  const title = notice ? 'A document was signed.' : 'Signed and ready.';
+  const opener = notice
+    ? `Hello ${esc(name || 'there')}. You were CC'd on this signing for your records. Every signer has completed their part. ${esc(docTitle ? '"' + docTitle + '" is' : 'The document is')} below.`
+    : `Hello ${esc(name || 'there')}. Every signer has completed their part. ${esc(docTitle ? '"' + docTitle + '" is' : 'Your document is')} ready to download.`;
   return shell({
-    preheader: `${docTitle || 'Your CyberSygn document'} is signed and ready.`,
+    preheader: notice
+      ? `${docTitle || 'A CyberSygn document'} was signed. CC notice.`
+      : `${docTitle || 'Your CyberSygn document'} is signed and ready.`,
     body: `
-      <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">Signed and ready.</h1>
+      <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">${esc(title)}</h1>
       <p class="cs-text" style="margin:0 0 8px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
-        Hello ${esc(name || 'there')}. Every signer has completed their part. ${esc(docTitle ? '"' + docTitle + '" is' : 'Your document is')} ready to download.
+        ${opener}
       </p>
       ${ctaButton({ url: downloadUrl, label: 'Download signed PDF →' })}
       ${auditUrl ? `

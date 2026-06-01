@@ -2887,6 +2887,67 @@ body[data-add-mode="true"] .page-shell::after {
 .send-note__kicker { font-family: var(--mono); font-size: var(--t-m); text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent-text); margin: 0 0 var(--s-2); }
 .send-note__body { margin: 0; color: var(--text-2); font-size: var(--t-s); line-height: 1.55; }
 
+/* ── CC additional recipients block ─────────────────────
+   Sits in the send modal under the per-signer list. Captures
+   comma-separated emails to copy when the doc completes. */
+.cc-section {
+  margin: var(--s-4) 0 0;
+  padding: var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.cc-section__kicker {
+  font-family: var(--mono);
+  font-size: var(--t-m);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-2);
+  margin: 0 0 var(--s-2);
+}
+.cc-section__help {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+.cc-section__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  letter-spacing: 0;
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.cc-section__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+.cc-section__input::placeholder {
+  color: var(--text-3);
+  opacity: 0.7;
+}
+.cc-section__preview {
+  margin: var(--s-2) 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  line-height: 1.45;
+  word-break: break-word;
+}
+.cc-section__preview--has {
+  color: var(--accent-text);
+}
+.cc-section__preview--drop {
+  color: var(--warn);
+}
+
 @media (max-width: 640px) {
   .link-row { grid-template-columns: 1fr; gap: var(--s-1); }
   .link-row__url { font-size: 10px; }

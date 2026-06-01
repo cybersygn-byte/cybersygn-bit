@@ -771,8 +771,12 @@ function getNavOrder() {
   const order = [...docState.fields]
     .sort((a, b) => {
       if (a.page !== b.page) return a.page - b.page;
-      // Treat fields within 10 PDF-points vertically as the same row.
-      const dy = a.y - b.y;
+      // PDF coordinates have y-origin at the BOTTOM of the page, so
+      // visually-higher fields have a LARGER y value. To sort top-of-
+      // page first, sort by y descending.
+      // Fields within 10 PDF-points vertically are treated as the same
+      // row, where left-to-right (ascending x) decides the tiebreak.
+      const dy = b.y - a.y;
       if (Math.abs(dy) > 10) return dy;
       return a.x - b.x;
     })
@@ -2742,62 +2746,64 @@ function updateSignersUI(list) {
     layoutRoot.classList.toggle('is-single-signer', list.length <= 1);
   }
 
-  // 1. Rebuild the signers list.
-  signersList.innerHTML = '';
-  for (const signer of list) {
-    const li = document.createElement('li');
-    li.className = 'signer-row';
-    li.dataset.signerId = signer.id;
-    li.style.setProperty('--signer-color', signer.color);
+  // In-place diff. Previous implementation rebuilt the entire list on
+  // every keystroke (signers.update -> notify -> updateSignersUI),
+  // which removed the focused input from the DOM and dropped focus
+  // mid-typing. The visible symptom was "one letter at a time" typing.
+  //
+  // Now: keep existing row elements alive, only build/destroy rows
+  // when the signer-id set changes. The user's input keeps focus and
+  // caret position naturally because we never touch nameInput.value
+  // or emailInput.value (those reflect what the user is typing).
+  const existingRows = new Map();
+  Array.from(signersList.children).forEach(li => {
+    const id = li.dataset.signerId;
+    if (id) existingRows.set(id, li);
+  });
 
-    const swatch = document.createElement('span');
-    swatch.className = 'signer-row__swatch';
-    swatch.setAttribute('aria-hidden', 'true');
-    swatch.textContent = signer.initials;
-
-    const body = document.createElement('div');
-    body.className = 'signer-row__body';
-
-    const nameInput = document.createElement('input');
-    nameInput.className = 'signer-row__name';
-    nameInput.value = signer.name;
-    nameInput.placeholder = 'Your name';
-    nameInput.addEventListener('input', e => signers.update(signer.id, { name: e.target.value }));
-
-    const emailInput = document.createElement('input');
-    emailInput.className = 'signer-row__email';
-    emailInput.type = 'email';
-    emailInput.value = signer.email;
-    emailInput.placeholder = 'email@address';
-    emailInput.addEventListener('input', e => signers.update(signer.id, { email: e.target.value }));
-
-    body.appendChild(nameInput);
-    body.appendChild(emailInput);
-
-    const count = document.createElement('span');
-    count.className = 'signer-row__count';
-    const owned = assignments.countFor(signer.id, docState.fields);
-    count.textContent = `${owned}`;
-    count.title = `${owned} fields assigned to ${signer.name}.`;
-
-    li.appendChild(swatch);
-    li.appendChild(body);
-    li.appendChild(count);
-
-    // Remove button (hidden for the only remaining signer; we always
-    // need at least one).
-    if (list.length > 1) {
-      const remove = document.createElement('button');
-      remove.type = 'button';
-      remove.className = 'signer-row__remove';
-      remove.setAttribute('aria-label', `Remove ${signer.name}`);
-      remove.textContent = '×';
-      remove.addEventListener('click', () => removeSigner(signer.id));
-      li.appendChild(remove);
+  const seenIds = new Set();
+  list.forEach((signer, idx) => {
+    seenIds.add(signer.id);
+    let li = existingRows.get(signer.id);
+    if (!li) {
+      li = buildSignerRow(signer);
+      signersList.appendChild(li);
+    } else {
+      // Refresh visual elements that follow the model but DON'T touch
+      // the input values (the user is typing into them).
+      li.style.setProperty('--signer-color', signer.color);
+      const swatch = li.querySelector('.signer-row__swatch');
+      if (swatch) swatch.textContent = signer.initials;
+      const count = li.querySelector('.signer-row__count');
+      if (count) {
+        const owned = assignments.countFor(signer.id, docState.fields);
+        count.textContent = String(owned);
+        count.title = `${owned} fields assigned to ${signer.name}.`;
+      }
     }
+    // Move row into the right order position if it drifted.
+    const want = signersList.children[idx];
+    if (want !== li) signersList.insertBefore(li, want);
 
-    signersList.appendChild(li);
-  }
+    // Show/hide remove button based on list length.
+    let removeBtn = li.querySelector('.signer-row__remove');
+    if (list.length > 1 && !removeBtn) {
+      removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'signer-row__remove';
+      removeBtn.setAttribute('aria-label', `Remove ${signer.name}`);
+      removeBtn.textContent = '×';
+      removeBtn.addEventListener('click', () => removeSigner(signer.id));
+      li.appendChild(removeBtn);
+    } else if (list.length <= 1 && removeBtn) {
+      removeBtn.remove();
+    }
+  });
+
+  // Remove rows whose signer no longer exists.
+  existingRows.forEach((li, id) => {
+    if (!seenIds.has(id)) li.remove();
+  });
 
   // 2. Rebuild the "Signing as" dropdown to match. Empty-name signers
   // get an ordinal fallback ("Signer 1") so the dropdown never reads
@@ -2815,6 +2821,58 @@ function updateSignersUI(list) {
 
   // 3. Refresh per-box chips so colours follow the (possibly renamed) signer.
   updateAssignmentUI();
+}
+
+/**
+ * Build one signer row. Called only when a new signer appears in the
+ * list — existing rows are updated in place by updateSignersUI to
+ * preserve input focus while the user is typing.
+ */
+function buildSignerRow(signer) {
+  const li = document.createElement('li');
+  li.className = 'signer-row';
+  li.dataset.signerId = signer.id;
+  li.style.setProperty('--signer-color', signer.color);
+
+  const swatch = document.createElement('span');
+  swatch.className = 'signer-row__swatch';
+  swatch.setAttribute('aria-hidden', 'true');
+  swatch.textContent = signer.initials;
+
+  const body = document.createElement('div');
+  body.className = 'signer-row__body';
+
+  const nameInput = document.createElement('input');
+  nameInput.className = 'signer-row__name';
+  nameInput.value = signer.name;
+  nameInput.placeholder = 'Full name';
+  nameInput.autocomplete = 'name';
+  // 'input' fires per keystroke. The store strips trailing whitespace,
+  // which would jump the caret if we re-rendered. Now updateSignersUI
+  // never replaces this input, so caret + focus stay stable.
+  nameInput.addEventListener('input', e => signers.update(signer.id, { name: e.target.value }));
+
+  const emailInput = document.createElement('input');
+  emailInput.className = 'signer-row__email';
+  emailInput.type = 'email';
+  emailInput.value = signer.email;
+  emailInput.placeholder = 'email@address';
+  emailInput.autocomplete = 'email';
+  emailInput.addEventListener('input', e => signers.update(signer.id, { email: e.target.value }));
+
+  body.appendChild(nameInput);
+  body.appendChild(emailInput);
+
+  const count = document.createElement('span');
+  count.className = 'signer-row__count';
+  const owned = assignments.countFor(signer.id, docState.fields);
+  count.textContent = String(owned);
+  count.title = `${owned} fields assigned to ${signer.name}.`;
+
+  li.appendChild(swatch);
+  li.appendChild(body);
+  li.appendChild(count);
+  return li;
 }
 
 function removeSigner(id) {
@@ -2985,6 +3043,59 @@ function escapeHtml(str) {
 
 // ---- Send-flow modal -------------------------------------------------------
 
+/**
+ * Parse a comma-separated CC string into an array of valid email
+ * addresses. Trims whitespace, de-duplicates case-insensitively, and
+ * drops anything that doesn't look like an email. Caps at 10 to keep
+ * the completion-email fan-out bounded.
+ */
+function parseCcEmails(raw) {
+  if (!raw || typeof raw !== 'string') return [];
+  const seen = new Set();
+  const out = [];
+  for (const part of raw.split(/[,;\s]+/)) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    // Conservative shape check: name@domain.tld with at least one dot
+    // after @. The Worker re-validates.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+    if (out.length >= 10) break;
+  }
+  return out;
+}
+
+/**
+ * Update the live preview under the CC input. Shows parsed email
+ * count and any addresses that were dropped, so users see what's
+ * actually going to be sent.
+ */
+function paintCcPreview(raw, el) {
+  if (!el) return;
+  const list = parseCcEmails(raw);
+  const rawCount = raw.split(/[,;\s]+/).filter(Boolean).length;
+  if (rawCount === 0) {
+    el.textContent = 'No additional recipients.';
+    el.classList.remove('cc-section__preview--has', 'cc-section__preview--drop');
+    return;
+  }
+  const dropped = rawCount - list.length;
+  if (list.length === 0) {
+    el.textContent = 'None of those look like valid emails. Check the format.';
+    el.classList.remove('cc-section__preview--has');
+    el.classList.add('cc-section__preview--drop');
+    return;
+  }
+  let msg = `${list.length} recipient${list.length === 1 ? '' : 's'}: ${list.join(', ')}`;
+  if (dropped > 0) msg += ` · ${dropped} skipped (invalid email)`;
+  el.textContent = msg;
+  el.classList.add('cc-section__preview--has');
+  el.classList.toggle('cc-section__preview--drop', dropped > 0);
+}
+
 function openSendModal() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -3083,6 +3194,33 @@ function openSendModal() {
   }
   body.appendChild(ol);
 
+  // CC recipients. Anyone listed here gets emailed the signed PDF the
+  // moment the last signer completes. They do NOT receive a signing link
+  // and cannot sign — they're notice-only. Useful for legal review,
+  // executive assistants, anyone who needs a copy for their records.
+  const ccSection = document.createElement('div');
+  ccSection.className = 'cc-section';
+  ccSection.innerHTML =
+    '<p class="cc-section__kicker">Also notify (optional).</p>' +
+    '<p class="cc-section__help">' +
+    'Send a copy of the signed PDF to additional people when signing completes. ' +
+    'They get the document, not a signing link. Comma-separated.' +
+    '</p>';
+  const ccInput = document.createElement('input');
+  ccInput.type = 'text';
+  ccInput.className = 'cc-section__input';
+  ccInput.id = 'send-cc-input';
+  ccInput.placeholder = 'legal@firm.com, assistant@firm.com';
+  ccInput.autocomplete = 'off';
+  ccSection.appendChild(ccInput);
+  const ccPreview = document.createElement('p');
+  ccPreview.className = 'cc-section__preview';
+  ccPreview.id = 'send-cc-preview';
+  ccSection.appendChild(ccPreview);
+  ccInput.addEventListener('input', () => paintCcPreview(ccInput.value, ccPreview));
+  paintCcPreview('', ccPreview);
+  body.appendChild(ccSection);
+
   // Production-flow preview (the magic-link copy).
   if (list.length > 1) {
     const note = document.createElement('div');
@@ -3138,6 +3276,7 @@ function openSendModal() {
         for (const [fieldId, overlay] of senderEdits.entries()) {
           fieldEditsPayload[fieldId] = overlay;
         }
+        const ccList = parseCcEmails(ccInput ? ccInput.value : '');
         const sendResult = await createDoc({
           title: docState.filename || 'CyberSygn document',
           pdfBytes: docState.originalBytes,
@@ -3147,6 +3286,7 @@ function openSendModal() {
           assignments: Object.fromEntries(
             docState.fields.map(f => [f.id, assignments.get(f.id)]),
           ),
+          cc: ccList,
           senderName: list[0] && list[0].name,
           senderId: getSenderId(),
           workspaceId: activeWs ? activeWs.id : null,

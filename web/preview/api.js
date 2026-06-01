@@ -52,7 +52,7 @@ export function checkWorker() {
  * Create a document for multi-signer routing. Returns the docId and
  * the magic links the Worker minted (and tried to email).
  */
-export async function createDoc({ title, pdfBytes, fields, fieldEdits, signers, assignments, senderName, senderId, workspaceId, mode }) {
+export async function createDoc({ title, pdfBytes, fields, fieldEdits, signers, assignments, cc, senderName, senderId, workspaceId, mode }) {
   const pdfBase64 = bytesToBase64(pdfBytes);
   return jsonCall('/api/docs', {
     method: 'POST',
@@ -63,6 +63,7 @@ export async function createDoc({ title, pdfBytes, fields, fieldEdits, signers, 
       fieldEdits: fieldEdits || {},
       signers,
       assignments,
+      cc: Array.isArray(cc) ? cc : [],
       senderName,
       senderId,
       workspaceId,

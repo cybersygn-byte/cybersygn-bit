@@ -42,12 +42,21 @@ export async function sendInvite(env, { to, name, docTitle, magicLink, senderNam
   return deliver(env, { to, subject, text, html });
 }
 
-export async function sendCompletion(env, { to, name, docTitle, downloadUrl, auditUrl }) {
-  const subject = `Signed: ${docTitle || 'CyberSygn document'}.`;
+export async function sendCompletion(env, { to, name, docTitle, downloadUrl, auditUrl, notice }) {
+  // `notice: true` means this recipient was CC'd by the sender — they
+  // didn't sign anything, they're notice-only. Copy adjusts to make
+  // that distinction clear so the CC doesn't think someone forged their
+  // signature on a document they never saw before.
+  const subject = notice
+    ? `For your records: ${docTitle || 'CyberSygn document'} has been signed.`
+    : `Signed: ${docTitle || 'CyberSygn document'}.`;
+  const opener = notice
+    ? 'You were CC\'d on this signing. Every signer has completed their part, and the signed document is below for your records.'
+    : 'Every signer has completed their part. The signed document is ready.';
   const text = [
     `${name || 'Hello'},`,
     '',
-    'Every signer has completed their part. The signed document is ready.',
+    opener,
     '',
     `Download: ${downloadUrl}`,
     auditUrl ? `Audit certificate: ${auditUrl}` : '',
@@ -58,7 +67,7 @@ export async function sendCompletion(env, { to, name, docTitle, downloadUrl, aud
     '',
     'CyberSygn.',
   ].filter(Boolean).join('\n');
-  const html = renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl });
+  const html = renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice });
 
   return deliver(env, { to, subject, text, html });
 }
