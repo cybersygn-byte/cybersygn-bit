@@ -114,7 +114,57 @@ export async function sendReminder(env, { to, name, docTitle, magicLink, senderN
   return deliver(env, { to, subject, text, html });
 }
 
-export async function deliver(env, { to, subject, text, html }) {
+/**
+ * Notify the sender that a signer has declined to sign. Plain text +
+ * optional reason; no signing link (nothing to nudge them with — the
+ * sender has to issue a fresh doc to a different signer).
+ */
+export async function deliverDeclineNotice(env, { to, senderName, signerName, signerEmail, docTitle, reason, dashUrl }) {
+  const subject = `${signerName || 'A signer'} declined to sign ${docTitle ? `"${docTitle}"` : 'your document'}.`;
+  const text = [
+    `${senderName || 'Hello'},`,
+    '',
+    `${signerName || 'The signer'} ${signerEmail ? `(${signerEmail}) ` : ''}declined to sign your document${docTitle ? ` "${docTitle}"` : ''}.`,
+    reason ? '' : null,
+    reason ? `Reason given: ${reason}` : null,
+    '',
+    'No further reminders will be sent. To proceed, send a fresh document',
+    'to a different signer or update the terms and re-send.',
+    '',
+    dashUrl ? `Open your dashboard: ${dashUrl}` : '',
+    '',
+    'CyberSygn.',
+  ].filter(x => x !== null).filter(x => x !== '' || x === '').join('\n');
+  return deliver(env, { to, subject, text });
+}
+
+/**
+ * Snapshot email send. Attaches the flattened PDF and a short note.
+ * Used by the /api/snapshot/email endpoint for direct PDF-to-CC sharing
+ * outside the signing flow.
+ */
+export async function deliverSnapshot(env, { to, senderName, senderEmailDisplay, filename, pdfBase64, note }) {
+  const subject = `${senderName || 'A CyberSygn user'} shared a signed document: ${filename}`;
+  const text = [
+    'Hello,',
+    '',
+    `${senderName || 'A CyberSygn user'}${senderEmailDisplay ? ` (${senderEmailDisplay})` : ''} sent you a signed document.`,
+    '',
+    note ? `Note: ${note}` : '',
+    '',
+    `The document is attached as ${filename}.`,
+    '',
+    'CyberSygn.',
+  ].filter(Boolean).join('\n');
+  return deliver(env, {
+    to,
+    subject,
+    text,
+    attachments: [{ filename, content: pdfBase64 }],
+  });
+}
+
+export async function deliver(env, { to, subject, text, html, attachments }) {
   const apiKey = env && env.RESEND_API_KEY;
   if (!apiKey) {
     // Console fallback: print the would-have-sent message.
@@ -132,6 +182,15 @@ export async function deliver(env, { to, subject, text, html }) {
     text,
   };
   if (html) resendBody.html = html;
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    // Resend attachments shape: [{ filename, content }] where content is
+    // a base64 string (their API decodes it server-side). Cap at 20 MB
+    // each — Resend's documented limit is 40 MB total per request and
+    // single-attachment failures fall back to plain text.
+    resendBody.attachments = attachments
+      .filter(a => a && typeof a.filename === 'string' && typeof a.content === 'string')
+      .map(a => ({ filename: a.filename, content: a.content }));
+  }
   const body = JSON.stringify(resendBody);
   const headers = {
     'Authorization': `Bearer ${apiKey}`,

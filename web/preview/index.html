@@ -353,6 +353,11 @@
               </svg>
             </span>
           </button>
+          <!-- Signer-only: decline-to-sign affordance, shown when in
+               signer mode (?doc=&t=). Hidden otherwise via CSS. -->
+          <button id="decline-button" class="decline-link" type="button">
+            Decline to sign this document
+          </button>
           <p id="add-field-hint" class="add-field-hint" aria-live="polite"></p>
         </div>
 
@@ -392,6 +397,9 @@
             </button>
             <button id="save-draft-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Save resumable draft
+            </button>
+            <button id="email-copy-button" class="btn btn--ghost btn--block btn--sm" type="button">
+              Email a copy to recipients
             </button>
             <button id="save-template-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Save fields as template

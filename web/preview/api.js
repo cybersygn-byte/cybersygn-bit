@@ -80,6 +80,38 @@ export async function hydrateSigner(docId, token) {
 }
 
 /**
+ * Signer declines to sign. One-way: no un-decline. The sender gets an
+ * email notification (if one of the other signers has an email on file).
+ */
+export async function declineSign(docId, token, reason) {
+  return jsonCall(`/api/docs/${docId}/signer/${token}/decline`, {
+    method: 'POST',
+    body: JSON.stringify({ reason: reason || '' }),
+  });
+}
+
+/**
+ * Direct PDF-to-CC email. Sends the in-browser flattened PDF as an
+ * attachment to each recipient via Resend. Daily rate-limited per
+ * senderId; owners get a higher cap.
+ */
+export async function emailSnapshot({ pdfBytes, filename, recipients, senderName, senderEmail, note, senderId }) {
+  const pdfBase64 = bytesToBase64(pdfBytes);
+  return jsonCall('/api/snapshot/email', {
+    method: 'POST',
+    body: JSON.stringify({
+      pdfBase64,
+      filename,
+      recipients,
+      senderName,
+      senderEmail,
+      note,
+      senderId,
+    }),
+  });
+}
+
+/**
  * Submit one signer's fills.
  */
 export async function submitFills(docId, token, fills) {

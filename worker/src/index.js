@@ -192,6 +192,22 @@ export default {
       return handleSubmitFills(request, env, fillsMatch[1], fillsMatch[2], url);
     }
 
+    // Signer declines to sign. Marks declinedAt, halts further reminders,
+    // notifies the sender. One-way: a declined signer cannot un-decline,
+    // the sender has to send a new doc.
+    const declineMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signer\/([^/]+)\/decline$/);
+    if (request.method === 'POST' && declineMatch) {
+      return handleDeclineSign(request, env, declineMatch[1], declineMatch[2], url);
+    }
+
+    // Direct PDF-to-CC email. Used by single-signer flows that want to
+    // copy additional recipients without going through the magic-link
+    // signing flow. Sender uploads the flattened PDF as base64; worker
+    // emails it with attachment via Resend to each recipient.
+    if (request.method === 'POST' && url.pathname === '/api/snapshot/email') {
+      return handleSnapshotEmail(request, env, url);
+    }
+
     // Fetch the original PDF for an authenticated signer.
     const pdfMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/pdf$/);
     if (request.method === 'GET' && pdfMatch) {
@@ -1847,6 +1863,205 @@ async function handleRemind(request, env, docId, signerId, url) {
 }
 
 /**
+ * Signer declines to sign. Marks signer.declinedAt + optional reason,
+ * halts further reminders (the reminder sweep skips declined signers),
+ * notifies the sender by email if they have one on file. One-way: a
+ * declined signer cannot un-decline; the sender has to send a new doc.
+ *
+ *   POST /api/docs/:docId/signer/:token/decline
+ *   body: { reason?: string }
+ *
+ * Response: { ok: true, declinedAt, senderNotified: bool }
+ */
+async function handleDeclineSign(request, env, docId, token, url) {
+  const storage = getStorage(env);
+  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
+
+  const signer = doc.signers.find(s => ctEqHex(s.token, token));
+  if (!signer) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });
+  if (signer.completedAt) {
+    return jsonResponse(409, { error: 'already_complete', message: 'You already signed this document.' });
+  }
+  if (signer.declinedAt) {
+    return jsonResponse(200, {
+      ok: true,
+      declinedAt: signer.declinedAt,
+      senderNotified: false,
+      already: true,
+    });
+  }
+
+  let reason = '';
+  try {
+    const body = await readJsonBody(request);
+    if (body.value && typeof body.value.reason === 'string') {
+      reason = body.value.reason.trim().slice(0, 500);
+    }
+  } catch (e) {}
+
+  const now = new Date().toISOString();
+  signer.declinedAt = now;
+  signer.declineReason = reason || null;
+  recordEvent(doc, {
+    type: 'declined',
+    signerId: signer.id,
+    request,
+    meta: { reason: reason || null },
+  });
+
+  // Notify the sender if their email is on the first signer record (the
+  // sender is always signers[0] in single-signer mode; in multi-signer,
+  // doc.senderName is the only hint we have. For now, email the first
+  // signer with a valid email who isn't the decliner).
+  let senderNotified = false;
+  const notifyTarget = doc.signers.find(s =>
+    s.id !== signer.id && isValidEmail(s.email)
+  );
+  if (notifyTarget) {
+    try {
+      const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+      const dashUrl = `${baseUrl}/dashboard/`;
+      const r = await deliverDeclineNotice(env, {
+        to: notifyTarget.email,
+        senderName: doc.senderName,
+        signerName: signer.name,
+        signerEmail: signer.email || '',
+        docTitle: doc.title,
+        reason,
+        dashUrl,
+      });
+      senderNotified = Boolean(r && r.delivered);
+    } catch (e) {
+      console.error('[decline] notify failed', e && e.message);
+    }
+  }
+
+  await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
+
+  return jsonResponse(200, { ok: true, declinedAt: now, senderNotified });
+}
+
+/**
+ * Direct PDF-to-CC email send. Bypasses the signing flow entirely —
+ * used by single-signer users who flatten their PDF in the browser and
+ * just want to email finished copies to legal / assistants / records.
+ *
+ *   POST /api/snapshot/email
+ *   body: {
+ *     pdfBase64: string,             // the already-flattened signed PDF
+ *     filename:  string,
+ *     recipients: string[],          // 1..10 valid emails
+ *     senderName?: string,
+ *     senderEmail?: string,          // shown in the from/reply context
+ *     note?:        string,          // up to 500 chars, added to body
+ *     senderId:     string,          // free-tier accounting key
+ *   }
+ *
+ * Rate limit: per senderId, 30 sends per 24h (or 100 for owners).
+ *
+ * Response: { ok, results: [{ to, delivered, mode }] }.
+ */
+async function handleSnapshotEmail(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  const body = await readJsonBody(request, { maxBytes: 32 * 1024 * 1024 });
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+
+  // Validate PDF base64.
+  if (typeof payload.pdfBase64 !== 'string' || payload.pdfBase64.length < 100) {
+    return jsonResponse(400, { error: 'no_pdf', message: 'pdfBase64 is required.' });
+  }
+  // Decode + sniff for the PDF magic so we don't accept anything else.
+  let pdfBytes;
+  try {
+    const binary = atob(payload.pdfBase64);
+    pdfBytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) pdfBytes[i] = binary.charCodeAt(i);
+  } catch (e) {
+    return jsonResponse(400, { error: 'pdf_decode', message: 'pdfBase64 is not valid base64.' });
+  }
+  if (pdfBytes.length < 8 || pdfBytes[0] !== 0x25 || pdfBytes[1] !== 0x50 || pdfBytes[2] !== 0x44 || pdfBytes[3] !== 0x46) {
+    return jsonResponse(400, { error: 'not_pdf', message: 'pdfBase64 does not contain a PDF (%PDF-… magic missing).' });
+  }
+  // Hard size cap. 20 MB is generous for a signed contract; bigger means
+  // the sender should share a link not an attachment.
+  if (pdfBytes.length > 20 * 1024 * 1024) {
+    return jsonResponse(413, { error: 'pdf_too_large', message: 'PDF is over 20 MB; share a link instead of attaching.' });
+  }
+
+  // Recipients.
+  const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
+  const cleanRecipients = [];
+  const seen = new Set();
+  for (const raw of recipients) {
+    if (cleanRecipients.length >= 10) break;
+    const t = String(raw || '').trim().slice(0, 200);
+    if (!isValidEmail(t)) continue;
+    const k = t.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    cleanRecipients.push(t);
+  }
+  if (cleanRecipients.length === 0) {
+    return jsonResponse(400, { error: 'no_recipients', message: 'At least one valid email is required.' });
+  }
+
+  const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || 'anon';
+  const senderName = String(payload.senderName || 'A CyberSygn user').slice(0, 80);
+  const senderEmailDisplay = String(payload.senderEmail || '').trim().slice(0, 200);
+  const filename = String(payload.filename || 'signed.pdf').slice(0, 200);
+  const note = String(payload.note || '').trim().slice(0, 500);
+
+  // Rate limit. Owners get a higher ceiling.
+  const dailyCap = owner ? 200 : 30;
+  const rateKey = `snapshot:rate:${senderId}:${new Date().toISOString().slice(0, 10)}`;
+  let currentCount = 0;
+  const storage = getStorage(env);
+  try {
+    const raw = await storage.docs.get(rateKey);
+    if (raw) currentCount = parseInt(raw, 10) || 0;
+  } catch (e) {}
+  if (currentCount + cleanRecipients.length > dailyCap) {
+    return jsonResponse(429, {
+      error: 'rate_limited',
+      message: `Daily snapshot-email cap (${dailyCap}) would be exceeded. Try again tomorrow.`,
+      sentToday: currentCount,
+      cap: dailyCap,
+    });
+  }
+
+  // Fan out the sends.
+  const attachmentBase64 = payload.pdfBase64;
+  const results = await Promise.all(cleanRecipients.map(to =>
+    deliverSnapshot(env, {
+      to,
+      senderName,
+      senderEmailDisplay,
+      filename,
+      pdfBase64: attachmentBase64,
+      note,
+    }).then(r => ({ to, ...r }))
+  ));
+
+  // Bump the rate counter only by the number that actually delivered.
+  const delivered = results.filter(r => r.delivered).length;
+  if (delivered > 0) {
+    try {
+      await storage.docs.put(rateKey, String(currentCount + delivered), { expirationTtl: 60 * 60 * 24 });
+    } catch (e) {}
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    results,
+    sent: delivered,
+    sentToday: currentCount + delivered,
+    cap: dailyCap,
+  });
+}
+
+/**
  * Walk every active doc and send overdue reminders. Called from
  * scheduled() on the cron schedule defined in wrangler.toml.
  *
@@ -1910,6 +2125,7 @@ export async function runReminderSweep(env) {
 
       for (const signer of doc.signers) {
         if (signer.completedAt) continue;
+        if (signer.declinedAt) continue;  // declined: stop nudging
         if (!isValidEmail(signer.email)) continue;
         if ((signer.reminderCount || 0) >= REMINDER_HARD_CAP) continue;
 

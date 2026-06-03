@@ -4211,17 +4211,47 @@ details[open] > .field-list__group--toggle::after {
 /* ── Signer-mode visibility ─────────────────────────────
    Magic-link recipients should not see sender-only controls.
    Hide: edit-fields toggle, add-field group, save template,
-   load another document. The signers panel collapses to just
-   the recipient's own row (no add). */
+   load another document, email-copy. The signers panel
+   collapses to just the recipient's own row (no add). */
 .is-signer-mode .doc-toolbar__toggle,
 .is-signer-mode .doc-toolbar__sep,
 .is-signer-mode .add-field-group,
 .is-signer-mode #save-template-button,
+.is-signer-mode #email-copy-button,
 .is-signer-mode #reset-button,
 .is-signer-mode #add-signer,
 .is-signer-mode .signers-panel__as {
   display: none !important;
 }
+
+/* Decline-to-sign link. Visible ONLY in signer mode — sender-mode
+   has nothing to decline. Styled as a quiet link, not a button:
+   destructive actions should feel deliberate, not loud. */
+.decline-link {
+  display: none;
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 6px 0 0;
+  text-align: center;
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  color: var(--text-3);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 140ms var(--ease);
+}
+.decline-link:hover {
+  color: var(--warn);
+  text-decoration-color: var(--warn);
+}
+.decline-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.is-signer-mode .decline-link { display: block; }
 /* Drop the "Tools & templates" disclosure altogether when only the
    snapshot button remains inside — the lone button gets promoted to
    the sidebar action zone via specific JS, but for safety hide an
