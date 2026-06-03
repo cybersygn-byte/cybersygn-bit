@@ -159,6 +159,7 @@ const addFieldButtons = document.querySelectorAll('.add-field-btn');
 const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const saveTemplateButton = $('save-template-button');
+const saveSnapshotButton = $('save-snapshot-button');
 
 // Document toolbar: prev/next field nav + edit-mode toggle.
 const docToolbar = $('doc-toolbar');
@@ -712,6 +713,8 @@ if (cameraInput) {
 resetButton.addEventListener('click', resetApp);
 
 signButton.addEventListener('click', onSignClick);
+
+if (saveSnapshotButton) saveSnapshotButton.addEventListener('click', onSaveSnapshotClick);
 
 // ── Document toolbar wiring ──────────────────────────────────────────────
 // Edit mode toggle. Adds/removes the .is-edit-mode class on the layout
@@ -2421,6 +2424,7 @@ function resetApp() {
   signButton.classList.remove('btn--ready');
   paintProgress(0, 0);
   if (sidebarTools) sidebarTools.removeAttribute('open');
+  if (saveSnapshotButton) saveSnapshotButton.disabled = true;
   resetNavCursor();
   setEditMode(false);
   fillStore.clear();
@@ -2486,14 +2490,22 @@ function paintSignButton(filledCount, totalCount) {
     signButton.disabled = true;
     signButton.classList.remove('btn--ready');
     signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
+    if (saveSnapshotButton) saveSnapshotButton.disabled = true;
     return;
   }
   signButton.disabled = false;
   signButton.classList.add('btn--ready');
-  // Label changes meaning at completion: "Download PDF" until everything
-  // is filled, "Download signed PDF" once nothing's left to fill — small
-  // word, big confidence cue for the user.
-  const label = filledCount >= totalCount && totalCount > 0 ? 'Download signed PDF' : 'Download PDF';
+  if (saveSnapshotButton) saveSnapshotButton.disabled = false;
+  // Three labels so the user knows what they're getting at any state:
+  //   none filled  → "Download PDF" (just the original)
+  //   partial      → "Download draft (X of Y)" (snapshot with current work baked in)
+  //   complete     → "Download signed PDF"
+  // The point: every state is a valid download. The button never locks
+  // the user out — they elect when to save.
+  let label;
+  if (filledCount === 0) label = 'Download PDF';
+  else if (filledCount >= totalCount) label = 'Download signed PDF';
+  else label = `Download draft (${filledCount} of ${totalCount})`;
   signButton.innerHTML = `<span class="sign-btn__label">${label}</span>` + SIGN_BTN_ARROW;
 }
 
@@ -2583,6 +2595,56 @@ async function onSignClick() {
   } finally {
     signButton.disabled = false;
     updateFillUI();  // restore the button state to "X of N filled"
+  }
+}
+
+/**
+ * Save a snapshot of the current work as a PDF. Same flatten flow as
+ * the primary Download button, but the filename is timestamped so the
+ * user can keep iterative snapshots — "draft 1, draft 2, signed" — and
+ * the button never gates them on completion.
+ *
+ * Available the moment any field exists. Works at any state: zero
+ * fields filled (just the original), partial (snapshot of work so far),
+ * complete (same as the primary download but with a snapshot filename).
+ */
+async function onSaveSnapshotClick() {
+  if (!docState.originalBytes || docState.fields.length === 0) {
+    showToast('Drop a document first.');
+    return;
+  }
+  const filledCount = fillStore.size();
+  const totalCount = docState.fields.length;
+  // ISO timestamp, condensed: 2026-06-02T15-04-22 → file-safe.
+  // Date.now() / new Date() aren't available in the workflow runner,
+  // but they're fine here in the browser — this is interactive code.
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const baseFilename = (docState.filename || 'document.pdf').replace(/\.pdf$/i, '');
+  const tag = filledCount >= totalCount && totalCount > 0 ? 'signed' : `draft-${filledCount}-of-${totalCount}`;
+  const snapshotName = `${baseFilename}__${tag}__${stamp}.pdf`;
+
+  const prior = saveSnapshotButton.textContent;
+  try {
+    saveSnapshotButton.disabled = true;
+    saveSnapshotButton.textContent = 'Saving snapshot…';
+    await flattenAndDownload({
+      originalBytes: freshCopy(docState.originalBytes),
+      fields: docState.fields,
+      fillStore,
+      filename: snapshotName,
+    });
+    track('preview_snapshot_saved', {
+      fieldsTotal: totalCount,
+      fieldsFilled: filledCount,
+      tag,
+    });
+    showToast(`Saved: ${snapshotName}`);
+  } catch (err) {
+    report(err, 'save_snapshot');
+    showToast(`Could not save snapshot: ${err.message || err}`);
+  } finally {
+    saveSnapshotButton.disabled = false;
+    saveSnapshotButton.textContent = prior;
   }
 }
 
