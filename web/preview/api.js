@@ -203,11 +203,22 @@ async function jsonCall(path, init = {}) {
  * The naive String.fromCharCode(...arr) approach throws RangeError for
  * arrays bigger than ~64 KB on most engines, so we chunk.
  */
-function bytesToBase64(bytes) {
+export function bytesToBase64(bytes) {
   const CHUNK = 0x8000; // 32 KB
   let binary = '';
   for (let i = 0; i < bytes.length; i += CHUNK) {
     binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
   }
   return btoa(binary);
+}
+
+/**
+ * Decode a base64 string into a Uint8Array. Counterpart of bytesToBase64.
+ * Used by the draft-restore path to rehydrate a saved PDF.
+ */
+export function base64ToBytes(b64) {
+  const binary = atob(b64);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) out[i] = binary.charCodeAt(i);
+  return out;
 }

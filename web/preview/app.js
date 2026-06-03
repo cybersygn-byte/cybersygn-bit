@@ -33,6 +33,8 @@ import {
   fetchSignerPdf,
   remindSigner,
   fetchProgress,
+  bytesToBase64,
+  base64ToBytes,
 } from './api.js';
 import { getSenderId, rememberDocToken, getActiveWorkspace } from './identity.js';
 import * as ownerMod from './owner.js';
@@ -160,6 +162,7 @@ const addFieldHint = $('add-field-hint');
 const aiConsentCheckbox = $('ai-training-consent');
 const saveTemplateButton = $('save-template-button');
 const saveSnapshotButton = $('save-snapshot-button');
+const saveDraftButton = $('save-draft-button');
 
 // Document toolbar: prev/next field nav + edit-mode toggle.
 const docToolbar = $('doc-toolbar');
@@ -715,6 +718,7 @@ resetButton.addEventListener('click', resetApp);
 signButton.addEventListener('click', onSignClick);
 
 if (saveSnapshotButton) saveSnapshotButton.addEventListener('click', onSaveSnapshotClick);
+if (saveDraftButton) saveDraftButton.addEventListener('click', onSaveDraftClick);
 
 // ── Document toolbar wiring ──────────────────────────────────────────────
 // Edit mode toggle. Adds/removes the .is-edit-mode class on the layout
@@ -1153,6 +1157,21 @@ window.addEventListener('drop', e => {
  */
 async function handleFiles(files) {
   hideError();
+
+  // Resume-from-draft. A .cybersygn-draft.json file means the user is
+  // returning to work they saved earlier — rehydrate instead of routing
+  // through detection. Single-file only; mixed selections fall through
+  // to the normal error path.
+  const drafts = files.filter(f =>
+    /\.cybersygn-draft\.json$/i.test(f.name) ||
+    /\.json$/i.test(f.name) && f.size < 50 * 1024 * 1024);
+  if (drafts.length === 1 && files.length === 1) {
+    const ok = await restoreDraft(drafts[0]);
+    if (ok) return;
+    // If restore failed (bad schema etc.), restoreDraft already showed
+    // an error. Don't fall through to PDF parsing — JSON isn't a PDF.
+    if (/\.json$/i.test(drafts[0].name)) return;
+  }
 
   const pdfs = files.filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
   const images = files.filter(f => f.type && f.type.startsWith('image/'));
@@ -2425,6 +2444,7 @@ function resetApp() {
   paintProgress(0, 0);
   if (sidebarTools) sidebarTools.removeAttribute('open');
   if (saveSnapshotButton) saveSnapshotButton.disabled = true;
+  if (saveDraftButton) saveDraftButton.disabled = true;
   if (layoutRoot) layoutRoot.classList.remove('is-signer-mode');
   resetNavCursor();
   setEditMode(false);
@@ -2492,11 +2512,13 @@ function paintSignButton(filledCount, totalCount) {
     signButton.classList.remove('btn--ready');
     signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
     if (saveSnapshotButton) saveSnapshotButton.disabled = true;
+    if (saveDraftButton) saveDraftButton.disabled = true;
     return;
   }
   signButton.disabled = false;
   signButton.classList.add('btn--ready');
   if (saveSnapshotButton) saveSnapshotButton.disabled = false;
+  if (saveDraftButton) saveDraftButton.disabled = false;
   // Three labels so the user knows what they're getting at any state:
   //   none filled  → "Download PDF" (just the original)
   //   partial      → "Download draft (X of Y)" (snapshot with current work baked in)
@@ -2646,6 +2668,178 @@ async function onSaveSnapshotClick() {
   } finally {
     saveSnapshotButton.disabled = false;
     saveSnapshotButton.textContent = prior;
+  }
+}
+
+/**
+ * Save the current EDITABLE work state as a JSON file the user can
+ * drop back into the app later to resume exactly where they left off.
+ *
+ * The snapshot button (slice 48) saves a flattened PDF — good for
+ * sharing, useless for editing. This saves everything: the original
+ * PDF bytes (base64), the field set, every sender edit (move/resize/
+ * type-change), every fill, the signer roster, CC recipients. Drop
+ * the file back onto the dropzone and the page rehydrates.
+ *
+ * Same Date.now() caveat as the snapshot path: this runs in the
+ * browser, not the workflow runtime, so direct timestamps are fine.
+ */
+const DRAFT_SCHEMA = 'cybersygn.draft.v1';
+
+async function onSaveDraftClick() {
+  if (!docState.originalBytes || docState.fields.length === 0) {
+    showToast('Drop a document first.');
+    return;
+  }
+  const prior = saveDraftButton.textContent;
+  try {
+    saveDraftButton.disabled = true;
+    saveDraftButton.textContent = 'Bundling draft…';
+
+    const pdfBase64 = bytesToBase64(new Uint8Array(freshCopy(docState.originalBytes)));
+    const draft = {
+      schema: DRAFT_SCHEMA,
+      savedAt: new Date().toISOString(),
+      filename: docState.filename,
+      docId: docState.docId,
+      pdfBase64,
+      fields: docState.fields,
+      senderEdits: Array.from(senderEdits.entries()),
+      fills: Array.from(fillStore.entries()),
+      signers: signers.list(),
+      assignments: Object.fromEntries(
+        docState.fields.map(f => [f.id, assignments.get(f.id)]),
+      ),
+      // CCs and signing mode aren't sidebar-resident; capture if present.
+      mode: docState.mode || null,
+    };
+    const json = JSON.stringify(draft);
+    const baseFilename = (docState.filename || 'document.pdf').replace(/\.pdf$/i, '');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const draftName = `${baseFilename}__draft__${stamp}.cybersygn-draft.json`;
+
+    // Download via blob.
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = draftName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    track('preview_draft_saved', {
+      fieldCount: docState.fields.length,
+      filledCount: fillStore.size(),
+    });
+    showToast(`Saved: ${draftName}. Drop this file later to resume.`);
+  } catch (err) {
+    report(err, 'save_draft');
+    showToast(`Could not save draft: ${err.message || err}`);
+  } finally {
+    saveDraftButton.disabled = false;
+    saveDraftButton.textContent = prior;
+  }
+}
+
+/**
+ * Restore a draft file the user previously saved. Decodes the embedded
+ * PDF base64, replays sender edits + fills + signers, then renders the
+ * document exactly as if the user had just been working on it.
+ *
+ * Errors fall through to the normal upload path so the user can still
+ * try opening the file as a regular PDF if it's actually that — we
+ * don't want a malformed draft to silently strand them.
+ */
+async function restoreDraft(file) {
+  let draft;
+  try {
+    const text = await file.text();
+    draft = JSON.parse(text);
+  } catch (err) {
+    showError('That draft file is not readable JSON. The file may be corrupt.');
+    return false;
+  }
+  if (!draft || draft.schema !== DRAFT_SCHEMA) {
+    showError('That file is not a CyberSygn draft. Wrong schema or version.');
+    return false;
+  }
+  if (!draft.pdfBase64 || !Array.isArray(draft.fields)) {
+    showError('Draft file is missing the PDF or field set.');
+    return false;
+  }
+
+  try {
+    const pdfBytes = base64ToBytes(draft.pdfBase64);
+
+    // Wipe current state.
+    fillStore.clear();
+    senderEdits.clear();
+    signers.reset();
+    assignments.reset();
+    fieldElements.clear();
+    docState.filename = draft.filename || 'restored.pdf';
+    docState.originalBytes = pdfBytes.buffer;
+    docState.docId = draft.docId || null;
+    docState.fields = draft.fields.map(f => ({ ...f, id: f.id || idFor(f) }));
+    docState.mode = draft.mode || null;
+
+    // Render pages (re-uses the same path fresh uploads take).
+    setStatus('busy', 'Restoring draft.');
+    showResultLayout();
+    await renderDocument(pdfBytes.buffer, {
+      fields: docState.fields,
+      pageCount: 0,
+    });
+
+    // Replay signers FIRST so assignments + chip colours land right.
+    if (Array.isArray(draft.signers) && draft.signers.length > 0) {
+      for (const s of draft.signers) {
+        try { signers.add({ name: s.name, email: s.email }); } catch (e) {}
+      }
+    } else {
+      // Fallback: a single sender so the rest of the UI has someone to point to.
+      signers.add({ name: 'You', email: '' });
+    }
+    const firstId = signers.list()[0] && signers.list()[0].id;
+    if (firstId) {
+      assignments.setDefault(firstId);
+      signingAs.set(firstId);
+    }
+    // Replay assignments, then sender edits, then fills.
+    if (draft.assignments && typeof draft.assignments === 'object') {
+      for (const [fid, sid] of Object.entries(draft.assignments)) {
+        if (sid) assignments.set(fid, sid);
+      }
+    }
+    if (Array.isArray(draft.senderEdits)) {
+      for (const [fid, overlay] of draft.senderEdits) {
+        senderEdits.set(fid, overlay);
+      }
+    }
+    if (Array.isArray(draft.fills)) {
+      for (const [fid, value] of draft.fills) {
+        fillStore.set(fid, value);
+      }
+    }
+
+    populateSidebar(
+      { pageCount: '-', fields: docState.fields },
+      docState.filename,
+    );
+    updateFillUI();
+    setStatus('done', `Restored from draft: ${draft.savedAt || 'unknown time'}.`);
+    showToast(`Draft restored. ${draft.fields.length} fields, ${fillStore.size()} already filled.`);
+    track('preview_draft_restored', {
+      fieldCount: draft.fields.length,
+      filledCount: fillStore.size(),
+    });
+    return true;
+  } catch (err) {
+    report(err, 'restore_draft');
+    showError(`Could not restore draft: ${err.message || err}`);
+    return false;
   }
 }
 
@@ -3321,6 +3515,8 @@ function openSendModal() {
   // Send via Worker: appears when the Worker is reachable AND there is
   // more than one signer (single-signer documents flatten and download
   // immediately; routing them by email would add no value).
+  // Single-signer CC arrives in slice 51 via a direct PDF-to-CC endpoint
+  // that doesn't go through the magic-link flow.
   if (workerStatus.ok && list.length > 1) {
     const sendBtn = document.createElement('button');
     sendBtn.type = 'button';

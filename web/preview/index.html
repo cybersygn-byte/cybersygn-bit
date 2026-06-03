@@ -79,7 +79,7 @@
               </svg>
               Choose a PDF
             </label>
-            <input id="file-input" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,image/*" hidden multiple />
+            <input id="file-input" type="file" accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,image/*,application/json,.json" hidden multiple />
 
             <label for="camera-input" class="btn btn--ghost upload-choice">
               <svg class="upload-choice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -96,6 +96,7 @@
             <li>PDFs work best. Camera scans become PDFs in your browser.</li>
             <li>Max 25 MB per file. Multiple photos compose into one document.</li>
             <li>Detection runs locally. Your file never reaches a server.</li>
+            <li>Resuming work? Drop a <code>.cybersygn-draft.json</code> to restore it.</li>
           </ul>
           <!-- Free-tier signup gate. Hidden once the user has a freeToken
                in localStorage; visible to first-time visitors. Three
@@ -388,6 +389,9 @@
             </div>
             <button id="save-snapshot-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Save snapshot of current work
+            </button>
+            <button id="save-draft-button" class="btn btn--ghost btn--block btn--sm" type="button">
+              Save resumable draft
             </button>
             <button id="save-template-button" class="btn btn--ghost btn--block btn--sm" type="button">
               Save fields as template
