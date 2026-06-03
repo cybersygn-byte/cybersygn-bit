@@ -220,14 +220,22 @@ export async function summary(env, opts = {}) {
   const window = opts.window || SQL_DEFAULT_WINDOW;
   const since = `timestamp > NOW() - ${window}`;
 
+  // When excludeOwner is true (default for customer-facing aggregates),
+  // every query gets an extra clause filtering out blob8='owner'. The
+  // /api/event endpoint writes 'owner' to blob8 when the request
+  // carries a valid owner token, so this cleanly separates owner test
+  // traffic from real customer signal in every chart.
+  const excludeOwner = opts.excludeOwner !== false;  // default true
+  const ownerClause = excludeOwner ? " AND blob8 != 'owner'" : '';
+
   const queries = {
-    totals: `SELECT SUM(_sample_interval) AS events, COUNT(DISTINCT index1) AS senders FROM ${dataset} WHERE ${since}`,
-    byEvent: `SELECT blob1 AS event, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} GROUP BY blob1 ORDER BY n DESC LIMIT 25`,
-    topPaths: `SELECT blob2 AS path, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} AND blob1 = 'pageview' GROUP BY blob2 ORDER BY n DESC LIMIT 10`,
-    topReferrers: `SELECT blob3 AS referrer, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} AND blob1 = 'pageview' GROUP BY blob3 ORDER BY n DESC LIMIT 10`,
-    byCountry: `SELECT blob6 AS country, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} AND blob1 = 'pageview' GROUP BY blob6 ORDER BY n DESC LIMIT 10`,
-    byUaClass: `SELECT blob5 AS ua, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} GROUP BY blob5 ORDER BY n DESC LIMIT 10`,
-    errors: `SELECT blob1 AS event, blob9 AS error_class, blob10 AS message, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since} AND blob1 LIKE 'error:%' GROUP BY blob1, blob9, blob10 ORDER BY n DESC LIMIT 10`,
+    totals: `SELECT SUM(_sample_interval) AS events, COUNT(DISTINCT index1) AS senders FROM ${dataset} WHERE ${since}${ownerClause}`,
+    byEvent: `SELECT blob1 AS event, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} GROUP BY blob1 ORDER BY n DESC LIMIT 25`,
+    topPaths: `SELECT blob2 AS path, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} AND blob1 = 'pageview' GROUP BY blob2 ORDER BY n DESC LIMIT 10`,
+    topReferrers: `SELECT blob3 AS referrer, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} AND blob1 = 'pageview' GROUP BY blob3 ORDER BY n DESC LIMIT 10`,
+    byCountry: `SELECT blob6 AS country, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} AND blob1 = 'pageview' GROUP BY blob6 ORDER BY n DESC LIMIT 10`,
+    byUaClass: `SELECT blob5 AS ua, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} GROUP BY blob5 ORDER BY n DESC LIMIT 10`,
+    errors: `SELECT blob1 AS event, blob9 AS error_class, blob10 AS message, SUM(_sample_interval) AS n FROM ${dataset} WHERE ${since}${ownerClause} AND blob1 LIKE 'error:%' GROUP BY blob1, blob9, blob10 ORDER BY n DESC LIMIT 10`,
   };
 
   const results = {};

@@ -89,7 +89,7 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/templates') {
-      return handleSaveTemplate(request, env);
+      return handleSaveTemplate(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/templates') {
       return handleLookupTemplate(request, env, url);
@@ -139,7 +139,7 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/event') {
-      return handleEvent(request, env);
+      return handleEvent(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/error') {
       return handleClientError(request, env);
@@ -1016,25 +1016,31 @@ async function handleDetectVision(request, env, url) {
 // GET  /api/templates?docId=...&senderId=...
 //   -> { ok, template, scope } or { ok: false } if no match
 
-async function handleSaveTemplate(request, env) {
+async function handleSaveTemplate(request, env, url) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
   const { docId, senderId, fields, scope, consent } = body.value || {};
+  // Owner sessions persist as ownerCreated=true and get downgraded to
+  // private scope inside saveTemplate so demo work cannot pollute the
+  // shared corpus.
+  const owner = await getOwnerForRequest(request, env, url);
   const result = await saveTemplate(env, {
     docId,
     senderId,
     fields,
     scope,
     consentGiven: consent === true,
+    ownerCreated: Boolean(owner),
   });
   if (!result.ok) return jsonResponse(400, { error: result.error || 'save_failed' });
 
-  // Fire-and-forget Phase 3 trigger check. Only public templates grow
-  // the shared corpus, so private saves don't move the needle. The
-  // watchdog is idempotent — one-shot alert per cluster lifetime.
+  // Fire-and-forget Phase 3 trigger check. Only customer-public
+  // templates grow the shared corpus — owner-saved templates are
+  // forced to private inside saveTemplate so they never reach this
+  // branch. Watchdog is idempotent — one-shot alert per cluster lifetime.
   // We don't await: the user's save response shouldn't wait on a
   // stats walk + maybe-email round-trip.
-  if (result.template.scope === 'public') {
+  if (result.template.scope === 'public' && !result.template.ownerCreated) {
     maybeFirePhase3Alert(env, deliverEmail).catch(e =>
       console.error('[phase3:trigger] async fire failed:', e && e.message));
   }
@@ -1165,7 +1171,7 @@ async function handleOwnerReportPreview(request, env, url) {
 
 // ---- /api/event ------------------------------------------------------------
 
-async function handleEvent(request, env) {
+async function handleEvent(request, env, url) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
 
@@ -1177,6 +1183,12 @@ async function handleEvent(request, env) {
     });
   }
 
+  // Owner test traffic should be flagged so analytics dashboards can
+  // optionally exclude it. We force-overwrite the tier blob with
+  // 'owner' when the request carries a valid owner token. Customer
+  // requests retain their declared tier (free / solo / founding / team).
+  const owner = url ? await getOwnerForRequest(request, env, url) : null;
+
   // Pull a few standard fields out of props for first-class storage in
   // the Analytics Engine schema. Everything else is dropped (we deliberately
   // do not store arbitrary props as JSON blobs to keep cardinality sane).
@@ -1186,7 +1198,7 @@ async function handleEvent(request, env) {
     senderId: typeof p.senderId === 'string' ? p.senderId : '',
     source:   typeof p.source   === 'string' ? p.source   : '',
     path:     typeof p.path     === 'string' ? p.path     : '',
-    tier:     typeof p.tier     === 'string' ? p.tier     : 'free',
+    tier:     owner ? 'owner' : (typeof p.tier === 'string' ? p.tier : 'free'),
     value:    typeof p.value    === 'number' ? p.value    : 0,
     durationMs: typeof p.durationMs === 'number' ? p.durationMs : 0,
   });
@@ -1236,7 +1248,11 @@ async function handleAnalyticsSummary(request, env, url) {
   const safeWindow = /^INTERVAL\s+'\d{1,3}'\s+(MINUTE|HOUR|DAY)$/i.test(windowParam || '')
     ? windowParam
     : "INTERVAL '7' DAY";
-  const data = await analyticsSummary(env, { window: safeWindow });
+  // By default, exclude owner test traffic so the dashboard reads as
+  // real-customer signal. ?includeOwner=1 brings owner events back in
+  // — useful when the owner wants to confirm their own clicks landed.
+  const includeOwner = url.searchParams.get('includeOwner') === '1';
+  const data = await analyticsSummary(env, { window: safeWindow, excludeOwner: !includeOwner });
   return jsonResponse(200, { ok: true, ...data });
 }
 
@@ -2122,6 +2138,10 @@ export async function runReminderSweep(env) {
       const doc = await storage.docs.get(`doc:${docId}`, { json: true });
       if (!doc) continue; // expired or deleted; drop from index
       if (doc.completedAt) continue; // completed; drop from index
+      // Owner-created docs: demo/testing work. Reminders to real-looking
+      // test emails would be spammy. Keep them in the index so the
+      // dashboard still shows them, just skip the reminder logic.
+      if (doc.ownerCreated) { stillActive.push(docId); continue; }
 
       // Skip docs past the sweep horizon.
       const createdMs = new Date(doc.createdAt).getTime();

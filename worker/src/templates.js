@@ -65,6 +65,11 @@ const TEMPLATE_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year; templates re-bump TT
  *   fields       array of field objects (validated + sanitized)
  *   scope        'private' (default) | 'public'
  *   consentGiven user opted in to AI training; required for scope='public'
+ *   ownerCreated true if the active session is the owner doing demo /
+ *                testing work. Owner public-saves get downgraded to
+ *                private so demo work cannot pollute the shared corpus;
+ *                if the caller explicitly persists ownerCreated=true on
+ *                the stored record, dataset stats and export both skip it.
  */
 export async function saveTemplate(env, opts) {
   if (!env || !env.CYBERSYGN_DOCS) {
@@ -82,6 +87,15 @@ export async function saveTemplate(env, opts) {
   if (scope === 'public' && !opts.consentGiven) {
     // Fall back to private rather than reject; the caller will see
     // the scope in the response and can prompt the user appropriately.
+    scope = 'private';
+  }
+  // Owner-test isolation: an active owner session writing a public
+  // template is doing demo work, not contributing real customer data.
+  // Downgrade to private so the public-corpus stays clean. The owner
+  // can still verify the save round-trip — it just lives under
+  // tpl-priv:<docId>:<senderId> instead of polluting tpl:<docId>.
+  const ownerCreated = Boolean(opts && opts.ownerCreated);
+  if (ownerCreated && scope === 'public') {
     scope = 'private';
   }
 
@@ -111,6 +125,12 @@ export async function saveTemplate(env, opts) {
     savedBy: senderId.slice(0, 12),  // truncate so it's not a unique ID we keep
     fields: merged.slice(0, MAX_FIELDS_PER_TEMPLATE),
     stats,
+    // Owner-created records persist this flag so downstream aggregates
+    // (dataset stats, export, public-template lookups) can skip them.
+    // Inherits from prior record if the same template was previously
+    // saved as owner-created — owner status is a property of the
+    // template record itself, not the moment of write.
+    ownerCreated: ownerCreated || (existing && existing.ownerCreated) || false,
   };
 
   const serialized = JSON.stringify(template);

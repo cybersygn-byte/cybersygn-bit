@@ -70,6 +70,7 @@ export async function exportDatasetJsonl(env) {
         let cursor = null;
         let totalRows = 0;
         let totalTemplates = 0;
+        let ownerSkipped = 0;
 
         do {
           const listOpts = { prefix: TEMPLATE_PREFIX, limit: 1000 };
@@ -81,6 +82,8 @@ export async function exportDatasetJsonl(env) {
             let tpl;
             try { tpl = JSON.parse(raw); } catch (e) { continue; }
             if (!tpl || !Array.isArray(tpl.fields)) continue;
+            // Skip owner-created templates: demo work, not training data.
+            if (tpl.ownerCreated) { ownerSkipped++; continue; }
             totalTemplates++;
             for (const f of tpl.fields) {
               const row = {
@@ -105,7 +108,8 @@ export async function exportDatasetJsonl(env) {
 
         // Trailer
         controller.enqueue(encoder.encode(
-          `# Export complete. ${totalRows} labeled examples across ${totalTemplates} unique documents.\n`
+          `# Export complete. ${totalRows} labeled examples across ${totalTemplates} unique documents.\n` +
+          `# Skipped ${ownerSkipped} owner-created templates (demo / testing data, not training corpus).\n`
         ));
         controller.close();
       } catch (err) {
@@ -143,6 +147,7 @@ export async function getDatasetStats(env) {
 
     // Walk public templates.
     let cursor = null;
+    let ownerSkipped = 0;
     do {
       const listOpts = { prefix: TEMPLATE_PREFIX, limit: 1000 };
       if (cursor) listOpts.cursor = cursor;
@@ -153,6 +158,11 @@ export async function getDatasetStats(env) {
         let tpl;
         try { tpl = JSON.parse(raw); } catch (e) { continue; }
         if (!tpl || !Array.isArray(tpl.fields)) continue;
+        // Owner-test templates: persisted with ownerCreated:true so
+        // demo work cannot inflate the customer-facing corpus stats.
+        // Tracked separately so the stats payload can report what
+        // was skipped — useful debugging if the count looks off.
+        if (tpl.ownerCreated) { ownerSkipped++; continue; }
         templates++;
         if (tpl.savedBy) contributors.add(tpl.savedBy);
         for (const f of tpl.fields) {
@@ -193,6 +203,7 @@ export async function getDatasetStats(env) {
         templates,
         contributors: contributors.size,
         byType,
+        ownerSkipped,
       },
       growth: {
         freeSignups: dripCount,
