@@ -26,7 +26,7 @@
 
 import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
-import { sendInvite, sendCompletion, sendReminder } from './email.js';
+import { sendInvite, sendCompletion, sendReminder, deliver as deliverEmail } from './email.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
@@ -39,7 +39,7 @@ import {
   getDatasetCount,
   ownerDripList,
 } from './free-tier.js';
-import { exportDatasetJsonl, getDatasetStats } from './dataset.js';
+import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import {
   TIERS,
@@ -1028,6 +1028,17 @@ async function handleSaveTemplate(request, env) {
     consentGiven: consent === true,
   });
   if (!result.ok) return jsonResponse(400, { error: result.error || 'save_failed' });
+
+  // Fire-and-forget Phase 3 trigger check. Only public templates grow
+  // the shared corpus, so private saves don't move the needle. The
+  // watchdog is idempotent — one-shot alert per cluster lifetime.
+  // We don't await: the user's save response shouldn't wait on a
+  // stats walk + maybe-email round-trip.
+  if (result.template.scope === 'public') {
+    maybeFirePhase3Alert(env, deliverEmail).catch(e =>
+      console.error('[phase3:trigger] async fire failed:', e && e.message));
+  }
+
   return jsonResponse(200, {
     ok: true,
     scope: result.template.scope,

@@ -36,6 +36,7 @@ const TEMPLATE_PREFIX = 'tpl:';
 const DRIP_PREFIX     = 'drip:';
 const SUB_PREFIX      = 'sub:';
 const TRAINING_READINESS_THRESHOLD = 5000;
+const PHASE3_ALERT_KV_KEY = 'phase3:alert:sent';
 
 /**
  * Export the dataset as JSONL. Each line is one labeled example:
@@ -214,5 +215,75 @@ export async function getDatasetStats(env) {
     };
   } catch (e) {
     return { ok: false, error: e && e.message ? e.message : 'unknown' };
+  }
+}
+
+/**
+ * Phase 3 trigger watchdog. Called after every public template save.
+ * If the corpus has crossed the training-readiness threshold AND we
+ * have not already sent the alert, fire a one-shot email so the
+ * decision moment is not missed by up to 30 days waiting for the
+ * monthly report.
+ *
+ * Idempotent: the alert key in KV is set on first fire and never reset,
+ * so a count that dips and recovers does not re-trigger.
+ *
+ * Best-effort: failures are logged and swallowed. Never blocks the
+ * caller (template save).
+ *
+ * See docs/ML.md for the strategic decision this watchdog supports.
+ */
+export async function maybeFirePhase3Alert(env, deliverFn) {
+  if (!env || !env.CYBERSYGN_DOCS) return;
+  try {
+    // Idempotency check first: skip the expensive list-walk if we've
+    // already alerted. Reading a single key is one KV op vs the
+    // hundreds the stats walk costs.
+    const alreadySent = await env.CYBERSYGN_DOCS.get(PHASE3_ALERT_KV_KEY);
+    if (alreadySent) return;
+
+    const stats = await getDatasetStats(env);
+    if (!stats.ok) return;
+    const ready = stats.trainingReadiness;
+    if (!ready || ready.current < ready.threshold) return;
+
+    // Threshold crossed and never alerted. Compose + send.
+    const to = (env && env.OWNER_EMAIL) || 'hello@cybersygn.io';
+    const subject = `Phase 3 trigger reached: ${ready.current.toLocaleString()} labeled examples in corpus.`;
+    const text = [
+      'CyberSygn ML watchdog.',
+      '',
+      `The labeled-data corpus has crossed ${ready.threshold.toLocaleString()} examples — the documented Phase 3 trigger.`,
+      `Current count: ${ready.current.toLocaleString()}.`,
+      '',
+      'The deferred decision in docs/ML.md is now actionable.',
+      'Next steps from that file:',
+      '  1. Export the corpus: GET /api/owner/dataset/export',
+      '  2. Hold out 10% as a regression test',
+      '  3. Choose a base model (Claude fine-tune vs OSS layout model)',
+      '  4. Train, eval against the holdout, beat the heuristic+vision baseline',
+      '  5. Roll out behind an opt-in flag, then promote',
+      '',
+      'This alert fires exactly once. The KV key phase3:alert:sent',
+      'has been set so further template saves will not re-trigger it.',
+      '',
+      'CyberSygn.',
+    ].join('\n');
+
+    if (typeof deliverFn === 'function') {
+      const result = await deliverFn(env, { to, subject, text });
+      // Only mark sent if Resend (or console) acknowledged delivery.
+      if (result && result.delivered) {
+        await env.CYBERSYGN_DOCS.put(PHASE3_ALERT_KV_KEY, new Date().toISOString());
+      }
+    } else {
+      // No delivery function bound — log the trigger so it's still
+      // observable in worker tail logs, and mark sent so we don't
+      // spam the log on every subsequent template save.
+      console.log('[phase3:trigger]', JSON.stringify({ to, subject, current: ready.current, threshold: ready.threshold }));
+      await env.CYBERSYGN_DOCS.put(PHASE3_ALERT_KV_KEY, new Date().toISOString());
+    }
+  } catch (e) {
+    console.error('[phase3:trigger] watchdog failed:', e && e.message);
   }
 }
