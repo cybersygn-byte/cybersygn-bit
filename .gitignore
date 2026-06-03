@@ -34,3 +34,7 @@ Thumbs.db
 
 # Backup files
 *.bak
+
+# Local-only owner credentials (never commit)
+.owner-password.txt
+.secrets/

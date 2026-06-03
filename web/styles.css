@@ -3916,7 +3916,29 @@ details[open] > .field-list__group--toggle::after {
 @media (max-width: 640px) {
   .doc-toolbar__toggle-label { display: none; }
   .doc-toolbar__pos-label { display: none; }
-  .doc-toolbar__pos { min-width: 60px; }
+  .doc-toolbar__pos { min-width: 60px; padding: 0 6px; }
+  .doc-toolbar { gap: 2px; padding: 4px 6px; top: 56px; }
+  .doc-toolbar__btn { width: 28px; height: 28px; }
+  .doc-toolbar__toggle { padding: 6px 10px; }
+  .doc-toolbar__sep { margin: 0 2px; }
+
+  /* Sidebar action zone shrinks on phones — smaller padding so the
+     primary CTA stays one tap above the fold instead of pushed below. */
+  .sidebar__action { padding: var(--s-3) var(--s-4); }
+  .sidebar__head { padding: var(--s-4); }
+  .sidebar__legend,
+  .sidebar__tools-summary { padding-left: var(--s-4); padding-right: var(--s-4); }
+  .sidebar__tools-body { padding-left: var(--s-4); padding-right: var(--s-4); }
+
+  /* Doc card shrinks: smaller icon, tighter type. */
+  .doc-card__icon { flex: 0 0 32px; width: 32px; height: 32px; }
+  .doc-card__title { font-size: 15px; }
+}
+
+/* ── Very small phones (iPhone SE width = 375) ───────── */
+@media (max-width: 380px) {
+  .doc-toolbar__pos { min-width: 44px; font-size: 11px; }
+  .doc-toolbar__toggle svg { width: 12px; height: 12px; }
 }
 
 .page-shell {
@@ -4184,6 +4206,28 @@ details[open] > .field-list__group--toggle::after {
   gap: var(--s-2);
   padding: var(--s-3) var(--s-5) var(--s-4);
   background: var(--bg-2);
+}
+
+/* ── Signer-mode visibility ─────────────────────────────
+   Magic-link recipients should not see sender-only controls.
+   Hide: edit-fields toggle, add-field group, save template,
+   load another document. The signers panel collapses to just
+   the recipient's own row (no add). */
+.is-signer-mode .doc-toolbar__toggle,
+.is-signer-mode .doc-toolbar__sep,
+.is-signer-mode .add-field-group,
+.is-signer-mode #save-template-button,
+.is-signer-mode #reset-button,
+.is-signer-mode #add-signer,
+.is-signer-mode .signers-panel__as {
+  display: none !important;
+}
+/* Drop the "Tools & templates" disclosure altogether when only the
+   snapshot button remains inside — the lone button gets promoted to
+   the sidebar action zone via specific JS, but for safety hide an
+   empty disclosure rather than show an empty body. */
+.is-signer-mode .sidebar__tools-body {
+  padding-top: var(--s-2);
 }
 .legend-chip {
   display: inline-flex;

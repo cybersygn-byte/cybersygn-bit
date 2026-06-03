@@ -2425,6 +2425,7 @@ function resetApp() {
   paintProgress(0, 0);
   if (sidebarTools) sidebarTools.removeAttribute('open');
   if (saveSnapshotButton) saveSnapshotButton.disabled = true;
+  if (layoutRoot) layoutRoot.classList.remove('is-signer-mode');
   resetNavCursor();
   setEditMode(false);
   fillStore.clear();
@@ -3650,11 +3651,23 @@ async function enterSignerMode(docId, token) {
   }
 
   populateSidebar({ pageCount: '-', fields: docState.fields }, session.title);
-  updateFillUI();
-
-  // Replace the send button label so the signer knows what it does.
-  signButton.textContent = 'Submit your fields';
+  // Mark the app as in signer mode. CSS uses this to hide sender-only
+  // controls (Save template, Load another, Add field, Edit toggle) so
+  // the signer's view stays focused on the only action they're here
+  // to take: fill their fields and submit.
+  if (layoutRoot) layoutRoot.classList.add('is-signer-mode');
   signButton.dataset.signerMode = 'true';
+  updateFillUI();
+  // Replace the send button HTML so the signer knows what it does.
+  // Single-line, proper structure so it matches the rest of the design.
+  signButton.disabled = false;
+  signButton.classList.add('btn--ready');
+  signButton.innerHTML = '<span class="sign-btn__label">Submit your fields</span>' +
+    '<span class="sign-btn__arrow" aria-hidden="true">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<polyline points="9 18 15 12 9 6"/>' +
+      '</svg>' +
+    '</span>';
 
   // Persist fills to the Worker on every change.
   fillStore.onChange(async () => {
