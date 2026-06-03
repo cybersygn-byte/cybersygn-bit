@@ -80,6 +80,8 @@ async function main() {
   console.log('  wrote dist/telemetry.js');
   await copyFile(join(SRC, 'polish.js'), join(OUT, 'polish.js'));
   console.log('  wrote dist/polish.js');
+  await copyFile(join(SRC, 'cinematic-hero.js'), join(OUT, 'cinematic-hero.js'));
+  console.log('  wrote dist/cinematic-hero.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));
   console.log('  wrote dist/styles.css');
   // 404.html surfaces when not_found_handling: '404-page' fires in Workers.
