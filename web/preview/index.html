@@ -24,7 +24,33 @@
 
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
-  
+
+  <!-- WebPage schema. Tells search engines what this page is — a free
+       tool for field detection on PDFs — so the snippet renders with
+       the right context and breadcrumb. -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "CyberSygn preview. Drop a PDF, see the fields.",
+    "url": "https://cybersygn.io/preview/",
+    "description": "Drop a PDF and CyberSygn locates every signature line, initial, date, and checkbox. The detection runs entirely in your browser.",
+    "isPartOf": { "@type": "WebSite", "url": "https://cybersygn.io/" },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
+        { "@type": "ListItem", "position": 2, "name": "Preview", "item": "https://cybersygn.io/preview/" }
+      ]
+    },
+    "potentialAction": {
+      "@type": "Action",
+      "name": "Detect signature fields in a PDF",
+      "target": "https://cybersygn.io/preview/"
+    }
+  }
+  </script>
+
   <script type="importmap">
   {
     "imports": {

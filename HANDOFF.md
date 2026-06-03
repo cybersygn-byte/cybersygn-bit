@@ -89,6 +89,15 @@ scripts/
 
 Use `git log --oneline` for the full list. Highlights:
 
+- **53** Sitemap covered (9 URLs), schema.org WebPage added to /preview/, homepage SoftwareApplication offer fixed (free is 3-lifetime not per-month), dashboard masthead grew the free-pill with inline localStorage paint, email deliverability verified via /api/owner/test-email (Resend providerId `aa769a02…`).
+- **52** Field validation: signer-row emails flag malformed with warn-border; send-by-email pre-flight blocks bad addresses. Free-tier counter pill in /preview/ + /dashboard/ mastheads. Empty state no longer hides upload behind the free-gate form — detection runs in-browser, gate moves to the actual send point.
+- **51** Signer-side completeness. POST /api/docs/:docId/signer/:token/decline + 'Decline to sign' link in signer mode; declined signers skipped by reminder sweep. POST /api/snapshot/email for direct PDF-to-CC sending with Resend attachments; daily rate-limited (30/day free, 200/day owner). 'Email a copy' modal in single-signer Tools.
+- **50** Save/restore editable draft. 'Save resumable draft' button writes a `.cybersygn-draft.json` with PDF base64 + fields + sender edits + fills + signers + assignments. handleFiles detects on upload, restoreDraft rehydrates. bytesToBase64/base64ToBytes promoted to api.js exports. Single-signer CC deferred to slice 51.
+- **49** Verification + signer-mode UX fixes + mobile polish + owner password rotation. Worker 141/141, real PDF 37/37, synthetic 10/10, stripe 34/34. Sender-only controls hidden in signer mode (is-signer-mode class). Mobile sidebar/toolbar tightened at <=640 and <=380. Owner password rotated, new credentials in .owner-password.txt (gitignored, mode 600).
+- **48** Save snapshot at any state. Primary Download button label switches per state ('Download draft (X of Y)' mid-fill); new 'Save snapshot of current work' button writes a timestamped PDF copy.
+- **47** Signer-name focus fix (no more 'one letter at a time'), nav order flipped to PDF y-descending, CC support in Send modal with /api/docs payload + completion-email fanout to CCs.
+- **46** Hide signer chips when single-signer, hide field-type tags by default, floating doc-toolbar with Prev/Next + edit-mode toggle, Tab/Shift+Tab keyboard nav.
+- **45** /preview/ sidebar rebuild: doc-card identity, reliability pill, progress bar above Download CTA, compact legend, Tools & templates disclosure.
 - **44** Template-loaded confidence display: confidence now preserved through save (worker/src/templates.js sanitizeFields), client defaults missing values to 1.0 (web/preview/app.js handleFile), existing public template at `tpl:80cc1a28...` patched in KV. Native Roofing PDF detection report now reads 100% (was 7%).
 - **43** `/control/` owner workbench with username+password login, robots-blocked
 - **42** Monthly owner-report email, runs on the 1st of each UTC month

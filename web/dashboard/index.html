@@ -26,6 +26,44 @@
   
   <script src="/telemetry.js"></script>
   <script src="/polish.js" defer></script>
+
+  <!-- Paint the free-tier pill from localStorage. Same data the
+       preview page writes (cybersygn.freeToken / cybersygn.freeUsed).
+       Inline because the dashboard doesn't share preview/app.js. -->
+  <script>
+    (function paintFreePillOnDashboard() {
+      function run() {
+        try {
+          const token = localStorage.getItem('cybersygn.freeToken');
+          if (!token) {
+            document.body.dataset.freeGated = 'true';
+            return;
+          }
+          document.body.dataset.freeGated = 'false';
+          const raw = localStorage.getItem('cybersygn.freeUsed');
+          let remaining = 3;
+          if (raw) {
+            try {
+              const obj = JSON.parse(raw);
+              if (Number.isFinite(obj.remaining)) remaining = obj.remaining;
+            } catch (e) {}
+          }
+          const r = document.getElementById('free-pill-remaining');
+          const p = document.getElementById('free-pill');
+          if (r) r.textContent = String(remaining);
+          if (p) {
+            p.classList.toggle('free-pill--depleted', remaining === 0);
+            p.title = remaining === 0
+              ? 'No free sends remaining. Upgrade for unlimited.'
+              : remaining + ' free send' + (remaining === 1 ? '' : 's') + ' left. Lifetime, never resets.';
+          }
+        } catch (e) {}
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run, { once: true });
+      } else { run(); }
+    })();
+  </script>
 </head>
 <body>
 
@@ -37,6 +75,11 @@
       <nav class="masthead__nav" aria-label="Dashboard">
         <a class="masthead__link" href="../">Send a document</a>
         <a class="masthead__link" href="../../">Home</a>
+        <!-- Persistent free-tier remaining count, mirrors /preview/ so
+             the user sees the same number on every CyberSygn page. -->
+        <span id="free-pill" class="free-pill" aria-live="polite">
+          <strong id="free-pill-remaining">3</strong> of 3 free
+        </span>
         <span id="owner-pill" class="owner-pill" data-active="false" title="Owner mode active">
           <span class="owner-pill__dot"></span>
           Owner
