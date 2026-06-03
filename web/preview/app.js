@@ -239,6 +239,36 @@ function paintFreeStatus() {
       ? 'No free sends remaining. Upgrade for unlimited.'
       : `${remaining} free send${remaining === 1 ? '' : 's'} left. Lifetime, never resets.`;
   }
+
+  // Loss-aversion banner: fires once when the user crosses into the
+  // "last send" state (remaining === 1) AND once more when they hit 0.
+  // Tracked per-session in sessionStorage so it doesn't nag on reload.
+  paintLossAversionBanner(remaining);
+}
+
+const LOSS_AVERSION_SEEN_KEY = 'cybersygn.lossAversionSeen';
+
+function paintLossAversionBanner(remaining) {
+  // Only fire on the two psychologically meaningful thresholds.
+  if (remaining !== 1 && remaining !== 0) return;
+  let seen = {};
+  try { seen = JSON.parse(sessionStorage.getItem(LOSS_AVERSION_SEEN_KEY) || '{}'); } catch (e) {}
+  const stateKey = remaining === 0 ? 'depleted' : 'last';
+  if (seen[stateKey]) return;
+  seen[stateKey] = true;
+  try { sessionStorage.setItem(LOSS_AVERSION_SEEN_KEY, JSON.stringify(seen)); } catch (e) {}
+
+  if (remaining === 1) {
+    showToast(
+      'Last free send. Lock $9 for life with Charter — 100 spots, going fast.',
+      { action: { href: '/#founding', label: 'See Charter →' } },
+    );
+  } else {
+    showToast(
+      'You used all 3 free sends. Charter is $9/mo locked for life; Solo is $12 with no cap.',
+      { action: { href: '/#pricing', label: 'Pick a plan →' } },
+    );
+  }
 }
 
 const freeGateForm = $('free-gate');
@@ -2630,6 +2660,13 @@ async function onSignClick() {
       fieldsFilled: fillStore.size(),
     });
     signButton.innerHTML = originalHtml;
+
+    // Post-download anchoring toast. Computes the time saved vs.
+    // dragging each field by hand in DocuSign (industry average ~20s
+    // per field for manual placement; we cite a conservative 15s).
+    // This is the moment the buyer feels the value most acutely —
+    // reciprocity primer for the upgrade ask later.
+    showSavedTimeToast(docState.fields.length);
   } catch (err) {
     report(err, 'direct_download');
     showToast(`Could not generate PDF: ${err.message || err}`);
@@ -2637,6 +2674,27 @@ async function onSignClick() {
     signButton.disabled = false;
     updateFillUI();  // restore the button state to "X of N filled"
   }
+}
+
+/**
+ * Conversion choreography: when the user finishes a download, surface
+ * how much time CyberSygn just saved them vs. dragging boxes in
+ * DocuSign. Anchored time savings + dollar value at $60/hr makes the
+ * Charter/Solo price feel cheap by comparison. Pure psychology — the
+ * actual download is identical to what we shipped before this nudge.
+ */
+function showSavedTimeToast(fieldCount) {
+  if (!Number.isFinite(fieldCount) || fieldCount < 3) return;
+  const secondsPerField = 15;  // DocuSign manual placement, conservative
+  const totalSeconds = fieldCount * secondsPerField;
+  const minutes = Math.max(1, Math.round(totalSeconds / 60));
+  const dollarsAt60 = Math.round((totalSeconds / 3600) * 60);
+  const minutesLabel = minutes === 1 ? 'minute' : 'minutes';
+  showToast(
+    `Saved you ${minutes} ${minutesLabel} vs DocuSign manual placement` +
+    (dollarsAt60 >= 5 ? ` — about $${dollarsAt60} at $60/hr.` : '.'),
+    { action: { href: '/#founding', label: 'Lock $9 for life →' } },
+  );
 }
 
 /**

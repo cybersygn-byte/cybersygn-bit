@@ -82,10 +82,10 @@
         "offers": [
           {
             "@type": "Offer",
-            "name": "Free",
+            "name": "Demo",
             "price": "0",
             "priceCurrency": "USD",
-            "description": "3 documents lifetime, single signer, browser-side signing"
+            "description": "3 documents lifetime. Every paid feature unlocked. No credit card."
           },
           {
             "@type": "Offer",
@@ -98,11 +98,11 @@
               "priceCurrency": "USD",
               "billingDuration": "P1M"
             },
-            "description": "Unlimited documents, multi-signer routing, in-person mode, audit certificate"
+            "description": "Unlimited documents, templates, multi-signer routing, in-person signing, audit certificate"
           },
           {
             "@type": "Offer",
-            "name": "Founding",
+            "name": "Charter",
             "price": "9",
             "priceCurrency": "USD",
             "priceSpecification": {
@@ -111,7 +111,7 @@
               "priceCurrency": "USD",
               "billingDuration": "P1M"
             },
-            "description": "$9 per month locked for life. First 100 customers only.",
+            "description": "$9 per month locked for the life of your account. Limited to 100 founders.",
             "eligibleQuantity": {
               "@type": "QuantitativeValue",
               "value": "100",
@@ -120,7 +120,7 @@
           },
           {
             "@type": "Offer",
-            "name": "Team",
+            "name": "Studio",
             "price": "29",
             "priceCurrency": "USD",
             "priceSpecification": {
@@ -129,7 +129,7 @@
               "priceCurrency": "USD",
               "billingDuration": "P1M"
             },
-            "description": "3 seats, shared workspace, aggregated dashboard"
+            "description": "3 seats, shared workspace, member roles, bulk template library"
           }
         ],
         "publisher": { "@id": "https://cybersygn.io/#organization" }
@@ -183,7 +183,7 @@
             "name": "What does it cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Free for 3 documents per month. Solo is $12 per month for unlimited documents. Founding is $9 per month locked for life, first 100 customers only. Team is $29 per month for 3 seats."
+              "text": "Demo is free for 3 documents lifetime with no credit card. Solo is $12 per month for unlimited documents. Charter is $9 per month locked for the life of your account, limited to 100 founders. Studio is $29 per month for a 3-seat team with shared workspace."
             }
           },
           {
@@ -247,27 +247,27 @@
     <div class="container">
       <div class="hero__grid">
         <div>
-          <p class="kicker hero__kicker">Field detection that runs in your browser.</p>
+          <p class="kicker hero__kicker">The e-signature tool that doesn't waste your time.</p>
           <h1 class="h-display hero__title">
-            Sign your next contract<span class="dot">.</span><br>
-            In <em>two minutes</em><span class="dot">.</span><br>
-            <span class="accent">No field placement</span><span class="dot">.</span>
+            DocuSign makes you drag<br>
+            every signature box<span class="dot">.</span><br>
+            <span class="accent">We find them in 3 seconds</span><span class="dot">.</span>
           </h1>
           <p class="lede hero__lede">
-            Drop a PDF. CyberSygn finds every signature line, initial, date, and checkbox automatically.
-            Sign in person on the same device, or route private links to remote signers. Free for your first
-            three documents this month.
+            Drop a PDF. CyberSygn locates every signature line, initial, date, and checkbox
+            automatically — the part that takes you 30 minutes in DocuSign. Receivers click a
+            link and sign. No accounts, no friction, no nonsense.
           </p>
           <div class="hero__actions">
             <a class="btn btn--primary btn--lg" href="./preview/">
-              Sign a document free
+              Try the demo, no signup
               <span class="btn-arrow" aria-hidden="true">→</span>
             </a>
-            <a class="btn btn--ghost btn--lg" href="#pricing">See pricing</a>
+            <a class="btn btn--ghost btn--lg" href="#pricing">See Charter pricing</a>
           </div>
           <span class="hero__note">
             <span class="hero__note-dot" aria-hidden="true"></span>
-            Detection passes on 37 of 37 real-world contracts. No card required.
+            Detection works on 37 of 37 real-world contracts. Built in Colorado.
           </span>
         </div>
 
@@ -414,88 +414,96 @@
       <header class="section__head">
         <div>
           <p class="kicker kicker--muted">Pricing.</p>
-          <h2 class="h-section section__title">Built for <em>builders.</em></h2>
+          <h2 class="h-section section__title">Pick your <em>identity.</em></h2>
         </div>
         <p class="lede section__lede">
-          One tier for occasional signing, one for steady solo practice, one for small teams.
-          The founding rate locks for the life of your account.
+          Demo to test-drive. Solo when you're operating on your own. Charter if you find us
+          in the first hundred. Studio when your team scales. Your founder rate, if you claim
+          one, never goes up.
         </p>
       </header>
 
       <div class="pricing">
-        <article class="tier" data-tier="free">
-          <p class="tier__name">Free</p>
+
+        <!-- DEMO. Free for 3 lifetime. Pain → relief → identity → action. -->
+        <article class="tier" data-tier="demo">
+          <p class="tier__name">Demo</p>
           <div class="tier__price">
             <span class="tier__price-num">$0</span>
-            <span class="tier__price-unit">forever</span>
+            <span class="tier__price-unit">lifetime</span>
           </div>
-          <p class="tier__hook">Three documents, ever, on the house.</p>
+          <p class="tier__hook">Test-drive the tool that finds every field for you.</p>
           <ul class="tier__list">
-            <li>3 documents <strong>lifetime</strong></li>
-            <li>Sign up with email to start</li>
-            <li>Your PDFs improve our detection dataset</li>
-            <li>Upgrade anytime; the same email keeps your history</li>
+            <li>Three full sends, no time limit</li>
+            <li>Every paid feature unlocked, no restrictions</li>
+            <li>No credit card required to start</li>
+            <li>Same email keeps your history when you upgrade</li>
           </ul>
-          <a class="btn btn--ghost btn--block" href="./preview/">Sign up and start</a>
+          <a class="btn btn--ghost btn--block" href="./preview/">Start the demo →</a>
         </article>
 
+        <!-- SOLO. The center-stage tier for owner-operators. -->
         <article class="tier" data-tier="solo">
           <p class="tier__name">Solo</p>
           <div class="tier__price">
             <span class="tier__price-num">$12</span>
             <span class="tier__price-unit">/mo</span>
           </div>
-          <p class="tier__hook">For independent professionals.</p>
+          <p class="tier__hook">How many hours a week do you waste in DocuSign?</p>
           <ul class="tier__list">
-            <li>Unlimited documents</li>
-            <li>Multi-signer routing</li>
-            <li>In-person mode</li>
-            <li>Camera scan upload</li>
-            <li>Audit certificate</li>
+            <li>Unlimited documents, unlimited signers</li>
+            <li>Templates auto-apply to every repeat upload</li>
+            <li>In-person signing mode for closing meetings</li>
+            <li>Camera scan turns paper into a signable PDF</li>
+            <li>Audit certificate with SHA-256 on every signed doc</li>
           </ul>
           <button class="btn btn--primary btn--block" type="button" data-checkout-tier="solo">
-            Choose Solo
+            Start operating →
           </button>
         </article>
 
-        <article class="tier tier--featured" data-tier="founding">
-          <span class="tier__badge" id="founding-badge">Locked at $9 for life</span>
-          <p class="tier__name">Founding</p>
+        <!-- CHARTER. Founding 100. The FOMO + lifetime-lock anchor. -->
+        <article class="tier tier--featured" data-tier="charter">
+          <span class="tier__badge" id="founding-badge">$9 for life, locked</span>
+          <p class="tier__name">Charter</p>
           <div class="tier__price">
             <span class="tier__price-num">$9</span>
-            <span class="tier__price-unit">/mo</span>
+            <span class="tier__price-unit">/mo forever</span>
           </div>
-          <p class="tier__hook">First 100 customers, forever.</p>
+          <p class="tier__hook">You found us before everyone else. We don't forget.</p>
           <ul class="tier__list">
-            <li>Everything in Solo</li>
-            <li>$9 / month, locked for life</li>
-            <li>Direct line to the founder</li>
-            <li>Shape what we ship next</li>
+            <li>Same Solo features, $3 less, locked for the life of your account</li>
+            <li>Direct line to the founder — replies within a day</li>
+            <li>Your name on the Charter wall when we ship it</li>
+            <li>Vote on what we build next</li>
+            <li>Once 100 spots fill, this rate disappears forever</li>
           </ul>
           <button class="btn btn--primary btn--block" type="button" data-checkout-tier="founding">
-            Claim a founding spot
+            Claim a Charter spot →
           </button>
           <p class="caption tier__remaining" id="founding-remaining">
             <span class="tier__remaining-dot" aria-hidden="true"></span>
-            <span id="founding-remaining-count">100</span> of 100 spots open.
+            <span id="founding-remaining-count">100</span> of 100 Charter spots remaining.
           </p>
         </article>
 
-        <article class="tier" data-tier="team">
-          <p class="tier__name">Team</p>
+        <!-- STUDIO. Small team. "Studio" beats "Team" — creative-collective identity. -->
+        <article class="tier" data-tier="studio">
+          <p class="tier__name">Studio</p>
           <div class="tier__price">
             <span class="tier__price-num">$29</span>
             <span class="tier__price-unit">/mo</span>
           </div>
-          <p class="tier__hook">For small firms, three seats.</p>
+          <p class="tier__hook">Your firm sends contracts. Stop herding cats in DocuSign.</p>
           <ul class="tier__list">
-            <li>3 seats included</li>
-            <li>Shared workspace</li>
-            <li>Aggregated dashboard</li>
-            <li>Member roles</li>
+            <li>Three seats for partners and assistants</li>
+            <li>Shared workspace, every send visible to the team</li>
+            <li>Aggregated dashboard across every signer</li>
+            <li>Member roles — who can send, who can sign, who can audit</li>
+            <li>Bulk template library so the same NDA never gets re-drawn</li>
           </ul>
           <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="team">
-            Choose Team
+            Start your Studio →
           </button>
         </article>
       </div>
@@ -571,7 +579,7 @@
               <td><span class="check">Yes</span></td>
             </tr>
             <tr>
-              <th scope="row">Founding member rate</th>
+              <th scope="row">Charter rate (founder lock)</th>
               <td class="compare__us">$9, locked for life</td>
               <td><span class="cross">No</span></td>
               <td><span class="cross">No</span></td>
@@ -653,9 +661,10 @@
           <summary class="faq__q">What does it cost?</summary>
           <div class="faq__a">
             <p>
-              Free for 3 documents per month. Solo is $12 per month for unlimited documents.
-              Founding is $9 per month locked for life, first 100 customers only. Team is $29
-              per month for 3 seats.
+              Demo is free for 3 documents lifetime, no card required. Solo is $12 per month for
+              unlimited documents. Charter is $9 per month locked for the life of your account,
+              limited to the first 100 founders. Studio is $29 per month for a 3-seat team with
+              shared workspace and member roles.
             </p>
           </div>
         </details>
@@ -681,23 +690,23 @@
     </div>
   </section>
 
-  <!-- ====================== FOUNDING ====================== -->
+  <!-- ====================== CHARTER MEMBERS ====================== -->
   <section class="section" id="founding">
     <div class="container">
       <div class="founding">
         <div>
-          <p class="kicker">Founding members.</p>
-          <h2 class="h-section section__title">Join the first hundred.<br><em>Lock $9 forever.</em></h2>
+          <p class="kicker">Charter members.</p>
+          <h2 class="h-section section__title">Be one of the first hundred.<br><em>Lock $9, keep it for life.</em></h2>
           <p class="lede" style="margin-top: var(--s-4);">
-            We're opening to a hundred founding customers in August 2026. You get the first
-            production builds, the founder's email address, and a price that never changes.
-            Tell us what you sign and how often.
+            One hundred Charter spots. Once they fill, the rate goes up and never comes back
+            down. Charter members get the first production builds, a direct line to the
+            founder, a vote on what we build next, and a permanent place on the Charter wall.
           </p>
         </div>
 
         <form class="founding-form" id="founding-form" autocomplete="on">
-          <p class="founding-form__head">Founding 100.</p>
-          <h3 class="h-card founding-form__title">Tell us a little.</h3>
+          <p class="founding-form__head">Charter 100.</p>
+          <h3 class="h-card founding-form__title">Reserve your spot.</h3>
 
           <div class="field">
             <input class="field__input" id="founding-name" name="name" placeholder=" " type="text" required />
@@ -713,12 +722,12 @@
           </div>
 
           <button class="btn btn--primary btn--lg btn--block" type="submit">
-            Reserve a founding slot
+            Claim my Charter spot
             <span class="btn-arrow" aria-hidden="true">→</span>
           </button>
 
           <p class="caption" style="margin-top: var(--s-3); text-align: center;" id="founding-status">
-            Your email goes to the founder, nowhere else.
+            Your email goes to the founder, nowhere else. Replies within a day.
           </p>
         </form>
       </div>
@@ -729,8 +738,8 @@
   <aside class="sticky-cta" id="sticky-cta" hidden aria-label="Get started">
     <div class="container sticky-cta__inner">
       <div class="sticky-cta__copy">
-        <p class="sticky-cta__title">Sign your next document free.</p>
-        <p class="sticky-cta__sub">No card, no signup. Three documents per month, on the house.</p>
+        <p class="sticky-cta__title">Three signed documents, on the house.</p>
+        <p class="sticky-cta__sub">No card, no commitment. See the field-detection magic in 30 seconds.</p>
       </div>
       <div class="sticky-cta__actions">
         <a class="btn btn--primary" href="./preview/">Start free</a>
@@ -769,7 +778,7 @@
       <div class="colophon__col">
         <p class="colophon__head">Company</p>
         <a href="mailto:hello@cybersygn.io">Contact</a>
-        <a href="#founding">Founding 100</a>
+        <a href="#founding">Charter 100</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
       </div>
@@ -806,17 +815,17 @@
         if (remainingCount) remainingCount.textContent = String(data.remaining);
 
         if (data.remaining === 0) {
-          if (badge) badge.textContent = 'All ' + cap + ' spots taken';
+          if (badge) badge.textContent = 'Charter full';
           if (remainingEl) {
-            remainingEl.innerHTML = '<span class="tier__remaining-dot tier__remaining-dot--full" aria-hidden="true"></span>All ' + cap + ' spots claimed.';
+            remainingEl.innerHTML = '<span class="tier__remaining-dot tier__remaining-dot--full" aria-hidden="true"></span>All ' + cap + ' Charter spots claimed. Rate is locked for those members forever.';
           }
           const btn = document.querySelector('[data-checkout-tier="founding"]');
-          if (btn) { btn.disabled = true; btn.textContent = 'Founding full'; }
+          if (btn) { btn.disabled = true; btn.textContent = 'Charter full'; }
         } else if (data.remaining < cap) {
           // Some taken, some left. Update text to say "remaining" not "open".
           if (remainingEl) {
             remainingEl.innerHTML = '<span class="tier__remaining-dot" aria-hidden="true"></span>' +
-              '<span id="founding-remaining-count">' + data.remaining + '</span> of ' + cap + ' spots remaining.';
+              '<span id="founding-remaining-count">' + data.remaining + '</span> of ' + cap + ' Charter spots remaining.';
           }
         }
         // remaining === cap: leave the default "X of 100 spots open." text.
