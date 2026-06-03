@@ -46,6 +46,12 @@
         <a class="masthead__link" href="../">Home</a>
         <a class="masthead__link" href="../dashboard/">Dashboard</a>
         <span id="status-indicator" class="pill" data-state="idle">Ready</span>
+        <!-- Persistent free-tier remaining count. Only visible to users
+             who have signed up (data-free-gated=false). Owners and
+             unsigned-up visitors don't see it. -->
+        <span id="free-pill" class="free-pill" aria-live="polite">
+          <strong id="free-pill-remaining">3</strong> of 3 free
+        </span>
         <span id="owner-pill" class="owner-pill" data-active="false" title="Owner mode active">
           <span class="owner-pill__dot"></span>
           Owner
@@ -103,12 +109,13 @@
                documents lifetime, no card needed. Submitting the form
                binds the email to a counter that survives cookie clears. -->
           <form class="free-gate" id="free-gate" autocomplete="on">
-            <p class="free-gate__kicker">Start free.</p>
-            <h3 class="free-gate__title">Three documents, ever, on the house.</h3>
+            <p class="free-gate__kicker">Send when you're ready.</p>
+            <h3 class="free-gate__title">Sign up to send by email.</h3>
             <p class="free-gate__lede">
-              Sign up once, sign three documents free, forever. Your email
-              binds the count so it survives cookie clears. Upgrade anytime;
-              the same email keeps your history.
+              Detection and signing run free in your browser, no account
+              needed. Sign up once to send signed PDFs to anyone, three
+              documents on the house. Your email binds the count so it
+              survives cookie clears.
             </p>
             <div class="free-gate__row">
               <div class="field">

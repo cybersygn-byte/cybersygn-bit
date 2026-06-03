@@ -212,9 +212,14 @@ function paintFreeStatus() {
   const status = $('free-status');
   const remainingEl = $('free-status-remaining');
   const capEl = $('free-status-cap');
+  const pillRemainingEl = $('free-pill-remaining');
+  const pillEl = $('free-pill');
   if (!gate || !status) return;
   const token = readFreeToken();
   if (!token) {
+    // No signup yet. Gate form stays visible but it's no longer the
+    // wall in front of upload — it's a "sign up to send" prompt below.
+    // The upload buttons + hints remain interactive.
     gate.hidden = false;
     status.hidden = true;
     document.body.dataset.freeGated = 'true';
@@ -227,6 +232,13 @@ function paintFreeStatus() {
   const remaining = used && Number.isFinite(used.remaining) ? used.remaining : 3;
   if (remainingEl) remainingEl.textContent = String(remaining);
   if (capEl) capEl.hidden = remaining > 0;
+  if (pillRemainingEl) pillRemainingEl.textContent = String(remaining);
+  if (pillEl) {
+    pillEl.classList.toggle('free-pill--depleted', remaining === 0);
+    pillEl.title = remaining === 0
+      ? 'No free sends remaining. Upgrade for unlimited.'
+      : `${remaining} free send${remaining === 1 ? '' : 's'} left. Lifetime, never resets.`;
+  }
 }
 
 const freeGateForm = $('free-gate');
@@ -3333,7 +3345,18 @@ function buildSignerRow(signer) {
   emailInput.value = signer.email;
   emailInput.placeholder = 'email@address';
   emailInput.autocomplete = 'email';
-  emailInput.addEventListener('input', e => signers.update(signer.id, { email: e.target.value }));
+  emailInput.addEventListener('input', e => {
+    signers.update(signer.id, { email: e.target.value });
+    // Inline validation: bad-format adds .is-invalid; empty is allowed
+    // (signer might not have an email and that's a sender choice).
+    const v = e.target.value.trim();
+    const isValid = v.length === 0 || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    e.target.classList.toggle('is-invalid', !isValid);
+  });
+  // Initial validation paint.
+  if (signer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signer.email)) {
+    emailInput.classList.add('is-invalid');
+  }
 
   body.appendChild(nameInput);
   body.appendChild(emailInput);
@@ -3741,6 +3764,16 @@ function openSendModal() {
     sendBtn.className = 'btn btn--ink';
     sendBtn.textContent = 'Send by email';
     sendBtn.addEventListener('click', async () => {
+      // Pre-send email validation: bail before any network call if a
+      // signer email is malformed. Empty emails are allowed (sender's
+      // choice), only ill-formed values block.
+      const bad = signers.list().filter(s =>
+        s.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email)
+      );
+      if (bad.length > 0) {
+        showToast(`Fix the email for ${bad.map(s => s.name).join(', ')} before sending.`);
+        return;
+      }
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending.';
       try {
