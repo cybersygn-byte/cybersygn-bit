@@ -226,6 +226,9 @@ export default {
 
     // Create a document: persist PDF + signers + assignments, mint per-signer
     // tokens, and email each signer their magic link.
+    if (request.method === 'POST' && url.pathname === '/api/docs/bulk') {
+      return handleBulkSend(request, env, url);
+    }
     if (request.method === 'POST' && url.pathname === '/api/docs') {
       return handleCreateDoc(request, env, url);
     }
@@ -1699,6 +1702,129 @@ async function handleAnalyticsSummary(request, env, url) {
  * Side effects: PDF stored, doc record persisted, one invite email sent per
  * signer with a valid email address.
  */
+/**
+ * Bulk send (Studio tier feature).
+ *
+ * Single PDF + an array of recipients → one personalized doc per
+ * recipient, each with its own magic link. Studio standardizes on
+ * this for HR onboarding, real-estate intake, contractor agreements,
+ * recruiting offer letters.
+ *
+ * Body:
+ *   {
+ *     title:        string,
+ *     pdfBase64:    base64-encoded PDF,
+ *     fields:       [{ id, page, x, y, width, height, type, label, ... }],
+ *     fieldEdits:   { fieldId: overlay },
+ *     senderName:   string,
+ *     senderId:     string,
+ *     workspaceId:  string|null,
+ *     recipients:   [ { name, email, assignments?: { fieldId: fieldId } } ]
+ *   }
+ *
+ * Per-recipient flow: each becomes a separate doc with that recipient
+ * as the sole signer. All fields auto-assign to them. Cap: 200 per
+ * call so a runaway script can't fan out infinite emails.
+ *
+ * Auth: requires a paid tier (Solo or Studio or owner). Free-tier
+ * senders are 402'd back to /#pricing.
+ *
+ * Response:
+ *   { ok, sent: N, failed: M, results: [{ recipient, docId?, error? }] }
+ */
+async function handleBulkSend(request, env, url) {
+  const body = await readJsonBody(request, { maxBytes: 32 * 1024 * 1024 });
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+
+  // Tier check.
+  const owner = await getOwnerForRequest(request, env, url);
+  const providedSenderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  const senderId = providedSenderId || randomId(16);
+  if (!owner) {
+    const sub = await getSubscription(env, senderId);
+    if (!sub || sub.tier === 'free') {
+      return jsonResponse(402, {
+        error: 'paid_tier_required',
+        message: 'Bulk send is a Studio feature. Upgrade at /#pricing.',
+      });
+    }
+  }
+
+  // Validate inputs.
+  if (!Array.isArray(payload.recipients) || payload.recipients.length === 0) {
+    return jsonResponse(400, { error: 'no_recipients' });
+  }
+  if (payload.recipients.length > 200) {
+    return jsonResponse(400, { error: 'too_many_recipients', cap: 200 });
+  }
+  if (typeof payload.pdfBase64 !== 'string' || payload.pdfBase64.length < 32) {
+    return jsonResponse(400, { error: 'invalid_pdf' });
+  }
+  if (!Array.isArray(payload.fields)) {
+    return jsonResponse(400, { error: 'invalid_fields' });
+  }
+
+  // Process recipients in batches to avoid I/O storms. The Worker
+  // runtime is fine with 5-10 parallel fetches; we cap concurrency at
+  // 8 to keep Stripe webhook + Resend + KV all happy.
+  const recipients = payload.recipients.filter(r =>
+    r && typeof r.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email.trim()),
+  );
+  const results = [];
+  let sent = 0, failed = 0;
+  const CONCURRENCY = 8;
+
+  async function processOne(recipient) {
+    const recipName = String(recipient.name || '').trim().slice(0, 80) || 'Signer';
+    const recipEmail = recipient.email.trim().toLowerCase();
+    try {
+      // Synthesize a single-signer payload for handleCreateDoc-style flow.
+      // Reuse the existing doc creation by calling its internal pieces
+      // directly: we replicate the salient parts inline so we don't
+      // round-trip through HTTP again.
+      const subRequest = new Request(request.url, {
+        method: 'POST',
+        headers: request.headers,
+        body: JSON.stringify({
+          title: payload.title || 'Document',
+          pdfBase64: payload.pdfBase64,
+          fields: payload.fields,
+          fieldEdits: payload.fieldEdits || {},
+          signers: [{ id: 'p1', name: recipName, email: recipEmail }],
+          assignments: Object.fromEntries(payload.fields.map(f => [f.id, 'p1'])),
+          cc: [],
+          senderName: payload.senderName,
+          senderId,
+          workspaceId: payload.workspaceId || null,
+          mode: 'send',
+        }),
+      });
+      const res = await handleCreateDoc(subRequest, env, url);
+      if (res.status >= 200 && res.status < 300) {
+        const data = await res.json();
+        sent += 1;
+        return { recipient: recipEmail, docId: data.docId, ok: true };
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        failed += 1;
+        return { recipient: recipEmail, error: errBody.error || `http_${res.status}`, ok: false };
+      }
+    } catch (e) {
+      failed += 1;
+      return { recipient: recipEmail, error: (e && e.message) || 'exception', ok: false };
+    }
+  }
+
+  for (let i = 0; i < recipients.length; i += CONCURRENCY) {
+    const batch = recipients.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(processOne));
+    results.push(...batchResults);
+  }
+
+  return jsonResponse(200, { ok: true, sent, failed, results });
+}
+
 async function handleCreateDoc(request, env, url) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
