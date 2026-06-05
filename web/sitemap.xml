@@ -65,6 +65,60 @@
 
 
 
+
+
+
+
+  <url>
+    <loc>https://cybersygn.io/status/</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+
+
+<!-- BLOG_OPEN -->
+  <url>
+    <loc>https://cybersygn.io/blog/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/how-to-sign-a-pdf-without-docusign/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/what-is-automatic-field-detection/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/cheapest-e-signature-for-solos-2026/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/why-receivers-hate-signing-accounts/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/five-docusign-features-you-dont-need/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/how-to-add-signature-to-pdf-free/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/blog/built-cybersygn-solo-on-cloudflare/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.65</priority>
+  </url>
+<!-- BLOG_CLOSE -->
 <!-- USE_CASES_OPEN -->
   <url>
     <loc>https://cybersygn.io/use-cases/freelance-contract/freelancers/</loc>
@@ -207,4 +261,38 @@
     <priority>0.6</priority>
   </url>
 <!-- USE_CASES_CLOSE -->
+<!-- COMPARISONS_OPEN -->
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-adobe-sign/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-dropbox-sign/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-pandadoc/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-signnow/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-acrobat-sign/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/alternatives/cybersygn-vs-signwell/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+<!-- COMPARISONS_CLOSE -->
 </urlset>
+
+

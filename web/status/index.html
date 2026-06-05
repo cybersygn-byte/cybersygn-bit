@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn status.</title>
+  <meta name="description" content="Live operational status of CyberSygn's API, signing, payments, email, and analytics." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cybersygn.io/status/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">status</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Status">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try the demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Status.</p>
+        <h1 class="h-display"><span id="status-overall">Loading…</span></h1>
+        <p class="lede" id="status-asof" style="max-width:720px;">Checking every subsystem in real time.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <ul class="status-list" id="status-list" aria-live="polite">
+          <li>Loading…</li>
+        </ul>
+        <p class="caption" style="margin-top: var(--s-4);">
+          This page pulls live from <code>/api/status</code> every 60 seconds.
+          Incidents are posted at <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a>
+          and the <a href="../blog/">blog</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/refund/">Refund</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/status', { cache: 'no-store' });
+        const d = await res.json();
+        const overall = document.getElementById('status-overall');
+        const asof = document.getElementById('status-asof');
+        const list = document.getElementById('status-list');
+        overall.textContent = d.status === 'operational' ? 'All systems operational.' : 'Some systems degraded.';
+        overall.className = d.status === 'operational' ? 'status-ok' : 'status-warn';
+        asof.textContent = 'As of ' + new Date(d.asOf || Date.now()).toLocaleString();
+        const items = Object.entries(d.subsystems || {}).map(([key, sub]) => (
+          '<li class="status-item ' + (sub.ok ? 'is-ok' : 'is-down') + '">' +
+            '<span class="status-item__dot" aria-hidden="true"></span>' +
+            '<span class="status-item__label">' + escapeHtml(sub.label || key) + '</span>' +
+            '<span class="status-item__state">' + (sub.ok ? 'operational' : 'down') + '</span>' +
+          '</li>'
+        ));
+        list.innerHTML = items.join('');
+      } catch (err) {
+        const list = document.getElementById('status-list');
+        list.innerHTML = '<li>Cannot reach /api/status. The site may be down.</li>';
+      }
+    }
+    loadStatus();
+    setInterval(loadStatus, 60000);
+  </script>
+
+</body>
+</html>

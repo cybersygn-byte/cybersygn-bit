@@ -70,6 +70,159 @@
   }
 
   // ─────────────────────────────────────────────────────────
+  // "Your DocuSign tax" calculator
+  // ─────────────────────────────────────────────────────────
+  const calcDocs = document.getElementById('calc-docs');
+  const calcRate = document.getElementById('calc-rate');
+  const calcMin = document.getElementById('calc-min');
+  const calcHours = document.getElementById('calc-hours');
+  const calcDollars = document.getElementById('calc-dollars');
+  const calcPayback = document.getElementById('calc-payback');
+  if (calcDocs && calcRate && calcMin) {
+    function runCalc() {
+      const docs = Math.max(0, Number(calcDocs.value) || 0);
+      const rate = Math.max(0, Number(calcRate.value) || 0);
+      const min = Math.max(1, Number(calcMin.value) || 1);
+      const hours = (docs * min) / 60;
+      const dollars = hours * rate;
+      const originCost = 9;
+      // How many DAYS until the $9 Origin subscription pays for itself
+      // at the user's hourly time savings? dollars/month → dollars/day → days till $9.
+      const dailyTimeSaved = dollars / 30;
+      const paybackDays = dailyTimeSaved > 0 ? Math.max(0.1, originCost / dailyTimeSaved) : Infinity;
+      if (calcHours) calcHours.textContent = hours.toFixed(1) + ' h';
+      if (calcDollars) calcDollars.textContent = '$' + Math.round(dollars).toLocaleString();
+      if (calcPayback) {
+        if (!isFinite(paybackDays)) {
+          calcPayback.textContent = '—';
+        } else if (paybackDays < 1) {
+          const hoursPay = Math.max(0.1, paybackDays * 24);
+          calcPayback.textContent = hoursPay.toFixed(1) + ' hours';
+        } else if (paybackDays < 30) {
+          calcPayback.textContent = paybackDays.toFixed(1) + ' days';
+        } else {
+          calcPayback.textContent = (paybackDays / 30).toFixed(1) + ' months';
+        }
+      }
+    }
+    [calcDocs, calcRate, calcMin].forEach(el => el.addEventListener('input', runCalc));
+    runCalc();
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // "Ask the founder" floating widget
+  // ─────────────────────────────────────────────────────────
+  function buildFounderWidget() {
+    if (document.getElementById('cs-founder-widget')) return;
+    const root = document.createElement('div');
+    root.id = 'cs-founder-widget';
+    root.className = 'founder-widget';
+    root.innerHTML = (
+      '<button class="founder-widget__btn" type="button" aria-expanded="false" aria-label="Ask Nathan a question">' +
+        '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>' +
+        '</svg>' +
+      '</button>' +
+      '<div class="founder-widget__panel" role="dialog" aria-label="Ask Nathan" hidden>' +
+        '<button class="founder-widget__close" type="button" aria-label="Close">×</button>' +
+        '<p class="kicker">Ask the founder.</p>' +
+        '<p class="founder-widget__lede">Replies within a day, usually within hours. No bots, no queue — it lands in my inbox.</p>' +
+        '<form class="founder-widget__form" autocomplete="on">' +
+          '<input class="founder-widget__email" name="email" type="email" placeholder="your@email.com" autocomplete="email" required />' +
+          '<textarea class="founder-widget__msg" name="message" placeholder="What\'s on your mind?" rows="3" required></textarea>' +
+          '<button class="btn btn--primary btn--block" type="submit">Send to Nathan</button>' +
+          '<p class="founder-widget__small">Goes straight to nathan@cybersygn.io. No CRM, no autoresponder.</p>' +
+        '</form>' +
+        '<p class="founder-widget__done" hidden>Sent. I\'ll reply within a day.</p>' +
+      '</div>'
+    );
+    document.body.appendChild(root);
+
+    const btn = root.querySelector('.founder-widget__btn');
+    const panel = root.querySelector('.founder-widget__panel');
+    const close = root.querySelector('.founder-widget__close');
+    const form = root.querySelector('.founder-widget__form');
+    const done = root.querySelector('.founder-widget__done');
+    btn.addEventListener('click', () => {
+      const isOpen = !panel.hidden;
+      panel.hidden = isOpen;
+      btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+      if (!isOpen) {
+        const em = panel.querySelector('input[name=email]');
+        if (em) setTimeout(() => em.focus(), 30);
+      }
+    });
+    close.addEventListener('click', () => {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    });
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const email = String(data.get('email') || '').trim();
+      const message = String(data.get('message') || '').trim();
+      if (!email || !message) return;
+      const submitBtn = form.querySelector('button[type=submit]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending…';
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, message, source: 'founder-widget', path: location.pathname }),
+        });
+        if (res.ok) {
+          form.hidden = true;
+          done.hidden = false;
+        } else {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Try again';
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Try again';
+      }
+    });
+  }
+  // Don't show the widget on /preview/ (already engaged), /control/, /dashboard/.
+  const widgetSkip = ['/preview/', '/control/', '/dashboard/'];
+  if (!widgetSkip.some(p => (location.pathname || '/').startsWith(p))) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', buildFounderWidget);
+    } else {
+      buildFounderWidget();
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // Origin proof — latest founders on homepage
+  // ─────────────────────────────────────────────────────────
+  const proofList = document.getElementById('origin-proof-list');
+  const proofClaimed = document.getElementById('origin-proof-claimed');
+  const proofCap = document.getElementById('origin-proof-cap');
+  if (proofList) {
+    fetch('/api/origin/wall?limit=6').then(r => r.ok ? r.json() : null).then(d => {
+      if (!d) return;
+      if (proofCap && d.cap) proofCap.textContent = String(d.cap);
+      if (proofClaimed && typeof d.claimed === 'number') proofClaimed.textContent = String(d.claimed);
+      if (Array.isArray(d.members) && d.members.length > 0) {
+        proofList.innerHTML = d.members.map((m, i) => (
+          '<li class="origin-proof__item">' +
+            '<span class="origin-proof__num">#' + (m.number || (i + 1)) + '</span>' +
+            '<p class="origin-proof__name">' + escapeHtml(m.displayName || 'A founder') + '</p>' +
+            '<p class="origin-proof__city">' + escapeHtml(m.city || 'Somewhere on Earth') + '</p>' +
+          '</li>'
+        )).join('');
+      }
+    }).catch(() => {});
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ─────────────────────────────────────────────────────────
   // Exit-intent modal
   // ─────────────────────────────────────────────────────────
   const EI_SEEN_KEY = 'cybersygn.exitIntentSeen.v1';

@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-06-05T20:49:50.318Z",
+  "description": "Curated PDF corpus sources for CyberSygn detection training and homepage gallery.",
+  "totalCandidates": 9,
+  "sources": [
+    {
+      "source": "SEC EDGAR",
+      "license": "Public Domain (US Gov)",
+      "type": "msa",
+      "title": "AT&T Master Services Agreement (exhibit 10.1)",
+      "company": "AT&T Inc.",
+      "url": "https://www.sec.gov/Archives/edgar/data/732717/000073271724000019/exhibit101q124.htm",
+      "note": "Sample exhibit format. Replace specific URL with verified document."
+    },
+    {
+      "source": "SEC EDGAR",
+      "license": "Public Domain (US Gov)",
+      "type": "employment-agreement",
+      "title": "Tesla Executive Employment Agreement",
+      "company": "Tesla, Inc.",
+      "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=tesla&type=10-K&dateb=&owner=include&count=40",
+      "note": "Search root. Specific exhibit 10s to be selected."
+    },
+    {
+      "source": "Y Combinator",
+      "license": "Public, freely usable",
+      "type": "safe-agreement",
+      "title": "SAFE (Simple Agreement for Future Equity)",
+      "url": "https://www.ycombinator.com/documents",
+      "note": "Multiple variants: post-money cap, post-money discount, post-money MFN, no cap."
+    },
+    {
+      "source": "Common Paper",
+      "license": "CC-BY 4.0",
+      "type": "msa",
+      "title": "Common Paper Cloud Services Agreement",
+      "url": "https://commonpaper.com/standards/cloud-service-agreement"
+    },
+    {
+      "source": "Common Paper",
+      "license": "CC-BY 4.0",
+      "type": "nda",
+      "title": "Common Paper Mutual NDA",
+      "url": "https://commonpaper.com/standards/mutual-nda"
+    },
+    {
+      "source": "GitLab",
+      "license": "MIT",
+      "type": "msa",
+      "title": "GitLab Subscription Agreement",
+      "url": "https://about.gitlab.com/handbook/legal/subscription-agreement"
+    },
+    {
+      "source": "Plain Language Legal",
+      "license": "CC0 (Public Domain)",
+      "type": "consulting-agreement",
+      "title": "Plain Consulting Agreement",
+      "url": "https://example.org/plain-consulting",
+      "note": "Search GitHub for similar projects."
+    },
+    {
+      "source": "GovInfo.gov",
+      "license": "Public Domain (US Gov)",
+      "type": "presidential-document",
+      "title": "Compilation of Presidential Documents",
+      "url": "https://www.govinfo.gov/app/collection/cpd"
+    },
+    {
+      "source": "FUNSD",
+      "license": "CC-BY-NC (research only)",
+      "type": "scanned-forms",
+      "title": "199 scanned form documents",
+      "url": "https://guillaumejaume.github.io/FUNSD/",
+      "note": "Research-only license. Use for internal validation, not redistribution."
+    }
+  ],
+  "nextSteps": [
+    "1. Manually review each source URL and verify license + content.",
+    "2. Download a vetted subset (~5-10 for homepage, ~500 for ML training).",
+    "3. Run worker/src/detect.js on each PDF; record detection accuracy.",
+    "4. Store cleared PDFs in corpus/training/ and corpus/gallery/.",
+    "5. Update web/index.html homepage gallery widget with selected files."
+  ],
+  "legalNotes": [
+    "SEC EDGAR documents are public-domain US Government works.",
+    "GovInfo.gov documents are public-domain US Government works.",
+    "Y Combinator SAFE documents are freely usable per YC published terms.",
+    "Common Paper documents are CC-BY 4.0 (attribute Common Paper).",
+    "GitLab handbook documents are MIT licensed.",
+    "FUNSD is CC-BY-NC: research only, no redistribution.",
+    "PubLayNet (separate) is CC-BY 4.0; useful for layout training only.",
+    "Never train on user-uploaded PDFs without explicit free-tier consent."
+  ]
+}

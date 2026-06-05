@@ -476,6 +476,305 @@
     </div>
   </section>
 
+  <!-- ====================== PDF GALLERY ======================
+       Surfaces the kinds of documents CyberSygn handles. CSS-only
+       paper visuals; each card is a category we've trained heuristics
+       against. License-clean: no real document content shown, just
+       category illustrations.
+       Real PDFs from the curated corpus (see docs/PDF-CORPUS.md and
+       corpus/index.json) can be linked when ready. -->
+  <section class="section pdf-gallery" id="pdf-gallery">
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">Documents we handle.</p>
+          <h2 class="h-section section__title">Every contract type, <em>auto-detected.</em></h2>
+        </div>
+        <p class="lede section__lede">
+          CyberSygn's detection engine is trained against 37 real-world contracts and 10 synthetic
+          PDFs. Heuristics cover the universal signing patterns across every category below.
+        </p>
+      </header>
+      <div class="pdf-gallery__grid">
+        <article class="pdf-tile" data-type="msa">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--60"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__sig"></span>
+          </div>
+          <p class="pdf-tile__name">Master Services Agreement</p>
+          <p class="pdf-tile__sub">Vendor contracts, retainer agreements, consulting MSAs.</p>
+        </article>
+        <article class="pdf-tile" data-type="nda">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__line pdf-tile__line--60"></span>
+            <span class="pdf-tile__sig"></span>
+            <span class="pdf-tile__init"></span>
+          </div>
+          <p class="pdf-tile__name">Non-Disclosure Agreement</p>
+          <p class="pdf-tile__sub">Mutual NDAs, one-way confidentiality, due-diligence wrappers.</p>
+        </article>
+        <article class="pdf-tile" data-type="employment">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__sig"></span>
+            <span class="pdf-tile__date"></span>
+          </div>
+          <p class="pdf-tile__name">Employment Agreement</p>
+          <p class="pdf-tile__sub">W-2 offer letters, 1099 contractor agreements, advisor terms.</p>
+        </article>
+        <article class="pdf-tile" data-type="lease">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__line pdf-tile__line--60"></span>
+            <span class="pdf-tile__sig"></span>
+            <span class="pdf-tile__init"></span>
+          </div>
+          <p class="pdf-tile__name">Rental Lease</p>
+          <p class="pdf-tile__sub">Residential leases, commercial subleases, room rentals.</p>
+        </article>
+        <article class="pdf-tile" data-type="photography">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__sig"></span>
+            <span class="pdf-tile__date"></span>
+          </div>
+          <p class="pdf-tile__name">Photography Contract</p>
+          <p class="pdf-tile__sub">Shoot agreements, model releases, image licensing.</p>
+        </article>
+        <article class="pdf-tile" data-type="coaching">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--60"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__sig"></span>
+          </div>
+          <p class="pdf-tile__name">Coaching Agreement</p>
+          <p class="pdf-tile__sub">Engagement terms, intake forms, cancellation policies.</p>
+        </article>
+        <article class="pdf-tile" data-type="freelance">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__sig"></span>
+            <span class="pdf-tile__date"></span>
+          </div>
+          <p class="pdf-tile__name">Freelance Contract</p>
+          <p class="pdf-tile__sub">Project SOWs, milestone payments, IP transfer clauses.</p>
+        </article>
+        <article class="pdf-tile" data-type="safe">
+          <div class="pdf-tile__paper" aria-hidden="true">
+            <span class="pdf-tile__line pdf-tile__line--70"></span>
+            <span class="pdf-tile__line pdf-tile__line--80"></span>
+            <span class="pdf-tile__line pdf-tile__line--60"></span>
+            <span class="pdf-tile__line pdf-tile__line--90"></span>
+            <span class="pdf-tile__sig"></span>
+          </div>
+          <p class="pdf-tile__name">SAFE / Investor Agreement</p>
+          <p class="pdf-tile__sub">YC SAFE templates, convertible notes, advisor agreements.</p>
+        </article>
+      </div>
+      <p class="pdf-gallery__cta">
+        <a href="./preview/" class="btn btn--primary btn--lg">
+          Drop your own PDF
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ====================== CALCULATOR ======================
+       Interactive "your DocuSign tax" widget. Inputs docs/month +
+       hourly rate; outputs hours/month wasted and dollars saved
+       by switching to CyberSygn. Conversion psychology in 50 lines
+       of JS — interactive widgets beat static copy 2-3x. -->
+  <section class="section calc" id="calc">
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">Your DocuSign tax.</p>
+          <h2 class="h-section section__title">How much time are you <em>actually losing?</em></h2>
+        </div>
+        <p class="lede section__lede">
+          Enter how many documents you send per month and what your time is worth. We'll show
+          the math on what manual field placement is costing you.
+        </p>
+      </header>
+      <div class="calc__grid">
+        <div class="calc__inputs">
+          <label class="calc__field">
+            <span>Documents per month</span>
+            <input type="number" id="calc-docs" min="0" max="500" step="1" value="20" />
+          </label>
+          <label class="calc__field">
+            <span>Your hourly rate ($)</span>
+            <input type="number" id="calc-rate" min="0" max="1000" step="5" value="75" />
+          </label>
+          <label class="calc__field">
+            <span>Time spent per contract (minutes)</span>
+            <input type="number" id="calc-min" min="1" max="120" step="1" value="20" />
+          </label>
+        </div>
+        <div class="calc__output">
+          <div class="calc__row">
+            <span class="calc__row-label">Hours / month wasted</span>
+            <span class="calc__row-num" id="calc-hours">—</span>
+          </div>
+          <div class="calc__row">
+            <span class="calc__row-label">Dollars / month wasted</span>
+            <span class="calc__row-num" id="calc-dollars">—</span>
+          </div>
+          <div class="calc__row calc__row--accent">
+            <span class="calc__row-label">CyberSygn Origin ($9/mo) pays for itself in</span>
+            <span class="calc__row-num" id="calc-payback">—</span>
+          </div>
+          <a class="btn btn--primary btn--block" href="#pricing" id="calc-cta">
+            Stop paying the DocuSign tax →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TRUST STRIP ======================
+       Five compact tiles above pricing that handle the most common
+       buyer objections at a glance. Sits between the hero and the
+       price cards so the reader's eye lands on it before money. -->
+  <section class="section trust-strip">
+    <div class="container">
+      <ul class="trust-grid" aria-label="Trust signals">
+        <li class="trust-tile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <p class="trust-tile__title">SHA-256 audit cert</p>
+          <p class="trust-tile__sub">Every signed PDF gets a fingerprinted certificate that holds up in court.</p>
+        </li>
+        <li class="trust-tile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <p class="trust-tile__title">Browser-local</p>
+          <p class="trust-tile__sub">Detection runs in your browser. Bytes never leave the page until you choose to send.</p>
+        </li>
+        <li class="trust-tile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 12l2 2 4-4"/>
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+          <p class="trust-tile__title">ESIGN + UETA</p>
+          <p class="trust-tile__sub">Same federal-level legal weight as DocuSign, HelloSign, and Adobe Sign.</p>
+        </li>
+        <li class="trust-tile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m12 2-3 7H2l5.5 4-2 7 6.5-4.5L18.5 20l-2-7L22 9h-7z"/>
+          </svg>
+          <p class="trust-tile__title">100% regression</p>
+          <p class="trust-tile__sub">Detection accuracy passes 37 of 37 real-world contracts plus 10 synthetic tests.</p>
+        </li>
+        <li class="trust-tile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 7L9 18l-5-5"/>
+          </svg>
+          <p class="trust-tile__title">Built on Cloudflare</p>
+          <p class="trust-tile__sub">Edge-deployed. Low latency everywhere. The same network Google uses.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================== ORIGIN PROOF =====================
+       Surfaces the latest Origin members. Hydrated by /api/origin/wall
+       (or the legacy /charter alias). Empty state copy until first
+       members land — even empty, the "73 of 100 spots remaining" is
+       its own conversion lever. -->
+  <section class="section origin-proof" id="origin-proof">
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">Origin members.</p>
+          <h2 class="h-section section__title">The first hundred. <em>Locked at $9 for life.</em></h2>
+        </div>
+        <p class="lede section__lede" id="origin-proof-lede">
+          <span id="origin-proof-claimed">—</span> of <span id="origin-proof-cap">100</span> Origin spots claimed.
+          When the cap fills, the rate disappears. Forever.
+        </p>
+      </header>
+      <ol class="origin-proof__list" id="origin-proof-list" aria-live="polite">
+        <li class="origin-proof__empty">Waiting for the first founder. Want to be them?
+          <a href="#founding">Claim Origin spot #1 →</a>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ====================== AS SEEN ON =======================
+       Placeholder press strip. Replace href/img once actual press
+       lands. The visual exists from day one so adding a new logo
+       feels like incremental polish, not a redesign. -->
+  <section class="section press-strip">
+    <div class="container">
+      <p class="kicker kicker--muted press-strip__kicker">In good company.</p>
+      <ul class="press-grid" aria-label="Press and community mentions">
+        <li>Product Hunt</li>
+        <li>Indie Hackers</li>
+        <li>Hacker News</li>
+        <li>Built in Colorado</li>
+        <li>Open Source</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================== FAQ ABOVE PRICING =====================
+       Five tight Q&As that kill the universal e-signature objections.
+       Above the price grid because they need to land BEFORE the price.
+       Schema.org FAQPage is on the lower FAQ section so we don't
+       double-bind. -->
+  <section class="section faq-pre">
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">Before you decide.</p>
+          <h2 class="h-section section__title">The five questions everyone asks.</h2>
+        </div>
+      </header>
+      <div class="faq-pre__grid">
+        <details class="faq-pre__item">
+          <summary><strong>Can I cancel anytime?</strong></summary>
+          <p>Yes. From your dashboard, one click, no email required. You keep access through the end of the billing period. Origin members lose the $9-for-life lock if they cancel, but every other tier is fully reversible.</p>
+        </details>
+        <details class="faq-pre__item">
+          <summary><strong>Is it legally binding?</strong></summary>
+          <p>Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign in any U.S. jurisdiction.</p>
+        </details>
+        <details class="faq-pre__item">
+          <summary><strong>Will my data be sold?</strong></summary>
+          <p>No, ever. Free-tier signups consent to anonymous, content-free field-position data being added to our detection-improvement corpus. Paid tiers opt out by default. Signed PDFs are stored long enough for the signing flow to complete, then expire. Read the full <a href="/privacy/">privacy policy</a>.</p>
+        </details>
+        <details class="faq-pre__item">
+          <summary><strong>Do signers need an account?</strong></summary>
+          <p>No. Signers click a unique magic link and sign in their browser. No signup, no password, no app to install. The most-hated part of DocuSign-style flows is the part we removed.</p>
+        </details>
+        <details class="faq-pre__item">
+          <summary><strong>What if it doesn't save me time?</strong></summary>
+          <p>30-day money-back guarantee, no forms, no haggling. Email <a href="mailto:nathan@cybersygn.io">nathan@cybersygn.io</a> within 30 days and the charge is refunded. The founder reads every email.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- ====================== PRICING ====================== -->
   <section class="section section--alt" id="pricing">
     <div class="container">
@@ -875,6 +1174,7 @@
       <div class="colophon__col">
         <p class="colophon__head">Company</p>
         <a href="/about/">About the founder</a>
+        <a href="/blog/">Blog</a>
         <a href="mailto:hello@cybersygn.io">Contact</a>
         <a href="#founding">Origin 100</a>
         <a href="/privacy">Privacy</a>

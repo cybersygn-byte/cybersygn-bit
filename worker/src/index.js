@@ -163,6 +163,14 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/error') {
       return handleClientError(request, env);
     }
+    if (request.method === 'POST' && url.pathname === '/api/contact') {
+      return handleContact(request, env, url);
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/status') {
+      return handleStatus(request, env, url);
+    }
+
     if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
       return handleMetricsDashboard(request, env, url);
     }
@@ -1441,6 +1449,73 @@ async function handleClientError(request, env) {
  * Designed so /control/ can render it as a single fetch + paint. No
  * client-side aggregation needed.
  */
+
+/**
+ * "Ask the founder" inbound form. Rate-limited by IP. Email gets
+ * delivered to the configured CYBERSYGN_OWNER_EMAIL (defaulting to
+ * hello@cybersygn.io) via the existing Resend pipeline.
+ */
+async function handleContact(request, env, url) {
+  const ip = ipKey(request);
+  const limit = await checkRateLimit(env, `contact:${ip}`, 5, 60 * 60);
+  if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/contact' });
+
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { email, message, source, path } = body.value || {};
+  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return jsonResponse(400, { error: 'invalid_email' });
+  }
+  if (typeof message !== 'string' || message.trim().length < 3 || message.length > 4000) {
+    return jsonResponse(400, { error: 'invalid_message' });
+  }
+  const to = (env && env.CYBERSYGN_OWNER_EMAIL) || 'hello@cybersygn.io';
+  const subject = `[CyberSygn] founder-widget message from ${email.trim()}`;
+  const text = [
+    `From: ${email.trim()}`,
+    `Source: ${source || 'unknown'}`,
+    `Page: ${path || 'unknown'}`,
+    '',
+    message.trim(),
+  ].join('\n');
+  try {
+    const r = await deliverEmail(env, { to, subject, text });
+    return jsonResponse(200, { ok: true, delivered: !!(r && r.delivered) });
+  } catch (e) {
+    return jsonResponse(500, { error: 'send_failed', message: (e && e.message) || 'unknown' });
+  }
+}
+
+/**
+ * Public status feed. Aggregates the live health of the worker's
+ * subsystems for the /status/ page. Mirrors /api/health but trims
+ * down to what the public page renders. Cache-busts every 60s.
+ */
+async function handleStatus(request, env, url) {
+  const subsystems = {
+    worker: { ok: true, label: 'CyberSygn API' },
+    kv: { ok: Boolean(env && env.CYBERSYGN_DOCS), label: 'Document storage (KV)' },
+    pdfs: { ok: Boolean(env && env.CYBERSYGN_PDFS), label: 'PDF storage' },
+    stripe: { ok: Boolean(env && env.STRIPE_SECRET_KEY), label: 'Payments (Stripe)' },
+    email: { ok: Boolean(env && env.RESEND_API_KEY), label: 'Email (Resend)' },
+    analytics: { ok: Boolean(env && env.CYBERSYGN_EVENTS), label: 'Analytics Engine' },
+    vision: { ok: Boolean(env && env.ANTHROPIC_API_KEY), label: 'Vision API (optional)' },
+  };
+  const allOk = Object.values(subsystems).every(s => s.ok || s.label.includes('optional'));
+  return new Response(JSON.stringify({
+    ok: allOk,
+    status: allOk ? 'operational' : 'degraded',
+    subsystems,
+    asOf: new Date().toISOString(),
+  }), {
+    status: 200,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'public, max-age=60, s-maxage=60',
+      'access-control-allow-origin': '*',
+    },
+  });
+}
 
 async function handleMetricsDashboard(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);

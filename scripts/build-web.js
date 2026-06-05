@@ -240,6 +240,33 @@ async function main() {
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
   console.log('  wrote dist/dashboard/join.html');
 
+  // /blog/: rendered from content/blog/*.md by scripts/build-blog.mjs
+  // which runs before this script via npm "build". Two-level tree:
+  // dist/blog/index.html (listing) + dist/blog/<slug>/index.html (posts).
+  const blogSrc = join(SRC, 'blog');
+  if (await exists(blogSrc)) {
+    const blogOut = join(OUT, 'blog');
+    await mkdir(blogOut, { recursive: true });
+    // index.html
+    const idx = join(blogSrc, 'index.html');
+    if (await exists(idx)) {
+      await copyFile(idx, join(blogOut, 'index.html'));
+    }
+    // posts subdirs
+    let count = 0;
+    for (const entry of await readdir(blogSrc, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const sub = join(blogSrc, entry.name);
+      const dst = join(blogOut, entry.name);
+      await mkdir(dst, { recursive: true });
+      for (const f of await readdir(sub)) {
+        await copyFile(join(sub, f), join(dst, f));
+      }
+      count++;
+    }
+    console.log(`  wrote ${count} blog posts + index to dist/blog/`);
+  }
+
   // /about/: founder page. Single static HTML with schema.org Person.
   const aboutSrc = join(SRC, 'about');
   if (await exists(aboutSrc)) {
@@ -247,6 +274,15 @@ async function main() {
     await mkdir(aboutOut, { recursive: true });
     await copyFile(join(aboutSrc, 'index.html'), join(aboutOut, 'index.html'));
     console.log('  wrote dist/about/index.html');
+  }
+
+  // /status/: live status page, pulls /api/status every 60s.
+  const statusSrc = join(SRC, 'status');
+  if (await exists(statusSrc)) {
+    const statusOut = join(OUT, 'status');
+    await mkdir(statusOut, { recursive: true });
+    await copyFile(join(statusSrc, 'index.html'), join(statusOut, 'index.html'));
+    console.log('  wrote dist/status/index.html');
   }
 
   // /control/: hidden owner workbench (login + analytics + demo + tools).
