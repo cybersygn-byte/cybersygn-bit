@@ -107,12 +107,16 @@ function shell({ preheader, body }) {
 </html>`;
 }
 
-function ctaButton({ url, label }) {
+function ctaButton({ url, label, color }) {
   // Two-layer button: outer table acts as the button surface; inner anchor
   // is the click target. Style on both so Outlook renders the surface
   // and webmail renders the anchor.
+  //
+  // `color` lets paid-tier senders override the default cyan with their
+  // brand accent. Falls back to CYAN when absent.
+  const bg = (typeof color === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) ? color : CYAN;
   return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 8px 0;">
-  <tr><td bgcolor="${CYAN}" style="background-color:${CYAN};border-radius:10px;mso-padding-alt:14px 28px;">
+  <tr><td bgcolor="${bg}" style="background-color:${bg};border-radius:10px;mso-padding-alt:14px 28px;">
     <a href="${esc(url)}"
        style="display:inline-block;padding:14px 28px;font-family:${FONT_STACK};font-size:15px;font-weight:600;letter-spacing:-0.005em;color:${NAVY};text-decoration:none;border-radius:10px;">
       ${esc(label)}
@@ -133,11 +137,24 @@ function kvTable(rows) {
 
 // ---- Public renderers -------------------------------------------------------
 
-export function renderInviteHtml({ name, senderName, docTitle, magicLink }) {
+export function renderInviteHtml({ name, senderName, docTitle, magicLink, brand }) {
   const heading = `${esc(senderName || 'A CyberSygn sender')} needs your signature.`;
+  // Branded headers for paid-tier senders. If a logo URL is present we
+  // emit a top banner with the sender's logo above the standard email
+  // body. accentColor (when present) flows into the CTA button color.
+  const brandLogo = brand && brand.logoUrl
+    ? `<div style="text-align:center;padding:12px 0 18px 0;">
+         <img src="${esc(brand.logoUrl)}" alt="${esc(brand.name || senderName || '')}"
+              style="max-height:48px;max-width:240px;display:inline-block;" />
+       </div>`
+    : '';
+  const ctaColor = (brand && brand.accentColor && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(brand.accentColor))
+    ? brand.accentColor
+    : CYAN;
   return shell({
     preheader: `${senderName || 'Someone'} sent you ${docTitle || 'a document'} to sign on CyberSygn.`,
     body: `
+      ${brandLogo}
       <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">${heading}</h1>
       <p class="cs-text" style="margin:0 0 8px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
         Hello ${esc(name || 'there')}. ${esc(senderName || 'Someone')} sent you a document to sign through CyberSygn. Click the button below to review and sign in your browser. You do not need an account.
@@ -147,7 +164,7 @@ export function renderInviteHtml({ name, senderName, docTitle, magicLink }) {
         ['Sender',  senderName || 'A CyberSygn sender'],
         ['Action',  'Review and sign'],
       ].filter(Boolean))}
-      ${ctaButton({ url: magicLink, label: 'Review and sign →' })}
+      ${ctaButton({ url: magicLink, label: 'Review and sign →', color: ctaColor })}
       <p class="cs-muted" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">
         This link is unique to you. Do not forward it. Anyone with the link can sign as you.
       </p>

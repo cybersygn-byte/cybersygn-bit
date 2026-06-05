@@ -185,12 +185,122 @@ async function load() {
 
   paintFounderHome(docs);
   ensureAffiliateCode();
+  ensureBrandPanel();
   if (docs.length === 0) {
     showState('empty');
     return;
   }
   showState('list');
   renderList();
+}
+
+/**
+ * Brand panel (slice 90). Reads the sender's current brand record,
+ * paints the form + preview, wires save. Only paid-tier senders see
+ * this panel — the worker returns 402 on POST for free senders, and
+ * the panel hides itself if subscription says 'free'.
+ */
+async function ensureBrandPanel() {
+  const panel = document.getElementById('brand-panel');
+  if (!panel) return;
+  const senderId = getSenderId();
+  if (!senderId) return;
+
+  // Tier gate. Read the cached subscription banner state — if it says
+  // 'free', we hide. Otherwise reveal the panel and fetch current brand.
+  let isPaid = true;
+  try {
+    const sub = window.__cybersygnSub;
+    if (sub && sub.tier === 'free') isPaid = false;
+  } catch (e) {}
+  if (!isPaid) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+
+  // Fetch current brand.
+  let brand = { logoUrl: '', accentColor: '', name: '' };
+  try {
+    const r = await fetch('/api/sender/' + encodeURIComponent(senderId) + '/brand');
+    if (r.ok) {
+      const d = await r.json();
+      if (d.brand) brand = { ...brand, ...d.brand };
+    }
+  } catch (e) {}
+
+  const logoInput = document.getElementById('brand-logo-url');
+  const colorInput = document.getElementById('brand-accent-color');
+  const swatch = document.getElementById('brand-accent-swatch');
+  const nameInput = document.getElementById('brand-display-name');
+  const previewLogo = document.getElementById('brand-preview-logo');
+  const previewName = document.getElementById('brand-preview-name');
+  const previewCta = document.getElementById('brand-preview-cta');
+  const statusEl = document.getElementById('brand-status');
+  const form = document.getElementById('brand-form');
+
+  if (logoInput) logoInput.value = brand.logoUrl || '';
+  if (colorInput) colorInput.value = brand.accentColor || '';
+  if (nameInput) nameInput.value = brand.name || '';
+  paintBrandPreview();
+
+  function paintBrandPreview() {
+    const url = (logoInput && logoInput.value || '').trim();
+    const color = (colorInput && colorInput.value || '').trim();
+    const name = (nameInput && nameInput.value || '').trim();
+    if (previewLogo) {
+      previewLogo.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="" />` : '';
+    }
+    if (previewName) previewName.textContent = name || 'CyberSygn';
+    if (swatch) swatch.style.background = color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : 'var(--accent)';
+    if (previewCta && color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+      previewCta.style.background = color;
+    } else if (previewCta) {
+      previewCta.style.background = '';  // reset to var(--accent)
+    }
+  }
+  if (logoInput) logoInput.addEventListener('input', paintBrandPreview);
+  if (colorInput) colorInput.addEventListener('input', paintBrandPreview);
+  if (nameInput) nameInput.addEventListener('input', paintBrandPreview);
+
+  if (form && !form.__wired) {
+    form.__wired = true;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        logoUrl: (logoInput && logoInput.value || '').trim(),
+        accentColor: (colorInput && colorInput.value || '').trim(),
+        name: (nameInput && nameInput.value || '').trim(),
+      };
+      statusEl.removeAttribute('data-state');
+      statusEl.textContent = 'Saving.';
+      try {
+        const r = await fetch('/api/sender/' + encodeURIComponent(senderId) + '/brand', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+        if (!r.ok) {
+          statusEl.dataset.state = 'error';
+          statusEl.textContent = data.message || data.error || 'Save failed.';
+          return;
+        }
+        statusEl.dataset.state = 'saved';
+        statusEl.textContent = 'Saved. Next magic-link email uses your brand.';
+        setTimeout(() => { if (statusEl.dataset.state === 'saved') statusEl.textContent = ''; }, 4000);
+      } catch (err) {
+        statusEl.dataset.state = 'error';
+        statusEl.textContent = 'Network error.';
+      }
+    });
+  }
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /**

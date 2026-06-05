@@ -264,6 +264,54 @@
       <!-- Affiliate panel (slice 84). Every paying customer has a
            referral code; here's the proof + their stats + share
            controls. Stays visible at all times once dashboard mounts. -->
+      <!-- Custom branding panel (slice 90). Hidden by default; revealed
+           when the sender is on a paid tier. Lets them brand outbound
+           magic-link emails + signing pages with their logo + accent. -->
+      <section id="brand-panel" class="brand-panel" hidden aria-live="polite">
+        <div class="brand-panel__head">
+          <div>
+            <p class="kicker kicker--ink">Brand your signing experience.</p>
+            <p class="brand-panel__body">
+              Solo, Origin, and Studio members can put their logo and accent color on every
+              magic-link email and signing page. Free senders see CyberSygn defaults.
+            </p>
+          </div>
+          <span class="brand-panel__tier-badge" id="brand-panel-tier">Paid</span>
+        </div>
+        <form id="brand-form" class="brand-form" autocomplete="off">
+          <div class="brand-form__row">
+            <label class="brand-form__field">
+              <span class="brand-form__label">Logo URL (https, png/jpg/svg/webp)</span>
+              <input id="brand-logo-url" type="url" placeholder="https://your-site.com/logo.png" />
+            </label>
+            <label class="brand-form__field brand-form__field--narrow">
+              <span class="brand-form__label">Accent color</span>
+              <div class="brand-form__color-row">
+                <input id="brand-accent-color" type="text" placeholder="#00CBF6" maxlength="7" />
+                <span id="brand-accent-swatch" class="brand-form__swatch" aria-hidden="true"></span>
+              </div>
+            </label>
+          </div>
+          <label class="brand-form__field">
+            <span class="brand-form__label">Display name (shown in email previews)</span>
+            <input id="brand-display-name" type="text" placeholder="Your Firm Name" maxlength="80" />
+          </label>
+          <div class="brand-form__actions">
+            <button id="brand-save" class="btn btn--ink btn--sm" type="submit">Save brand</button>
+            <span id="brand-status" class="brand-form__status"></span>
+          </div>
+        </form>
+        <div class="brand-preview">
+          <p class="kicker kicker--muted">Preview</p>
+          <div class="brand-preview__card">
+            <div class="brand-preview__logo" id="brand-preview-logo"></div>
+            <h4 class="brand-preview__name" id="brand-preview-name">CyberSygn</h4>
+            <p class="brand-preview__body">A signer would see your logo here above the magic-link email.</p>
+            <span id="brand-preview-cta" class="brand-preview__cta">Review and sign →</span>
+          </div>
+        </div>
+      </section>
+
       <section id="affiliate-panel" class="affiliate-panel" hidden aria-live="polite">
         <div class="affiliate-panel__head">
           <div>

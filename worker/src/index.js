@@ -362,6 +362,19 @@ export default {
       }
     }
 
+    // Custom branding for paid tiers (slice 90).
+    // GET  /api/sender/:senderId/brand        — public read of brand
+    // POST /api/sender/:senderId/brand        — paid-only write
+    {
+      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/brand$/);
+      if (m && request.method === 'GET') {
+        return handleBrandRead(request, env, m[1]);
+      }
+      if (m && request.method === 'POST') {
+        return handleBrandWrite(request, env, url, m[1]);
+      }
+    }
+
     // GET /api/sender/:senderId/docs
     const senderListMatch = url.pathname.match(/^\/api\/sender\/([^/]+)\/docs$/);
     if (request.method === 'GET' && senderListMatch) {
@@ -1748,6 +1761,124 @@ function paletteColor(id) {
   }
 }
 
+/**
+ * Custom branding (slice 90).
+ *
+ * Solo/Origin/Studio members configure a logo URL + accent color to
+ * override CyberSygn's default brand across:
+ *   - the magic-link signing page header
+ *   - magic-link invitation + completion emails
+ *   - the audit certificate
+ *
+ * Storage: KV key `brand:<senderId>` → JSON
+ *   { logoUrl: string, accentColor: hex, name: string, updatedAt: ISO }
+ *
+ * Public read (GET): the signing page needs to fetch the sender's
+ *   brand BEFORE the signer authenticates. We expose it as a thin
+ *   read-only endpoint that returns only the safe display fields.
+ *
+ * Authenticated write (POST): paid-tier or owner only. Free senders
+ *   get 402 and a pointer to /#pricing.
+ */
+/**
+ * Helper: load a sender's brand record. Returns null when no brand
+ * is set, so callers can decide whether to fall back to defaults.
+ */
+async function loadSenderBrand(env, senderId) {
+  if (!env || !env.CYBERSYGN_DOCS) return null;
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return null;
+  try {
+    const raw = await env.CYBERSYGN_DOCS.get(`brand:${safeId}`);
+    if (!raw) return null;
+    const rec = JSON.parse(raw);
+    // Only return display fields; never expose updatedAt or v.
+    return {
+      logoUrl: rec.logoUrl || '',
+      accentColor: rec.accentColor || '',
+      name: rec.name || '',
+    };
+  } catch (e) { return null; }
+}
+
+async function handleBrandRead(request, env, senderId) {
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
+  if (!env || !env.CYBERSYGN_DOCS) return jsonResponse(200, { brand: null });
+  try {
+    const raw = await env.CYBERSYGN_DOCS.get(`brand:${safeId}`);
+    if (!raw) return jsonResponse(200, { brand: null });
+    let rec;
+    try { rec = JSON.parse(raw); } catch (e) { return jsonResponse(200, { brand: null }); }
+    return jsonResponse(200, {
+      brand: {
+        logoUrl: typeof rec.logoUrl === 'string' ? rec.logoUrl : '',
+        accentColor: typeof rec.accentColor === 'string' ? rec.accentColor : '',
+        name: typeof rec.name === 'string' ? rec.name : '',
+      },
+    });
+  } catch (e) {
+    return jsonResponse(200, { brand: null });
+  }
+}
+
+async function handleBrandWrite(request, env, url, senderId) {
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
+
+  // Paid-tier check. Free senders cannot brand their docs.
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) {
+    const sub = await getSubscription(env, safeId);
+    if (!sub || sub.tier === 'free') {
+      return jsonResponse(402, {
+        error: 'paid_tier_required',
+        message: 'Custom branding is a Solo/Origin/Studio feature. Upgrade at /#pricing.',
+      });
+    }
+  }
+
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+
+  // Validate. logoUrl is optional but if present must be https.
+  const logoUrl = String(payload.logoUrl || '').trim();
+  if (logoUrl && !/^https:\/\/[^\s]+\.(png|jpg|jpeg|svg|webp)(\?.*)?$/i.test(logoUrl)) {
+    return jsonResponse(400, { error: 'invalid_logo_url', message: 'logoUrl must be an https:// URL ending in .png, .jpg, .svg, or .webp.' });
+  }
+  if (logoUrl.length > 500) {
+    return jsonResponse(400, { error: 'logo_url_too_long' });
+  }
+
+  // accentColor must look like #RRGGBB or #RGB.
+  let accentColor = String(payload.accentColor || '').trim();
+  if (accentColor && !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accentColor)) {
+    return jsonResponse(400, { error: 'invalid_accent_color', message: 'accentColor must be a hex color like #00CBF6.' });
+  }
+  if (accentColor) accentColor = accentColor.toLowerCase();
+
+  const name = String(payload.name || '').trim().slice(0, 80);
+
+  const record = {
+    v: 1,
+    logoUrl,
+    accentColor,
+    name,
+    updatedAt: new Date().toISOString(),
+  };
+  if (env && env.CYBERSYGN_DOCS) {
+    try {
+      await env.CYBERSYGN_DOCS.put(`brand:${safeId}`, JSON.stringify(record), {
+        expirationTtl: 60 * 60 * 24 * 365 * 5,  // 5y like all sender records
+      });
+    } catch (e) {
+      return jsonResponse(500, { error: 'kv_put_failed' });
+    }
+  }
+  return jsonResponse(200, { ok: true, brand: { logoUrl, accentColor, name } });
+}
+
 async function handleSenderTemplatesCount(request, env, url, senderId) {
   const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
@@ -2170,6 +2301,10 @@ async function handleCreateDoc(request, env, url) {
 
   // Build magic links and dispatch invites in parallel.
   const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+  // Pull sender branding (slice 90) once so every invite carries the
+  // same logo + accent. Free senders have no brand record; the email
+  // renderer falls back to CyberSygn defaults.
+  const senderBrand = await loadSenderBrand(env, senderId);
   const signerLinks = await Promise.all(signers.map(async s => {
     const magicLink = `${baseUrl}/preview/?doc=${docId}&t=${s.token}`;
     let sent = false;
@@ -2181,6 +2316,7 @@ async function handleCreateDoc(request, env, url) {
         docTitle: docRecord.title,
         magicLink,
         senderName: docRecord.senderName,
+        brand: senderBrand,
       });
       sent = !!result.delivered;
       if (!sent) error = result.error || 'send failed';

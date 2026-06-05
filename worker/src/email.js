@@ -30,7 +30,7 @@ import {
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
 const REPLY_TO_DEFAULT = 'hello@cybersygn.io';
 
-export async function sendInvite(env, { to, name, docTitle, magicLink, senderName }) {
+export async function sendInvite(env, { to, name, docTitle, magicLink, senderName, brand }) {
   const subject = `${senderName || 'A CyberSygn sender'} needs your signature on ${docTitle || 'a document'}.`;
   const text = [
     `${name || 'Hello'},`,
@@ -45,7 +45,7 @@ export async function sendInvite(env, { to, name, docTitle, magicLink, senderNam
     '',
     'CyberSygn. The signature tool you\'ll actually like. Built in Colorado.',
   ].filter(Boolean).join('\n');
-  const html = renderInviteHtml({ name, senderName, docTitle, magicLink });
+  const html = renderInviteHtml({ name, senderName, docTitle, magicLink, brand });
 
   return deliver(env, { to, subject, text, html });
 }
