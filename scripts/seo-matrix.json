@@ -1,0 +1,143 @@
+{
+  "_comment": "Doc-type × vertical matrix for programmatic SEO. The generator emits /use-cases/<doc-slug>/<vertical-slug>/ landing pages. Edit this file and run scripts/build-use-cases.mjs to regenerate.",
+  "docTypes": [
+    {
+      "slug": "nda",
+      "name": "NDA",
+      "longName": "non-disclosure agreement",
+      "indefinite": "an",
+      "description": "A non-disclosure agreement is a legally binding contract that establishes confidential information cannot be shared with third parties without consent.",
+      "fields": "name, company, date, signature, witness signature"
+    },
+    {
+      "slug": "msa",
+      "name": "MSA",
+      "longName": "master services agreement",
+      "indefinite": "a",
+      "description": "A master services agreement is the umbrella contract that defines the legal terms between a service provider and a client across all engagements.",
+      "fields": "company name, signing party, effective date, signature, initials at every page"
+    },
+    {
+      "slug": "employment-agreement",
+      "name": "employment agreement",
+      "longName": "employment agreement",
+      "indefinite": "an",
+      "description": "An employment agreement defines the working relationship between an employer and an employee, covering compensation, scope, and confidentiality.",
+      "fields": "employee name, start date, compensation, signature, signature date"
+    },
+    {
+      "slug": "contractor-agreement",
+      "name": "contractor agreement",
+      "longName": "independent contractor agreement",
+      "indefinite": "an",
+      "description": "An independent contractor agreement spells out the scope, payment terms, and IP ownership for a 1099 working relationship.",
+      "fields": "contractor name, project scope, fee, payment terms, signature, date"
+    },
+    {
+      "slug": "rental-lease",
+      "name": "rental lease",
+      "longName": "residential rental lease",
+      "indefinite": "a",
+      "description": "A residential rental lease is the binding agreement between landlord and tenant covering rent, security deposit, term, and use of the property.",
+      "fields": "tenant name, landlord name, property address, rent amount, term, signature, witness signature"
+    },
+    {
+      "slug": "photography-contract",
+      "name": "photography contract",
+      "longName": "photography services agreement",
+      "indefinite": "a",
+      "description": "A photography contract sets out shoot details, deliverables, payment, and image-licensing rights between photographer and client.",
+      "fields": "client name, shoot date, deliverables, fee, signature"
+    },
+    {
+      "slug": "model-release",
+      "name": "model release",
+      "longName": "model release form",
+      "indefinite": "a",
+      "description": "A model release grants the photographer or studio the right to use a subject's likeness in marketing, editorial, or commercial work.",
+      "fields": "subject name, date, signature, parent or guardian signature if minor"
+    },
+    {
+      "slug": "freelance-contract",
+      "name": "freelance contract",
+      "longName": "freelance services agreement",
+      "indefinite": "a",
+      "description": "A freelance contract defines scope, deadlines, payment, and revisions between an independent freelancer and a client.",
+      "fields": "client name, project description, fee, milestones, signature, date"
+    },
+    {
+      "slug": "coaching-agreement",
+      "name": "coaching agreement",
+      "longName": "coaching services agreement",
+      "indefinite": "a",
+      "description": "A coaching agreement establishes the engagement terms between a coach and a client, including frequency, fees, and cancellation policy.",
+      "fields": "client name, coach name, package, fee, term, signature, signature date"
+    },
+    {
+      "slug": "consulting-agreement",
+      "name": "consulting agreement",
+      "longName": "consulting services agreement",
+      "indefinite": "a",
+      "description": "A consulting agreement governs the relationship between a consultant and a client, defining deliverables, IP, and compensation.",
+      "fields": "consultant name, client name, scope, fee structure, signature, date"
+    }
+  ],
+  "verticals": [
+    {
+      "slug": "freelancers",
+      "name": "freelancers",
+      "singular": "a freelancer",
+      "audienceLine": "You bill by the project. Every minute spent dragging fields into a contract is unbilled time you could be working on the next gig.",
+      "ideal": ["freelance-contract", "nda", "contractor-agreement", "consulting-agreement"]
+    },
+    {
+      "slug": "consultants",
+      "name": "consultants",
+      "singular": "a consultant",
+      "audienceLine": "Your engagements are high-trust, high-stakes, and frequent. Clients need to sign yesterday and you need an audit trail tomorrow.",
+      "ideal": ["msa", "consulting-agreement", "nda", "contractor-agreement"]
+    },
+    {
+      "slug": "coaches",
+      "name": "coaches",
+      "singular": "a coach",
+      "audienceLine": "Onboarding a new client should take five minutes, not fifty. The intake forms, the agreement, the cancellation policy — all on the same device, same session.",
+      "ideal": ["coaching-agreement", "nda", "consulting-agreement"]
+    },
+    {
+      "slug": "photographers",
+      "name": "photographers",
+      "singular": "a photographer",
+      "audienceLine": "Between shoots, edits, and client management, the last thing you need is a signature tool that fights you. The shoot starts on time when the paperwork is already signed.",
+      "ideal": ["photography-contract", "model-release", "freelance-contract"]
+    },
+    {
+      "slug": "startups",
+      "name": "startups",
+      "singular": "a startup",
+      "audienceLine": "Speed is the only moat. Contractor agreements, NDAs, advisor agreements — same templates, every time, signed without friction.",
+      "ideal": ["nda", "contractor-agreement", "msa", "employment-agreement"]
+    },
+    {
+      "slug": "real-estate-agents",
+      "name": "real estate agents",
+      "singular": "a real estate agent",
+      "audienceLine": "Closings hinge on speed and accuracy. A signature platform that finds every field across a 40-page lease is the difference between a Friday close and a Monday escalation.",
+      "ideal": ["rental-lease", "nda", "consulting-agreement"]
+    },
+    {
+      "slug": "agencies",
+      "name": "agencies",
+      "singular": "an agency",
+      "audienceLine": "You sign a hundred contracts a month across clients, contractors, and partners. The detection step alone reclaims days a year.",
+      "ideal": ["msa", "consulting-agreement", "nda", "contractor-agreement"]
+    },
+    {
+      "slug": "lawyers",
+      "name": "lawyers",
+      "singular": "a solo or small-firm lawyer",
+      "audienceLine": "Engagement letters, NDAs, retainer agreements — every page needs initials, every signature needs an audit certificate. Detection that does the placement makes intake feel like the rest of your practice.",
+      "ideal": ["consulting-agreement", "nda", "msa"]
+    }
+  ]
+}

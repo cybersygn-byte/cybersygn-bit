@@ -14,7 +14,9 @@
     "build:templates": "node scripts/generate-templates.js",
     "vendor": "node scripts/vendor.js",
     "preview": "node scripts/serve-web.js",
-    "build": "node scripts/build-web.js"
+    "build": "node scripts/build-use-cases.mjs && node scripts/build-web.js",
+    "build:web": "node scripts/build-web.js",
+    "build:seo": "node scripts/build-use-cases.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",
