@@ -2006,6 +2006,12 @@ async function handleSubmitFills(request, env, docId, token, url) {
     docComplete: Boolean(doc.completedAt),
     auditUrl,
     completionEmails,
+    // Surfaced for the signer-microsite (slice 75). Returning name +
+    // email lets the post-submit modal greet the signer by name and
+    // prefill the free-tier signup form with their email — one-click
+    // conversion.
+    signerName: signer.name || '',
+    signerEmail: signer.email || '',
   });
 }
 

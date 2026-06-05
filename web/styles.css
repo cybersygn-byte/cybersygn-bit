@@ -4073,6 +4073,27 @@ body[data-add-mode="true"] .page-shell::after {
 .send-note__kicker { font-family: var(--mono); font-size: var(--t-m); text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent-text); margin: 0 0 var(--s-2); }
 .send-note__body { margin: 0; color: var(--text-2); font-size: var(--t-s); line-height: 1.55; }
 
+/* ── Signer microsite ───────────────────────────────────
+   Post-submit modal for magic-link signers. Two visual zones:
+   the status (you submitted) and the wedge (claim your own).
+   The wedge is the conversion machinery. */
+.signer-microsite__status {
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg-2);
+  border-radius: var(--r);
+  margin-bottom: var(--s-4);
+}
+.signer-microsite__convert {
+  padding: var(--s-4);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r);
+}
+.signer-microsite__wedge .kicker { color: var(--accent-text); margin: 0 0 var(--s-2); }
+.signer-microsite__wedge h3 { margin: 0 0 var(--s-3); }
+.signer-microsite__wedge p { margin: 0 0 var(--s-2); color: var(--text-2); }
+.signer-microsite__wedge p:last-child { margin-bottom: 0; color: var(--text); }
+
 /* ── CC additional recipients block ─────────────────────
    Sits in the send modal under the per-signer list. Captures
    comma-separated emails to copy when the doc completes. */
