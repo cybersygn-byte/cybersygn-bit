@@ -319,6 +319,17 @@ export default {
     }
 
     // Sender dashboard: list every doc this sender has created.
+    // GET /api/docs/:docId/live?t=<signerToken> — co-signing presence.
+    {
+      const m = url.pathname.match(/^\/api\/docs\/([a-f0-9]{32,64})\/live$/);
+      if (request.method === 'GET' && m) {
+        return handleDocLive(request, env, url, m[1]);
+      }
+      if (request.method === 'POST' && m) {
+        return handleDocPresenceUpdate(request, env, url, m[1]);
+      }
+    }
+
     // GET /api/sender/:senderId/templates — count of templates this sender saved.
     {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/templates$/);
@@ -1608,6 +1619,111 @@ async function handleAffiliateStats(request, env, url, code) {
  * not attributed back to one sender so they're excluded from this
  * personal count.
  */
+/**
+ * Co-signing live presence (slice 86).
+ *
+ * GET /api/docs/:docId/live?t=<signerToken>
+ *   Returns lightweight presence + fill state for every signer:
+ *     {
+ *       ok,
+ *       signers: [{
+ *         id, name, initials, color,
+ *         completedAt, lastSeenAt,
+ *         filledCount, ownedCount,
+ *         currentPage,
+ *       }]
+ *     }
+ *   Used by signer-side clients to poll every 2s and render presence
+ *   pills (e.g. "Jane is signing — page 2, 5 of 8 fields filled").
+ *
+ * POST /api/docs/:docId/live?t=<signerToken>
+ *   Body: { currentPage }
+ *   Updates the calling signer's presence on the doc record. Cheap,
+ *   no event log entry — we keep this off the audit trail because
+ *   it's UI state, not legally meaningful.
+ *
+ * Auth: same magic-link signing token used elsewhere. The presence
+ * fields we expose are the same data already available in the doc
+ * record; no new PII surface.
+ *
+ * Throughput: with a 2s poll interval and 4 signers per doc, this
+ * is 2 reads/sec per active doc. Even with hundreds of concurrent
+ * docs, KV easily absorbs it.
+ */
+async function handleDocLive(request, env, url, docId) {
+  const token = url.searchParams.get('t');
+  if (!token) return jsonResponse(400, { error: 'missing_token' });
+  const storage = getStorage(env);
+  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  if (!doc) return jsonResponse(404, { error: 'not_found' });
+  const callingSigner = doc.signers.find(s => ctEqHex(s.token, token));
+  if (!callingSigner) return jsonResponse(403, { error: 'invalid_token' });
+
+  // Compute per-signer presence + fill state from the doc.
+  const presence = (doc.presence || {});
+  const out = doc.signers.map(s => {
+    const owned = Object.values(doc.assignments || {}).filter(sid => sid === s.id).length;
+    return {
+      id: s.id,
+      name: s.name || 'Signer',
+      initials: initialsFor(s.name),
+      color: paletteColor(s.id),
+      completedAt: s.completedAt || null,
+      lastSeenAt: presence[s.id] && presence[s.id].lastSeenAt || null,
+      filledCount: Object.keys(s.fills || {}).length,
+      ownedCount: owned,
+      currentPage: presence[s.id] && presence[s.id].currentPage || null,
+    };
+  });
+  return jsonResponse(200, {
+    ok: true,
+    signers: out,
+    docComplete: !!doc.completedAt,
+  });
+}
+
+async function handleDocPresenceUpdate(request, env, url, docId) {
+  const token = url.searchParams.get('t');
+  if (!token) return jsonResponse(400, { error: 'missing_token' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const currentPage = Number((body.value || {}).currentPage);
+  if (!Number.isFinite(currentPage) || currentPage < 0 || currentPage > 1000) {
+    return jsonResponse(400, { error: 'invalid_page' });
+  }
+  const storage = getStorage(env);
+  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  if (!doc) return jsonResponse(404, { error: 'not_found' });
+  const signer = doc.signers.find(s => ctEqHex(s.token, token));
+  if (!signer) return jsonResponse(403, { error: 'invalid_token' });
+
+  doc.presence = doc.presence || {};
+  doc.presence[signer.id] = {
+    currentPage,
+    lastSeenAt: new Date().toISOString(),
+  };
+  try { await storage.docs.put(`doc:${docId}`, JSON.stringify(doc), { expirationTtl: DOC_TTL_SECONDS }); } catch (e) {}
+  return jsonResponse(200, { ok: true });
+}
+
+// Lightweight initials extractor mirroring signers.js client logic.
+function initialsFor(name) {
+  if (typeof name !== 'string' || !name.trim()) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+// Stable color from signer slot id (p1, p2, p3, p4).
+function paletteColor(id) {
+  switch (id) {
+    case 'p1': return '#B83227';
+    case 'p2': return '#2F4D7A';
+    case 'p3': return '#B47A1F';
+    case 'p4': return '#2F6D6A';
+    default: return '#3A4258';
+  }
+}
+
 async function handleSenderTemplatesCount(request, env, url, senderId) {
   const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });

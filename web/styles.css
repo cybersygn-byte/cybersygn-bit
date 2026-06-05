@@ -2736,6 +2736,74 @@ button { font: inherit; cursor: pointer; }
   margin-top: var(--s-3);
 }
 
+/* ── Co-signing presence pill (slice 86) ────────────────
+   Floats top-right of the viewport while in signer mode.
+   Lists every signer with their initials swatch, name, and
+   current page + fill %. Auto-updates from 2s poll. */
+.co-sign-pill {
+  position: fixed;
+  top: 76px;
+  right: 16px;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(10px);
+  -webkit-backdrop-filter: saturate(140%) blur(10px);
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  box-shadow: 0 12px 28px -10px rgba(1,20,52,0.18);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.co-sign-pill__signer {
+  display: grid;
+  grid-template-columns: 18px auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 2px;
+}
+.co-sign-pill__swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+}
+.co-sign-pill__name {
+  color: var(--text);
+  font-weight: 500;
+  font-family: var(--sans);
+  font-size: 12px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.co-sign-pill__status {
+  color: var(--text-3);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.co-sign-pill__pct {
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 768px) {
+  .co-sign-pill {
+    top: auto;
+    bottom: 240px;
+    left: 16px;
+    right: 16px;
+  }
+}
+
 /* ── Affiliate panel (slice 84) ──────────────────────── */
 .affiliate-panel {
   margin-bottom: var(--s-5);

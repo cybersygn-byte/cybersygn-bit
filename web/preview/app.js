@@ -121,6 +121,78 @@ const FILLABLE_TYPES = new Set(['signature', 'initial', 'date', 'checkbox', 'tex
   }
 })();
 
+// ── Co-signing presence (slice 86) ─────────────────────
+// Polls /api/docs/:id/live every 2s while we're in signer mode.
+// Posts a presence heartbeat with the current page on intervals.
+// Renders a small floating pill listing who else is signing right
+// now and where they are in the document.
+let _coSignPollTimer = null;
+let _coSignPresenceTimer = null;
+let _coSignSelfId = null;
+function startCoSigningPresence(docId, token) {
+  stopCoSigningPresence();
+  function pull() {
+    fetch('/api/docs/' + docId + '/live?t=' + encodeURIComponent(token))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d && d.ok) renderCoSigningPill(d); })
+      .catch(() => {});
+  }
+  function push() {
+    // Best-effort: post the current page (1 unless we know better).
+    const currentPage = (window.__cybersygnCurrentPage) || 1;
+    fetch('/api/docs/' + docId + '/live?t=' + encodeURIComponent(token), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ currentPage }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+  pull();
+  push();
+  _coSignPollTimer = setInterval(pull, 2000);
+  _coSignPresenceTimer = setInterval(push, 5000);
+}
+function stopCoSigningPresence() {
+  if (_coSignPollTimer) { clearInterval(_coSignPollTimer); _coSignPollTimer = null; }
+  if (_coSignPresenceTimer) { clearInterval(_coSignPresenceTimer); _coSignPresenceTimer = null; }
+}
+function renderCoSigningPill(data) {
+  // Hide pill if only one signer exists — no co-signing happening.
+  if (!data.signers || data.signers.length <= 1) {
+    const old = document.getElementById('co-signing-pill');
+    if (old) old.remove();
+    return;
+  }
+  // Self is the calling signer (we don't show ourselves in the pill).
+  // Heuristic: we don't actually know which is "us" until we have the
+  // session — but we can detect that by name. For MVP, list everyone
+  // and let the user mentally filter.
+  let pill = document.getElementById('co-signing-pill');
+  if (!pill) {
+    pill = document.createElement('div');
+    pill.id = 'co-signing-pill';
+    pill.className = 'co-sign-pill';
+    document.body.appendChild(pill);
+  }
+  pill.innerHTML = data.signers.map(s => {
+    const status = s.completedAt
+      ? '✓ done'
+      : (s.currentPage ? 'page ' + s.currentPage : 'idle');
+    const fillPct = s.ownedCount ? Math.round((s.filledCount / s.ownedCount) * 100) : 0;
+    return '<div class="co-sign-pill__signer">' +
+      '<span class="co-sign-pill__swatch" style="background:' + s.color + '">' + s.initials + '</span>' +
+      '<span class="co-sign-pill__name">' + escapeHtml(s.name) + '</span>' +
+      '<span class="co-sign-pill__status">' + escapeHtml(status) + '</span>' +
+      '<span class="co-sign-pill__pct">' + fillPct + '%</span>' +
+    '</div>';
+  }).join('');
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // Mobile bottom-sheet behavior. At <=768px the sidebar acts as a
 // drag-up sheet: tap the handle / header → expand. Tap outside or
 // drag down → collapse. CSS handles the open/closed transition;
@@ -4357,6 +4429,10 @@ async function enterEmbedMode(pdfUrl, source) {
 
 async function enterSignerMode(docId, token) {
   setStatus('busy', 'Loading your document.');
+  // Kick off the co-signing presence loop. Polls /api/docs/:id/live
+  // every 2 seconds while we're in signer mode; renders a pill above
+  // the document showing who else is signing right now. Slice 86.
+  startCoSigningPresence(docId, token);
 
   const hydrateResult = await hydrateSigner(docId, token);
   if (!hydrateResult.ok) {
