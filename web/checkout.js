@@ -36,11 +36,23 @@ async function startCheckout(button) {
   const headers = { 'content-type': 'application/json' };
   if (ownerToken) headers[OWNER_HEADER] = ownerToken;
 
+  // Affiliate attribution: capture ref from URL or cookie, forward to
+  // /api/checkout/create-session so the subscription metadata carries it.
+  let ref = null;
+  try {
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef && /^[a-z0-9]{4,16}$/.test(urlRef.toLowerCase())) ref = urlRef.toLowerCase();
+    if (!ref) {
+      const m = document.cookie.match(/(?:^|;\s*)cybersygn_ref=([a-z0-9]{4,16})/);
+      if (m) ref = m[1].toLowerCase();
+    }
+  } catch (e) {}
+
   try {
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ tier, senderId }),
+      body: JSON.stringify({ tier, senderId, ref }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.url) {

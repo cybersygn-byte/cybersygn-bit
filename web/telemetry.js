@@ -146,4 +146,34 @@
     return 'marketing';
   }
   cybersygn.track('pageview', { source: inferSource() });
+
+  // ---- affiliate ref capture
+  // If ?ref=<code> is in the URL, drop a cookie so the code survives
+  // the visit's lifetime and the eventual checkout button sends it as
+  // Stripe metadata. Cookie TTL is 60 days. Same-domain only, no
+  // third-party cookies, no analytics-network leakage.
+  try {
+    var params = new URLSearchParams(w.location.search);
+    var ref = params.get('ref');
+    if (ref && /^[a-z0-9]{4,16}$/.test(ref.toLowerCase())) {
+      var code = ref.toLowerCase();
+      var expires = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = 'cybersygn_ref=' + code + '; path=/; expires=' + expires + '; SameSite=Lax';
+      // Fire the click counter once per page load when the ref was
+      // explicitly in the URL (cookie reads don't count as clicks).
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/affiliate/click', JSON.stringify({ code: code }));
+        } else {
+          fetch('/api/affiliate/click', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ code: code }),
+            keepalive: true,
+          }).catch(function () {});
+        }
+      } catch (e) {}
+      cybersygn.track('affiliate_landing', { code: code });
+    }
+  } catch (e) {}
 })();

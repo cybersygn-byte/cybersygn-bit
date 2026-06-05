@@ -42,6 +42,7 @@ import {
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
+import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import {
@@ -169,6 +170,20 @@ export default {
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
       return handleStatus(request, env, url);
+    }
+
+    // Affiliate program endpoints.
+    if (request.method === 'POST' && url.pathname === '/api/affiliate/register') {
+      return handleAffiliateRegister(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/affiliate/click') {
+      return handleAffiliateClick(request, env, url);
+    }
+    {
+      const m = url.pathname.match(/^\/api\/affiliate\/([a-z0-9]{4,16})$/);
+      if (request.method === 'GET' && m) {
+        return handleAffiliateStats(request, env, url, m[1]);
+      }
     }
 
     if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
@@ -610,7 +625,7 @@ async function handleOwnerLogin(request, env) {
 async function handleCheckoutCreateSession(request, env, url) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
-  const { tier, senderId, email } = body.value || {};
+  const { tier, senderId, email, ref } = body.value || {};
 
   if (!tier || !TIERS[tier] || tier === 'free') {
     return jsonResponse(400, {
@@ -646,6 +661,7 @@ async function handleCheckoutCreateSession(request, env, url) {
       senderId: safeSenderId,
       email: typeof email === 'string' ? email.trim() : undefined,
       origin,
+      ref: typeof ref === 'string' ? ref.toLowerCase() : undefined,
     });
     return jsonResponse(200, { url: session.url, sessionId: session.sessionId });
   } catch (err) {
@@ -1515,6 +1531,61 @@ async function handleStatus(request, env, url) {
       'access-control-allow-origin': '*',
     },
   });
+}
+
+/**
+ * Mint (or look up) an affiliate code for the current senderId.
+ * Idempotent — calling it twice returns the same code.
+ *
+ * Body: { senderId, email? }
+ * Returns: { ok, code, record, isNew, shareUrl }
+ */
+async function handleAffiliateRegister(request, env, url) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+  const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
+  const email = typeof payload.email === 'string' ? payload.email.trim().slice(0, 320) : '';
+
+  const result = await registerAffiliate(env, { senderId, email });
+  if (!result.ok) return jsonResponse(500, { error: result.error });
+  const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+  return jsonResponse(200, {
+    ok: true,
+    code: result.code,
+    isNew: result.isNew,
+    shareUrl: `${baseUrl}/?ref=${result.code}`,
+    record: {
+      clicks: result.record.clicks || 0,
+      signups: result.record.signups || 0,
+      conversions: result.record.conversions || 0,
+      earnedUsd: result.record.earnedUsd || 0,
+    },
+  });
+}
+
+/**
+ * Public click-counter. Called by client-side script when a visitor
+ * lands with ?ref=<code> in the URL. Cheap, no auth — just bumps.
+ */
+async function handleAffiliateClick(request, env, url) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const code = String((body.value || {}).code || '').toLowerCase();
+  await bumpClick(env, code);
+  return jsonResponse(200, { ok: true });
+}
+
+/**
+ * Public stats for a specific affiliate code. Returns aggregate counts;
+ * no PII. Anyone with the code can query so the affiliate themselves
+ * can build a dashboard without authentication.
+ */
+async function handleAffiliateStats(request, env, url, code) {
+  const stats = await getCodeStats(env, code);
+  if (!stats.ok) return jsonResponse(404, { error: 'not_found' });
+  return jsonResponse(200, stats);
 }
 
 async function handleMetricsDashboard(request, env, url) {

@@ -158,7 +158,7 @@ export function foundingCap() {
  * Founding 100 is gated server-side: if the count is already at the cap,
  * we refuse and ask the caller to fall back to Solo.
  */
-export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin }) {
+export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin, ref }) {
   if (!env || typeof env.STRIPE_SECRET_KEY !== 'string' || !env.STRIPE_SECRET_KEY.startsWith('sk_')) {
     throw stripeError('not_configured', 'Stripe is not configured on this deployment.');
   }
@@ -192,6 +192,12 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   body.set('metadata[senderId]', senderId || '');
   body.set('subscription_data[metadata][tier]', tier);
   body.set('subscription_data[metadata][senderId]', senderId || '');
+  // Affiliate ref: only set if the client supplied a real code shape.
+  // The webhook reads subscription.metadata.ref to credit the affiliate.
+  if (typeof ref === 'string' && /^[a-z0-9]{4,16}$/.test(ref)) {
+    body.set('metadata[ref]', ref);
+    body.set('subscription_data[metadata][ref]', ref);
+  }
   if (reUseCustomer) {
     body.set('customer', reUseCustomer);
   } else if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -324,8 +330,22 @@ async function onCheckoutCompleted(env, session) {
   const tier = session.metadata && session.metadata.tier;
   const customerId = session.customer;
   const subId = session.subscription;
+  const ref = session.metadata && session.metadata.ref;
   if (!senderId || !tier || !customerId) {
     return { applied: false, reason: 'missing_link_fields' };
+  }
+
+  // Affiliate attribution. Credit the conversion exactly once per
+  // (code, customer) pair. Done lazily — if the import fails for any
+  // reason (cycle, missing module in test env), we don't block the
+  // main subscription record write.
+  if (ref) {
+    try {
+      const { recordConversion } = await import('./affiliate.js');
+      await recordConversion(env, ref.toLowerCase(), customerId, tier);
+    } catch (e) {
+      console.error('[stripe] affiliate credit failed:', e && e.message);
+    }
   }
   const storage = pickStorage(env);
 
