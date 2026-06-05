@@ -14,11 +14,12 @@
     "build:templates": "node scripts/generate-templates.js",
     "vendor": "node scripts/vendor.js",
     "preview": "node scripts/serve-web.js",
-    "build": "node scripts/build-blog.mjs && node scripts/build-use-cases.mjs && node scripts/build-comparisons.mjs && node scripts/build-web.js",
+    "build": "npm run smoke && node scripts/build-blog.mjs && node scripts/build-use-cases.mjs && node scripts/build-comparisons.mjs && node scripts/build-web.js",
     "build:compare": "node scripts/build-comparisons.mjs",
-    "build:web": "node scripts/build-web.js",
+    "build:web": "npm run smoke && node scripts/build-web.js",
     "build:seo": "node scripts/build-use-cases.mjs",
-    "build:blog": "node scripts/build-blog.mjs"
+    "build:blog": "node scripts/build-blog.mjs",
+    "smoke": "node scripts/smoke-check.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",
