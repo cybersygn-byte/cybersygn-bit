@@ -42,6 +42,7 @@ import {
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
+import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS } from './webhooks.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
 import { getRoadmap, castVote } from './roadmap.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
@@ -68,7 +69,7 @@ const MAX_JSON_BYTES = 256 * 1024; // larger now: doc creation payload includes 
 const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
@@ -254,7 +255,7 @@ export default {
       // dozens a day, but a flood-loop should still be capped.
       const rl = await checkRateLimit(env, ipKey(request, 'docs'), { max: 60, windowSeconds: 600 });
       if (!rl.ok) return rateLimitedResponse(rl);
-      return handleCreateDoc(request, env, url);
+      return handleCreateDoc(request, env, url, ctx);
     }
 
     // Per-signer hydration: GET /api/docs/:docId/signer/:token
@@ -268,7 +269,7 @@ export default {
     // Signer submits their fills.
     const fillsMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signer\/([^/]+)\/fills$/);
     if (request.method === 'POST' && fillsMatch) {
-      return handleSubmitFills(request, env, fillsMatch[1], fillsMatch[2], url);
+      return handleSubmitFills(request, env, fillsMatch[1], fillsMatch[2], url, ctx);
     }
 
     // Signer declines to sign. Marks declinedAt, halts further reminders,
@@ -373,6 +374,16 @@ export default {
       if (m && request.method === 'POST') {
         return handleBrandWrite(request, env, url, m[1]);
       }
+    }
+
+    // Outbound webhooks for Studio tier (slice 91).
+    {
+      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/webhook$/);
+      if (m && request.method === 'GET')    return handleWebhookGet(request, env, m[1]);
+      if (m && request.method === 'POST')   return handleWebhookPost(request, env, url, m[1]);
+      if (m && request.method === 'DELETE') return handleWebhookDelete(request, env, url, m[1]);
+      const lm = url.pathname.match(/^\/api\/sender\/([^/]+)\/webhook\/log$/);
+      if (lm && request.method === 'GET') return handleWebhookLog(request, env, lm[1]);
     }
 
     // GET /api/sender/:senderId/docs
@@ -1696,26 +1707,40 @@ async function handleDocLive(request, env, url, docId) {
   const callingSigner = doc.signers.find(s => ctEqHex(s.token, token));
   if (!callingSigner) return jsonResponse(403, { error: 'invalid_token' });
 
-  // Compute per-signer presence + fill state from the doc.
+  // Compute per-signer presence + fill state. Slice 92 adds
+  // currentFieldId and idle-state heuristics so the client can render
+  // "Jane is on page 2 working on field 7" rather than a flat
+  // "page 2" indicator.
   const presence = (doc.presence || {});
+  const nowMs = Date.now();
   const out = doc.signers.map(s => {
     const owned = Object.values(doc.assignments || {}).filter(sid => sid === s.id).length;
+    const pres = presence[s.id] || {};
+    const lastSeenMs = pres.lastSeenAt ? Date.parse(pres.lastSeenAt) : 0;
+    const ageMs = nowMs - lastSeenMs;
+    // online: heartbeat within 10 s. idle: within 60 s. otherwise offline.
+    let liveState = 'offline';
+    if (lastSeenMs && ageMs < 10_000) liveState = 'online';
+    else if (lastSeenMs && ageMs < 60_000) liveState = 'idle';
     return {
       id: s.id,
       name: s.name || 'Signer',
       initials: initialsFor(s.name),
       color: paletteColor(s.id),
       completedAt: s.completedAt || null,
-      lastSeenAt: presence[s.id] && presence[s.id].lastSeenAt || null,
+      lastSeenAt: pres.lastSeenAt || null,
       filledCount: Object.keys(s.fills || {}).length,
       ownedCount: owned,
-      currentPage: presence[s.id] && presence[s.id].currentPage || null,
+      currentPage: pres.currentPage || null,
+      currentFieldId: pres.currentFieldId || null,
+      liveState,
     };
   });
   return jsonResponse(200, {
     ok: true,
     signers: out,
     docComplete: !!doc.completedAt,
+    serverTimeMs: nowMs,
   });
 }
 
@@ -1724,10 +1749,15 @@ async function handleDocPresenceUpdate(request, env, url, docId) {
   if (!token) return jsonResponse(400, { error: 'missing_token' });
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
-  const currentPage = Number((body.value || {}).currentPage);
+  const payload = body.value || {};
+  const currentPage = Number(payload.currentPage);
   if (!Number.isFinite(currentPage) || currentPage < 0 || currentPage > 1000) {
     return jsonResponse(400, { error: 'invalid_page' });
   }
+  // currentFieldId is optional. We accept and sanitize but never block on it.
+  const currentFieldId = typeof payload.currentFieldId === 'string'
+    ? payload.currentFieldId.slice(0, 64)
+    : null;
   const storage = getStorage(env);
   const doc = await storage.docs.get(`doc:${docId}`, { json: true });
   if (!doc) return jsonResponse(404, { error: 'not_found' });
@@ -1737,6 +1767,7 @@ async function handleDocPresenceUpdate(request, env, url, docId) {
   doc.presence = doc.presence || {};
   doc.presence[signer.id] = {
     currentPage,
+    currentFieldId,
     lastSeenAt: new Date().toISOString(),
   };
   try { await storage.docs.put(`doc:${docId}`, JSON.stringify(doc), { expirationTtl: DOC_TTL_SECONDS }); } catch (e) {}
@@ -1799,6 +1830,82 @@ async function loadSenderBrand(env, senderId) {
       name: rec.name || '',
     };
   } catch (e) { return null; }
+}
+
+/**
+ * Webhook config endpoints (slice 91). Studio-tier feature.
+ */
+async function handleWebhookGet(request, env, senderId) {
+  const owner = await getOwnerForRequest(request, env, new URL(request.url));
+  if (!owner) {
+    const sub = await getSubscription(env, senderId);
+    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+      return jsonResponse(402, { error: 'studio_required', message: 'Webhooks are a Studio feature. Upgrade at /#pricing.' });
+    }
+  }
+  const cfg = await getWebhookConfig(env, senderId);
+  if (!cfg) return jsonResponse(200, { config: null, availableEvents: WEBHOOK_EVENTS });
+  // Never return the raw secret on read. The dashboard sees an indicator
+  // that a secret exists; rotation is "create new config".
+  return jsonResponse(200, {
+    config: {
+      url: cfg.url,
+      events: cfg.events,
+      hasSecret: true,
+      createdAt: cfg.createdAt,
+    },
+    availableEvents: WEBHOOK_EVENTS,
+  });
+}
+
+async function handleWebhookPost(request, env, url, senderId) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) {
+    const sub = await getSubscription(env, senderId);
+    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+      return jsonResponse(402, { error: 'studio_required' });
+    }
+  }
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const r = await saveWebhookConfig(env, senderId, body.value || {});
+  if (!r.ok) return jsonResponse(400, { error: r.error });
+  // Return the secret exactly once, at creation time. The dashboard
+  // surfaces it with a copy button and a warning that this is the
+  // only time it's shown.
+  return jsonResponse(200, {
+    ok: true,
+    config: {
+      url: r.config.url,
+      events: r.config.events,
+      secret: r.config.secret,
+      createdAt: r.config.createdAt,
+    },
+  });
+}
+
+async function handleWebhookDelete(request, env, url, senderId) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) {
+    const sub = await getSubscription(env, senderId);
+    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+      return jsonResponse(402, { error: 'studio_required' });
+    }
+  }
+  await deleteWebhookConfig(env, senderId);
+  return jsonResponse(200, { ok: true });
+}
+
+async function handleWebhookLog(request, env, senderId) {
+  const owner = await getOwnerForRequest(request, env, new URL(request.url));
+  if (!owner) {
+    const sub = await getSubscription(env, senderId);
+    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+      return jsonResponse(402, { error: 'studio_required' });
+    }
+  }
+  const log = await getDeliveryLog(env, senderId);
+  return jsonResponse(200, { log });
 }
 
 async function handleBrandRead(request, env, senderId) {
@@ -2129,7 +2236,7 @@ async function handleBulkSend(request, env, url) {
   return jsonResponse(200, { ok: true, sent, failed, results });
 }
 
-async function handleCreateDoc(request, env, url) {
+async function handleCreateDoc(request, env, url, ctx) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
   const payload = body.value;
@@ -2332,6 +2439,19 @@ async function handleCreateDoc(request, env, url) {
     };
   }));
 
+  // Fire doc.created webhook (slice 91). Studio-only — fireWebhook
+  // returns early if the sender has no config. waitUntil hands the
+  // delivery off to the runtime so the API response doesn't block.
+  const waitUntil = ctx && typeof ctx.waitUntil === 'function'
+    ? (p) => ctx.waitUntil(p.catch(() => {}))
+    : (p) => p.catch(() => {});
+  waitUntil(fireWebhook(env, senderId, 'doc.created', {
+    docId,
+    title: docRecord.title,
+    signerCount: signers.length,
+    mode: docRecord.mode,
+  }));
+
   return jsonResponse(201, {
     docId,
     senderId,
@@ -2391,7 +2511,7 @@ async function handleHydrateSigner(request, env, docId, token) {
  * signer complete if every field they own is now filled, and the
  * document complete if every signer is now done.
  */
-async function handleSubmitFills(request, env, docId, token, url) {
+async function handleSubmitFills(request, env, docId, token, url, ctx) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
 
@@ -2454,6 +2574,30 @@ async function handleSubmitFills(request, env, docId, token, url) {
   if (allDone && !doc.completedAt) {
     doc.completedAt = new Date().toISOString();
     recordEvent(doc, { type: 'completed', request });
+  }
+
+  // Webhook fires (slice 91). signer.completed when this submission
+  // crossed the per-signer threshold; doc.completed when all signers
+  // are done.
+  const waitUntil = ctx && typeof ctx.waitUntil === 'function'
+    ? (p) => ctx.waitUntil(p.catch(() => {}))
+    : (p) => p.catch(() => {});
+  if (signer.completedAt && !wasSignerComplete) {
+    waitUntil(fireWebhook(env, doc.senderId, 'signer.completed', {
+      docId,
+      title: doc.title,
+      signerId: signer.id,
+      signerEmail: signer.email,
+      completedAt: signer.completedAt,
+    }));
+  }
+  if (allDone && doc.completedAt) {
+    waitUntil(fireWebhook(env, doc.senderId, 'doc.completed', {
+      docId,
+      title: doc.title,
+      completedAt: doc.completedAt,
+      signerCount: doc.signers.length,
+    }));
   }
 
   doc.signers[signerIdx] = signer;

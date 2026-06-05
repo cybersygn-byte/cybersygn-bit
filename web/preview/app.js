@@ -121,29 +121,38 @@ const FILLABLE_TYPES = new Set(['signature', 'initial', 'date', 'checkbox', 'tex
   }
 })();
 
-// ── Co-signing presence (slice 86) ─────────────────────
-// Polls /api/docs/:id/live every 2s while we're in signer mode.
-// Posts a presence heartbeat with the current page on intervals.
-// Renders a small floating pill listing who else is signing right
-// now and where they are in the document.
+// ── Co-signing presence (slice 86 + v2 slice 92) ─────────────────────
+// Polls /api/docs/:id/live every 2s while in signer mode. Heartbeat
+// with currentPage + currentFieldId every 5s. Renders a presence
+// pill showing each signer's live state, page, field, and progress.
+// Surfaces a toast when a remote signer makes progress.
 let _coSignPollTimer = null;
 let _coSignPresenceTimer = null;
+let _coSignLastSnapshot = null;
 let _coSignSelfId = null;
-function startCoSigningPresence(docId, token) {
+function startCoSigningPresence(docId, token, selfId) {
   stopCoSigningPresence();
+  _coSignSelfId = selfId || null;
   function pull() {
     fetch('/api/docs/' + docId + '/live?t=' + encodeURIComponent(token))
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d && d.ok) renderCoSigningPill(d); })
+      .then(d => {
+        if (!d || !d.ok) return;
+        // Diff against last snapshot → fire toasts for material remote
+        // progress (other signer crossed a 25% threshold, or finished).
+        diffAndToast(d, _coSignLastSnapshot);
+        _coSignLastSnapshot = d;
+        renderCoSigningPill(d);
+      })
       .catch(() => {});
   }
   function push() {
-    // Best-effort: post the current page (1 unless we know better).
     const currentPage = (window.__cybersygnCurrentPage) || 1;
+    const currentFieldId = (window.__cybersygnCurrentFieldId) || null;
     fetch('/api/docs/' + docId + '/live?t=' + encodeURIComponent(token), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ currentPage }),
+      body: JSON.stringify({ currentPage, currentFieldId }),
       keepalive: true,
     }).catch(() => {});
   }
@@ -155,18 +164,46 @@ function startCoSigningPresence(docId, token) {
 function stopCoSigningPresence() {
   if (_coSignPollTimer) { clearInterval(_coSignPollTimer); _coSignPollTimer = null; }
   if (_coSignPresenceTimer) { clearInterval(_coSignPresenceTimer); _coSignPresenceTimer = null; }
+  _coSignLastSnapshot = null;
 }
+
+/**
+ * Compare prev vs. curr snapshot. For each remote signer, emit a
+ * lightweight toast if they crossed a 25% completion threshold
+ * (25/50/75/100) or just submitted.
+ */
+function diffAndToast(curr, prev) {
+  if (!prev || !prev.signers) return;
+  const prevById = new Map(prev.signers.map(s => [s.id, s]));
+  for (const s of (curr.signers || [])) {
+    if (s.id === _coSignSelfId) continue;
+    const p = prevById.get(s.id);
+    if (!p) continue;
+    const prevPct = p.ownedCount ? Math.floor((p.filledCount / p.ownedCount) * 4) * 25 : 0;
+    const currPct = s.ownedCount ? Math.floor((s.filledCount / s.ownedCount) * 4) * 25 : 0;
+    if (currPct > prevPct && currPct > 0 && currPct < 100) {
+      try {
+        if (typeof showToast === 'function') {
+          showToast(`${s.name} is ${currPct}% through their fields.`);
+        }
+      } catch (e) {}
+    }
+    if (!p.completedAt && s.completedAt) {
+      try {
+        if (typeof showToast === 'function') {
+          showToast(`${s.name} just finished signing.`);
+        }
+      } catch (e) {}
+    }
+  }
+}
+
 function renderCoSigningPill(data) {
-  // Hide pill if only one signer exists — no co-signing happening.
   if (!data.signers || data.signers.length <= 1) {
     const old = document.getElementById('co-signing-pill');
     if (old) old.remove();
     return;
   }
-  // Self is the calling signer (we don't show ourselves in the pill).
-  // Heuristic: we don't actually know which is "us" until we have the
-  // session — but we can detect that by name. For MVP, list everyone
-  // and let the user mentally filter.
   let pill = document.getElementById('co-signing-pill');
   if (!pill) {
     pill = document.createElement('div');
@@ -175,13 +212,18 @@ function renderCoSigningPill(data) {
     document.body.appendChild(pill);
   }
   pill.innerHTML = data.signers.map(s => {
-    const status = s.completedAt
-      ? '✓ done'
-      : (s.currentPage ? 'page ' + s.currentPage : 'idle');
+    let status;
+    if (s.completedAt) status = '✓ done';
+    else if (s.liveState === 'offline') status = 'offline';
+    else if (s.currentFieldId) status = 'page ' + (s.currentPage || '?');
+    else if (s.currentPage) status = 'page ' + s.currentPage;
+    else status = 'idle';
     const fillPct = s.ownedCount ? Math.round((s.filledCount / s.ownedCount) * 100) : 0;
-    return '<div class="co-sign-pill__signer">' +
+    const me = s.id === _coSignSelfId ? ' co-sign-pill__signer--self' : '';
+    const live = ' co-sign-pill__signer--' + (s.liveState || 'offline');
+    return '<div class="co-sign-pill__signer' + me + live + '">' +
       '<span class="co-sign-pill__swatch" style="background:' + s.color + '">' + s.initials + '</span>' +
-      '<span class="co-sign-pill__name">' + escapeHtml(s.name) + '</span>' +
+      '<span class="co-sign-pill__name">' + escapeHtml(s.name) + (s.id === _coSignSelfId ? ' (you)' : '') + '</span>' +
       '<span class="co-sign-pill__status">' + escapeHtml(status) + '</span>' +
       '<span class="co-sign-pill__pct">' + fillPct + '%</span>' +
     '</div>';
@@ -2568,6 +2610,17 @@ function focusField(id) {
   }
   if (row) row.classList.add('is-focused');
 
+  // Slice 92: surface this field id as the co-signing presence
+  // current-field-id so the next heartbeat carries it.
+  window.__cybersygnCurrentFieldId = id;
+  // Best-effort: also push current page from the focused field so the
+  // heartbeat carries the right page even if document scroll hasn't
+  // updated it.
+  const field = docState.fields.find(f => f.id === id);
+  if (field && Number.isFinite(field.page)) {
+    window.__cybersygnCurrentPage = field.page;
+  }
+
   // Sync the toolbar counter so prev/next picks up from wherever the
   // user clicked. Find this field's position in the reading-order list.
   const order = getNavOrder();
@@ -4426,10 +4479,6 @@ async function enterEmbedMode(pdfUrl, source) {
 
 async function enterSignerMode(docId, token) {
   setStatus('busy', 'Loading your document.');
-  // Kick off the co-signing presence loop. Polls /api/docs/:id/live
-  // every 2 seconds while we're in signer mode; renders a pill above
-  // the document showing who else is signing right now. Slice 86.
-  startCoSigningPresence(docId, token);
 
   const hydrateResult = await hydrateSigner(docId, token);
   if (!hydrateResult.ok) {
@@ -4441,6 +4490,12 @@ async function enterSignerMode(docId, token) {
     return;
   }
   const session = hydrateResult.data;
+
+  // Now that we have the session, the signer's own id is known. Kick
+  // off the co-signing presence loop (slice 86, deepened in slice 92).
+  // The pill identifies self vs. others and the diff-toast helper
+  // skips self-progress notifications.
+  startCoSigningPresence(docId, token, (session.signer && session.signer.id) || null);
 
   const pdfResult = await fetchSignerPdf(docId, token);
   if (!pdfResult.ok) {

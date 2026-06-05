@@ -2871,6 +2871,35 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent-text);
   font-variant-numeric: tabular-nums;
 }
+
+/* Slice 92: live-state visual cues. A leading dot on each signer row
+   shows whether they're online (green), idle (amber), or offline (gray).
+   Self gets a slightly muted appearance so the user can mentally
+   distinguish their own row from the others. */
+.co-sign-pill__signer {
+  position: relative;
+}
+.co-sign-pill__signer::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.co-sign-pill__signer--online::before { background: var(--ok); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 30%, transparent); }
+.co-sign-pill__signer--idle::before   { background: var(--warn); }
+.co-sign-pill__signer--offline::before { background: var(--text-3); opacity: 0.6; }
+.co-sign-pill__signer--self {
+  opacity: 0.8;
+  background: var(--bg-2);
+  border-radius: 6px;
+  margin: -2px -4px;
+  padding: 2px 4px;
+}
 @media (max-width: 768px) {
   .co-sign-pill {
     top: auto;
