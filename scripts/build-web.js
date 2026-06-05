@@ -208,6 +208,10 @@ async function main() {
   await copyFile(join(SRC, 'preview', 'signing.js'), join(OUT, 'preview', 'signing.js'));
   console.log('  wrote dist/preview/signing.js');
 
+  // onboarding.js: first-time coachmarks + milestone toasts (slice 80).
+  await copyFile(join(SRC, 'preview', 'onboarding.js'), join(OUT, 'preview', 'onboarding.js'));
+  console.log('  wrote dist/preview/onboarding.js');
+
   // signers.js: multi-signer assignment and signing-as perspective.
   await copyFile(join(SRC, 'preview', 'signers.js'), join(OUT, 'preview', 'signers.js'));
   console.log('  wrote dist/preview/signers.js');
