@@ -3649,12 +3649,36 @@ details[open] > .field-list__group--toggle::after {
   box-shadow:
     0 1px 0 rgba(255,255,255,0.18) inset,
     0 6px 18px -6px var(--accent-glow);
+  animation: appleInviteIdle 4.4s ease-in-out infinite;
+  animation-delay: 6s;
 }
-.layout--apple .upload-choice.btn--primary:hover {
+.layout--apple .upload-choice.btn--primary:hover,
+.layout--apple .upload-choice.btn--primary:focus-visible {
   transform: translateY(-1px);
   box-shadow:
     0 1px 0 rgba(255,255,255,0.22) inset,
     0 10px 24px -8px var(--accent-glow);
+  animation: none;
+}
+/* Gentle Apple-style invitation: a soft glow expands then collapses
+   every 4 seconds, only after the user has been on the page for 6
+   seconds without taking action. Subtle enough to feel like ambient
+   product life, not desperate marketing. */
+@keyframes appleInviteIdle {
+  0%, 100% {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.18) inset,
+      0 6px 18px -6px var(--accent-glow);
+  }
+  50% {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.22) inset,
+      0 8px 28px -4px var(--accent-glow),
+      0 0 0 8px color-mix(in srgb, var(--accent) 6%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .layout--apple .upload-choice.btn--primary { animation: none; }
 }
 .layout--apple .dropzone-card__or {
   font-style: normal;
@@ -3737,16 +3761,48 @@ details[open] > .field-list__group--toggle::after {
     0 16px 36px -20px rgba(1,20,52,0.22);
 }
 
-/* Dark mode: atmosphere glow brightens slightly so the scene reads. */
+/* Dark mode adjustments: navy-tinted shadows go invisible against navy
+   backgrounds, so swap to neutral/cyan-tinted elevation cues. Atmosphere
+   glow brightens slightly so the scene reads in dim conditions. The
+   page-shell carries the most weight here — it's the "document on a
+   desk" metaphor and needs honest separation from the navy background. */
 @media (prefers-color-scheme: dark) {
   .layout--apple .dropzone-card {
-    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    background: color-mix(in srgb, var(--bg) 76%, transparent);
     border-color: var(--line-2);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 8px 24px -8px rgba(0,0,0,0.45),
+      0 40px 80px -32px rgba(0,0,0,0.55);
   }
   .layout--apple .sidebar {
     background: color-mix(in srgb, var(--bg) 78%, transparent);
+    box-shadow: -1px 0 0 rgba(255,255,255,0.03);
+  }
+  .layout--apple .page-shell {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 24px 48px -20px rgba(0,0,0,0.55),
+      0 60px 100px -32px rgba(0,0,0,0.35);
+  }
+  .layout--apple .doc-toolbar {
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 16px 36px -20px rgba(0,0,0,0.55);
+  }
+  .layout--apple .upload-choice.btn--primary {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.18) inset,
+      0 6px 18px -6px var(--accent-glow),
+      0 12px 28px -12px rgba(0,0,0,0.6);
+  }
+  .layout--apple .free-gate {
+    background: color-mix(in srgb, var(--bg-2) 60%, transparent);
+    border-color: var(--line-2);
   }
   .preview-atmos__glow--a { opacity: 1.3; }
+  .preview-atmos__grid { opacity: 0.6; }
 }
 
 /* ---- Dropzone (empty state) ---- */
