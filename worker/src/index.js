@@ -40,6 +40,7 @@ import {
   ownerDripList,
 } from './free-tier.js';
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
+import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import {
@@ -827,6 +828,17 @@ async function handleCharterWall(env) {
  * No editing of foundingNumber, joinedAt, or any billing field.
  */
 async function handleCharterProfile(request, env, url) {
+  // Rate limit: 30 edits per hour per IP. Real Charter members will
+  // tweak their card a few times and walk away; this stops a script
+  // from cycling through display names to grief the wall.
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) {
+    const limit = await checkRateLimit(env, `charter-profile:${ipKey(request)}`, [
+      { windowSec: 60 * 60, max: 30 },
+    ]);
+    if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/charter/profile' });
+  }
+
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
   const payload = body.value || {};
@@ -1201,6 +1213,18 @@ async function handleLookupTemplate(request, env, url) {
 // ---- Free-tier endpoints ---------------------------------------------------
 
 async function handleFreeSignup(request, env) {
+  // Rate limit: per-IP 3 signups per 24h, 10 per week. Tight enough to
+  // stop drive-by signup floods, generous enough not to bite a real
+  // user creating multiple test accounts in a day.
+  const owner = await getOwnerForRequest(request, env, new URL(request.url));
+  if (!owner) {
+    const limit = await checkRateLimit(env, `signup:${ipKey(request)}`, [
+      { windowSec: 60 * 60 * 24,     max: 3 },
+      { windowSec: 60 * 60 * 24 * 7, max: 10 },
+    ]);
+    if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/free/signup' });
+  }
+
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
   const { firstName, lastName, email } = body.value || {};
