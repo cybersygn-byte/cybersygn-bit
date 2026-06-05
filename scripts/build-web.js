@@ -252,6 +252,8 @@ async function main() {
   await copyFile(join(SRC, 'dashboard', 'owner-panel.js'), join(OUT, 'dashboard', 'owner-panel.js'));
   console.log('  wrote dist/dashboard/owner-panel.js');
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
+  await copyFile(join(SRC, 'dashboard', 'bulk-send.html'), join(OUT, 'dashboard', 'bulk-send.html'));
+  console.log('  wrote dist/dashboard/bulk-send.html');
   console.log('  wrote dist/dashboard/join.html');
 
   // /blog/: rendered from content/blog/*.md by scripts/build-blog.mjs

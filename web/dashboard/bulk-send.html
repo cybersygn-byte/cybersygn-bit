@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bulk send — CyberSygn.</title>
+  <meta name="description" content="Send one PDF to up to 200 recipients with personalized magic links. Studio tier." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="./" aria-label="Dashboard">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">bulk send</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Bulk send">
+        <a class="masthead__link" href="./">Dashboard</a>
+        <a class="masthead__link" href="../preview/">Preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: var(--s-6); padding-bottom: var(--s-7); max-width: 920px;">
+
+    <header style="margin-bottom: var(--s-5);">
+      <p class="kicker">Studio tier.</p>
+      <h1 class="h-section">Bulk send.</h1>
+      <p class="lede">One PDF, up to 200 recipients, personalized magic links. Ideal for HR
+      onboarding, real estate intake, contractor agreements, recruiting offer letters.</p>
+    </header>
+
+    <!-- Step 1: PDF + fields -->
+    <section class="state-card" style="margin-bottom: var(--s-4);">
+      <p class="state-card__kicker">Step 1</p>
+      <h2 class="state-card__body" style="font-weight: 600;">Pick the PDF.</h2>
+      <p class="state-card__body">Upload your PDF once. CyberSygn detects every field. The same field set goes to every recipient.</p>
+      <div style="display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-3);">
+        <input type="file" id="bulk-pdf" accept="application/pdf" />
+        <span id="bulk-pdf-status" class="caption">No file selected.</span>
+      </div>
+    </section>
+
+    <!-- Step 2: recipients CSV -->
+    <section class="state-card" style="margin-bottom: var(--s-4);">
+      <p class="state-card__kicker">Step 2</p>
+      <h2 class="state-card__body" style="font-weight: 600;">Add recipients.</h2>
+      <p class="state-card__body">Paste a CSV (or use the textarea). Two columns: <code>name,email</code>. One per row. Up to 200.</p>
+      <textarea id="bulk-recipients"
+                style="width:100%;min-height:200px;margin-top:var(--s-3);padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;"
+                placeholder="Jane Doe,jane@example.com&#10;John Smith,john@firm.com&#10;..."></textarea>
+      <p id="bulk-recipients-status" class="caption" style="margin-top: var(--s-2);">No recipients parsed yet.</p>
+    </section>
+
+    <!-- Step 3: send -->
+    <section class="state-card" style="margin-bottom: var(--s-4);">
+      <p class="state-card__kicker">Step 3</p>
+      <h2 class="state-card__body" style="font-weight: 600;">Send.</h2>
+      <p class="state-card__body">Each recipient receives a personalized magic link with the PDF + their detected fields. Per-recipient status appears below as it lands.</p>
+      <button id="bulk-send" class="btn btn--primary btn--lg" type="button" disabled>
+        Send to <span id="bulk-send-count">0</span> recipients
+        <span class="btn-arrow" aria-hidden="true">→</span>
+      </button>
+    </section>
+
+    <!-- Results -->
+    <section id="bulk-results" class="state-card" hidden>
+      <p class="state-card__kicker">Sent.</p>
+      <h2 class="state-card__body" style="font-weight: 600;"><span id="bulk-results-sent">0</span> sent · <span id="bulk-results-failed">0</span> failed.</h2>
+      <div id="bulk-results-list" style="margin-top: var(--s-3); max-height: 360px; overflow-y: auto; font-family: var(--mono); font-size: 12px; line-height: 1.7;"></div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="/">Home</a>
+        <a href="/dashboard/">Dashboard</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { getSenderId } from '../preview/identity.js';
+    import { detectFields } from '../preview/detect.js';
+
+    const $ = id => document.getElementById(id);
+    const pdfInput = $('bulk-pdf');
+    const pdfStatus = $('bulk-pdf-status');
+    const csvArea = $('bulk-recipients');
+    const csvStatus = $('bulk-recipients-status');
+    const sendBtn = $('bulk-send');
+    const sendCount = $('bulk-send-count');
+    const resultsSection = $('bulk-results');
+    const resultsSent = $('bulk-results-sent');
+    const resultsFailed = $('bulk-results-failed');
+    const resultsList = $('bulk-results-list');
+
+    let pdfBytes = null;
+    let pdfFields = null;
+    let pdfTitle = null;
+
+    pdfInput.addEventListener('change', async () => {
+      const f = pdfInput.files && pdfInput.files[0];
+      if (!f) { pdfStatus.textContent = 'No file selected.'; refresh(); return; }
+      pdfStatus.textContent = 'Loading + detecting fields.';
+      try {
+        const buf = await f.arrayBuffer();
+        pdfBytes = new Uint8Array(buf);
+        pdfTitle = f.name;
+        // Reuse the detection module the preview uses.
+        const detection = await detectFields(new Uint8Array(buf), { filename: f.name });
+        pdfFields = detection.fields;
+        pdfStatus.textContent = pdfFields.length + ' field' + (pdfFields.length === 1 ? '' : 's') + ' detected in ' + f.name + '.';
+        refresh();
+      } catch (err) {
+        pdfStatus.textContent = 'Could not parse PDF: ' + (err.message || err);
+        pdfBytes = null;
+        pdfFields = null;
+        refresh();
+      }
+    });
+
+    csvArea.addEventListener('input', () => {
+      const parsed = parseCsv(csvArea.value);
+      csvStatus.textContent = parsed.length + ' valid recipient' + (parsed.length === 1 ? '' : 's') + ' parsed.';
+      refresh();
+    });
+
+    function parseCsv(text) {
+      const out = [];
+      for (const line of text.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const parts = trimmed.split(',').map(s => s.trim());
+        if (parts.length < 2) continue;
+        const name = parts[0];
+        const email = parts[1];
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue;
+        out.push({ name, email });
+        if (out.length >= 200) break;
+      }
+      return out;
+    }
+
+    function refresh() {
+      const recipients = parseCsv(csvArea.value);
+      const ready = pdfBytes && pdfFields && pdfFields.length > 0 && recipients.length > 0;
+      sendBtn.disabled = !ready;
+      sendCount.textContent = String(recipients.length);
+    }
+
+    sendBtn.addEventListener('click', async () => {
+      if (sendBtn.disabled) return;
+      const recipients = parseCsv(csvArea.value);
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Sending.';
+      resultsSection.hidden = false;
+      resultsSent.textContent = '0';
+      resultsFailed.textContent = '0';
+      resultsList.innerHTML = '';
+
+      try {
+        const pdfBase64 = bytesToBase64(pdfBytes);
+        const res = await fetch('/api/docs/bulk', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            title: pdfTitle,
+            pdfBase64,
+            fields: pdfFields,
+            fieldEdits: {},
+            senderName: '',
+            senderId: getSenderId(),
+            recipients,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          resultsList.innerHTML = '<p class="caption" style="color:var(--err)">Send failed: ' + (data.error || res.status) + '. ' + (data.message || '') + '</p>';
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Try again';
+          return;
+        }
+        resultsSent.textContent = String(data.sent || 0);
+        resultsFailed.textContent = String(data.failed || 0);
+        if (Array.isArray(data.results)) {
+          for (const r of data.results) {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:grid;grid-template-columns:14px 1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid var(--line);';
+            row.innerHTML =
+              '<span style="color:' + (r.ok ? 'var(--ok)' : 'var(--warn)') + '">' + (r.ok ? '✓' : '×') + '</span>' +
+              '<span>' + escape(r.recipient) + '</span>' +
+              '<span style="color:var(--text-3)">' + (r.ok ? (r.docId || '').slice(0, 8) : escape(r.error || '')) + '</span>';
+            resultsList.appendChild(row);
+          }
+        }
+        sendBtn.textContent = 'Send another batch';
+        sendBtn.disabled = false;
+      } catch (err) {
+        resultsList.innerHTML = '<p class="caption" style="color:var(--err)">Network error: ' + (err.message || err) + '</p>';
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Try again';
+      }
+    });
+
+    function bytesToBase64(bytes) {
+      let s = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        s += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(s);
+    }
+
+    function escape(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+  </script>
+
+</body>
+</html>
