@@ -5901,6 +5901,14 @@ details[open] > .field-list__group--toggle::after {
   font-size: var(--t-sm);
   line-height: 1.55;
 }
+/* Actionable empty state — embeds a CTA so the surface isn't inert. */
+.field-list__empty--actionable {
+  background: var(--bg-2);
+  border-left: 3px solid var(--accent);
+  margin: var(--s-3) var(--s-5);
+  padding: var(--s-4);
+  border-radius: 6px;
+}
 .field-list__group {
   display: flex;
   align-items: center;

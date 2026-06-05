@@ -2353,10 +2353,20 @@ function populateSidebar(detection, filename) {
 
   fieldList.innerHTML = '';
   if (detection.fields.length === 0) {
+    // Empty state with a concrete next-step instead of just a status line.
     const empty = document.createElement('li');
-    empty.className = 'field-list__empty';
-    empty.textContent = 'No fields detected. This document may not need a signature, or its layout is outside Phase 1 coverage.';
+    empty.className = 'field-list__empty field-list__empty--actionable';
+    empty.innerHTML =
+      '<p style="margin:0 0 8px;font-weight:600">No fields detected.</p>' +
+      '<p style="margin:0 0 12px">This document may not need a signature, or its layout is unusual. ' +
+      'You can still add fields manually anywhere on the page.</p>' +
+      '<button type="button" class="btn btn--ghost btn--sm" data-empty-add="signature">+ Add a signature field</button>';
     fieldList.appendChild(empty);
+    const addBtn = empty.querySelector('[data-empty-add]');
+    if (addBtn) addBtn.addEventListener('click', () => {
+      const sigBtn = document.querySelector('.add-field-btn[data-add-type="signature"]');
+      if (sigBtn) sigBtn.click();
+    });
     return;
   }
 
