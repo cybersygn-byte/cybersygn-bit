@@ -82,6 +82,16 @@ async function main() {
   console.log('  wrote dist/polish.js');
   await copyFile(join(SRC, 'cinematic-hero.js'), join(OUT, 'cinematic-hero.js'));
   console.log('  wrote dist/cinematic-hero.js');
+  await copyFile(join(SRC, 'embed.js'), join(OUT, 'embed.js'));
+  console.log('  wrote dist/embed.js');
+  // /embed/ docs page.
+  const embedSrc = join(SRC, 'embed');
+  const embedOut = join(OUT, 'embed');
+  if (await exists(embedSrc)) {
+    await mkdir(embedOut, { recursive: true });
+    await copyFile(join(embedSrc, 'index.html'), join(embedOut, 'index.html'));
+    console.log('  wrote dist/embed/index.html');
+  }
   await copyFile(join(SRC, 'conversion.js'), join(OUT, 'conversion.js'));
   console.log('  wrote dist/conversion.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Embed CyberSygn on your site. One script tag.</title>
+  <meta name="description" content="Drop a single script tag on any page and any button becomes a CyberSygn signing launcher. Iframe-based, attribution-tracked, zero dependencies." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/embed/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">embed</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Embed">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try the demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero__grid">
+          <div>
+            <p class="kicker hero__kicker">Distribute through any site.</p>
+            <h1 class="h-display hero__title">
+              Drop a script tag<span class="dot">.</span><br>
+              <span class="accent">Any button becomes a signing launcher</span><span class="dot">.</span>
+            </h1>
+            <p class="lede hero__lede">
+              Agencies, freelancer portfolios, contract-template marketplaces, CRMs.
+              Anywhere a PDF lives, a CyberSygn-powered signing flow can launch over it. Zero
+              dependencies, attribution-tracked, ESIGN-compliant.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker">Setup.</p>
+            <h2 class="h-section section__title">Two lines of HTML.</h2>
+          </div>
+        </header>
+
+        <pre class="embed-snippet" style="background:#011434;color:#cfe9ff;padding:18px 22px;border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6">
+&lt;script src="https://cybersygn.io/embed.js" defer&gt;&lt;/script&gt;
+
+&lt;button data-cybersygn-sign="https://yoursite.com/contracts/nda.pdf"
+        data-cybersygn-source="agency-portal"&gt;
+  Sign this NDA
+&lt;/button&gt;
+        </pre>
+
+        <p class="lede" style="margin-top:24px">
+          That's the whole integration. Click the button, the CyberSygn signing flow opens
+          in a modal iframe over your page, the signer completes, the iframe closes, and
+          your page fires a <code>cybersygn:complete</code> CustomEvent so you can update
+          your UI.
+        </p>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker">Live demo.</p>
+            <h2 class="h-section section__title">Click and try it.</h2>
+          </div>
+        </header>
+        <button class="btn btn--primary btn--lg"
+                data-cybersygn-sign="https://cybersygn.io/brand/og-image.png"
+                data-cybersygn-source="embed-docs">
+          Launch CyberSygn signing modal →
+        </button>
+        <p class="caption" style="margin-top:12px">This opens the same flow your visitors would see — over your page, not over ours.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker">Data attributes.</p>
+            <h2 class="h-section section__title">All optional except the URL.</h2>
+          </div>
+        </header>
+        <ul class="lede">
+          <li><code>data-cybersygn-sign</code> — required. PDF URL to load.</li>
+          <li><code>data-cybersygn-source</code> — optional. Attribution tag. Default: <code>location.hostname</code>.</li>
+          <li><code>data-cybersygn-email</code> — optional. Pre-fills signer email.</li>
+          <li><code>data-cybersygn-name</code> — optional. Pre-fills signer name.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker">Programmatic API.</p>
+            <h2 class="h-section section__title">For framework code.</h2>
+          </div>
+        </header>
+        <pre class="embed-snippet" style="background:#011434;color:#cfe9ff;padding:18px 22px;border-radius:8px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6">
+window.CyberSygn.open(pdfUrl, {
+  source: 'react-app',
+  signerEmail: 'jane@firm.com',
+  signerName: 'Jane Smith',
+});
+
+window.addEventListener('cybersygn:complete', function (e) {
+  // e.detail = { type: 'cybersygn:complete', docId, signerEmail }
+  router.push('/thanks');
+});
+        </pre>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="/embed.js" defer></script>
+</body>
+</html>
