@@ -19,7 +19,10 @@
     "build:web": "npm run smoke && node scripts/build-web.js",
     "build:seo": "node scripts/build-use-cases.mjs",
     "build:blog": "node scripts/build-blog.mjs",
-    "smoke": "node scripts/smoke-check.mjs"
+    "smoke": "node scripts/smoke-check.mjs",
+    "lint:css": "node scripts/css-check.mjs",
+    "lint": "npm run smoke && npm run lint:css",
+    "deploy": "npm run lint && npm run build && npm run test:worker && npx wrangler deploy"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

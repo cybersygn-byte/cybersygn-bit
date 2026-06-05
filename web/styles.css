@@ -4134,9 +4134,12 @@ button { font: inherit; cursor: pointer; }
   pointer-events: none;
 }
 
-/* ----- Field-box drag + resize handles ----- */
+/* ----- Field-box drag + resize handles -----
+   .field-box's full ruleset (border, background, cursor, etc.) lives
+   further down. Here we only ship the touch behavior that the drag
+   handler depends on. Keeping it separate from the visual ruleset
+   reflects the dual purpose: visual presentation + interaction surface. */
 .field-box {
-  cursor: move;
   touch-action: none; /* prevent page-scroll while dragging */
 }
 .field-box__handle {
