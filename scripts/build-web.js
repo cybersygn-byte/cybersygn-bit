@@ -82,6 +82,8 @@ async function main() {
   console.log('  wrote dist/polish.js');
   await copyFile(join(SRC, 'cinematic-hero.js'), join(OUT, 'cinematic-hero.js'));
   console.log('  wrote dist/cinematic-hero.js');
+  await copyFile(join(SRC, 'conversion.js'), join(OUT, 'conversion.js'));
+  console.log('  wrote dist/conversion.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));
   console.log('  wrote dist/styles.css');
   // 404.html surfaces when not_found_handling: '404-page' fires in Workers.
@@ -237,6 +239,15 @@ async function main() {
   console.log('  wrote dist/dashboard/owner-panel.js');
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
   console.log('  wrote dist/dashboard/join.html');
+
+  // /about/: founder page. Single static HTML with schema.org Person.
+  const aboutSrc = join(SRC, 'about');
+  if (await exists(aboutSrc)) {
+    const aboutOut = join(OUT, 'about');
+    await mkdir(aboutOut, { recursive: true });
+    await copyFile(join(aboutSrc, 'index.html'), join(aboutOut, 'index.html'));
+    console.log('  wrote dist/about/index.html');
+  }
 
   // /control/: hidden owner workbench (login + analytics + demo + tools).
   // robots-blocked, noindex meta. Copy index.html + control.js verbatim.

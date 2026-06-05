@@ -23,10 +23,13 @@ const STRIPE_API = 'https://api.stripe.com/v1';
 const FOUNDING_CAP = 100;
 
 export const TIERS = {
-  free:     { id: 'free',     docs: 3,        priceEnv: null,                    label: 'Free' },
-  solo:     { id: 'solo',     docs: Infinity, priceEnv: 'STRIPE_PRICE_SOLO',     label: 'Solo' },
-  founding: { id: 'founding', docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING', label: 'Founding' },
-  team:     { id: 'team',     docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM',     label: 'Team' },
+  free:            { id: 'free',            docs: 3,        priceEnv: null,                            label: 'Demo' },
+  solo:            { id: 'solo',            docs: Infinity, priceEnv: 'STRIPE_PRICE_SOLO',             label: 'Solo' },
+  solo_annual:     { id: 'solo_annual',     docs: Infinity, priceEnv: 'STRIPE_PRICE_SOLO_ANNUAL',      label: 'Solo (annual)' },
+  founding:        { id: 'founding',        docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING',         label: 'Origin' },
+  founding_annual: { id: 'founding_annual', docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING_ANNUAL',  label: 'Origin (annual)' },
+  team:            { id: 'team',            docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM',             label: 'Studio' },
+  team_annual:     { id: 'team_annual',     docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM_ANNUAL',      label: 'Studio (annual)' },
 };
 
 // ---- Public API surface called from index.js ------------------------------

@@ -214,6 +214,7 @@
   <script src="/telemetry.js"></script>
   <script src="/polish.js" defer></script>
   <script src="/cinematic-hero.js" defer></script>
+  <script src="/conversion.js" defer></script>
 </head>
 <body>
 
@@ -490,6 +491,32 @@
         </p>
       </header>
 
+      <!-- Billing-cycle toggle. Annual shows 20% off, monthly default. -->
+      <div class="billing-toggle" role="radiogroup" aria-label="Billing cycle" data-cycle="monthly">
+        <button class="billing-toggle__opt is-active" type="button" data-cycle="monthly" role="radio" aria-checked="true">
+          Monthly
+        </button>
+        <button class="billing-toggle__opt" type="button" data-cycle="annual" role="radio" aria-checked="false">
+          Annual <span class="billing-toggle__badge">Save 20%</span>
+        </button>
+      </div>
+
+      <!-- Money-back guarantee. Single highest-leverage objection-killer. -->
+      <p class="money-back">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="m16 8-8 8"/>
+          <path d="m8 8 8 8" style="display:none"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span><strong>30-day money-back guarantee.</strong> Try CyberSygn risk-free. Not saving time? Email the founder, get a full refund. No forms, no haggling.</span>
+      </p>
+
+      <!-- Placeholder so the original section header continues to render. -->
+      <p class="lede section__lede" hidden>
+        </p>
+      </header>
+
       <div class="pricing">
 
         <!-- DEMO. Free for 3 lifetime. Pain → relief → identity → action. -->
@@ -510,7 +537,7 @@
         </article>
 
         <!-- SOLO. The center-stage tier for owner-operators. -->
-        <article class="tier" data-tier="solo">
+        <article class="tier" data-tier="solo" data-monthly="12" data-annual="9.60" data-annual-total="115">
           <p class="tier__name">Solo</p>
           <div class="tier__price">
             <span class="tier__price-num">$12</span>
@@ -530,7 +557,7 @@
         </article>
 
         <!-- ORIGIN. Founding 100. The FOMO + lifetime-lock anchor. -->
-        <article class="tier tier--featured" data-tier="origin">
+        <article class="tier tier--featured" data-tier="origin" data-monthly="9" data-annual="7.20" data-annual-total="86">
           <span class="tier__badge" id="founding-badge">$9 for life, locked</span>
           <p class="tier__name">Origin</p>
           <div class="tier__price">
@@ -558,7 +585,7 @@
         </article>
 
         <!-- STUDIO. Small team. "Studio" beats "Team" — creative-collective identity. -->
-        <article class="tier" data-tier="studio">
+        <article class="tier" data-tier="studio" data-monthly="29" data-annual="23.20" data-annual-total="278">
           <p class="tier__name">Studio</p>
           <div class="tier__price">
             <span class="tier__price-num">$29</span>
@@ -847,6 +874,7 @@
       </div>
       <div class="colophon__col">
         <p class="colophon__head">Company</p>
+        <a href="/about/">About the founder</a>
         <a href="mailto:hello@cybersygn.io">Contact</a>
         <a href="#founding">Origin 100</a>
         <a href="/privacy">Privacy</a>

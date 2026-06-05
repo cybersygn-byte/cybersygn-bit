@@ -568,6 +568,270 @@ button { font: inherit; cursor: pointer; }
   opacity: 0;
   animation: ciScan 6s ease-in-out infinite;
 }
+/* ── Founder card on /about/ ─────────────────────────────── */
+.founder-card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--s-2);
+}
+.founder-card__photo svg {
+  display: block;
+  border-radius: 50%;
+}
+.founder-card__name {
+  margin: var(--s-3) 0 0;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.founder-card__role {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.founder-card__contact {
+  margin: var(--s-2) 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.founder-card__contact a { color: var(--accent-text); }
+
+.prose p {
+  margin: 0 0 var(--s-3);
+  font-size: var(--t);
+  line-height: 1.7;
+  color: var(--text-2);
+  max-width: 720px;
+}
+.promise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+.promise-list li {
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-size: var(--t);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.promise-list strong { color: var(--text); }
+
+/* ── Billing-cycle toggle ─────────────────────────────────
+   Pill toggle above the pricing grid. Annual carries a "save 20%" badge. */
+.billing-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  margin: 0 auto var(--s-3);
+  font-family: var(--sans);
+}
+.billing-toggle__opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+.billing-toggle__opt:hover:not(.is-active) { color: var(--text); }
+.billing-toggle__opt.is-active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(1,20,52,0.08);
+}
+.billing-toggle__badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@media (max-width: 640px) {
+  .billing-toggle__opt { padding: 6px 12px; font-size: 13px; }
+}
+
+/* Container has the toggle centered — wrap section__head accordingly. */
+.section[id="pricing"] .section__head + .billing-toggle {
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+}
+/* Center the toggle in the section by giving it auto margins inside the container. */
+#pricing .billing-toggle { margin-left: auto; margin-right: auto; display: inline-flex; }
+#pricing > .container { text-align: center; }
+#pricing > .container > .section__head { text-align: left; }
+#pricing > .container > .pricing { text-align: left; }
+
+/* Annual price footnote on each tier card. */
+.tier__price-foot {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--accent-text);
+}
+
+/* ── Money-back guarantee strip ──────────────────────────── */
+.money-back {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  max-width: 720px;
+  margin: 0 auto var(--s-5);
+  padding: var(--s-3) var(--s-4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r);
+  color: var(--text);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+.money-back svg {
+  flex: 0 0 18px;
+  color: var(--accent-text);
+  margin-top: 1px;
+}
+.money-back strong { color: var(--accent-text); }
+@media (max-width: 640px) {
+  .money-back { text-align: left; }
+}
+
+/* ── Exit-intent modal ───────────────────────────────────── */
+.exit-intent {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 240ms var(--ease);
+  pointer-events: none;
+}
+.exit-intent.is-open { opacity: 1; pointer-events: auto; }
+.exit-intent.is-closing { opacity: 0; }
+.exit-intent__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(1, 20, 52, 0.55);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+}
+.exit-intent__card {
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+  max-width: 460px;
+  width: calc(100vw - var(--s-4));
+  box-shadow: 0 32px 64px -16px rgba(1,20,52,0.45),
+              0 4px 12px rgba(1,20,52,0.15);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 280ms var(--ease);
+}
+.exit-intent.is-open .exit-intent__card {
+  transform: translateY(0) scale(1);
+}
+.exit-intent__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--text-3);
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+.exit-intent__close:hover {
+  background: var(--bg-2);
+  color: var(--text);
+}
+.exit-intent__title {
+  margin: var(--s-2) 0 var(--s-2);
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.exit-intent__lede {
+  margin: 0 0 var(--s-4);
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+.exit-intent__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.exit-intent__input {
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  color: var(--text);
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.exit-intent__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+.exit-intent__small {
+  margin: var(--s-3) 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+@media (max-width: 480px) {
+  .exit-intent__row { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exit-intent, .exit-intent__card { transition: none; }
+}
+
 .cinematic-hero__overlay {
   position: absolute;
   inset: 0;

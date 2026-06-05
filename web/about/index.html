@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The founder behind CyberSygn. Nathan Vogt.</title>
+  <meta name="description" content="CyberSygn is built by Nathan Vogt in Parker, Colorado. One founder, no investors, no committee. Every email replied to within a day. Here's the story." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/about/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <meta property="og:title" content="The founder behind CyberSygn." />
+  <meta property="og:description" content="Built solo in Parker, Colorado. One founder, no investors, no committee." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/about/" />
+  <meta property="og:type" content="profile" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
+          { "@type": "ListItem", "position": 2, "name": "About", "item": "https://cybersygn.io/about/" }
+        ]
+      },
+      {
+        "@type": "Person",
+        "name": "Nathan Vogt",
+        "jobTitle": "Founder",
+        "worksFor": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
+        "address": { "@type": "PostalAddress", "addressLocality": "Parker", "addressRegion": "CO", "addressCountry": "US" },
+        "url": "https://cybersygn.io/about/"
+      }
+    ]
+  }
+  </script>
+
+  <script src="/telemetry.js"></script>
+  <script src="/polish.js" defer></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">about</span>
+      </a>
+      <nav class="masthead__nav" aria-label="About">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try the demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero__grid">
+          <div>
+            <p class="kicker hero__kicker">About.</p>
+            <h1 class="h-display hero__title">
+              One founder. No investors.<br>
+              <span class="accent">No committee.</span>
+            </h1>
+            <p class="lede hero__lede">
+              CyberSygn is built by Nathan Vogt in Parker, Colorado. One person owns every
+              decision — what we ship, what we don't, how the brand sounds, what the email
+              you receive looks like. If you email <a href="mailto:nathan@cybersygn.io">nathan@cybersygn.io</a>,
+              the reply comes from a person, not a queue.
+            </p>
+          </div>
+          <aside class="founder-card" aria-hidden="false">
+            <div class="founder-card__photo" aria-hidden="true">
+              <!-- Placeholder for founder portrait. Replace with web/brand/founder.jpg
+                   when a real photo is available. -->
+              <svg viewBox="0 0 200 200" width="120" height="120">
+                <defs>
+                  <linearGradient id="founderBg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#011434"/>
+                    <stop offset="100%" stop-color="#00CBF6"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="100" r="100" fill="url(#founderBg)"/>
+                <text x="100" y="120" text-anchor="middle" font-family="Inter, system-ui" font-size="64" font-weight="700" fill="#FFFFFF">NV</text>
+              </svg>
+            </div>
+            <p class="founder-card__name">Nathan Vogt</p>
+            <p class="founder-card__role">Founder · Parker, CO</p>
+            <p class="founder-card__contact"><a href="mailto:nathan@cybersygn.io">nathan@cybersygn.io</a></p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="why">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">The why.</p>
+            <h2 class="h-section section__title">Why a new e-signature tool?</h2>
+          </div>
+        </header>
+        <div class="prose">
+          <p>
+            I sign a lot of contracts. NDAs, contractor agreements, leases, photo releases. Every
+            time, I'd watch myself spend twenty minutes dragging signature boxes onto a page that
+            had a perfectly clear signature line already printed on it. The slowest part of signing
+            anything was telling the tool where the fields were that I could already see with my eyes.
+          </p>
+          <p>
+            That broke me. So I built the thing I wanted: drop a PDF, watch the fields appear,
+            send it, get it back signed. Detection runs locally in your browser — your document
+            doesn't leave your machine until you choose to send it. The signer clicks a link and
+            signs. No account, no app, no friction.
+          </p>
+          <p>
+            CyberSygn is built on Cloudflare Workers, edge-deployed, fast everywhere. It uses the
+            same ESIGN Act and UETA frameworks DocuSign does. Same legal weight, a fraction of the
+            time, a fraction of the price.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt" id="how">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">How I work.</p>
+            <h2 class="h-section section__title">A few promises.</h2>
+          </div>
+        </header>
+        <ul class="promise-list">
+          <li><strong>Every email is replied to within a day.</strong> If you write to nathan@cybersygn.io, you'll hear back. I read all of them.</li>
+          <li><strong>The Origin rate is locked for life.</strong> 100 founders, $9/month, never goes up. When the 100 are claimed, the rate disappears forever.</li>
+          <li><strong>30-day money-back guarantee, no forms.</strong> If CyberSygn doesn't save you time, write me one sentence and I refund the charge. No haggling.</li>
+          <li><strong>Your data stays your data.</strong> Detection runs in your browser. Signed PDFs are stored long enough for signing to complete, then expire. The audit certificate is yours to keep.</li>
+          <li><strong>I ship every week.</strong> Follow along on the changelog when it ships. Or just open the product — there's always something new.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="connect">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Connect.</p>
+            <h2 class="h-section section__title">Reach me directly.</h2>
+          </div>
+        </header>
+        <p class="lede">
+          Email is the front door. I read everything. Replies within a day, usually within hours.
+        </p>
+        <div class="hero__actions" style="margin-top: var(--s-5);">
+          <a class="btn btn--primary btn--lg" href="mailto:nathan@cybersygn.io">
+            Email Nathan
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="btn btn--ghost btn--lg" href="../#founding">Claim an Origin spot →</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/refund/">Refund</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>

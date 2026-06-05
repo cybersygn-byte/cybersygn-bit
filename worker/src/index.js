@@ -1441,6 +1441,7 @@ async function handleClientError(request, env) {
  * Designed so /control/ can render it as a single fetch + paint. No
  * client-side aggregation needed.
  */
+
 async function handleMetricsDashboard(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
