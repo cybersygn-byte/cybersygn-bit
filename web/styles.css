@@ -5465,6 +5465,84 @@ details[open] > .field-list__group--toggle::after {
     border-top: 1px solid var(--line);
   }
 }
+
+/* ── Mobile signing UX (slice 79) ─────────────────────────
+   At phone widths the sidebar becomes a bottom sheet pinned to the
+   viewport edge. Collapsed by default with just the primary CTA + a
+   handle. Tap-to-expand reveals the full workspace. Signing is
+   one-handed and thumb-reachable. Large touch targets (44pt min). */
+@media (max-width: 768px) {
+  .result {
+    grid-template-columns: 1fr !important;
+    padding-bottom: 88px;  /* room for the sheet handle */
+  }
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    z-index: 40;
+    max-height: 86vh;
+    height: auto;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+    background: color-mix(in srgb, var(--bg) 96%, transparent);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    box-shadow: 0 -20px 60px rgba(1,20,52,0.18);
+    transform: translateY(calc(100% - 220px));
+    transition: transform 320ms var(--ease);
+    overflow-y: auto;
+  }
+  .sidebar[data-sheet="open"] {
+    transform: translateY(0);
+  }
+  /* Grab handle so users learn it's draggable. */
+  .sidebar::before {
+    content: "";
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line-strong);
+    margin: 10px auto 4px;
+    flex: 0 0 auto;
+  }
+  /* Bigger touch targets on every interactive element inside the sheet. */
+  .sidebar .btn,
+  .sidebar .add-field-btn,
+  .sidebar .signer-row__name,
+  .sidebar .signer-row__email,
+  .sidebar .signers-panel__as-select {
+    min-height: 44px;
+    font-size: 15px;
+  }
+  /* The primary CTA stays visible even when sheet is collapsed. */
+  .sidebar__action {
+    padding-block: 8px;
+  }
+  /* Field type tags larger on mobile so signers can read which is
+     which from the thumb position. */
+  .field-box__tag {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  /* Doc toolbar at the top sits a bit smaller on phones. */
+  .doc-toolbar {
+    top: 64px;
+    padding: 4px 6px;
+  }
+}
+
+/* Focus zoom: when a field is focused on mobile, briefly scale the
+   surrounding page into view. CSS hint; JS toggles the data attribute. */
+@media (max-width: 768px) {
+  .field-box.is-focused {
+    box-shadow: 0 0 0 4px var(--accent), 0 0 0 8px var(--accent-line);
+  }
+}
 .sidebar__head {
   padding: var(--s-5) var(--s-5) var(--s-4);
   border-bottom: 1px solid var(--line);

@@ -121,6 +121,53 @@ const FILLABLE_TYPES = new Set(['signature', 'initial', 'date', 'checkbox', 'tex
   }
 })();
 
+// Mobile bottom-sheet behavior. At <=768px the sidebar acts as a
+// drag-up sheet: tap the handle / header → expand. Tap outside or
+// drag down → collapse. CSS handles the open/closed transition;
+// this just toggles the data-sheet attribute. Slice 79.
+(function wireMobileSheet() {
+  if (typeof window === 'undefined') return;
+  function init() {
+    const sidebar = document.querySelector('#result .sidebar');
+    if (!sidebar) return;
+    const head = sidebar.querySelector('.sidebar__head');
+    function toggle() {
+      const isOpen = sidebar.getAttribute('data-sheet') === 'open';
+      sidebar.setAttribute('data-sheet', isOpen ? 'closed' : 'open');
+    }
+    if (head) head.addEventListener('click', e => {
+      // Only toggle when tapping the doc-card area, not interactive children.
+      if (e.target.closest('button, a, input, select')) return;
+      if (window.innerWidth > 768) return;
+      toggle();
+    });
+    // Drag handle (the ::before pseudo) — listen at the top edge.
+    sidebar.addEventListener('touchstart', e => {
+      if (window.innerWidth > 768) return;
+      const rect = sidebar.getBoundingClientRect();
+      const touchY = e.touches[0].clientY;
+      // Only respond to grabs within 18px of the top edge.
+      if (touchY - rect.top > 18) return;
+      sidebar.dataset.dragging = 'true';
+      sidebar.dataset.dragStartY = String(touchY);
+    });
+    sidebar.addEventListener('touchend', e => {
+      if (sidebar.dataset.dragging !== 'true') return;
+      delete sidebar.dataset.dragging;
+      const endY = (e.changedTouches[0] || {}).clientY || 0;
+      const startY = Number(sidebar.dataset.dragStartY || '0');
+      const delta = endY - startY;
+      delete sidebar.dataset.dragStartY;
+      // Drag-up > 40px opens; drag-down > 40px closes; otherwise toggle.
+      if (delta < -40) sidebar.setAttribute('data-sheet', 'open');
+      else if (delta > 40) sidebar.setAttribute('data-sheet', 'closed');
+      else toggle();
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
 const cybersygn = (window.cybersygn = window.cybersygn || {});
 
 const track = cybersygn.track || function track(event, props) {
