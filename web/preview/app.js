@@ -187,11 +187,8 @@ function renderCoSigningPill(data) {
     '</div>';
   }).join('');
 }
-function escapeHtml(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// (escapeHtml is declared lower in the module — see the marketing
+//  block. Removed the duplicate here so the file parses.)
 
 // Mobile bottom-sheet behavior. At <=768px the sidebar acts as a
 // drag-up sheet: tap the handle / header → expand. Tap outside or
