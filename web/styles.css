@@ -2736,6 +2736,99 @@ button { font: inherit; cursor: pointer; }
   margin-top: var(--s-3);
 }
 
+/* ── Affiliate panel (slice 84) ──────────────────────── */
+.affiliate-panel {
+  margin-bottom: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-2));
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r);
+}
+.affiliate-panel__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s-4);
+  align-items: center;
+  margin-bottom: var(--s-4);
+}
+.affiliate-panel__body {
+  margin: 6px 0 0;
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+}
+.affiliate-panel__earned {
+  text-align: right;
+}
+.affiliate-panel__earned-num {
+  display: block;
+  font-family: var(--display, var(--sans));
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ok);
+  line-height: 1;
+}
+.affiliate-panel__earned-label {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.affiliate-panel__share {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+.affiliate-panel__share-input {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.affiliate-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s-2);
+}
+.affiliate-stat {
+  padding: 10px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.affiliate-stat__num {
+  display: block;
+  font-family: var(--display, var(--sans));
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.affiliate-stat__label {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+@media (max-width: 640px) {
+  .affiliate-panel__head { grid-template-columns: 1fr; text-align: left; }
+  .affiliate-panel__earned { text-align: left; }
+  .affiliate-panel__share { grid-template-columns: 1fr; }
+}
+
 /* ── Founder's home (slice 81) ────────────────────────
    Four-card KPI strip + sparkline at the top of the
    dashboard. Always rendered when sender has docs. */

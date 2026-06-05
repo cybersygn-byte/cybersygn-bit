@@ -260,6 +260,36 @@
         </div>
       </section>
 
+      <!-- Affiliate panel (slice 84). Every paying customer has a
+           referral code; here's the proof + their stats + share
+           controls. Stays visible at all times once dashboard mounts. -->
+      <section id="affiliate-panel" class="affiliate-panel" hidden aria-live="polite">
+        <div class="affiliate-panel__head">
+          <div>
+            <p class="kicker kicker--ink">Refer customers, earn $20 each.</p>
+            <p class="affiliate-panel__body">
+              Share your link. When someone signs up and converts, you earn $20
+              per first paid month. Your account already has a code; copy and share.
+            </p>
+          </div>
+          <div class="affiliate-panel__earned">
+            <span class="affiliate-panel__earned-num" id="aff-earned">$0</span>
+            <span class="affiliate-panel__earned-label">earned</span>
+          </div>
+        </div>
+        <div class="affiliate-panel__share">
+          <input id="aff-share-input" class="affiliate-panel__share-input" type="text" readonly value="" aria-label="Your referral URL" />
+          <button id="aff-share-copy" class="btn btn--ink btn--sm" type="button">Copy</button>
+          <a id="aff-share-tweet" class="btn btn--ghost btn--sm" target="_blank" rel="noopener" href="#">Share on X</a>
+        </div>
+        <div class="affiliate-panel__stats">
+          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-clicks">0</span><span class="affiliate-stat__label">Clicks</span></div>
+          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-signups">0</span><span class="affiliate-stat__label">Signups</span></div>
+          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-conv">0</span><span class="affiliate-stat__label">Conversions</span></div>
+          <div class="affiliate-stat"><span class="affiliate-stat__num"><code id="aff-code" style="font-family:var(--mono);font-size:18px">—</code></span><span class="affiliate-stat__label">Your code</span></div>
+        </div>
+      </section>
+
       <!-- Founder's home — the at-a-glance KPI strip. Always visible
            once docs have loaded. Derived from /api/sender/:id/docs
            data the dashboard already fetches. -->

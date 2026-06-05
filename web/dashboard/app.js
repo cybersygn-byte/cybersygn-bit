@@ -246,21 +246,43 @@ async function ensureAffiliateCode() {
   } catch (e) { /* non-fatal */ }
 }
 
-// Stub — full impl in slice 84. Defined here so ensureAffiliateCode
-// can call it once the markup exists.
 function paintAffiliatePanel(record) {
   const panel = document.getElementById('affiliate-panel');
   if (!panel || !record) return;
   panel.hidden = false;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+  const shareUrl = record.shareUrl || ('https://cybersygn.io/?ref=' + record.code);
   set('aff-code', record.code);
-  set('aff-share-url', record.shareUrl || ('https://cybersygn.io/?ref=' + record.code));
   set('aff-clicks', record.clicks || 0);
   set('aff-signups', record.signups || 0);
   set('aff-conv', record.conversions || 0);
   set('aff-earned', '$' + (record.earnedUsd || 0));
   const shareInput = document.getElementById('aff-share-input');
-  if (shareInput) shareInput.value = record.shareUrl || ('https://cybersygn.io/?ref=' + record.code);
+  if (shareInput) shareInput.value = shareUrl;
+
+  // Copy button.
+  const copyBtn = document.getElementById('aff-share-copy');
+  if (copyBtn && !copyBtn.__wired) {
+    copyBtn.__wired = true;
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(shareInput.value);
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => { copyBtn.textContent = prev; }, 1600);
+      } catch (e) {
+        shareInput.select();
+        document.execCommand('copy');
+      }
+    });
+  }
+
+  // Tweet intent.
+  const tweet = document.getElementById('aff-share-tweet');
+  if (tweet) {
+    const text = encodeURIComponent("I've been using CyberSygn — automatic field detection, no DocuSign drag-and-drop. Try it free:");
+    tweet.href = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
+  }
 }
 
 /**
