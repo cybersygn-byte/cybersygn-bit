@@ -257,11 +257,11 @@
           '<div class="exit-intent__row">' +
             '<input class="exit-intent__input" type="email" name="email" placeholder="your@email.com" autocomplete="email" required />' +
             '<button class="btn btn--primary" type="submit">' +
-              'Send me three free signs' +
+              'Send Me the Freebies' +
               '<span class="btn-arrow" aria-hidden="true">→</span>' +
             '</button>' +
           '</div>' +
-          '<p class="exit-intent__small">Goes to the founder, nowhere else. Replies within a day.</p>' +
+          '<p class="exit-intent__small">Goes to CyberSygn, nowhere else.</p>' +
         '</form>' +
       '</div>'
     );

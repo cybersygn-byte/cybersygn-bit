@@ -529,11 +529,21 @@ button { font: inherit; cursor: pointer; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  /* Bump the visible frame up so the end-state of the video shows the
+     bottom of the document (with field highlights) instead of the
+     centered composition. Roughly equivalent to ~2 inches of vertical
+     shift at typical viewport heights — done as object-position % so
+     it scales fluidly with the container. */
+  object-position: center 75%;
 }
 .cinematic-hero__video {
   opacity: 0;
-  transition: opacity 800ms var(--ease);
+  transition: opacity 1200ms var(--ease);
+}
+/* Once the video has ended, fade it out so the static last frame
+   gives way to the logo overlay sitting on the placeholder. */
+.cinematic-hero[data-video-ended="true"] .cinematic-hero__video {
+  opacity: 0;
 }
 .cinematic-hero[data-video-ready="true"] .cinematic-hero__video {
   opacity: 1;

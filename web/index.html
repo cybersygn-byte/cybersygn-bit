@@ -253,11 +253,13 @@
        for the prompt + export workflow. -->
   <section class="cinematic-hero" id="cinematic-hero">
     <div class="cinematic-hero__stage">
-      <!-- Real video, if present. Loops continuously. -->
+      <!-- Real video, if present. Plays once per page load. When the
+           video ends, the harness fades the video element out and
+           holds the logo overlay visible. Re-fire requires page reload. -->
       <video class="cinematic-hero__video"
              id="cinematic-hero-video"
              muted playsinline preload="auto" disablepictureinpicture
-             autoplay loop
+             autoplay
              poster="brand/og-image.png">
         <source src="brand/hero.mp4" type="video/mp4" />
       </video>
