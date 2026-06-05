@@ -183,12 +183,86 @@ async function load() {
     workspaceCache = null;
   }
 
+  paintFounderHome(docs);
   if (docs.length === 0) {
     showState('empty');
     return;
   }
   showState('list');
   renderList();
+}
+
+/**
+ * Founder's home — the four-card KPI strip + sparkline at the top of
+ * the dashboard. Derived entirely from the docs[] we already have, so
+ * no extra fetch. Slice 81.
+ */
+function paintFounderHome(docs) {
+  const home = document.getElementById('founder-home');
+  if (!home) return;
+  home.hidden = false;
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+  let totalMonth = 0;
+  let pendingSigners = 0;
+  let fieldsYtd = 0;
+  for (const d of docs) {
+    const created = Date.parse(d.createdAt);
+    if (Number.isFinite(created)) {
+      if (created >= monthStart) totalMonth += 1;
+      if (created >= yearStart) fieldsYtd += d.totalOwned || 0;
+    }
+    if (!d.completedAt && d.signers > d.signersComplete) {
+      pendingSigners += d.signers - d.signersComplete;
+    }
+  }
+
+  // Time saved: 15 seconds per field placed automatically vs.
+  // dragging by hand. Conservative.
+  const secondsSaved = fieldsYtd * 15;
+  const minutesSaved = Math.round(secondsSaved / 60);
+  const dollarsSaved = Math.round((secondsSaved / 3600) * 60);
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = String(val); };
+  set('fh-total', totalMonth);
+  set('fh-total-hint', now.toLocaleDateString('en-US', { month: 'long' }));
+  set('fh-pending', pendingSigners);
+  set('fh-saved-mins', minutesSaved.toLocaleString());
+  set('fh-saved-dollars', '≈ $' + dollarsSaved.toLocaleString() + ' at $60/hr');
+  // Templates: we don't fetch per-sender template count yet — show '—'
+  // and link to the templates docs section. (Future: /api/sender/:id/templates count.)
+  set('fh-templates', '—');
+
+  // Tiny sparkline: count of docs per ISO week over the last 12 weeks.
+  const weeks = 12;
+  const buckets = new Array(weeks).fill(0);
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+  const startMs = now.getTime() - weeks * msPerWeek;
+  for (const d of docs) {
+    const t = Date.parse(d.createdAt);
+    if (!Number.isFinite(t) || t < startMs) continue;
+    const idx = Math.min(weeks - 1, Math.floor((t - startMs) / msPerWeek));
+    buckets[idx] += 1;
+  }
+  const max = Math.max(1, ...buckets);
+  const w = 240, h = 36;
+  const step = w / weeks;
+  const path = buckets.map((v, i) => {
+    const x = i * step + step / 2;
+    const y = h - (v / max) * (h - 4) - 2;
+    return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const spark = document.getElementById('fh-sparkline');
+  if (spark) {
+    spark.innerHTML =
+      '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" preserveAspectRatio="none">' +
+      '<path d="' + path + '" fill="none" stroke="#00CBF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>' +
+      '<span class="founder-home__sparkline-label">12-week send volume</span>';
+  }
 }
 
 function showState(state) {

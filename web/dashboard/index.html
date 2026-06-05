@@ -260,6 +260,35 @@
         </div>
       </section>
 
+      <!-- Founder's home — the at-a-glance KPI strip. Always visible
+           once docs have loaded. Derived from /api/sender/:id/docs
+           data the dashboard already fetches. -->
+      <section id="founder-home" class="founder-home" hidden aria-live="polite">
+        <div class="founder-home__grid">
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-total">—</p>
+            <p class="founder-home__label">Total sends</p>
+            <p class="founder-home__hint" id="fh-total-hint">this month</p>
+          </div>
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-pending">—</p>
+            <p class="founder-home__label">Pending signers</p>
+            <p class="founder-home__hint">awaiting signature</p>
+          </div>
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-saved-mins">—</p>
+            <p class="founder-home__label">Minutes saved YTD</p>
+            <p class="founder-home__hint" id="fh-saved-dollars">≈ $0 at $60/hr</p>
+          </div>
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-templates">—</p>
+            <p class="founder-home__label">Templates saved</p>
+            <p class="founder-home__hint">auto-apply on re-upload</p>
+          </div>
+        </div>
+        <div class="founder-home__sparkline" id="fh-sparkline" aria-hidden="true"></div>
+      </section>
+
       <!-- States: loading, error, empty, list. We render exactly one at a time. -->
       <section id="state-loading" class="state-card">
         <p class="state-card__kicker">Loading.</p>

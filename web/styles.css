@@ -2736,6 +2736,75 @@ button { font: inherit; cursor: pointer; }
   margin-top: var(--s-3);
 }
 
+/* ── Founder's home (slice 81) ────────────────────────
+   Four-card KPI strip + sparkline at the top of the
+   dashboard. Always rendered when sender has docs. */
+.founder-home {
+  margin-bottom: var(--s-5);
+}
+.founder-home__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s-3);
+}
+.founder-home__card {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 140ms var(--ease), transform 200ms var(--ease);
+}
+.founder-home__card:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-1px);
+}
+.founder-home__num {
+  font-family: var(--display, var(--sans));
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin: 0;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.founder-home__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-2);
+  margin: 6px 0 0;
+}
+.founder-home__hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--accent-text);
+  margin: 0;
+}
+.founder-home__sparkline {
+  margin-top: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.founder-home__sparkline-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+
 /* Stats strip: 4 cards in a responsive grid. */
 .dash-stats {
   display: grid;
