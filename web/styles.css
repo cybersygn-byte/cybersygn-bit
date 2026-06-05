@@ -511,12 +511,19 @@ button { font: inherit; cursor: pointer; }
 .cinematic-hero {
   position: relative;
   width: 100%;
-  height: 70vh;
-  min-height: 480px;
-  max-height: 820px;
+  /* Taller stage so the document occupies more of the frame and the
+     end-of-loop highlights read clearly. */
+  height: 85vh;
+  min-height: 560px;
+  max-height: 940px;
   overflow: hidden;
   background: var(--bg);
-  margin-bottom: calc(-1 * clamp(60px, 10vh, 120px));  /* hero pulls up under it */
+  /* Pull the cinematic up one pixel to sit under the masthead's
+     bottom border so the seam disappears. */
+  margin-top: -1px;
+  /* Hero pulls up further so the cinematic bleeds into the hero copy
+     instead of leaving a visible bottom border. */
+  margin-bottom: calc(-1 * clamp(80px, 14vh, 160px));
 }
 .cinematic-hero__stage {
   position: absolute;
@@ -529,12 +536,11 @@ button { font: inherit; cursor: pointer; }
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Bump the visible frame up so the end-state of the video shows the
-     bottom of the document (with field highlights) instead of the
-     centered composition. Roughly equivalent to ~2 inches of vertical
-     shift at typical viewport heights — done as object-position % so
-     it scales fluidly with the container. */
-  object-position: center 75%;
+  /* Anchor to the bottom of the source video so the end-of-loop frame
+     surfaces the document's highlighted signature row in the visible
+     frame. Combined with the +15% taller .cinematic-hero this gives
+     the document real presence at every viewport size without bars. */
+  object-position: center bottom;
 }
 .cinematic-hero__video {
   opacity: 0;
@@ -1464,8 +1470,11 @@ button { font: inherit; cursor: pointer; }
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(60% 60% at 50% 40%, rgba(1,20,52,0) 0%, rgba(1,20,52,0.18) 60%, rgba(1,20,52,0.55) 100%),
-    linear-gradient(180deg, rgba(1,20,52,0) 60%, var(--bg) 100%);
+    radial-gradient(60% 60% at 50% 40%, rgba(1,20,52,0) 0%, rgba(1,20,52,0.14) 60%, rgba(1,20,52,0.48) 100%),
+    /* Stronger bottom-to-bg gradient so the bottom of the cinematic
+       fully dissolves into the hero text section underneath — no
+       visible band, just a soft handoff. */
+    linear-gradient(180deg, rgba(1,20,52,0) 55%, var(--bg) 92%);
   pointer-events: none;
 }
 
@@ -1519,7 +1528,12 @@ button { font: inherit; cursor: pointer; }
 }
 
 .hero {
-  padding-block: clamp(60px, 10vh, 120px) clamp(48px, 8vh, 96px);
+  /* Tighter top padding so the hero copy sits closer to the bottom
+     of the cinematic — they should read as one composition, not two
+     stacked sections. Bottom padding unchanged. */
+  padding-block: clamp(20px, 4vh, 60px) clamp(48px, 8vh, 96px);
+  position: relative;
+  z-index: 1;  /* above the cinematic's negative-margin bleed */
 }
 
 /* ── Origin wall (web/origin/) ─────────────────────────
