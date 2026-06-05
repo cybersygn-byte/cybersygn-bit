@@ -606,6 +606,100 @@ button { font: inherit; cursor: pointer; }
   padding-block: clamp(60px, 10vh, 120px) clamp(48px, 8vh, 96px);
 }
 
+/* ── Charter wall (web/charter/) ─────────────────────────
+   Public grid of every Charter member. Card per member with
+   number, optional name, optional city, join date. Empty
+   state pitches the first spot. */
+.charter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--s-3);
+  margin-top: var(--s-4);
+}
+.charter-card {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  transition: border-color 200ms var(--ease), transform 200ms var(--ease), box-shadow 200ms var(--ease);
+  position: relative;
+}
+.charter-card:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -12px rgba(1,20,52,0.18);
+}
+.charter-card__num {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+.charter-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.charter-card__name {
+  margin: 0;
+  font-family: var(--display, var(--sans));
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  word-break: break-word;
+}
+.charter-card__city {
+  margin: 2px 0 0;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+.charter-card__date {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.charter-empty {
+  text-align: center;
+  padding: var(--s-7) var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, transparent, var(--accent-soft));
+  margin-top: var(--s-4);
+}
+.charter-empty__kicker {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--accent-text);
+  margin: 0 0 var(--s-2);
+}
+.charter-empty__title {
+  margin: 0 0 var(--s-3);
+}
+.charter-empty__lede {
+  margin: 0 auto var(--s-5);
+  max-width: 480px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
 .hero__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);

@@ -131,9 +131,9 @@ async function main() {
     }
   }
 
-  // 2d. Legal pages. Privacy, Terms, Refund. Each in its own subdirectory
+  // 2d. Legal pages + public Charter wall. Each in its own subdirectory
   // with a clean trailing-slash URL.
-  for (const name of ['privacy', 'terms', 'refund']) {
+  for (const name of ['privacy', 'terms', 'refund', 'charter']) {
     const src = join(SRC, name);
     const dst = join(OUT, name);
     if (await exists(join(src, 'index.html'))) {

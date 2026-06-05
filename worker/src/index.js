@@ -173,6 +173,9 @@ export default {
     if (request.method === 'GET' && url.pathname === '/api/billing/founding-count') {
       return handleFoundingCount(env);
     }
+    if (request.method === 'GET' && url.pathname === '/api/charter/wall') {
+      return handleCharterWall(env);
+    }
 
     // ---- Multi-signer routes ------------------------------------------
 
@@ -742,6 +745,71 @@ async function handleFoundingCount(env) {
     taken,
     cap,
     remaining: Math.max(0, cap - taken),
+  });
+}
+
+/**
+ * Public Charter wall: list every Charter member with their member
+ * number, optional display name + city, and join date. Drives social
+ * proof on /charter/. No PII beyond what each member chose to show.
+ *
+ * Schema per member:
+ *   { number, displayName, city, joinedAt }
+ *
+ * displayName + city default to '' if the member hasn't filled them in
+ * (the Charter onboarding flow will collect these on a per-member basis
+ * in a follow-up slice; for now the wall surfaces just member numbers
+ * and join dates, which is enough to convey real signups exist).
+ *
+ * Cached at edge for 60s so the page can poll cheaply.
+ */
+async function handleCharterWall(env) {
+  const taken = await getFoundingCount(env);
+  const cap = foundingCap();
+  const members = [];
+  // List sub:* records on the raw KV binding (the storage abstraction
+  // wraps get/put but not list). Small list — cap is 100 — so a single
+  // page suffices; if Charter ever grows past 1000 we'll add a
+  // denormalized index.
+  const docsBinding = env && env.CYBERSYGN_DOCS;
+  if (docsBinding && typeof docsBinding.list === 'function') {
+    try {
+      const result = await docsBinding.list({ prefix: 'sub:', limit: 1000 });
+      for (const entry of result.keys || []) {
+        const raw = await docsBinding.get(entry.name);
+        if (!raw) continue;
+        let rec;
+        try { rec = JSON.parse(raw); } catch (e) { continue; }
+        if (!rec) continue;
+        if (rec.tier !== 'founding') continue;
+        if (typeof rec.foundingNumber !== 'number' || rec.foundingNumber < 1) continue;
+        members.push({
+          number: rec.foundingNumber,
+          displayName: typeof rec.charterDisplayName === 'string' ? rec.charterDisplayName.slice(0, 40) : '',
+          city: typeof rec.charterCity === 'string' ? rec.charterCity.slice(0, 60) : '',
+          joinedAt: rec.activatedAt || null,
+        });
+      }
+    } catch (e) {
+      console.error('[charter-wall] list failed:', e && e.message);
+    }
+  }
+  // Order: lowest number first (chronological since numbers issue in order).
+  members.sort((a, b) => a.number - b.number);
+
+  const body = JSON.stringify({
+    taken,
+    cap,
+    remaining: Math.max(0, cap - taken),
+    members,
+  });
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json',
+      'cache-control': 'public, max-age=60, s-maxage=60',
+      'access-control-allow-origin': '*',
+    },
   });
 }
 

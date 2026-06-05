@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Charter wall. 100 founding members of CyberSygn.</title>
+  <meta name="description" content="Every CyberSygn Charter member, in order. Charter is 100 founders who locked $9 per month forever. Once full, the rate closes for good." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/charter/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <meta property="og:title" content="The Charter wall. 100 founding members of CyberSygn." />
+  <meta property="og:description" content="Every CyberSygn Charter member, in order. $9 per month locked for life. Once full, the rate closes for good." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/charter/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
+          { "@type": "ListItem", "position": 2, "name": "Charter wall", "item": "https://cybersygn.io/charter/" }
+        ]
+      },
+      {
+        "@type": "WebPage",
+        "name": "The Charter wall",
+        "description": "Every Charter member of CyberSygn, in order. Charter is the founding 100 who locked $9 per month forever.",
+        "url": "https://cybersygn.io/charter/"
+      }
+    ]
+  }
+  </script>
+
+  <script src="/telemetry.js"></script>
+  <script src="/polish.js" defer></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">charter</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Charter">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link masthead__link--cta" href="../#founding">Claim a spot</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <div class="container">
+        <div>
+          <p class="kicker hero__kicker">The Charter wall.</p>
+          <h1 class="h-display hero__title">
+            The first <em><span id="charter-cap">100</span></em> founders<span class="dot">.</span><br>
+            <span class="accent">$9, locked forever.</span>
+          </h1>
+          <p class="lede hero__lede">
+            Charter is a one-time deal. <strong><span id="charter-taken">—</span> of <span id="charter-cap-2">100</span> spots</strong>
+            claimed. Once we hit one hundred, the rate goes up and never comes back down for new
+            members. This page lists every Charter member, in the order they signed up.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary btn--lg" href="../#founding" id="charter-cta">
+              Claim Charter spot
+              <span class="btn-arrow" aria-hidden="true">→</span>
+            </a>
+            <a class="btn btn--ghost btn--lg" href="../#pricing">See all tiers</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="wall">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Members.</p>
+            <h2 class="h-section section__title" id="wall-title">Loading the wall.</h2>
+          </div>
+          <p class="lede section__lede" id="wall-lede">
+            Every member, in chronological order, with their Charter number and city. Display names
+            and cities are optional — some members keep it minimal.
+          </p>
+        </header>
+
+        <div class="charter-grid" id="charter-grid" aria-live="polite">
+          <!-- Member cards injected by JS -->
+        </div>
+
+        <div class="charter-empty" id="charter-empty" hidden>
+          <p class="charter-empty__kicker">Be the first.</p>
+          <h3 class="h-card charter-empty__title">No Charter members yet.</h3>
+          <p class="charter-empty__lede">
+            The wall is empty. Whoever claims the first spot becomes <strong>#001</strong> — the
+            first name on this page, locked at $9 per month for the life of their account.
+          </p>
+          <a class="btn btn--primary btn--lg" href="../#founding">
+            Claim Charter #001
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/refund/">Refund</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var cap = 100;
+      function paintCounter(taken) {
+        var t = document.getElementById('charter-taken');
+        if (t) t.textContent = String(taken);
+        var c1 = document.getElementById('charter-cap');
+        var c2 = document.getElementById('charter-cap-2');
+        if (c1) c1.textContent = String(cap);
+        if (c2) c2.textContent = String(cap);
+        // CTA copy adapts: if full, change to "Charter is full" + disable.
+        var cta = document.getElementById('charter-cta');
+        if (cta && taken >= cap) {
+          cta.textContent = 'Charter is full';
+          cta.classList.add('btn--disabled');
+          cta.setAttribute('aria-disabled', 'true');
+        }
+      }
+      function paintMembers(members) {
+        var grid = document.getElementById('charter-grid');
+        var empty = document.getElementById('charter-empty');
+        var title = document.getElementById('wall-title');
+        if (!grid) return;
+        grid.innerHTML = '';
+        if (!members.length) {
+          if (empty) empty.hidden = false;
+          if (title) title.textContent = 'Spot one is open.';
+          return;
+        }
+        if (empty) empty.hidden = true;
+        if (title) title.textContent = members.length + (members.length === 1 ? ' member.' : ' members.');
+        members.forEach(function (m) {
+          var card = document.createElement('article');
+          card.className = 'charter-card';
+          var n = String(m.number).padStart(3, '0');
+          var name = m.displayName || '—';
+          var city = m.city || '';
+          var date = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+          card.innerHTML =
+            '<div class="charter-card__num">#' + n + '</div>' +
+            '<div class="charter-card__body">' +
+              '<p class="charter-card__name">' + escapeHtml(name) + '</p>' +
+              (city ? '<p class="charter-card__city">' + escapeHtml(city) + '</p>' : '') +
+              (date ? '<p class="charter-card__date">Joined ' + escapeHtml(date) + '</p>' : '') +
+            '</div>';
+          grid.appendChild(card);
+        });
+      }
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+      }
+
+      fetch('/api/charter/wall').then(function (r) {
+        return r.ok ? r.json() : { taken: 0, cap: 100, members: [] };
+      }).then(function (data) {
+        cap = data.cap || 100;
+        paintCounter(data.taken || 0);
+        paintMembers(data.members || []);
+      }).catch(function () {
+        paintCounter(0);
+        paintMembers([]);
+      });
+    })();
+  </script>
+
+</body>
+</html>
