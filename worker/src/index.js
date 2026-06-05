@@ -140,6 +140,8 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
+      const rl = await checkRateLimit(env, ipKey(request, 'signup'), { max: 8, windowSeconds: 600 });
+      if (!rl.ok) return rateLimitedResponse(rl);
       return handleSignup(request, env);
     }
 
@@ -163,6 +165,10 @@ export default {
       return handleEvent(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/error') {
+      // Tight rate limit on client-error reports — bug-spam is a real
+      // failure mode and we don't want it to hot-spot Resend.
+      const rl = await checkRateLimit(env, ipKey(request, 'err'), { max: 30, windowSeconds: 60 });
+      if (!rl.ok) return rateLimitedResponse(rl);
       return handleClientError(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/contact') {
@@ -244,6 +250,10 @@ export default {
       return handleBulkSend(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/docs') {
+      // Generous rate limit on doc creation — paid customers send
+      // dozens a day, but a flood-loop should still be capped.
+      const rl = await checkRateLimit(env, ipKey(request, 'docs'), { max: 60, windowSeconds: 600 });
+      if (!rl.ok) return rateLimitedResponse(rl);
       return handleCreateDoc(request, env, url);
     }
 
