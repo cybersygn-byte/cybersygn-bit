@@ -1,0 +1,37 @@
+{
+  "name": "cybersygn-detect",
+  "version": "0.1.0",
+  "description": "Heuristic signature-field detection in PDFs. Runs in browser, Cloudflare Worker, or Node. The detection engine behind CyberSygn.io.",
+  "type": "module",
+  "main": "src-detect.js",
+  "exports": {
+    ".": "./src-detect.js"
+  },
+  "files": [
+    "src-detect.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "pdf",
+    "signature",
+    "detection",
+    "e-signature",
+    "cloudflare-workers",
+    "browser",
+    "docusign-alternative"
+  ],
+  "author": "Nathan Vogt <nathan@cybersygn.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cybersygn-byte/cybersygn-detect"
+  },
+  "homepage": "https://cybersygn.io",
+  "bugs": {
+    "url": "https://github.com/cybersygn-byte/cybersygn-detect/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
