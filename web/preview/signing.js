@@ -17,6 +17,82 @@
 import { PDFDocument, rgb, StandardFonts } from '../vendor/pdf-lib.mjs';
 
 // ---------------------------------------------------------------------------
+// Viral footer
+// ---------------------------------------------------------------------------
+
+/**
+ * Stamp a discreet "Signed with CyberSygn" line in the bottom margin of
+ * every page in the PDF. Clickable URI annotation pointing to the
+ * homepage. Paid users can disable this via the localStorage flag
+ * 'cybersygn.viralFooter' = 'off' (the dashboard settings panel sets
+ * this when the user is on Solo / Origin / Studio).
+ *
+ * Free-tier users cannot disable — the footer is the price of free.
+ *
+ * Why this is in PDF user units: pdf-lib uses the original PDF
+ * coordinate system (origin bottom-left, points). 12pt from the bottom
+ * + 12pt from the right is a polite margin that virtually no contract
+ * footer overlaps with.
+ *
+ * Why a URI annotation, not just text: signers who receive a PDF in
+ * email often click links. A real annotation gives us the click.
+ */
+async function drawViralFooter(pdfDoc, font) {
+  // Paid-tier off-switch.
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('cybersygn.viralFooter') === 'off') return;
+  } catch (e) {}
+
+  const pages = pdfDoc.getPages();
+  const url = 'https://cybersygn.io/?ref=footer';
+  const label = 'Signed with CyberSygn';
+  const arrow = '↗';
+  const text = `${label} ${arrow}`;
+  const size = 7;
+  // Brand cyan, slightly desaturated for paper friendliness.
+  const fg = rgb(0.00, 0.55, 0.72);
+
+  for (const page of pages) {
+    const { width } = page.getSize();
+    const textWidth = font.widthOfTextAtSize(text, size);
+    const x = width - textWidth - 14;
+    const y = 8;
+
+    // Draw the visible text.
+    page.drawText(text, { x, y, size, font, color: fg });
+
+    // Add an invisible URI annotation rectangle over the text so a PDF
+    // reader treats it as a clickable link. pdf-lib supports raw
+    // annotations via context.obj() — minimal Link annotation.
+    try {
+      const linkAnnot = pdfDoc.context.obj({
+        Type: 'Annot',
+        Subtype: 'Link',
+        Rect: [x - 2, y - 1, x + textWidth + 2, y + size + 1],
+        Border: [0, 0, 0],
+        A: {
+          Type: 'Action',
+          S: 'URI',
+          URI: pdfDoc.context.obj(url),
+        },
+      });
+      const annotRef = pdfDoc.context.register(linkAnnot);
+      const node = page.node;
+      let annots = node.Annots();
+      if (!annots) {
+        annots = pdfDoc.context.obj([]);
+        node.set(pdfDoc.context.obj('Annots'), annots);
+      }
+      annots.push(annotRef);
+    } catch (e) {
+      // If the annotation can't be written for any reason (corrupted
+      // PDF dictionary, e.g.) the text-only footer still ships. We do
+      // NOT throw — the download must succeed.
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Fill store
 // ---------------------------------------------------------------------------
 
@@ -466,6 +542,13 @@ export async function flattenAndDownload({ originalBytes, fields, fillStore, fil
       });
     }
   }
+
+  // Viral footer. Add a discreet "Signed with CyberSygn" line in the
+  // bottom margin of every page, clickable, brand-colored. Required for
+  // free tier (paid users can disable via localStorage flag — toggled
+  // from /dashboard/ settings panel). The marker text + URL both go to
+  // the page so search engines indexing PDFs see the brand mention.
+  await drawViralFooter(pdfDoc, helvetica);
 
   const bytes = await pdfDoc.save();
   const blob = new Blob([bytes], { type: 'application/pdf' });
