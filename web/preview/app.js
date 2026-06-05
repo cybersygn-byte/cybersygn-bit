@@ -3252,6 +3252,19 @@ async function submitSignerFills() {
       const signerName = (res.data && res.data.signerName) || '';
       const signerEmail = (res.data && res.data.signerEmail) || '';
       const docTitle = docState.filename || 'the document';
+      // postMessage to any embedding parent so widget-host pages can
+      // react to completion (slice 78 / 83). Only fires if we're in
+      // an iframe (window !== window.parent).
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'cybersygn:complete',
+            docComplete: !!res.data.docComplete,
+            docId: docId,
+            signerEmail: signerEmail,
+          }, '*');
+        }
+      } catch (e) {}
       showSignerMicrosite({
         docComplete: !!res.data.docComplete,
         auditUrl: res.data.auditUrl,
@@ -4301,9 +4314,43 @@ async function boot() {
   const params = new URLSearchParams(window.location.search);
   const docId = params.get('doc');
   const token = params.get('t');
+  const pdfUrl = params.get('pdf');
   if (docId && token && status.ok) {
     await enterSignerMode(docId, token);
+  } else if (pdfUrl) {
+    // Embed-mode handling (slice 78 / 83): /preview/?pdf=<url>&embed=<source>
+    // Fetch the PDF from the provided URL and route it through the
+    // same handleFiles pipeline a fresh upload would use.
+    await enterEmbedMode(pdfUrl, params.get('embed') || 'embed');
   } else {
+    resetApp();
+  }
+}
+
+/**
+ * Embed mode entry. Fetches the PDF from a remote URL and feeds it
+ * into the existing detection pipeline. Used by the iframe-embed
+ * widget (slice 78). Failures fall back to the empty dropzone so
+ * users can still upload a different document.
+ */
+async function enterEmbedMode(pdfUrl, source) {
+  setStatus('busy', 'Loading document from ' + (source || 'embed'));
+  try {
+    const res = await fetch(pdfUrl, { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    // Synthesize a File so handleFiles treats it identically to upload.
+    const filename = pdfUrl.split('/').pop().split('?')[0] || 'document.pdf';
+    const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
+    setStatus('ok', 'Loaded.');
+    track('embed_pdf_loaded', { source });
+    await handleFiles([file]);
+  } catch (err) {
+    setStatus('error', 'Could not load PDF.');
+    showError(
+      'Could not load that PDF.',
+      'The document URL returned ' + (err.message || 'an error') + '. Drop a file here to continue.',
+    );
     resetApp();
   }
 }

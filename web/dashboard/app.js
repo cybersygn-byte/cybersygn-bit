@@ -184,12 +184,83 @@ async function load() {
   }
 
   paintFounderHome(docs);
+  ensureAffiliateCode();
   if (docs.length === 0) {
     showState('empty');
     return;
   }
   showState('list');
   renderList();
+}
+
+/**
+ * Affiliate auto-register. Every sender gets a referral code on first
+ * dashboard visit — idempotent on senderId so repeat visits return
+ * the same code. Cached in localStorage so the next visit doesn't
+ * round-trip. Slice 83.
+ *
+ * The slice-84 affiliate panel renders the stored code + stats.
+ */
+const AFFILIATE_LOCAL_KEY = 'cybersygn.affiliate';
+
+async function ensureAffiliateCode() {
+  try {
+    const senderId = getSenderId();
+    if (!senderId) return;
+    // Already cached? Refresh stats but don't re-mint.
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(AFFILIATE_LOCAL_KEY) || 'null'); } catch (e) {}
+    if (cached && cached.code) {
+      // Best-effort stats refresh.
+      try {
+        const r = await fetch('/api/affiliate/' + encodeURIComponent(cached.code));
+        if (r.ok) {
+          const stats = await r.json();
+          cached = { ...cached, ...stats };
+          localStorage.setItem(AFFILIATE_LOCAL_KEY, JSON.stringify(cached));
+        }
+      } catch (e) {}
+      paintAffiliatePanel(cached);
+      return;
+    }
+    // First visit: mint.
+    const res = await fetch('/api/affiliate/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ senderId }),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.code) return;
+    const record = {
+      code: data.code,
+      shareUrl: data.shareUrl,
+      clicks: 0,
+      signups: 0,
+      conversions: 0,
+      earnedUsd: 0,
+      ...((data.record) || {}),
+    };
+    try { localStorage.setItem(AFFILIATE_LOCAL_KEY, JSON.stringify(record)); } catch (e) {}
+    paintAffiliatePanel(record);
+  } catch (e) { /* non-fatal */ }
+}
+
+// Stub — full impl in slice 84. Defined here so ensureAffiliateCode
+// can call it once the markup exists.
+function paintAffiliatePanel(record) {
+  const panel = document.getElementById('affiliate-panel');
+  if (!panel || !record) return;
+  panel.hidden = false;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+  set('aff-code', record.code);
+  set('aff-share-url', record.shareUrl || ('https://cybersygn.io/?ref=' + record.code));
+  set('aff-clicks', record.clicks || 0);
+  set('aff-signups', record.signups || 0);
+  set('aff-conv', record.conversions || 0);
+  set('aff-earned', '$' + (record.earnedUsd || 0));
+  const shareInput = document.getElementById('aff-share-input');
+  if (shareInput) shareInput.value = record.shareUrl || ('https://cybersygn.io/?ref=' + record.code);
 }
 
 /**
@@ -232,9 +303,21 @@ function paintFounderHome(docs) {
   set('fh-pending', pendingSigners);
   set('fh-saved-mins', minutesSaved.toLocaleString());
   set('fh-saved-dollars', '≈ $' + dollarsSaved.toLocaleString() + ' at $60/hr');
-  // Templates: we don't fetch per-sender template count yet — show '—'
-  // and link to the templates docs section. (Future: /api/sender/:id/templates count.)
-  set('fh-templates', '—');
+  // Templates — fetched async; updates the tile when it lands. The
+  // count comes from /api/sender/:id/templates which lists tpl-priv:
+  // KV keys for this sender.
+  set('fh-templates', '…');
+  try {
+    const senderId = (typeof getSenderId === 'function') ? getSenderId() : (window.cybersygn && window.cybersygn.senderId);
+    if (senderId) {
+      fetch('/api/sender/' + encodeURIComponent(senderId) + '/templates')
+        .then(r => r.ok ? r.json() : { count: 0 })
+        .then(d => set('fh-templates', Number.isFinite(d.count) ? d.count : 0))
+        .catch(() => set('fh-templates', 0));
+    } else {
+      set('fh-templates', 0);
+    }
+  } catch (e) { set('fh-templates', 0); }
 
   // Tiny sparkline: count of docs per ISO week over the last 12 weeks.
   const weeks = 12;

@@ -319,6 +319,14 @@ export default {
     }
 
     // Sender dashboard: list every doc this sender has created.
+    // GET /api/sender/:senderId/templates — count of templates this sender saved.
+    {
+      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/templates$/);
+      if (request.method === 'GET' && m) {
+        return handleSenderTemplatesCount(request, env, url, m[1]);
+      }
+    }
+
     // GET /api/sender/:senderId/docs
     const senderListMatch = url.pathname.match(/^\/api\/sender\/([^/]+)\/docs$/);
     if (request.method === 'GET' && senderListMatch) {
@@ -1589,6 +1597,31 @@ async function handleAffiliateStats(request, env, url, code) {
   const stats = await getCodeStats(env, code);
   if (!stats.ok) return jsonResponse(404, { error: 'not_found' });
   return jsonResponse(200, stats);
+}
+
+/**
+ * Cheap count of templates a sender has saved.
+ *
+ * Templates are keyed by SHA-256 of the PDF and scoped by sender for
+ * the private tier. We list KV with prefix `tpl-priv:<senderId>:` (or
+ * the equivalent shape) and return the count. Public templates are
+ * not attributed back to one sender so they're excluded from this
+ * personal count.
+ */
+async function handleSenderTemplatesCount(request, env, url, senderId) {
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
+  if (!env || !env.CYBERSYGN_DOCS) return jsonResponse(200, { count: 0, source: 'memory' });
+  try {
+    // List bounded — for very prolific senders we cap at 1000.
+    const r = await env.CYBERSYGN_DOCS.list({
+      prefix: `tpl-priv:${safeId}:`,
+      limit: 1000,
+    });
+    return jsonResponse(200, { count: r.keys.length, source: 'kv' });
+  } catch (e) {
+    return jsonResponse(200, { count: 0, error: e && e.message });
+  }
 }
 
 async function handleMetricsDashboard(request, env, url) {
