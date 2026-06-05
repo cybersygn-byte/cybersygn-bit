@@ -252,13 +252,21 @@
        for the prompt + export workflow. -->
   <section class="cinematic-hero" id="cinematic-hero">
     <div class="cinematic-hero__stage">
-      <!-- Real video, if present. -->
+      <!-- Real video, if present. Loops continuously. -->
       <video class="cinematic-hero__video"
              id="cinematic-hero-video"
              muted playsinline preload="auto" disablepictureinpicture
+             autoplay loop
              poster="brand/og-image.png">
         <source src="brand/hero.mp4" type="video/mp4" />
       </video>
+      <!-- CyberSygn logo overlay. Visible at the start and end of each
+           video loop iteration; fades out during the cinematic so the
+           video's own composition reads. Driven by cinematic-hero.js
+           from video.currentTime so it stays in sync at any duration. -->
+      <div class="cinematic-hero__logo" id="cinematic-hero-logo" aria-hidden="true">
+        <img src="brand/lockup-white@2x.png" alt="" />
+      </div>
       <!-- Placeholder: pure CSS/SVG that animates without the video.
            Hidden by JS the moment the <video> file loads metadata. -->
       <div class="cinematic-hero__placeholder" aria-hidden="true">

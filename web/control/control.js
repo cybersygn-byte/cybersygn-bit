@@ -125,7 +125,72 @@ async function paint() {
   loginSection.hidden = true;
   panelSection.hidden = false;
   if (signout) signout.hidden = false;
+  await loadKpis();
   await loadAnalytics();
+}
+
+// ----- Founder KPIs tile -----------------------------------------------------
+
+async function loadKpis() {
+  const body = $('ctrl-kpi-body');
+  if (!body) return;
+  body.innerHTML = '<p class="control-tile__empty">Loading metrics.</p>';
+  try {
+    const res = await fetch('/api/owner/metrics/dashboard', {
+      headers: { 'X-CyberSygn-Owner': readToken() },
+    });
+    if (res.status === 401) {
+      body.innerHTML = '<p class="control-tile__empty">Session expired.</p>';
+      return;
+    }
+    if (!res.ok) {
+      body.innerHTML = '<p class="control-tile__empty">Could not load: HTTP ' + res.status + '</p>';
+      return;
+    }
+    const d = await res.json();
+    const founding = d.founding || {};
+    const free = d.free || {};
+    const dataset = d.dataset || {};
+    const integ = d.integrations || {};
+    const claimedPct = founding.cap > 0 ? Math.round((founding.claimed / founding.cap) * 100) : 0;
+    const dsPct = Math.round((dataset.progress || 0) * 100);
+    body.innerHTML =
+      '<div class="control-stats">' +
+        statBlock(founding.claimed, 'Origin claimed', founding.cap + ' cap · ' + claimedPct + '%') +
+        statBlock(free.signups, 'Free signups', 'lifetime') +
+        statBlock(dataset.total, 'Labeled corpus', dataset.threshold.toLocaleString() + ' target · ' + dsPct + '%') +
+        statBlock(dataset.contributors, 'Contributors', 'unique emails') +
+      '</div>' +
+      '<div class="control-integrations">' +
+        '<p class="kicker kicker--muted">Integrations</p>' +
+        '<ul>' +
+          integBlock('GA4', integ.ga4) +
+          integBlock('Search Console', integ.gsc) +
+          integBlock('Resend', integ.resend) +
+          integBlock('Stripe', integ.stripe) +
+          integBlock('Anthropic', integ.anthropic) +
+        '</ul>' +
+      '</div>';
+  } catch (err) {
+    body.innerHTML = '<p class="control-tile__empty">Network error: ' + (err.message || err) + '</p>';
+  }
+}
+
+function statBlock(num, label, sub) {
+  const n = Number.isFinite(num) ? Number(num).toLocaleString() : '—';
+  return '<div class="control-stat">' +
+    '<span class="control-stat__num">' + n + '</span>' +
+    '<span class="control-stat__label">' + label + '</span>' +
+    (sub ? '<span class="control-stat__sub">' + sub + '</span>' : '') +
+  '</div>';
+}
+
+function integBlock(name, on) {
+  return '<li class="control-integ ' + (on ? 'is-on' : 'is-off') + '">' +
+    '<span class="control-integ__dot" aria-hidden="true"></span>' +
+    '<span>' + name + '</span>' +
+    '<span class="control-integ__state">' + (on ? 'configured' : 'not set') + '</span>' +
+  '</li>';
 }
 
 // ----- Analytics tile -------------------------------------------------------
@@ -207,6 +272,8 @@ const refreshBtn = $('ctrl-refresh');
 if (refreshBtn) refreshBtn.addEventListener('click', loadAnalytics);
 const windowSel = $('ctrl-window');
 if (windowSel) windowSel.addEventListener('change', loadAnalytics);
+const kpiRefreshBtn = $('ctrl-kpi-refresh');
+if (kpiRefreshBtn) kpiRefreshBtn.addEventListener('click', loadKpis);
 
 // Initial paint
 paint();

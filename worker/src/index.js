@@ -41,6 +41,7 @@ import {
 } from './free-tier.js';
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
+import { maybeInjectAnalytics } from './analytics-inject.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import {
@@ -162,6 +163,10 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/error') {
       return handleClientError(request, env);
     }
+    if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
+      return handleMetricsDashboard(request, env, url);
+    }
+
     if (request.method === 'GET' && url.pathname === '/api/analytics/summary') {
       return handleAnalyticsSummary(request, env, url);
     }
@@ -324,7 +329,8 @@ export default {
       });
     }
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
-      return env.ASSETS.fetch(request);
+      const upstream = await env.ASSETS.fetch(request);
+      return maybeInjectAnalytics(upstream, env);
     }
     return new Response('Not found.', {
       status: 404,
@@ -1423,6 +1429,82 @@ async function handleClientError(request, env) {
 }
 
 // ---- /api/analytics/summary ------------------------------------------------
+
+/**
+ * Owner-only metrics dashboard endpoint.
+ *
+ * Returns a single JSON document with the numbers the founder actually
+ * needs to see daily: Origin spots claimed, free signups, dataset
+ * progress toward Phase 3 (5k threshold), founder rate vs. cap, and
+ * traffic (when GA4 reports back via Analytics Engine).
+ *
+ * Designed so /control/ can render it as a single fetch + paint. No
+ * client-side aggregation needed.
+ */
+async function handleMetricsDashboard(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+
+  const out = {
+    generatedAt: new Date().toISOString(),
+    founding: { claimed: 0, cap: 100, remaining: 100 },
+    free: { signups: 0, consumed: 0 },
+    dataset: { total: 0, contributors: 0, threshold: 5000, progress: 0 },
+    integrations: {
+      ga4: Boolean(env && env.CYBERSYGN_GA4_ID),
+      gsc: Boolean(env && env.CYBERSYGN_GSC_TOKEN),
+      resend: Boolean(env && env.RESEND_API_KEY),
+      stripe: Boolean(env && env.STRIPE_SECRET_KEY),
+      anthropic: Boolean(env && env.ANTHROPIC_API_KEY),
+    },
+    errors: [],
+  };
+
+  // Founding count.
+  try {
+    const taken = await getFoundingCount(env);
+    out.founding.cap = foundingCap();
+    out.founding.claimed = taken;
+    out.founding.remaining = Math.max(0, out.founding.cap - taken);
+  } catch (e) {
+    out.errors.push('founding: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  // Dataset progress.
+  try {
+    const stats = await getDatasetStats(env);
+    out.dataset.total = (stats && stats.total) || 0;
+    out.dataset.contributors = (stats && stats.contributors) || 0;
+    out.dataset.threshold = (stats && stats.threshold) || 5000;
+    out.dataset.progress = out.dataset.threshold > 0
+      ? Math.min(1, out.dataset.total / out.dataset.threshold)
+      : 0;
+  } catch (e) {
+    out.errors.push('dataset: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  // Free-tier signups via drip list count. Cheap-ish but bounded.
+  try {
+    if (env && env.CYBERSYGN_DOCS) {
+      // Use KV list with prefix='drip:' as the lower bound of signups.
+      let cursor;
+      let total = 0;
+      let pages = 0;
+      while (true) {
+        const r = await env.CYBERSYGN_DOCS.list({ prefix: 'drip:', limit: 1000, cursor });
+        total += r.keys.length;
+        pages += 1;
+        if (r.list_complete || !r.cursor || pages > 10) break;  // hard cap
+        cursor = r.cursor;
+      }
+      out.free.signups = total;
+    }
+  } catch (e) {
+    out.errors.push('free: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  return jsonResponse(200, out);
+}
 
 async function handleAnalyticsSummary(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);

@@ -577,6 +577,30 @@ button { font: inherit; cursor: pointer; }
   pointer-events: none;
 }
 
+/* CyberSygn logo overlay over the cinematic. JS drives the opacity from
+   video.currentTime so the logo fades out at the start of every loop
+   iteration and fades back in at the end — a soft brand bookend on each
+   replay. Centered, scaled to read at any viewport. */
+.cinematic-hero__logo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 1;  /* JS will overwrite per-frame; this is the initial state */
+  transition: opacity 80ms linear;
+}
+.cinematic-hero__logo img {
+  width: clamp(180px, 28vw, 420px);
+  height: auto;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.35));
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Hold the logo at full opacity rather than animating it on/off. */
+  .cinematic-hero__logo { opacity: 1; }
+}
+
 @keyframes ciPaperFloat {
   0%, 100% { transform: translateY(0) rotate(-0.4deg); }
   50%      { transform: translateY(-14px) rotate(0.4deg); }
@@ -5952,6 +5976,56 @@ body[data-owner-active="true"] .free-pill {
   letter-spacing: -0.02em;
   color: var(--text);
 }
+.control-stat__sub {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--accent-text);
+}
+.control-integrations {
+  margin-top: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.control-integrations > .kicker { margin: 0 0 var(--s-2); }
+.control-integrations ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s-2);
+}
+.control-integ {
+  display: grid;
+  grid-template-columns: 8px auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.control-integ__dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--text-3);
+}
+.control-integ.is-on .control-integ__dot { background: var(--ok); }
+.control-integ.is-off .control-integ__dot { background: var(--warn); }
+.control-integ__state {
+  justify-self: end;
+  color: var(--text-3);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.control-integ.is-on .control-integ__state { color: var(--ok); }
+
 .control-stat__label {
   font-family: var(--mono);
   font-size: var(--t-xs);
