@@ -169,6 +169,59 @@
    form controls and scrollbars natively. */
 
 /* ========================================================================
+   2b. FORCED THEMES (slice 95 — embed widget)
+   Embeds set <html data-theme="dark|light"> via URL params. We re-apply
+   the relevant variable block so the iframe matches the embedder's
+   chrome regardless of the visitor's OS preference. data-theme="auto"
+   (or absent) keeps prefers-color-scheme behavior.
+   ======================================================================== */
+:root[data-theme="dark"] {
+  --bg:           #011434;
+  --bg-2:         #07193D;
+  --bg-3:         #0C1F46;
+  --surface:      #061838;
+  --surface-2:    #0A1C40;
+  --text:         #F0F3FA;
+  --text-2:       #BFC6D9;
+  --text-3:       #ACB2C8;
+  --text-on-dark: #011434;
+  --line:         rgba(240, 243, 250, 0.08);
+  --line-2:       rgba(240, 243, 250, 0.14);
+  --line-strong:  rgba(240, 243, 250, 0.32);
+  --accent-soft:  rgba(0, 203, 246, 0.14);
+  --accent-line:  rgba(0, 203, 246, 0.36);
+  --accent-text:  #6EDEFA;
+  --accent-glow:  rgba(0, 203, 246, 0.42);
+  --ok:           #46D097;
+  --ok-soft:      rgba(70, 208, 151, 0.14);
+  --warn:         #F4B850;
+  --warn-soft:    rgba(244, 184, 80, 0.14);
+}
+/* Forced light: explicitly restore the default variables in case the OS
+   preference is dark and a Studio embedder wants light to win. We re-
+   declare via the same baseline values that :root sets in section 1. */
+:root[data-theme="light"] {
+  --bg:           #F7F8FB;
+  --bg-2:         #EFF1F6;
+  --surface:      #FFFFFF;
+  --text:         #011434;
+  --text-2:       #3A4258;
+  --text-3:       #4F5874;
+  --text-on-dark: #FFFFFF;
+  --line:         rgba(1, 20, 52, 0.08);
+  --line-2:       rgba(1, 20, 52, 0.14);
+  --line-strong:  rgba(1, 20, 52, 0.28);
+  --accent-soft:  rgba(0, 203, 246, 0.10);
+  --accent-line:  rgba(0, 203, 246, 0.32);
+  --accent-text:  #007496;
+  --accent-glow:  rgba(0, 203, 246, 0.36);
+  --ok:           #1E8A5F;
+  --ok-soft:      rgba(30, 138, 95, 0.10);
+  --warn:         #C9831D;
+  --warn-soft:    rgba(201, 131, 29, 0.12);
+}
+
+/* ========================================================================
    3. RESET + BASE
    ======================================================================== */
 
@@ -2908,6 +2961,136 @@ button { font: inherit; cursor: pointer; }
     right: 16px;
   }
 }
+
+/* ── Bulk-send CSV upload (slice 96) ──────────────────── */
+.bulk-csv-drop {
+  margin-top: var(--s-3);
+  padding: var(--s-4);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  text-align: center;
+  transition: background 140ms var(--ease), border-color 140ms var(--ease);
+}
+.bulk-csv-drop[data-dragging="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.bulk-csv-drop__title { margin: 0 0 6px; font-weight: 600; color: var(--text); }
+.bulk-csv-drop__sub { margin: 0; font-size: var(--t-sm); color: var(--text-2); }
+.bulk-csv-drop__link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent-text);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.bulk-csv-drop__status { margin: 8px 0 0; font-family: var(--mono); font-size: 11px; color: var(--accent-text); }
+.bulk-csv-preview {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.bulk-csv-preview li {
+  display: grid;
+  grid-template-columns: 36px 1fr 1.4fr auto;
+  gap: var(--s-2);
+  padding: 6px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.bulk-csv-preview li:last-child { border-bottom: 0; }
+.bulk-csv-preview .row-num { color: var(--text-3); }
+.bulk-csv-preview .row-status { font-size: 11px; color: var(--ok); }
+.bulk-csv-preview .is-bad { background: var(--warn-soft); }
+.bulk-csv-preview .is-bad .row-status { color: var(--warn); }
+.bulk-csv-preview .row-more { font-style: italic; color: var(--text-3); padding: 8px 10px; }
+
+/* ── Webhooks panel (slice 93) ────────────────────────── */
+.webhook-panel {
+  margin-bottom: var(--s-5);
+  padding: var(--s-4) var(--s-5);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.webhook-panel__head { display: grid; grid-template-columns: 1fr auto; gap: var(--s-3); margin-bottom: var(--s-3); }
+.webhook-panel__body { margin: 6px 0 0; color: var(--text-2); font-size: var(--t-sm); line-height: 1.55; }
+.webhook-panel__badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--accent-line);
+  align-self: start;
+}
+.webhook-panel__form fieldset { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s-3); margin: var(--s-3) 0; }
+.webhook-panel__form fieldset legend { padding: 0 6px; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.webhook-panel__form fieldset label { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: var(--t-sm); color: var(--text-2); }
+.webhook-form__field { display: flex; flex-direction: column; gap: 6px; }
+.webhook-form__label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.webhook-form__field input[type=url] {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg-2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.webhook-form__status { margin-left: var(--s-2); font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+.webhook-config { display: grid; gap: var(--s-3); }
+.webhook-config__row { display: grid; grid-template-columns: 140px 1fr; gap: var(--s-2); align-items: baseline; }
+.webhook-config__url { font-family: var(--mono); font-size: 12px; color: var(--text); word-break: break-all; }
+.webhook-config__secret-state { font-size: var(--t-sm); color: var(--text-2); }
+.webhook-config__actions { display: flex; gap: var(--s-2); }
+.webhook-secret-banner {
+  padding: var(--s-3) var(--s-4);
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  border-radius: var(--r);
+}
+.webhook-secret-banner__head { margin: 0 0 var(--s-2); color: var(--warn); font-size: var(--t-sm); }
+.webhook-secret-banner__code {
+  margin: 0 0 var(--s-2);
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+.webhook-log__list { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: 4px; }
+.webhook-log__item {
+  display: grid;
+  grid-template-columns: 130px 1fr auto auto;
+  gap: var(--s-2);
+  padding: 6px 10px;
+  background: var(--bg-2);
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.webhook-log__item--ok { border-left: 2px solid var(--ok); }
+.webhook-log__item--fail { border-left: 2px solid var(--warn); }
+.webhook-log__attempts { color: var(--text-3); }
+.webhook-log__empty { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-top: 6px; }
 
 /* ── Brand panel (slice 90) ───────────────────────────── */
 .brand-panel {

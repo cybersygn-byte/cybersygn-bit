@@ -41,6 +41,11 @@
     params.set('pdf', pdfUrl);
     if (opts.signerEmail) params.set('email', opts.signerEmail);
     if (opts.signerName)  params.set('name',  opts.signerName);
+    // Slice 95 theming. theme: light|dark|auto. accent: hex.
+    if (opts.theme && /^(light|dark|auto)$/.test(opts.theme)) params.set('theme', opts.theme);
+    if (opts.accent && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(opts.accent)) {
+      params.set('accent', opts.accent);
+    }
 
     // Backdrop.
     var backdrop = document.createElement('div');
@@ -116,6 +121,9 @@
         source: el.getAttribute('data-cybersygn-source') || undefined,
         signerEmail: el.getAttribute('data-cybersygn-email') || undefined,
         signerName: el.getAttribute('data-cybersygn-name') || undefined,
+        // Slice 95: theming opt-ins on the launcher element.
+        theme: el.getAttribute('data-cybersygn-theme') || undefined,
+        accent: el.getAttribute('data-cybersygn-accent') || undefined,
       });
     });
   }

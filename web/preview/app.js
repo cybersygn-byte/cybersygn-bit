@@ -232,6 +232,42 @@ function renderCoSigningPill(data) {
 // (escapeHtml is declared lower in the module — see the marketing
 //  block. Removed the duplicate here so the file parses.)
 
+/**
+ * Apply sender's custom brand (slice 94). When a paid sender has
+ * configured a logo / accent / name, this function swaps the masthead
+ * wordmark for their logo, sets a CSS custom property that overrides
+ * the primary CTA accent, and updates the masthead context label.
+ * Falls back to CyberSygn defaults when brand is null / missing.
+ */
+function applySenderBrand(brand) {
+  if (!brand) return;
+  try {
+    // Swap masthead wordmark for sender's logo (when provided).
+    if (brand.logoUrl) {
+      const wm = document.querySelector('.masthead .wordmark__img');
+      if (wm) {
+        wm.src = brand.logoUrl;
+        wm.alt = brand.name || 'sender logo';
+        wm.style.maxHeight = '40px';
+        wm.style.width = 'auto';
+      }
+      const ctx = document.querySelector('.masthead .wordmark__context');
+      if (ctx) ctx.textContent = 'signing';
+    }
+    // Accent color override flows through a CSS custom property.
+    // styles.css's --accent and --accent-text reference --brand-accent
+    // when set by JS, falling back to the default cyan otherwise.
+    if (brand.accentColor && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(brand.accentColor)) {
+      document.documentElement.style.setProperty('--accent', brand.accentColor);
+      // Also push it through to the legacy accent text variable so
+      // links and buttons pick up the new tone.
+      document.documentElement.style.setProperty('--brand-accent', brand.accentColor);
+    }
+    // Mark body so any CSS using [data-sender-branded] can adjust.
+    document.body.dataset.senderBranded = 'true';
+  } catch (e) { /* non-fatal */ }
+}
+
 // Mobile bottom-sheet behavior. At <=768px the sidebar acts as a
 // drag-up sheet: tap the handle / header → expand. Tap outside or
 // drag down → collapse. CSS handles the open/closed transition;
@@ -4440,13 +4476,38 @@ async function boot() {
   if (docId && token && status.ok) {
     await enterSignerMode(docId, token);
   } else if (pdfUrl) {
-    // Embed-mode handling (slice 78 / 83): /preview/?pdf=<url>&embed=<source>
-    // Fetch the PDF from the provided URL and route it through the
-    // same handleFiles pipeline a fresh upload would use.
+    // Embed-mode handling (slice 78 / 83 / 95): /preview/?pdf=<url>&embed=<source>
+    // Optional ?theme=light|dark|auto and ?accent=#hex from slice 95.
+    applyEmbedTheme(params.get('theme'), params.get('accent'));
     await enterEmbedMode(pdfUrl, params.get('embed') || 'embed');
   } else {
     resetApp();
   }
+}
+
+/**
+ * Embed theme application (slice 95). When the iframe URL carries
+ * ?theme=light|dark|auto and/or ?accent=#hex, apply them to the
+ * document root so the page renders in the embedding site's tone.
+ *
+ * theme="dark" forces data-theme=dark on <html>; "light" forces light.
+ * "auto" defers to prefers-color-scheme.
+ *
+ * accent flows through --accent so primary CTAs match the embedder's brand.
+ */
+function applyEmbedTheme(theme, accent) {
+  try {
+    if (theme === 'dark') {
+      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.style.colorScheme = 'dark';
+    } else if (theme === 'light') {
+      document.documentElement.dataset.theme = 'light';
+      document.documentElement.style.colorScheme = 'light';
+    }
+    if (accent && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(accent)) {
+      document.documentElement.style.setProperty('--accent', accent);
+    }
+  } catch (e) {}
 }
 
 /**
@@ -4490,6 +4551,11 @@ async function enterSignerMode(docId, token) {
     return;
   }
   const session = hydrateResult.data;
+
+  // Slice 94: apply sender brand if present. Paid senders can supply
+  // a logo + accent color which gets baked into the masthead and the
+  // primary CTA color on this signing page.
+  applySenderBrand(session.brand);
 
   // Now that we have the session, the signer's own id is known. Kick
   // off the co-signing presence loop (slice 86, deepened in slice 92).

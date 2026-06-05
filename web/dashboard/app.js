@@ -186,12 +186,159 @@ async function load() {
   paintFounderHome(docs);
   ensureAffiliateCode();
   ensureBrandPanel();
+  ensureWebhookPanel();
   if (docs.length === 0) {
     showState('empty');
     return;
   }
   showState('list');
   renderList();
+}
+
+/**
+ * Webhooks panel (slice 93). Studio-tier only.
+ * Reads the sender's current webhook config; renders either:
+ *   - empty form to create one, OR
+ *   - configured view with URL + events + log + delete button.
+ * Secret is shown ONCE after creation in a banner that auto-dismisses
+ * on copy/click. After that, the secret is unreachable (server never
+ * returns it again).
+ */
+async function ensureWebhookPanel() {
+  const panel = document.getElementById('webhook-panel');
+  if (!panel) return;
+  const senderId = getSenderId();
+  if (!senderId) return;
+
+  // Studio-tier gate. Free/Solo/Origin all see nothing.
+  let isStudio = false;
+  try {
+    const sub = window.__cybersygnSub;
+    if (sub && (sub.tier === 'team' || sub.tier === 'team_annual')) isStudio = true;
+  } catch (e) {}
+  if (!isStudio) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+
+  const emptyEl = document.getElementById('webhook-empty');
+  const configEl = document.getElementById('webhook-config');
+  const form = document.getElementById('webhook-form');
+  const statusEl = document.getElementById('webhook-status');
+  const urlInput = document.getElementById('webhook-url');
+  const cfgUrl = document.getElementById('webhook-config-url');
+  const cfgEvents = document.getElementById('webhook-config-events');
+  const secretBanner = document.getElementById('webhook-secret-banner');
+  const secretValue = document.getElementById('webhook-secret-value');
+  const secretCopy = document.getElementById('webhook-secret-copy');
+  const secretDismiss = document.getElementById('webhook-secret-dismiss');
+  const deleteBtn = document.getElementById('webhook-delete');
+  const logList = document.getElementById('webhook-log-list');
+  const logEmpty = document.getElementById('webhook-log-empty');
+
+  async function refresh() {
+    try {
+      const r = await fetch('/api/sender/' + encodeURIComponent(senderId) + '/webhook');
+      if (!r.ok) { emptyEl.hidden = false; configEl.hidden = true; return; }
+      const d = await r.json();
+      if (!d.config) {
+        emptyEl.hidden = false;
+        configEl.hidden = true;
+        return;
+      }
+      emptyEl.hidden = true;
+      configEl.hidden = false;
+      cfgUrl.textContent = d.config.url;
+      cfgEvents.innerHTML = (d.config.events || []).map(e => '<code>' + escapeHtml(e) + '</code>').join(' ');
+      await loadLog();
+    } catch (e) {}
+  }
+
+  async function loadLog() {
+    try {
+      const r = await fetch('/api/sender/' + encodeURIComponent(senderId) + '/webhook/log');
+      if (!r.ok) { logEmpty.hidden = false; logList.innerHTML = ''; return; }
+      const d = await r.json();
+      const log = d.log || [];
+      if (log.length === 0) {
+        logEmpty.hidden = false;
+        logList.innerHTML = '';
+        return;
+      }
+      logEmpty.hidden = true;
+      logList.innerHTML = log.slice(0, 30).map(entry => {
+        const ok = entry.status >= 200 && entry.status < 300;
+        const cls = ok ? 'webhook-log__item--ok' : 'webhook-log__item--fail';
+        return '<li class="webhook-log__item ' + cls + '">' +
+          '<code>' + escapeHtml(entry.event || '?') + '</code>' +
+          '<span>' + (ok ? '✓' : '✗') + ' HTTP ' + (entry.status || '?') + '</span>' +
+          '<span class="webhook-log__attempts">' + (entry.attempts || 1) + (entry.attempts > 1 ? ' attempts' : ' attempt') + '</span>' +
+          '<time>' + escapeHtml(entry.ts || '') + '</time>' +
+          '</li>';
+      }).join('');
+    } catch (e) {}
+  }
+
+  if (form && !form.__wired) {
+    form.__wired = true;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = (urlInput && urlInput.value || '').trim();
+      const events = Array.from(form.querySelectorAll('fieldset input:checked')).map(el => el.value);
+      if (!url) { statusEl.textContent = 'URL required.'; return; }
+      statusEl.textContent = 'Creating.';
+      try {
+        const r = await fetch('/api/sender/' + encodeURIComponent(senderId) + '/webhook', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ url, events }),
+        });
+        const d = await r.json();
+        if (!r.ok) {
+          statusEl.textContent = d.message || d.error || 'Failed.';
+          return;
+        }
+        statusEl.textContent = '';
+        // Show the secret ONCE.
+        if (d.config && d.config.secret) {
+          secretValue.textContent = d.config.secret;
+          secretBanner.hidden = false;
+        }
+        await refresh();
+      } catch (err) {
+        statusEl.textContent = 'Network error.';
+      }
+    });
+  }
+
+  if (secretCopy && !secretCopy.__wired) {
+    secretCopy.__wired = true;
+    secretCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(secretValue.textContent);
+        secretCopy.textContent = 'Copied';
+        setTimeout(() => { secretCopy.textContent = 'Copy'; }, 1600);
+      } catch (e) {}
+    });
+  }
+  if (secretDismiss && !secretDismiss.__wired) {
+    secretDismiss.__wired = true;
+    secretDismiss.addEventListener('click', () => { secretBanner.hidden = true; });
+  }
+  if (deleteBtn && !deleteBtn.__wired) {
+    deleteBtn.__wired = true;
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('Delete this webhook? You can re-create it but the signing secret will change.')) return;
+      try {
+        await fetch('/api/sender/' + encodeURIComponent(senderId) + '/webhook', { method: 'DELETE' });
+        secretBanner.hidden = true;
+        await refresh();
+      } catch (e) {}
+    });
+  }
+
+  await refresh();
 }
 
 /**

@@ -51,15 +51,29 @@
       </div>
     </section>
 
-    <!-- Step 2: recipients CSV -->
+    <!-- Step 2: recipients CSV — upload a file or paste -->
     <section class="state-card" style="margin-bottom: var(--s-4);">
       <p class="state-card__kicker">Step 2</p>
       <h2 class="state-card__body" style="font-weight: 600;">Add recipients.</h2>
-      <p class="state-card__body">Paste a CSV (or use the textarea). Two columns: <code>name,email</code>. One per row. Up to 200.</p>
+      <p class="state-card__body">Two columns: <code>name,email</code>. One per row. Up to 200.</p>
+
+      <!-- Slice 96: file drop zone for CSV upload. Both manual paste and
+           file upload feed the same parsed-list state. Drop zone takes
+           drag-and-drop. Click to use the native file picker. -->
+      <div id="bulk-csv-dropzone" class="bulk-csv-drop">
+        <input id="bulk-csv-file" type="file" accept=".csv,text/csv" hidden />
+        <p class="bulk-csv-drop__title">Drop a .csv file here.</p>
+        <p class="bulk-csv-drop__sub">Or <button type="button" id="bulk-csv-pick" class="bulk-csv-drop__link">pick a file</button>, or paste below.</p>
+        <p id="bulk-csv-file-status" class="bulk-csv-drop__status" hidden></p>
+      </div>
+
       <textarea id="bulk-recipients"
-                style="width:100%;min-height:200px;margin-top:var(--s-3);padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;"
+                style="width:100%;min-height:140px;margin-top:var(--s-3);padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;"
                 placeholder="Jane Doe,jane@example.com&#10;John Smith,john@firm.com&#10;..."></textarea>
       <p id="bulk-recipients-status" class="caption" style="margin-top: var(--s-2);">No recipients parsed yet.</p>
+      <!-- Slice 96: per-row validation preview. Bad-email rows show in
+           the list with a red marker so the sender sees what will be skipped. -->
+      <ol id="bulk-recipients-preview" class="bulk-csv-preview" hidden></ol>
     </section>
 
     <!-- Step 3: send -->
@@ -134,26 +148,116 @@
       }
     });
 
-    csvArea.addEventListener('input', () => {
-      const parsed = parseCsv(csvArea.value);
-      csvStatus.textContent = parsed.length + ' valid recipient' + (parsed.length === 1 ? '' : 's') + ' parsed.';
-      refresh();
-    });
+    csvArea.addEventListener('input', () => { repaintCsvPreview(); refresh(); });
 
-    function parseCsv(text) {
-      const out = [];
+    // Slice 96: file-upload + drag-drop integration. Both pipelines
+    // funnel into csvArea.value so the existing parser + send flow
+    // stays single-sourced. Drop zone visually highlights on drag-over.
+    const csvDrop = $('bulk-csv-dropzone');
+    const csvFile = $('bulk-csv-file');
+    const csvPick = $('bulk-csv-pick');
+    const csvFileStatus = $('bulk-csv-file-status');
+    if (csvPick) csvPick.addEventListener('click', () => csvFile.click());
+    if (csvFile) csvFile.addEventListener('change', () => {
+      const f = csvFile.files && csvFile.files[0];
+      if (!f) return;
+      if (f.size > 2 * 1024 * 1024) {
+        csvFileStatus.hidden = false;
+        csvFileStatus.textContent = 'CSV too large (>2 MB).';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        csvArea.value = String(reader.result || '');
+        csvFileStatus.hidden = false;
+        csvFileStatus.textContent = 'Loaded ' + f.name + '.';
+        repaintCsvPreview();
+        refresh();
+      };
+      reader.readAsText(f);
+    });
+    if (csvDrop) {
+      csvDrop.addEventListener('dragover', e => {
+        e.preventDefault();
+        csvDrop.dataset.dragging = 'true';
+      });
+      csvDrop.addEventListener('dragleave', () => {
+        delete csvDrop.dataset.dragging;
+      });
+      csvDrop.addEventListener('drop', e => {
+        e.preventDefault();
+        delete csvDrop.dataset.dragging;
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        if (!/\.csv$/i.test(f.name) && f.type !== 'text/csv') {
+          csvFileStatus.hidden = false;
+          csvFileStatus.textContent = 'Only .csv files accepted.';
+          return;
+        }
+        if (f.size > 2 * 1024 * 1024) {
+          csvFileStatus.hidden = false;
+          csvFileStatus.textContent = 'CSV too large (>2 MB).';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          csvArea.value = String(reader.result || '');
+          csvFileStatus.hidden = false;
+          csvFileStatus.textContent = 'Loaded ' + f.name + '.';
+          repaintCsvPreview();
+          refresh();
+        };
+        reader.readAsText(f);
+      });
+    }
+
+    /**
+     * Parse + per-row validation (slice 96). Returns rows with
+     * validity flags so the UI can highlight bad emails. parseCsv()
+     * keeps the original valid-only behavior for the send step.
+     */
+    function parseCsvRows(text) {
+      const rows = [];
       for (const line of text.split(/\r?\n/)) {
         const trimmed = line.trim();
         if (!trimmed) continue;
         const parts = trimmed.split(',').map(s => s.trim());
-        if (parts.length < 2) continue;
-        const name = parts[0];
-        const email = parts[1];
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) continue;
-        out.push({ name, email });
-        if (out.length >= 200) break;
+        const name = parts[0] || '';
+        const email = parts[1] || '';
+        const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        rows.push({ name, email, valid });
+        if (rows.length >= 200) break;
       }
-      return out;
+      return rows;
+    }
+
+    function parseCsv(text) {
+      return parseCsvRows(text).filter(r => r.valid).map(r => ({ name: r.name, email: r.email }));
+    }
+
+    function repaintCsvPreview() {
+      const previewEl = $('bulk-recipients-preview');
+      const rows = parseCsvRows(csvArea.value);
+      const valid = rows.filter(r => r.valid).length;
+      const invalid = rows.length - valid;
+      csvStatus.textContent = valid + ' valid recipient' + (valid === 1 ? '' : 's') + ' parsed' +
+        (invalid > 0 ? ' · ' + invalid + ' row' + (invalid === 1 ? '' : 's') + ' will be skipped (invalid email)' : '') + '.';
+      if (!previewEl) return;
+      if (rows.length === 0) { previewEl.hidden = true; previewEl.innerHTML = ''; return; }
+      previewEl.hidden = false;
+      previewEl.innerHTML = rows.slice(0, 30).map((r, idx) =>
+        '<li class="' + (r.valid ? 'is-ok' : 'is-bad') + '">' +
+          '<span class="row-num">' + (idx + 1) + '</span>' +
+          '<span class="row-name">' + escapeHtml(r.name || '(no name)') + '</span>' +
+          '<span class="row-email">' + escapeHtml(r.email || '(empty)') + '</span>' +
+          '<span class="row-status">' + (r.valid ? '✓' : '✗ invalid email') + '</span>' +
+        '</li>',
+      ).join('') + (rows.length > 30 ? '<li class="row-more">+ ' + (rows.length - 30) + ' more rows</li>' : '');
+    }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function refresh() {

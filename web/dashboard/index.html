@@ -264,6 +264,71 @@
       <!-- Affiliate panel (slice 84). Every paying customer has a
            referral code; here's the proof + their stats + share
            controls. Stays visible at all times once dashboard mounts. -->
+      <!-- Webhooks panel (slice 93). Studio-tier only. Hidden by default;
+           revealed when subscription tier === 'team' or 'team_annual'. -->
+      <section id="webhook-panel" class="webhook-panel" hidden aria-live="polite">
+        <div class="webhook-panel__head">
+          <div>
+            <p class="kicker kicker--ink">Outbound webhooks.</p>
+            <p class="webhook-panel__body">
+              Studio members can wire CyberSygn into their stack. We POST signed JSON to your URL
+              when documents are created, signers complete, or the whole doc is done. HMAC-SHA256
+              signature so you can verify the payload.
+            </p>
+          </div>
+          <span class="webhook-panel__badge">Studio</span>
+        </div>
+
+        <!-- Empty state: no webhook configured yet. -->
+        <div id="webhook-empty" class="webhook-panel__form" hidden>
+          <form id="webhook-form" autocomplete="off">
+            <label class="webhook-form__field">
+              <span class="webhook-form__label">Endpoint URL (https only)</span>
+              <input id="webhook-url" type="url" placeholder="https://your-app.com/webhooks/cybersygn" required />
+            </label>
+            <fieldset class="webhook-form__events">
+              <legend>Events to receive</legend>
+              <label><input type="checkbox" value="doc.created" checked /> <code>doc.created</code> — new doc minted, signers notified</label>
+              <label><input type="checkbox" value="signer.completed" checked /> <code>signer.completed</code> — a signer submitted their fills</label>
+              <label><input type="checkbox" value="doc.completed" checked /> <code>doc.completed</code> — every signer is done, signed PDF available</label>
+            </fieldset>
+            <button id="webhook-create" type="submit" class="btn btn--ink btn--sm">Create webhook</button>
+            <span id="webhook-status" class="webhook-form__status"></span>
+          </form>
+        </div>
+
+        <!-- Configured state: shows URL, events, log. Secret shown ONCE
+             after creation in a banner that auto-dismisses. -->
+        <div id="webhook-config" class="webhook-config" hidden>
+          <div class="webhook-config__row">
+            <span class="kicker kicker--muted">Endpoint</span>
+            <code id="webhook-config-url" class="webhook-config__url">https://…</code>
+          </div>
+          <div class="webhook-config__row">
+            <span class="kicker kicker--muted">Subscribed events</span>
+            <span id="webhook-config-events"></span>
+          </div>
+          <div class="webhook-config__row">
+            <span class="kicker kicker--muted">Signing secret</span>
+            <span class="webhook-config__secret-state">Stored. Rotate by deleting and re-creating.</span>
+          </div>
+          <div id="webhook-secret-banner" class="webhook-secret-banner" hidden>
+            <p class="webhook-secret-banner__head"><strong>Save your signing secret now.</strong> This is the only time we will show it.</p>
+            <pre id="webhook-secret-value" class="webhook-secret-banner__code"></pre>
+            <button id="webhook-secret-copy" type="button" class="btn btn--ghost btn--sm">Copy</button>
+            <button id="webhook-secret-dismiss" type="button" class="btn btn--ghost btn--sm">Got it</button>
+          </div>
+          <div class="webhook-config__actions">
+            <button id="webhook-delete" type="button" class="btn btn--ghost btn--sm">Delete webhook</button>
+          </div>
+          <div class="webhook-log">
+            <p class="kicker kicker--muted">Recent deliveries (last 100)</p>
+            <ol id="webhook-log-list" class="webhook-log__list"></ol>
+            <p id="webhook-log-empty" class="webhook-log__empty">No deliveries yet.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Custom branding panel (slice 90). Hidden by default; revealed
            when the sender is on a paid tier. Lets them brand outbound
            magic-link emails + signing pages with their logo + accent. -->

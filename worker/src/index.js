@@ -2492,6 +2492,12 @@ async function handleHydrateSigner(request, env, docId, token) {
   );
   const ownedFields = doc.fields.filter(f => ownedFieldIds.has(f.id));
 
+  // Slice 94: bundle the sender's brand into the hydrate payload so
+  // the signing page can apply logo + accent without a second
+  // round-trip. Free senders get null and the page falls back to
+  // CyberSygn defaults.
+  const senderBrand = await loadSenderBrand(env, doc.senderId);
+
   return jsonResponse(200, {
     docId,
     title: doc.title,
@@ -2502,6 +2508,7 @@ async function handleHydrateSigner(request, env, docId, token) {
     fills: signer.fills,
     completed: !!signer.completedAt,
     allComplete: !!doc.completedAt,
+    brand: senderBrand,
   });
 }
 
