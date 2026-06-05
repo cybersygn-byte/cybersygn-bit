@@ -2736,6 +2736,68 @@ button { font: inherit; cursor: pointer; }
   margin-top: var(--s-3);
 }
 
+/* ── Roadmap (slice 87) ──────────────────────────────── */
+.roadmap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-5);
+}
+@media (max-width: 980px) {
+  .roadmap { grid-template-columns: 1fr; }
+}
+.roadmap__column h2 { margin-bottom: 4px; }
+.roadmap__column .caption { margin-bottom: var(--s-4); color: var(--text-3); }
+.roadmap__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+.roadmap__item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  transition: border-color 140ms var(--ease), transform 200ms var(--ease);
+}
+.roadmap__item:hover { border-color: var(--accent-line); transform: translateY(-1px); }
+.roadmap__vote {
+  appearance: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  padding: 6px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 140ms var(--ease), border-color 140ms var(--ease);
+}
+.roadmap__vote:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.roadmap__vote:disabled { opacity: 0.6; cursor: not-allowed; }
+.roadmap__vote.is-voted {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+.roadmap__vote-arrow { font-size: 10px; line-height: 1; }
+.roadmap__vote-count { font-variant-numeric: tabular-nums; }
+.roadmap__title { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.roadmap__desc { margin: 0; color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; }
+
 /* ── Co-signing presence pill (slice 86) ────────────────
    Floats top-right of the viewport while in signer mode.
    Lists every signer with their initials swatch, name, and

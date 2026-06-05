@@ -285,6 +285,14 @@ async function main() {
 
   // /about/: founder page. Single static HTML with schema.org Person.
   const aboutSrc = join(SRC, 'about');
+  // Roadmap (slice 87).
+  const roadmapSrc = join(SRC, 'roadmap');
+  const roadmapOut = join(OUT, 'roadmap');
+  if (await exists(roadmapSrc)) {
+    await mkdir(roadmapOut, { recursive: true });
+    await copyFile(join(roadmapSrc, 'index.html'), join(roadmapOut, 'index.html'));
+    console.log('  wrote dist/roadmap/index.html');
+  }
   if (await exists(aboutSrc)) {
     const aboutOut = join(OUT, 'about');
     await mkdir(aboutOut, { recursive: true });

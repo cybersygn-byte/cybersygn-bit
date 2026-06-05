@@ -43,6 +43,7 @@ import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dat
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
+import { getRoadmap, castVote } from './roadmap.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import {
@@ -170,6 +171,19 @@ export default {
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
       return handleStatus(request, env, url);
+    }
+
+    // Public roadmap with voting.
+    if (request.method === 'GET' && url.pathname === '/api/roadmap') {
+      const data = await getRoadmap(env);
+      return jsonResponse(200, data);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/roadmap/vote') {
+      const body = await readJsonBody(request);
+      if (body.error) return jsonResponse(400, body.error);
+      const { itemId, voter } = body.value || {};
+      const r = await castVote(env, itemId, voter);
+      return jsonResponse(r.ok ? 200 : 400, r);
     }
 
     // Affiliate program endpoints.

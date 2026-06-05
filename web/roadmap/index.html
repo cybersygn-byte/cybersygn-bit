@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn roadmap. Vote on what we build next.</title>
+  <meta name="description" content="What CyberSygn is shipping, building, and planning. Vote on the items you want next. Founder reads every vote." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/roadmap/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">roadmap</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Roadmap">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../dashboard/">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Public roadmap.</p>
+        <h1 class="h-display hero__title">
+          What we ship<span class="dot">.</span><br>
+          <span class="accent">In your hands</span><span class="dot">.</span>
+        </h1>
+        <p class="lede hero__lede" style="max-width: 720px;">
+          Below: everything we are shipping, building, and planning. Vote on the items that
+          matter most to you. The founder reads every vote and reorders this list weekly.
+          One vote per browser. No login required.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="roadmap" id="roadmap-root">
+          <div class="roadmap__column" data-status="planned">
+            <h2 class="h-section">Planned</h2>
+            <p class="caption">Up for vote. Top three each month enter In Progress.</p>
+            <ol class="roadmap__list" id="roadmap-planned"></ol>
+          </div>
+          <div class="roadmap__column" data-status="in-progress">
+            <h2 class="h-section">In progress</h2>
+            <p class="caption">Currently shipping.</p>
+            <ol class="roadmap__list" id="roadmap-in-progress"></ol>
+          </div>
+          <div class="roadmap__column" data-status="shipped">
+            <h2 class="h-section">Shipped</h2>
+            <p class="caption">Recently delivered. Live on cybersygn.io.</p>
+            <ol class="roadmap__list" id="roadmap-shipped"></ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Stable per-browser voter id. Random uuid in a 5-year cookie.
+      function voterId() {
+        var m = document.cookie.match(/(?:^|;\s*)cybersygn_voter=([a-z0-9-]{8,64})/);
+        if (m) return m[1];
+        var id = '';
+        var hex = '0123456789abcdef';
+        for (var i = 0; i < 32; i++) id += hex[(Math.random() * 16) | 0];
+        var expires = new Date(Date.now() + 5 * 365 * 24 * 60 * 60 * 1000).toUTCString();
+        document.cookie = 'cybersygn_voter=' + id + '; path=/; expires=' + expires + '; SameSite=Lax';
+        return id;
+      }
+      function votedSet() {
+        try { return new Set(JSON.parse(localStorage.getItem('cybersygn.voted') || '[]')); }
+        catch (e) { return new Set(); }
+      }
+      function markVoted(itemId) {
+        var s = votedSet(); s.add(itemId);
+        try { localStorage.setItem('cybersygn.voted', JSON.stringify([...s])); } catch (e) {}
+      }
+      function escape(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+        });
+      }
+      function render(items) {
+        var voted = votedSet();
+        var byStatus = { 'planned': [], 'in-progress': [], 'shipped': [] };
+        items.forEach(function (it) { (byStatus[it.status] || []).push(it); });
+        // Sort planned + in-progress by votes desc; shipped by order in array.
+        byStatus.planned.sort(function (a, b) { return (b.votes || 0) - (a.votes || 0); });
+        byStatus['in-progress'].sort(function (a, b) { return (b.votes || 0) - (a.votes || 0); });
+        Object.keys(byStatus).forEach(function (status) {
+          var listId = status === 'planned' ? 'roadmap-planned'
+            : status === 'in-progress' ? 'roadmap-in-progress' : 'roadmap-shipped';
+          var list = document.getElementById(listId);
+          if (!list) return;
+          list.innerHTML = byStatus[status].map(function (it) {
+            var disabled = status !== 'planned' || voted.has(it.id);
+            return '<li class="roadmap__item">' +
+              '<button type="button" class="roadmap__vote ' + (voted.has(it.id) ? 'is-voted' : '') + '"' +
+              ' data-item="' + escape(it.id) + '"' + (disabled ? ' disabled' : '') + '>' +
+                '<span class="roadmap__vote-arrow">▲</span>' +
+                '<span class="roadmap__vote-count">' + (it.votes || 0) + '</span>' +
+              '</button>' +
+              '<div class="roadmap__copy">' +
+                '<h3 class="roadmap__title">' + escape(it.title) + '</h3>' +
+                '<p class="roadmap__desc">' + escape(it.desc) + '</p>' +
+              '</div>' +
+            '</li>';
+          }).join('');
+        });
+        // Wire votes.
+        document.querySelectorAll('.roadmap__vote:not([disabled])').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var itemId = btn.getAttribute('data-item');
+            var countEl = btn.querySelector('.roadmap__vote-count');
+            var current = parseInt(countEl.textContent, 10) || 0;
+            // Optimistic UI.
+            countEl.textContent = String(current + 1);
+            btn.classList.add('is-voted');
+            btn.disabled = true;
+            markVoted(itemId);
+            try { window.cybersygn && window.cybersygn.track && window.cybersygn.track('roadmap_vote', { itemId: itemId }); } catch (e) {}
+            fetch('/api/roadmap/vote', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ itemId: itemId, voter: voterId() }),
+            }).catch(function () {});
+          });
+        });
+      }
+      fetch('/api/roadmap').then(function (r) { return r.json(); }).then(function (d) {
+        if (d && Array.isArray(d.items)) render(d.items);
+      }).catch(function () {});
+    })();
+  </script>
+
+</body>
+</html>
