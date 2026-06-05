@@ -104,6 +104,36 @@ export async function checkFreeTierAllowance(env, senderId) {
 }
 
 /**
+ * Set the Charter wall display fields on a sub record. Used by the
+ * Charter onboarding form so a member can fill in their display name
+ * and city for the public wall. Owner-by-senderId auth check is the
+ * caller's responsibility.
+ *
+ * Returns the updated record on success, null if the record doesn't
+ * exist or isn't a Charter member.
+ */
+export async function setCharterProfile(env, senderId, { displayName, city }) {
+  if (!senderId) return null;
+  const storage = pickStorage(env);
+  const raw = await storage.get(`sub:${senderId}`);
+  if (!raw) return null;
+  let rec;
+  try { rec = JSON.parse(raw); } catch (e) { return null; }
+  if (!rec || rec.tier !== 'founding' || typeof rec.foundingNumber !== 'number') {
+    return null;
+  }
+  if (typeof displayName === 'string') {
+    rec.charterDisplayName = displayName.trim().slice(0, 40);
+  }
+  if (typeof city === 'string') {
+    rec.charterCity = city.trim().slice(0, 60);
+  }
+  rec.updatedAt = new Date().toISOString();
+  await storage.put(`sub:${senderId}`, JSON.stringify(rec));
+  return rec;
+}
+
+/**
  * Read the live founding-member count. Used by the marketing page to
  * render "X of 100 founding spots remaining" honestly.
  */

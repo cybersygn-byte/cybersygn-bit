@@ -49,6 +49,7 @@ import {
   incrementUsage,
   checkFreeTierAllowance,
   getFoundingCount,
+  setCharterProfile,
   foundingCap,
   createCheckoutSession,
   createBillingPortalSession,
@@ -175,6 +176,9 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/charter/wall') {
       return handleCharterWall(env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/charter/profile') {
+      return handleCharterProfile(request, env, url);
     }
 
     // ---- Multi-signer routes ------------------------------------------
@@ -811,6 +815,55 @@ async function handleCharterWall(env) {
       'access-control-allow-origin': '*',
     },
   });
+}
+
+/**
+ * Charter member self-edit: update displayName + city for the public
+ * wall. Mirrors the auth pattern of /api/billing/portal — caller passes
+ * senderId in the body, and the server only updates if a sub:senderId
+ * record exists AND the record is a Charter member with a foundingNumber.
+ * Owner override via X-CyberSygn-Owner is also accepted.
+ *
+ * No editing of foundingNumber, joinedAt, or any billing field.
+ */
+async function handleCharterProfile(request, env, url) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+  const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!senderId) return jsonResponse(400, { error: 'missing_sender_id' });
+
+  // Owner override allowed but not required. Existing trust model on
+  // /api/billing/portal is "if you know the senderId, you can edit"
+  // (clients store it in localStorage). This endpoint inherits that.
+  // PII risk is bounded: the fields update only the Charter wall
+  // display name + city — no email, no billing, no auth state.
+  const displayName = typeof payload.displayName === 'string' ? payload.displayName : '';
+  const city = typeof payload.city === 'string' ? payload.city : '';
+
+  // Light content moderation: strip control chars + cap length. Display
+  // is rendered with escapeHtml on the client so script injection isn't
+  // a concern, but unicode-only names + extreme lengths are still ugly.
+  const cleanName = displayName.replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, 40);
+  const cleanCity = city.replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, 60);
+
+  try {
+    const updated = await setCharterProfile(env, senderId, {
+      displayName: cleanName,
+      city: cleanCity,
+    });
+    if (!updated) {
+      return jsonResponse(404, { error: 'not_charter_member', message: 'No Charter sub found for this senderId.' });
+    }
+    return jsonResponse(200, {
+      ok: true,
+      number: updated.foundingNumber,
+      displayName: updated.charterDisplayName || '',
+      city: updated.charterCity || '',
+    });
+  } catch (err) {
+    return jsonResponse(500, { error: 'update_failed', message: err && err.message ? err.message : 'unknown' });
+  }
 }
 
 // ---- /api/health -----------------------------------------------------------

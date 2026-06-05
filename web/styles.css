@@ -1614,6 +1614,80 @@ button { font: inherit; cursor: pointer; }
 .toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 3px; }
 
 /* Dashboard subscription banner */
+/* Charter wall self-edit panel on the dashboard. Lets Charter members
+   set their public display name + city. Mirrors the identity-panel
+   visual treatment so it feels native to the dashboard chrome. */
+.charter-panel {
+  margin: var(--s-3) 0;
+  padding: var(--s-4);
+  background: linear-gradient(135deg, var(--accent-soft), transparent);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg);
+}
+.charter-panel__head {
+  margin-bottom: var(--s-3);
+}
+.charter-panel__body {
+  margin: 4px 0 0;
+  font-size: var(--t-sm);
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.charter-panel__body strong {
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+.charter-panel__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+}
+@media (max-width: 640px) {
+  .charter-panel__form { grid-template-columns: 1fr; }
+}
+.charter-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.charter-panel__label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+.charter-panel__input {
+  padding: 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.charter-panel__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-line);
+}
+.charter-panel__buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.charter-panel__status {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+.charter-panel__status--ok { color: var(--ok); }
+.charter-panel__status--err { color: var(--warn); }
+
 .sub-banner {
   display: flex;
   align-items: center;
