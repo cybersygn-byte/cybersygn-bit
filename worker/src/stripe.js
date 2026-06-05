@@ -366,7 +366,78 @@ async function onCheckoutCompleted(env, session) {
 
   await storage.put(`sub:${senderId}`, JSON.stringify(record));
   await storage.put(`stripe:customer:${customerId}`, senderId);
+
+  // Charter welcome email. Fires exactly once per founding number
+  // assignment, gated by a KV marker so webhook retries don't dupe.
+  // Failure of the email send doesn't block the rest of the checkout
+  // pipeline — webhook returns 200 either way.
+  if (tier === 'founding' && typeof record.foundingNumber === 'number' && record.foundingNumber > 0) {
+    try {
+      await maybeSendCharterWelcome(env, {
+        senderId,
+        customerId,
+        foundingNumber: record.foundingNumber,
+        sessionEmail: session.customer_details?.email || session.customer_email || null,
+        sessionName: session.customer_details?.name || null,
+      });
+    } catch (err) {
+      console.error('[stripe] charter welcome failed:', err && err.message);
+    }
+  }
+
   return { applied: true, senderId, tier, status: record.status };
+}
+
+/**
+ * Send the welcome-to-Charter email exactly once per founding number.
+ * Idempotency lives in a KV marker at meta:charter-welcomed:<senderId>
+ * so webhook retries — or multiple checkout-completed events — never
+ * dupe-send.
+ *
+ * Email destination resolution priority:
+ *   1. session.customer_details.email (the Stripe Checkout email)
+ *   2. fetched Stripe customer.email
+ *   3. silently skip
+ *
+ * The body addresses the customer by name when available.
+ */
+async function maybeSendCharterWelcome(env, { senderId, customerId, foundingNumber, sessionEmail, sessionName }) {
+  const storage = pickStorage(env);
+  const markerKey = `meta:charter-welcomed:${senderId}`;
+  const existing = await storage.get(markerKey).catch(() => null);
+  if (existing) return { skipped: 'already_welcomed' };
+
+  let email = sessionEmail || null;
+  let name = sessionName || null;
+  if (!email && customerId) {
+    try {
+      const cust = await stripeFetch(env, 'GET', `/customers/${customerId}`, null);
+      email = cust?.email || null;
+      name = name || cust?.name || null;
+    } catch (e) {}
+  }
+  if (!email) {
+    return { skipped: 'no_email' };
+  }
+  const firstName = (name || '').split(/\s+/)[0] || '';
+  const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
+
+  // Lazy import to avoid the email-html module loading for non-email paths.
+  const { sendCharterWelcome } = await import('./email.js');
+  const result = await sendCharterWelcome(env, {
+    to: email,
+    name: firstName,
+    foundingNumber,
+    appUrl,
+  });
+
+  // Mark as sent regardless of Resend success — a retry on a real send
+  // failure could spam, and the dashboard surfaces the Charter card
+  // already so the member can still find their wall edit.
+  await storage.put(markerKey, new Date().toISOString(), {
+    expirationTtl: 60 * 60 * 24 * 365 * 5,
+  });
+  return { sent: true, deliveryResult: result };
 }
 
 async function onSubscriptionUpserted(env, sub) {

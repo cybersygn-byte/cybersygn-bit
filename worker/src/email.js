@@ -24,6 +24,7 @@ import {
   renderDripDay1Html,
   renderDripDay3Html,
   renderDripDay7Html,
+  renderCharterWelcomeHtml,
 } from './email-html.js';
 
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
@@ -272,6 +273,46 @@ export async function sendDripDay7(env, { to, name, appUrl }) {
     'I read and reply to every email at nathan@cybersygn.io.',
   ].join('\n');
   const html = renderDripDay7Html({ name, url });
+  return deliver(env, { to, subject, text, html });
+}
+
+/**
+ * Welcome-to-Charter email. Fires once per founding subscription when
+ * the foundingNumber gets assigned (via Stripe webhook). Calibrated to
+ * the magnitude of what just happened: someone made a 5-year+ economic
+ * commitment to the product. The email should feel earned, personal,
+ * and confident — not promotional.
+ */
+export async function sendCharterWelcome(env, { to, name, foundingNumber, appUrl }) {
+  const url = appUrl || 'https://cybersygn.io';
+  const numLabel = String(foundingNumber).padStart(3, '0');
+  const subject = `Welcome to the Charter — you are #${numLabel}.`;
+  const text = [
+    `${name || 'Hello'},`,
+    '',
+    `You are Charter member #${numLabel}.`,
+    '',
+    'That means: $9 per month, locked for the life of your account, forever.',
+    'A direct line to me. A vote on what we build next. A permanent place on',
+    `the public Charter wall at ${url}/charter/`,
+    '',
+    'Two things to do in the next minute, if you want them:',
+    '',
+    `1. Open your dashboard at ${url}/dashboard/ and find the Charter card.`,
+    '   You can set how your name and city appear on the wall — or leave it',
+    '   minimal. Whatever you prefer.',
+    '',
+    `2. Reply to this email and tell me what you sign and how often. Even one`,
+    '   sentence helps me build the product around your actual use case.',
+    '',
+    `Either way, you are set. Sign documents at ${url}/preview/ — unlimited,`,
+    'no friction, no upsell. The product is yours now.',
+    '',
+    'Nathan',
+    'Founder, CyberSygn',
+    'nathan@cybersygn.io',
+  ].join('\n');
+  const html = renderCharterWelcomeHtml({ name, foundingNumber, url });
   return deliver(env, { to, subject, text, html });
 }
 

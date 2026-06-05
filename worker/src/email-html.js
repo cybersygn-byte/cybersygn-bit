@@ -341,3 +341,58 @@ export function renderDripDay7Html({ name, url }) {
       </p>`,
   });
 }
+
+/**
+ * Welcome-to-Charter email. Fires once when a founding number is
+ * assigned by the webhook. Earned, personal, no upsell — they
+ * already paid. The job of this email is to anchor the relationship.
+ */
+export function renderCharterWelcomeHtml({ name, foundingNumber, url }) {
+  const num = String(foundingNumber).padStart(3, '0');
+  const dashboard = `${url}/dashboard/`;
+  const wall = `${url}/charter/`;
+  const preview = `${url}/preview/`;
+  return shell({
+    preheader: `You are Charter member #${num}. \$9 for life, locked.`,
+    body: `
+      <p style="margin:0 0 4px 0;font-family:${FONT_STACK};font-size:12px;line-height:1.2;letter-spacing:0.14em;text-transform:uppercase;color:${CYAN};">
+        Charter member.
+      </p>
+      <h1 class="cs-title" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-0.025em;color:${NAVY};">
+        Welcome. You are #${num}.
+      </h1>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        Hello ${esc(name || 'there')},
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        That means $9 per month, locked for the life of your account, forever.
+        A direct line to me. A vote on what we build next. And a permanent
+        place on the public <a href="${esc(wall)}" style="color:${CYAN};">Charter wall</a>.
+      </p>
+      <p class="cs-text" style="margin:0 0 20px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        <strong>Two things to do in the next minute,</strong> if you want them:
+      </p>
+      <ol style="margin:0 0 20px 20px;padding:0;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:${INK};">
+        <li style="margin-bottom:10px;">
+          Open your <a href="${esc(dashboard)}" style="color:${CYAN};">dashboard</a> and find the Charter card.
+          Set how your name and city appear on the wall — or leave it minimal.
+          Whatever you prefer.
+        </li>
+        <li>
+          Reply to this email and tell me what you sign and how often. Even
+          one sentence helps me build the product around your use case.
+        </li>
+      </ol>
+      ${ctaButton({ url: preview, label: 'Sign your first unlimited document →' })}
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        Either way, you are set. The product is yours now. No upsells, no
+        limits, no friction.
+      </p>
+      <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
+      <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.6;color:${MUTED};">
+        Nathan, founder. <a href="mailto:nathan@cybersygn.io" style="color:${CYAN};">nathan@cybersygn.io</a>.
+        <br>
+        Built in Colorado. Replies within a day, every day.
+      </p>`,
+  });
+}
