@@ -606,17 +606,17 @@ button { font: inherit; cursor: pointer; }
   padding-block: clamp(60px, 10vh, 120px) clamp(48px, 8vh, 96px);
 }
 
-/* ── Charter wall (web/charter/) ─────────────────────────
-   Public grid of every Charter member. Card per member with
+/* ── Origin wall (web/origin/) ─────────────────────────
+   Public grid of every Origin member. Card per member with
    number, optional name, optional city, join date. Empty
    state pitches the first spot. */
-.charter-grid {
+.origin-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--s-3);
   margin-top: var(--s-4);
 }
-.charter-card {
+.origin-card {
   display: flex;
   gap: var(--s-3);
   padding: var(--s-4);
@@ -626,12 +626,12 @@ button { font: inherit; cursor: pointer; }
   transition: border-color 200ms var(--ease), transform 200ms var(--ease), box-shadow 200ms var(--ease);
   position: relative;
 }
-.charter-card:hover {
+.origin-card:hover {
   border-color: var(--accent-line);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px -12px rgba(1,20,52,0.18);
 }
-.charter-card__num {
+.origin-card__num {
   font-family: var(--mono);
   font-size: 14px;
   font-weight: 700;
@@ -645,11 +645,11 @@ button { font: inherit; cursor: pointer; }
   flex: 0 0 auto;
   font-variant-numeric: tabular-nums;
 }
-.charter-card__body {
+.origin-card__body {
   flex: 1 1 auto;
   min-width: 0;
 }
-.charter-card__name {
+.origin-card__name {
   margin: 0;
   font-family: var(--display, var(--sans));
   font-size: 15px;
@@ -659,14 +659,14 @@ button { font: inherit; cursor: pointer; }
   line-height: 1.25;
   word-break: break-word;
 }
-.charter-card__city {
+.origin-card__city {
   margin: 2px 0 0;
   font-family: var(--sans);
   font-size: 13px;
   color: var(--text-2);
   line-height: 1.4;
 }
-.charter-card__date {
+.origin-card__date {
   margin: 6px 0 0;
   font-family: var(--mono);
   font-size: 11px;
@@ -674,7 +674,7 @@ button { font: inherit; cursor: pointer; }
   letter-spacing: 0.02em;
 }
 
-.charter-empty {
+.origin-empty {
   text-align: center;
   padding: var(--s-7) var(--s-5);
   border: 1px dashed var(--line-strong);
@@ -682,7 +682,7 @@ button { font: inherit; cursor: pointer; }
   background: linear-gradient(180deg, transparent, var(--accent-soft));
   margin-top: var(--s-4);
 }
-.charter-empty__kicker {
+.origin-empty__kicker {
   font-family: var(--mono);
   font-size: var(--t-xs);
   text-transform: uppercase;
@@ -690,10 +690,10 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent-text);
   margin: 0 0 var(--s-2);
 }
-.charter-empty__title {
+.origin-empty__title {
   margin: 0 0 var(--s-3);
 }
-.charter-empty__lede {
+.origin-empty__lede {
   margin: 0 auto var(--s-5);
   max-width: 480px;
   color: var(--text-2);
@@ -1614,51 +1614,51 @@ button { font: inherit; cursor: pointer; }
 .toast__close:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; border-radius: 3px; }
 
 /* Dashboard subscription banner */
-/* Charter wall self-edit panel on the dashboard. Lets Charter members
+/* Origin wall self-edit panel on the dashboard. Lets Origin members
    set their public display name + city. Mirrors the identity-panel
    visual treatment so it feels native to the dashboard chrome. */
-.charter-panel {
+.origin-panel {
   margin: var(--s-3) 0;
   padding: var(--s-4);
   background: linear-gradient(135deg, var(--accent-soft), transparent);
   border: 1px solid var(--accent-line);
   border-radius: var(--r-lg);
 }
-.charter-panel__head {
+.origin-panel__head {
   margin-bottom: var(--s-3);
 }
-.charter-panel__body {
+.origin-panel__body {
   margin: 4px 0 0;
   font-size: var(--t-sm);
   color: var(--text-2);
   line-height: 1.55;
 }
-.charter-panel__body strong {
+.origin-panel__body strong {
   color: var(--accent-text);
   font-variant-numeric: tabular-nums;
 }
-.charter-panel__form {
+.origin-panel__form {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--s-3);
   margin-bottom: var(--s-3);
 }
 @media (max-width: 640px) {
-  .charter-panel__form { grid-template-columns: 1fr; }
+  .origin-panel__form { grid-template-columns: 1fr; }
 }
-.charter-panel__field {
+.origin-panel__field {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.charter-panel__label {
+.origin-panel__label {
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-3);
 }
-.charter-panel__input {
+.origin-panel__input {
   padding: 8px 12px;
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
@@ -1668,25 +1668,25 @@ button { font: inherit; cursor: pointer; }
   font-size: var(--t-sm);
   transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
 }
-.charter-panel__input:focus {
+.origin-panel__input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-line);
 }
-.charter-panel__buttons {
+.origin-panel__buttons {
   display: flex;
   align-items: center;
   gap: var(--s-3);
   flex-wrap: wrap;
 }
-.charter-panel__status {
+.origin-panel__status {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--text-3);
   letter-spacing: 0.02em;
 }
-.charter-panel__status--ok { color: var(--ok); }
-.charter-panel__status--err { color: var(--warn); }
+.origin-panel__status--ok { color: var(--ok); }
+.origin-panel__status--err { color: var(--warn); }
 
 .sub-banner {
   display: flex;
@@ -3549,6 +3549,205 @@ details[open] > .field-list__group--toggle::after {
 .layout--empty .result        { display: none; }
 .layout--loaded .dropzone-wrap { display: none; }
 .layout--loaded .result        { display: grid; }
+
+/* ============================================================================
+   APPLE-STYLE PREVIEW LAYER (slice 58)
+   Layered upgrades to the /preview/ page only, scoped via .layout--apple.
+   - Atmospheric background scene behind the dropzone card
+   - Bigger display typography, more whitespace, softer chrome
+   - Glass-blur on sidebar in result view
+   - Brand color discipline: navy/cyan/paper only
+   - Dark mode auto-honored via existing :root prefers-color-scheme tokens
+   ============================================================================ */
+
+.layout--apple { position: relative; isolation: isolate; }
+
+.preview-atmos {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.preview-atmos svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--text);
+}
+.preview-atmos__glow {
+  transform-origin: 50% 50%;
+  animation: paDrift 24s ease-in-out infinite alternate;
+}
+.preview-atmos__glow--a { animation-delay: 0s; }
+.preview-atmos__glow--b { animation-delay: -12s; }
+@keyframes paDrift {
+  0%   { transform: translate(0, 0)    scale(1.00); }
+  50%  { transform: translate(40px, -30px) scale(1.10); }
+  100% { transform: translate(-30px, 40px) scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .preview-atmos__glow { animation: none; }
+}
+
+/* Layer the dropzone above the atmospheric scene. */
+.layout--apple .dropzone-wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 70vh;
+  padding-block: clamp(48px, 8vh, 96px);
+}
+.layout--apple .dropzone-card {
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: saturate(140%) blur(14px);
+  -webkit-backdrop-filter: saturate(140%) blur(14px);
+  border: 1px solid var(--line-2);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgba(1,20,52,0.05),
+    0 8px 24px -8px rgba(1,20,52,0.10),
+    0 40px 80px -32px rgba(1,20,52,0.18);
+}
+.layout--apple .dropzone-card__copy {
+  padding: clamp(28px, 4vw, 56px);
+}
+.layout--apple .dropzone-card__headline {
+  font-size: clamp(36px, 4.5vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  margin-bottom: clamp(16px, 2vw, 24px);
+}
+.layout--apple .dropzone-card__kicker {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  margin-bottom: clamp(16px, 2vw, 20px);
+}
+.layout--apple .dropzone-card__lede {
+  font-size: clamp(15px, 1.2vw, 18px);
+  line-height: 1.55;
+  color: var(--text-2);
+  margin-bottom: clamp(24px, 3vw, 36px);
+  max-width: 52ch;
+}
+.layout--apple .dropzone-card__actions {
+  gap: 12px;
+}
+.layout--apple .upload-choice {
+  padding: 14px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  border-radius: 12px;
+  transition:
+    transform 220ms var(--ease),
+    box-shadow 220ms var(--ease),
+    background 160ms var(--ease);
+}
+.layout--apple .upload-choice.btn--primary {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.18) inset,
+    0 6px 18px -6px var(--accent-glow);
+}
+.layout--apple .upload-choice.btn--primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.22) inset,
+    0 10px 24px -8px var(--accent-glow);
+}
+.layout--apple .dropzone-card__or {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  margin-left: 4px;
+}
+.layout--apple .dropzone-card__hints li {
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: var(--sans);
+  letter-spacing: 0;
+}
+.layout--apple .dropzone-card__hints li::before {
+  color: var(--accent);
+}
+
+/* Free-gate form: a touch more breathing room and a softer container. */
+.layout--apple .free-gate {
+  margin-top: clamp(24px, 3vw, 40px);
+  padding: clamp(20px, 2.5vw, 32px);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-2) 70%, transparent);
+  border: 1px solid var(--line);
+}
+.layout--apple .free-gate__title {
+  font-size: clamp(20px, 2vw, 26px);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Drag-over state: cyan glow ring instead of a tint. More premium. */
+.layout--apple .dropzone-wrap.is-dragging {
+  background: transparent;
+}
+.layout--apple .dropzone-wrap.is-dragging .dropzone-card {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 4px var(--accent-line),
+    0 8px 24px -8px rgba(1,20,52,0.10),
+    0 40px 80px -32px rgba(1,20,52,0.18);
+  transform: scale(1.008);
+}
+
+/* ── Result view: soft floating chrome, glass sidebar ──────────── */
+.layout--apple .result__pages {
+  padding-block: clamp(24px, 4vh, 48px) clamp(64px, 10vh, 120px);
+}
+.layout--apple .page-shell {
+  border-radius: 6px;
+  box-shadow:
+    0 1px 2px rgba(1,20,52,0.06),
+    0 24px 48px -20px rgba(1,20,52,0.18),
+    0 60px 100px -32px rgba(1,20,52,0.10);
+}
+.layout--apple .sidebar {
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: saturate(150%) blur(20px);
+  -webkit-backdrop-filter: saturate(150%) blur(20px);
+}
+.layout--apple .sidebar__head {
+  padding: clamp(20px, 2vw, 28px) clamp(20px, 2vw, 28px) clamp(16px, 1.6vw, 22px);
+}
+.layout--apple .doc-card__title {
+  font-size: 18px;
+  letter-spacing: -0.018em;
+}
+.layout--apple .sidebar__action {
+  padding: clamp(16px, 1.8vw, 22px) clamp(20px, 2vw, 28px);
+}
+
+/* Floating toolbar polish: slightly bigger, more shadow lift. */
+.layout--apple .doc-toolbar {
+  padding: 7px 9px;
+  box-shadow:
+    0 1px 2px rgba(1,20,52,0.06),
+    0 16px 36px -20px rgba(1,20,52,0.22);
+}
+
+/* Dark mode: atmosphere glow brightens slightly so the scene reads. */
+@media (prefers-color-scheme: dark) {
+  .layout--apple .dropzone-card {
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    border-color: var(--line-2);
+  }
+  .layout--apple .sidebar {
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+  }
+  .preview-atmos__glow--a { opacity: 1.3; }
+}
 
 /* ---- Dropzone (empty state) ---- */
 .dropzone-wrap {

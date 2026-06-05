@@ -24,7 +24,7 @@ import {
   renderDripDay1Html,
   renderDripDay3Html,
   renderDripDay7Html,
-  renderCharterWelcomeHtml,
+  renderOriginWelcomeHtml,
 } from './email-html.js';
 
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
@@ -240,11 +240,11 @@ export async function sendDripDay3(env, { to, name, appUrl }) {
  * Drip day 7 — conversion ask.
  * Sent 168 hours after signup. By now they have seen the product, used
  * it, maybe saved a template. They know what they are choosing between.
- * Charter is the FOMO play; Solo is the soft-sell secondary.
+ * Origin is the FOMO play; Solo is the soft-sell secondary.
  */
 export async function sendDripDay7(env, { to, name, appUrl }) {
   const url = appUrl || 'https://cybersygn.io';
-  const subject = `One week in. Charter rate is still open.`;
+  const subject = `One week in. Origin rate is still open.`;
   const text = [
     `${name || 'Hello'},`,
     '',
@@ -252,19 +252,19 @@ export async function sendDripDay7(env, { to, name, appUrl }) {
     'for you, this is the right time to lock the founder rate before it',
     'closes for good.',
     '',
-    'Charter: $9/month, locked for the life of your account. 100 spots,',
+    'Origin: $9/month, locked for the life of your account. 100 spots,',
     'limited, never re-opens. You get the same product as Solo at the same',
     'features, $3 less every month, forever. Plus a direct line to me, a',
-    'vote on what we build next, and your name on the Charter wall when we',
+    'vote on what we build next, and your name on the Origin wall when we',
     'ship it.',
     '',
-    `Claim a Charter spot: ${url}/#founding`,
+    `Claim a Origin spot: ${url}/#founding`,
     '',
-    'If Charter is full or not your thing, Solo is $12/month with no cap.',
+    'If Origin is full or not your thing, Solo is $12/month with no cap.',
     '',
     `See pricing: ${url}/#pricing`,
     '',
-    'Honest math: at $60/hour, Charter pays for itself the first time you',
+    'Honest math: at $60/hour, Origin pays for itself the first time you',
     'avoid 9 minutes of dragging boxes in DocuSign. Two contracts a month',
     'and the math is no longer interesting.',
     '',
@@ -277,28 +277,28 @@ export async function sendDripDay7(env, { to, name, appUrl }) {
 }
 
 /**
- * Welcome-to-Charter email. Fires once per founding subscription when
+ * Welcome-to-Origin email. Fires once per founding subscription when
  * the foundingNumber gets assigned (via Stripe webhook). Calibrated to
  * the magnitude of what just happened: someone made a 5-year+ economic
  * commitment to the product. The email should feel earned, personal,
  * and confident — not promotional.
  */
-export async function sendCharterWelcome(env, { to, name, foundingNumber, appUrl }) {
+export async function sendOriginWelcome(env, { to, name, foundingNumber, appUrl }) {
   const url = appUrl || 'https://cybersygn.io';
   const numLabel = String(foundingNumber).padStart(3, '0');
-  const subject = `Welcome to the Charter — you are #${numLabel}.`;
+  const subject = `Welcome to the Origin — you are #${numLabel}.`;
   const text = [
     `${name || 'Hello'},`,
     '',
-    `You are Charter member #${numLabel}.`,
+    `You are Origin member #${numLabel}.`,
     '',
     'That means: $9 per month, locked for the life of your account, forever.',
     'A direct line to me. A vote on what we build next. A permanent place on',
-    `the public Charter wall at ${url}/charter/`,
+    `the public Origin wall at ${url}/origin/`,
     '',
     'Two things to do in the next minute, if you want them:',
     '',
-    `1. Open your dashboard at ${url}/dashboard/ and find the Charter card.`,
+    `1. Open your dashboard at ${url}/dashboard/ and find the Origin card.`,
     '   You can set how your name and city appear on the wall — or leave it',
     '   minimal. Whatever you prefer.',
     '',
@@ -312,7 +312,7 @@ export async function sendCharterWelcome(env, { to, name, foundingNumber, appUrl
     'Founder, CyberSygn',
     'nathan@cybersygn.io',
   ].join('\n');
-  const html = renderCharterWelcomeHtml({ name, foundingNumber, url });
+  const html = renderOriginWelcomeHtml({ name, foundingNumber, url });
   return deliver(env, { to, subject, text, html });
 }
 

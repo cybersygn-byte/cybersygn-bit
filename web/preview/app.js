@@ -260,12 +260,12 @@ function paintLossAversionBanner(remaining) {
 
   if (remaining === 1) {
     showToast(
-      'Last free send. Lock $9 for life with Charter — 100 spots, going fast.',
-      { action: { href: '/#founding', label: 'See Charter →' } },
+      'Last free send. Lock $9 for life with Origin — 100 spots, going fast.',
+      { action: { href: '/#founding', label: 'See Origin →' } },
     );
   } else {
     showToast(
-      'You used all 3 free sends. Charter is $9/mo locked for life; Solo is $12 with no cap.',
+      'You used all 3 free sends. Origin is $9/mo locked for life; Solo is $12 with no cap.',
       { action: { href: '/#pricing', label: 'Pick a plan →' } },
     );
   }
@@ -2680,7 +2680,7 @@ async function onSignClick() {
  * Conversion choreography: when the user finishes a download, surface
  * how much time CyberSygn just saved them vs. dragging boxes in
  * DocuSign. Anchored time savings + dollar value at $60/hr makes the
- * Charter/Solo price feel cheap by comparison. Pure psychology — the
+ * Origin/Solo price feel cheap by comparison. Pure psychology — the
  * actual download is identical to what we shipped before this nudge.
  */
 function showSavedTimeToast(fieldCount) {
@@ -2691,8 +2691,8 @@ function showSavedTimeToast(fieldCount) {
   const dollarsAt60 = Math.round((totalSeconds / 3600) * 60);
   const minutesLabel = minutes === 1 ? 'minute' : 'minutes';
   showToast(
-    `Saved you ${minutes} ${minutesLabel} vs DocuSign manual placement` +
-    (dollarsAt60 >= 5 ? ` — about $${dollarsAt60} at $60/hr.` : '.'),
+    `Saved you about ${minutes} ${minutesLabel} of manual field placement` +
+    (dollarsAt60 >= 5 ? ` — roughly $${dollarsAt60} of your time at $60/hr.` : '.'),
     { action: { href: '/#founding', label: 'Lock $9 for life →' } },
   );
 }

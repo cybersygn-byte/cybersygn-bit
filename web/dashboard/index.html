@@ -199,35 +199,35 @@
       </aside>
 
       <!--
-        Charter wall card. Shown only to Charter members. Lets them set
+        Origin wall card. Shown only to Origin members. Lets them set
         the display name + city that appears on the public wall at
-        /charter/. The "appears as" preview reflects what the wall card
-        will look like. Save fires POST /api/charter/profile.
+        /origin/. The "appears as" preview reflects what the wall card
+        will look like. Save fires POST /api/origin/profile.
       -->
-      <section id="charter-panel" class="charter-panel" hidden aria-live="polite">
-        <div class="charter-panel__head">
+      <section id="origin-panel" class="origin-panel" hidden aria-live="polite">
+        <div class="origin-panel__head">
           <div>
-            <p class="kicker kicker--ink">Your Charter wall card.</p>
-            <p class="charter-panel__body">
-              You are Charter member <strong>#<span id="charter-panel-num">—</span></strong>.
-              Set how your card appears on the public <a href="/charter/" target="_blank" rel="noopener">Charter wall</a>.
+            <p class="kicker kicker--ink">Your Origin wall card.</p>
+            <p class="origin-panel__body">
+              You are Origin member <strong>#<span id="origin-panel-num">—</span></strong>.
+              Set how your card appears on the public <a href="/origin/" target="_blank" rel="noopener">Origin wall</a>.
               Leave either field empty to keep it minimal.
             </p>
           </div>
         </div>
-        <div class="charter-panel__form">
-          <label class="charter-panel__field">
-            <span class="charter-panel__label">Display name (optional)</span>
-            <input id="charter-name-input" class="charter-panel__input" type="text" maxlength="40" placeholder="Jane Doe" autocomplete="name" />
+        <div class="origin-panel__form">
+          <label class="origin-panel__field">
+            <span class="origin-panel__label">Display name (optional)</span>
+            <input id="origin-name-input" class="origin-panel__input" type="text" maxlength="40" placeholder="Jane Doe" autocomplete="name" />
           </label>
-          <label class="charter-panel__field">
-            <span class="charter-panel__label">City (optional)</span>
-            <input id="charter-city-input" class="charter-panel__input" type="text" maxlength="60" placeholder="Denver, CO" autocomplete="address-level2" />
+          <label class="origin-panel__field">
+            <span class="origin-panel__label">City (optional)</span>
+            <input id="origin-city-input" class="origin-panel__input" type="text" maxlength="60" placeholder="Denver, CO" autocomplete="address-level2" />
           </label>
         </div>
-        <div class="charter-panel__buttons">
-          <button id="charter-save" class="btn btn--ink btn--sm" type="button">Save to wall</button>
-          <span id="charter-save-status" class="charter-panel__status" aria-live="polite"></span>
+        <div class="origin-panel__buttons">
+          <button id="origin-save" class="btn btn--ink btn--sm" type="button">Save to wall</button>
+          <span id="origin-save-status" class="origin-panel__status" aria-live="polite"></span>
         </div>
       </section>
 
@@ -518,21 +518,21 @@
         });
       }
 
-      // Charter wall self-edit panel. Only shown for Charter (founding)
+      // Origin wall self-edit panel. Only shown for Origin (founding)
       // members who have a foundingNumber. The dashboard fetches the
-      // current displayName + city by hitting /api/charter/wall and
+      // current displayName + city by hitting /api/origin/wall and
       // finding the entry by number; the user can edit and save.
-      const charterPanel = document.getElementById('charter-panel');
-      if (charterPanel && tier === 'founding' && data.foundingNumber) {
-        const numEl = document.getElementById('charter-panel-num');
-        const nameInput = document.getElementById('charter-name-input');
-        const cityInput = document.getElementById('charter-city-input');
-        const saveBtn = document.getElementById('charter-save');
-        const statusEl = document.getElementById('charter-save-status');
+      const originPanel = document.getElementById('origin-panel');
+      if (originPanel && tier === 'founding' && data.foundingNumber) {
+        const numEl = document.getElementById('origin-panel-num');
+        const nameInput = document.getElementById('origin-name-input');
+        const cityInput = document.getElementById('origin-city-input');
+        const saveBtn = document.getElementById('origin-save');
+        const statusEl = document.getElementById('origin-save-status');
         if (numEl) numEl.textContent = String(data.foundingNumber);
         // Hydrate existing values from the public wall (cache-safe).
         try {
-          const wallRes = await fetch('/api/charter/wall', { headers: { 'cache-control': 'no-cache' } });
+          const wallRes = await fetch('/api/origin/wall', { headers: { 'cache-control': 'no-cache' } });
           if (wallRes.ok) {
             const wall = await wallRes.json();
             const me = (wall.members || []).find(m => m.number === data.foundingNumber);
@@ -549,7 +549,7 @@
             saveBtn.textContent = 'Saving.';
             if (statusEl) statusEl.textContent = '';
             try {
-              const res = await fetch('/api/charter/profile', {
+              const res = await fetch('/api/origin/profile', {
                 method: 'POST',
                 headers: { 'content-type': 'application/json', ...(headers || {}) },
                 body: JSON.stringify({
@@ -562,8 +562,8 @@
               if (res.ok && j.ok) {
                 saveBtn.textContent = 'Saved.';
                 if (statusEl) {
-                  statusEl.textContent = 'Wall card updated. Reload /charter/ to see it.';
-                  statusEl.className = 'charter-panel__status charter-panel__status--ok';
+                  statusEl.textContent = 'Wall card updated. Reload /origin/ to see it.';
+                  statusEl.className = 'origin-panel__status origin-panel__status--ok';
                 }
                 setTimeout(() => {
                   saveBtn.textContent = originalLabel;
@@ -573,7 +573,7 @@
                 saveBtn.textContent = 'Try again';
                 if (statusEl) {
                   statusEl.textContent = j.message || j.error || 'Could not save.';
-                  statusEl.className = 'charter-panel__status charter-panel__status--err';
+                  statusEl.className = 'origin-panel__status origin-panel__status--err';
                 }
                 saveBtn.disabled = false;
               }
@@ -581,13 +581,13 @@
               saveBtn.textContent = 'Try again';
               if (statusEl) {
                 statusEl.textContent = 'Network error. Try again.';
-                statusEl.className = 'charter-panel__status charter-panel__status--err';
+                statusEl.className = 'origin-panel__status origin-panel__status--err';
               }
               saveBtn.disabled = false;
             }
           });
         }
-        charterPanel.hidden = false;
+        originPanel.hidden = false;
       }
 
       banner.hidden = false;

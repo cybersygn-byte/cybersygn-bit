@@ -104,15 +104,15 @@ export async function checkFreeTierAllowance(env, senderId) {
 }
 
 /**
- * Set the Charter wall display fields on a sub record. Used by the
- * Charter onboarding form so a member can fill in their display name
+ * Set the Origin wall display fields on a sub record. Used by the
+ * Origin onboarding form so a member can fill in their display name
  * and city for the public wall. Owner-by-senderId auth check is the
  * caller's responsibility.
  *
  * Returns the updated record on success, null if the record doesn't
- * exist or isn't a Charter member.
+ * exist or isn't a Origin member.
  */
-export async function setCharterProfile(env, senderId, { displayName, city }) {
+export async function setOriginProfile(env, senderId, { displayName, city }) {
   if (!senderId) return null;
   const storage = pickStorage(env);
   const raw = await storage.get(`sub:${senderId}`);
@@ -123,10 +123,10 @@ export async function setCharterProfile(env, senderId, { displayName, city }) {
     return null;
   }
   if (typeof displayName === 'string') {
-    rec.charterDisplayName = displayName.trim().slice(0, 40);
+    rec.originDisplayName = displayName.trim().slice(0, 40);
   }
   if (typeof city === 'string') {
-    rec.charterCity = city.trim().slice(0, 60);
+    rec.originCity = city.trim().slice(0, 60);
   }
   rec.updatedAt = new Date().toISOString();
   await storage.put(`sub:${senderId}`, JSON.stringify(rec));
@@ -367,13 +367,13 @@ async function onCheckoutCompleted(env, session) {
   await storage.put(`sub:${senderId}`, JSON.stringify(record));
   await storage.put(`stripe:customer:${customerId}`, senderId);
 
-  // Charter welcome email. Fires exactly once per founding number
+  // Origin welcome email. Fires exactly once per founding number
   // assignment, gated by a KV marker so webhook retries don't dupe.
   // Failure of the email send doesn't block the rest of the checkout
   // pipeline — webhook returns 200 either way.
   if (tier === 'founding' && typeof record.foundingNumber === 'number' && record.foundingNumber > 0) {
     try {
-      await maybeSendCharterWelcome(env, {
+      await maybeSendOriginWelcome(env, {
         senderId,
         customerId,
         foundingNumber: record.foundingNumber,
@@ -381,7 +381,7 @@ async function onCheckoutCompleted(env, session) {
         sessionName: session.customer_details?.name || null,
       });
     } catch (err) {
-      console.error('[stripe] charter welcome failed:', err && err.message);
+      console.error('[stripe] origin welcome failed:', err && err.message);
     }
   }
 
@@ -389,8 +389,8 @@ async function onCheckoutCompleted(env, session) {
 }
 
 /**
- * Send the welcome-to-Charter email exactly once per founding number.
- * Idempotency lives in a KV marker at meta:charter-welcomed:<senderId>
+ * Send the welcome-to-Origin email exactly once per founding number.
+ * Idempotency lives in a KV marker at meta:origin-welcomed:<senderId>
  * so webhook retries — or multiple checkout-completed events — never
  * dupe-send.
  *
@@ -401,9 +401,9 @@ async function onCheckoutCompleted(env, session) {
  *
  * The body addresses the customer by name when available.
  */
-async function maybeSendCharterWelcome(env, { senderId, customerId, foundingNumber, sessionEmail, sessionName }) {
+async function maybeSendOriginWelcome(env, { senderId, customerId, foundingNumber, sessionEmail, sessionName }) {
   const storage = pickStorage(env);
-  const markerKey = `meta:charter-welcomed:${senderId}`;
+  const markerKey = `meta:origin-welcomed:${senderId}`;
   const existing = await storage.get(markerKey).catch(() => null);
   if (existing) return { skipped: 'already_welcomed' };
 
@@ -423,8 +423,8 @@ async function maybeSendCharterWelcome(env, { senderId, customerId, foundingNumb
   const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
 
   // Lazy import to avoid the email-html module loading for non-email paths.
-  const { sendCharterWelcome } = await import('./email.js');
-  const result = await sendCharterWelcome(env, {
+  const { sendOriginWelcome } = await import('./email.js');
+  const result = await sendOriginWelcome(env, {
     to: email,
     name: firstName,
     foundingNumber,
@@ -432,7 +432,7 @@ async function maybeSendCharterWelcome(env, { senderId, customerId, foundingNumb
   });
 
   // Mark as sent regardless of Resend success — a retry on a real send
-  // failure could spam, and the dashboard surfaces the Charter card
+  // failure could spam, and the dashboard surfaces the Origin card
   // already so the member can still find their wall edit.
   await storage.put(markerKey, new Date().toISOString(), {
     expirationTtl: 60 * 60 * 24 * 365 * 5,

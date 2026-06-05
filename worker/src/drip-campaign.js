@@ -16,7 +16,7 @@
  *     Habit formation; gives the user a reason to come back.
  *
  *   Day 7 (168h after signup):
- *     Conversion ask. Now they understand the product. Pitch Charter
+ *     Conversion ask. Now they understand the product. Pitch Origin
  *     ($9 locked for life, scarcity-anchored to 100 spots) as the
  *     no-brainer. Solo as the secondary path.
  *

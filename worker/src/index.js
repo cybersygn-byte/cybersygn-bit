@@ -50,7 +50,7 @@ import {
   incrementUsage,
   checkFreeTierAllowance,
   getFoundingCount,
-  setCharterProfile,
+  setOriginProfile,
   foundingCap,
   createCheckoutSession,
   createBillingPortalSession,
@@ -81,6 +81,18 @@ export default {
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
       return handleHealth(env);
+    }
+
+    // 301 redirects: Origin tier rename. Anyone with a /charter/* link
+    // (early Origin members, social shares, indexed pages) gets permanently
+    // redirected to /origin/*. Cheap, preserves SEO juice, keeps inbound
+    // links alive forever.
+    if (url.pathname === '/charter' || url.pathname === '/charter/') {
+      return Response.redirect('https://cybersygn.io/origin/', 301);
+    }
+    if (url.pathname.startsWith('/charter/')) {
+      const tail = url.pathname.slice('/charter/'.length);
+      return Response.redirect(`https://cybersygn.io/origin/${tail}`, 301);
     }
 
     if (request.method === 'POST' && url.pathname === '/detect') {
@@ -175,11 +187,11 @@ export default {
     if (request.method === 'GET' && url.pathname === '/api/billing/founding-count') {
       return handleFoundingCount(env);
     }
-    if (request.method === 'GET' && url.pathname === '/api/charter/wall') {
-      return handleCharterWall(env);
+    if (request.method === 'GET' && url.pathname === '/api/origin/wall') {
+      return handleOriginWall(env);
     }
-    if (request.method === 'POST' && url.pathname === '/api/charter/profile') {
-      return handleCharterProfile(request, env, url);
+    if (request.method === 'POST' && url.pathname === '/api/origin/profile') {
+      return handleOriginProfile(request, env, url);
     }
 
     // ---- Multi-signer routes ------------------------------------------
@@ -754,27 +766,27 @@ async function handleFoundingCount(env) {
 }
 
 /**
- * Public Charter wall: list every Charter member with their member
+ * Public Origin wall: list every Origin member with their member
  * number, optional display name + city, and join date. Drives social
- * proof on /charter/. No PII beyond what each member chose to show.
+ * proof on /origin/. No PII beyond what each member chose to show.
  *
  * Schema per member:
  *   { number, displayName, city, joinedAt }
  *
  * displayName + city default to '' if the member hasn't filled them in
- * (the Charter onboarding flow will collect these on a per-member basis
+ * (the Origin onboarding flow will collect these on a per-member basis
  * in a follow-up slice; for now the wall surfaces just member numbers
  * and join dates, which is enough to convey real signups exist).
  *
  * Cached at edge for 60s so the page can poll cheaply.
  */
-async function handleCharterWall(env) {
+async function handleOriginWall(env) {
   const taken = await getFoundingCount(env);
   const cap = foundingCap();
   const members = [];
   // List sub:* records on the raw KV binding (the storage abstraction
   // wraps get/put but not list). Small list — cap is 100 — so a single
-  // page suffices; if Charter ever grows past 1000 we'll add a
+  // page suffices; if Origin ever grows past 1000 we'll add a
   // denormalized index.
   const docsBinding = env && env.CYBERSYGN_DOCS;
   if (docsBinding && typeof docsBinding.list === 'function') {
@@ -790,13 +802,13 @@ async function handleCharterWall(env) {
         if (typeof rec.foundingNumber !== 'number' || rec.foundingNumber < 1) continue;
         members.push({
           number: rec.foundingNumber,
-          displayName: typeof rec.charterDisplayName === 'string' ? rec.charterDisplayName.slice(0, 40) : '',
-          city: typeof rec.charterCity === 'string' ? rec.charterCity.slice(0, 60) : '',
+          displayName: typeof rec.originDisplayName === 'string' ? rec.originDisplayName.slice(0, 40) : '',
+          city: typeof rec.originCity === 'string' ? rec.originCity.slice(0, 60) : '',
           joinedAt: rec.activatedAt || null,
         });
       }
     } catch (e) {
-      console.error('[charter-wall] list failed:', e && e.message);
+      console.error('[origin-wall] list failed:', e && e.message);
     }
   }
   // Order: lowest number first (chronological since numbers issue in order).
@@ -819,24 +831,24 @@ async function handleCharterWall(env) {
 }
 
 /**
- * Charter member self-edit: update displayName + city for the public
+ * Origin member self-edit: update displayName + city for the public
  * wall. Mirrors the auth pattern of /api/billing/portal — caller passes
  * senderId in the body, and the server only updates if a sub:senderId
- * record exists AND the record is a Charter member with a foundingNumber.
+ * record exists AND the record is a Origin member with a foundingNumber.
  * Owner override via X-CyberSygn-Owner is also accepted.
  *
  * No editing of foundingNumber, joinedAt, or any billing field.
  */
-async function handleCharterProfile(request, env, url) {
-  // Rate limit: 30 edits per hour per IP. Real Charter members will
+async function handleOriginProfile(request, env, url) {
+  // Rate limit: 30 edits per hour per IP. Real Origin members will
   // tweak their card a few times and walk away; this stops a script
   // from cycling through display names to grief the wall.
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) {
-    const limit = await checkRateLimit(env, `charter-profile:${ipKey(request)}`, [
+    const limit = await checkRateLimit(env, `origin-profile:${ipKey(request)}`, [
       { windowSec: 60 * 60, max: 30 },
     ]);
-    if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/charter/profile' });
+    if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/origin/profile' });
   }
 
   const body = await readJsonBody(request);
@@ -848,7 +860,7 @@ async function handleCharterProfile(request, env, url) {
   // Owner override allowed but not required. Existing trust model on
   // /api/billing/portal is "if you know the senderId, you can edit"
   // (clients store it in localStorage). This endpoint inherits that.
-  // PII risk is bounded: the fields update only the Charter wall
+  // PII risk is bounded: the fields update only the Origin wall
   // display name + city — no email, no billing, no auth state.
   const displayName = typeof payload.displayName === 'string' ? payload.displayName : '';
   const city = typeof payload.city === 'string' ? payload.city : '';
@@ -860,18 +872,18 @@ async function handleCharterProfile(request, env, url) {
   const cleanCity = city.replace(/[\u0000-\u001F\u007F]/g, "").trim().slice(0, 60);
 
   try {
-    const updated = await setCharterProfile(env, senderId, {
+    const updated = await setOriginProfile(env, senderId, {
       displayName: cleanName,
       city: cleanCity,
     });
     if (!updated) {
-      return jsonResponse(404, { error: 'not_charter_member', message: 'No Charter sub found for this senderId.' });
+      return jsonResponse(404, { error: 'not_origin_member', message: 'No Origin sub found for this senderId.' });
     }
     return jsonResponse(200, {
       ok: true,
       number: updated.foundingNumber,
-      displayName: updated.charterDisplayName || '',
-      city: updated.charterCity || '',
+      displayName: updated.originDisplayName || '',
+      city: updated.originCity || '',
     });
   } catch (err) {
     return jsonResponse(500, { error: 'update_failed', message: err && err.message ? err.message : 'unknown' });
