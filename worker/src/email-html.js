@@ -219,3 +219,125 @@ export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, no
       </p>`,
   });
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Free-tier email drip campaign HTML renderers
+//
+// Three templates, escalating intent. Brand voice: factual, no
+// wheedling, no caps, no exclamation marks. Style matches the rest of
+// the transactional-email shell.
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Day 1. Welcome + first-action nudge. No pitch.
+ */
+export function renderDripDay1Html({ name, url }) {
+  const preview = `${url}/preview/`;
+  return shell({
+    preheader: 'Your first contract in 3 seconds. Here is how.',
+    body: `
+      <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
+        Your first contract in 3 seconds.
+      </h1>
+      <p class="cs-text" style="margin:0 0 8px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
+        Hello ${esc(name || 'there')},
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
+        Yesterday you signed up for CyberSygn. Three free documents, no card.
+        Today, here is the one thing that makes the product worth the email:
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        Drop a contract PDF on the preview page. Watch every signature line,
+        initial, date, and checkbox appear automatically in about 3 seconds.
+        No dragging. No box placement. No 30-minute DocuSign ritual.
+      </p>
+      ${ctaButton({ url: preview, label: 'Try the preview now →' })}
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        That is the whole email. The rest is silence.
+      </p>
+      <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
+      <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">
+        Nathan, founder. <a href="${esc(url)}" style="color:${CYAN};">cybersygn.io</a>
+      </p>`,
+  });
+}
+
+/**
+ * Day 3. Templates tip — the lock-in mechanic.
+ */
+export function renderDripDay3Html({ name, url }) {
+  const preview = `${url}/preview/`;
+  return shell({
+    preheader: 'Stop re-detecting the same PDF every week.',
+    body: `
+      <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
+        Stop re-detecting the same PDF.
+      </h1>
+      <p class="cs-text" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
+        Hello ${esc(name || 'there')},
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        If you sign the same kind of contract every week — NDAs, intake forms,
+        invoices, vendor agreements, retainers — there is a tip that pays for
+        itself the second time you upload one.
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        After CyberSygn detects the fields, click <strong>Save as template</strong> in the
+        preview sidebar. Every future upload of that exact PDF auto-loads the
+        saved fields at 100% confidence. No second detection. No second review.
+        Pure muscle memory.
+      </p>
+      ${ctaButton({ url: preview, label: 'Save your first template →' })}
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        One contract, one template, infinite repeat sends. The way every signing
+        tool should work and somehow none of them do.
+      </p>
+      <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
+      <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">
+        Nathan, founder. <a href="${esc(url)}" style="color:${CYAN};">cybersygn.io</a>
+      </p>`,
+  });
+}
+
+/**
+ * Day 7. Conversion ask — Charter with FOMO + Solo as soft secondary.
+ */
+export function renderDripDay7Html({ name, url }) {
+  const founding = `${url}/#founding`;
+  const pricing = `${url}/#pricing`;
+  return shell({
+    preheader: 'One week in. Lock $9 for life with Charter.',
+    body: `
+      <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
+        Charter rate is still open.
+      </h1>
+      <p class="cs-text" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
+        Hello ${esc(name || 'there')},
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        A week ago you signed up for the Demo. If CyberSygn is the right tool for
+        you, this is the right time to lock the founder rate before it closes
+        for good.
+      </p>
+      <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
+        <strong>Charter:</strong> $9/month, locked for the life of your account.
+        100 spots, limited, never re-opens. Same product as Solo, $3 less every
+        month forever, direct line to me, a vote on what we build next, and
+        your name on the Charter wall when we ship it.
+      </p>
+      ${ctaButton({ url: founding, label: 'Claim a Charter spot →' })}
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        If Charter is full or not your thing, <a href="${esc(pricing)}" style="color:${CYAN};">Solo is $12/month with no cap</a>.
+      </p>
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        Honest math: at $60/hour, Charter pays for itself the first time you
+        avoid 9 minutes of dragging boxes in DocuSign. Two contracts a month
+        and the math is no longer interesting.
+      </p>
+      <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
+      <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">
+        Nathan, founder. I read and reply to every email at
+        <a href="mailto:nathan@cybersygn.io" style="color:${CYAN};">nathan@cybersygn.io</a>.
+      </p>`,
+  });
+}

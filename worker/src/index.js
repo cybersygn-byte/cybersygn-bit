@@ -41,6 +41,7 @@ import {
 } from './free-tier.js';
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
+import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import {
   TIERS,
   getSubscription,
@@ -116,6 +117,9 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/report/preview') {
       return handleOwnerReportPreview(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/drip/run') {
+      return handleOwnerDripRun(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
@@ -323,10 +327,14 @@ export default {
    */
   async scheduled(event, env, ctx) {
     // Reminder sweep runs every hour. Monthly owner report only fires
-    // on the first day of the month between 00:00 and 00:59 UTC.
+    // on the first day of the month between 00:00 and 00:59 UTC. Free-
+    // tier drip campaign fires daily at 14:00 UTC (~9am EST/10am EDT).
     ctx.waitUntil(runReminderSweep(env, event));
     if (shouldRunMonthlyReport(event)) {
       ctx.waitUntil(runMonthlyOwnerReport(env, event));
+    }
+    if (shouldRunDripCampaign(event)) {
+      ctx.waitUntil(runDripCampaign(env, event));
     }
   },
 };
@@ -1146,6 +1154,29 @@ async function handleOwnerDatasetStats(request, env, url) {
  * Same renderer the cron uses, so the preview is byte-identical to
  * what arrives in your inbox on the 1st of next month.
  */
+/**
+ * Owner-only: manually fire the drip sweep right now. Useful for
+ * testing the cron path without waiting for 14:00 UTC. Bypasses the
+ * day-key idempotency lock so repeated test runs all send. The
+ * per-recipient drip-sent:<emailHash>:<stage> markers still prevent
+ * double-sends to real recipients.
+ *
+ * Query params:
+ *   ?dryRun=true       → don't actually send; return what WOULD send
+ *   ?bypassLock=true   → clear the day-key lock before running
+ */
+async function handleOwnerDripRun(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const bypassLock = url.searchParams.get('bypassLock') === 'true';
+  if (bypassLock && env && env.CYBERSYGN_DOCS) {
+    const dayKey = new Date().toISOString().slice(0, 10);
+    try { await env.CYBERSYGN_DOCS.delete(`meta:drip-lock:${dayKey}`); } catch (e) {}
+  }
+  const result = await runDripCampaign(env, { scheduledTime: Date.now() });
+  return jsonResponse(200, { ok: true, ...result });
+}
+
 async function handleOwnerReportPreview(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });

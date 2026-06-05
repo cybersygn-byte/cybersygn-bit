@@ -17,7 +17,14 @@
  * Both return { delivered: bool, mode: 'resend' | 'console', id?, error? }.
  */
 
-import { renderInviteHtml, renderReminderHtml, renderCompletionHtml } from './email-html.js';
+import {
+  renderInviteHtml,
+  renderReminderHtml,
+  renderCompletionHtml,
+  renderDripDay1Html,
+  renderDripDay3Html,
+  renderDripDay7Html,
+} from './email-html.js';
 
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
 const REPLY_TO_DEFAULT = 'hello@cybersygn.io';
@@ -162,6 +169,110 @@ export async function deliverSnapshot(env, { to, senderName, senderEmailDisplay,
     text,
     attachments: [{ filename, content: pdfBase64 }],
   });
+}
+
+/**
+ * Drip day 1 — welcome + activation nudge.
+ * Sent 24 hours after free signup. No selling, pure value: show the
+ * one thing they need to do first to unlock the magic moment. The
+ * reciprocity primer for later asks.
+ */
+export async function sendDripDay1(env, { to, name, appUrl }) {
+  const url = appUrl || 'https://cybersygn.io';
+  const subject = `${name || 'Welcome'} — your first contract in 3 seconds.`;
+  const text = [
+    `${name || 'Hello'},`,
+    '',
+    'Yesterday you signed up for CyberSygn. Three free documents, no card.',
+    'Today, here is the one thing that makes the product worth the email:',
+    '',
+    'Drop a contract PDF on the preview page. Watch every signature line,',
+    'initial, date, and checkbox appear automatically in about 3 seconds.',
+    'No dragging. No box placement. No 30-minute DocuSign ritual.',
+    '',
+    `Try it now: ${url}/preview/`,
+    '',
+    'That is the whole pitch. The rest of the email is silence.',
+    '',
+    'Nathan',
+    'Founder, CyberSygn',
+    `${url}`,
+  ].join('\n');
+  const html = renderDripDay1Html({ name, url });
+  return deliver(env, { to, subject, text, html });
+}
+
+/**
+ * Drip day 3 — templates tip. The lock-in mechanic.
+ * Sent 72 hours after signup. The user has probably tried the product
+ * once by now. Teach them the lock-in feature (templates) — it gives
+ * them a reason to come back, and creates switching cost over time.
+ */
+export async function sendDripDay3(env, { to, name, appUrl }) {
+  const url = appUrl || 'https://cybersygn.io';
+  const subject = `Quick tip: stop re-detecting the same PDF.`;
+  const text = [
+    `${name || 'Hello'},`,
+    '',
+    'If you sign the same kind of contract every week — NDAs, intake forms,',
+    'invoices, vendor agreements, retainers — there is a tip that pays for',
+    'itself the second time you upload one.',
+    '',
+    'After CyberSygn detects the fields, click "Save as template" in the',
+    'preview sidebar. Every future upload of that exact PDF auto-loads the',
+    'saved fields at 100% confidence. No second detection. No second review.',
+    'Pure muscle memory.',
+    '',
+    `Save your first template: ${url}/preview/`,
+    '',
+    'One contract, one template, infinite repeat sends. The way every',
+    'signing tool should work and somehow none of them do.',
+    '',
+    'Nathan',
+    'Founder, CyberSygn',
+  ].join('\n');
+  const html = renderDripDay3Html({ name, url });
+  return deliver(env, { to, subject, text, html });
+}
+
+/**
+ * Drip day 7 — conversion ask.
+ * Sent 168 hours after signup. By now they have seen the product, used
+ * it, maybe saved a template. They know what they are choosing between.
+ * Charter is the FOMO play; Solo is the soft-sell secondary.
+ */
+export async function sendDripDay7(env, { to, name, appUrl }) {
+  const url = appUrl || 'https://cybersygn.io';
+  const subject = `One week in. Charter rate is still open.`;
+  const text = [
+    `${name || 'Hello'},`,
+    '',
+    'A week ago you signed up for the Demo. If CyberSygn is the right tool',
+    'for you, this is the right time to lock the founder rate before it',
+    'closes for good.',
+    '',
+    'Charter: $9/month, locked for the life of your account. 100 spots,',
+    'limited, never re-opens. You get the same product as Solo at the same',
+    'features, $3 less every month, forever. Plus a direct line to me, a',
+    'vote on what we build next, and your name on the Charter wall when we',
+    'ship it.',
+    '',
+    `Claim a Charter spot: ${url}/#founding`,
+    '',
+    'If Charter is full or not your thing, Solo is $12/month with no cap.',
+    '',
+    `See pricing: ${url}/#pricing`,
+    '',
+    'Honest math: at $60/hour, Charter pays for itself the first time you',
+    'avoid 9 minutes of dragging boxes in DocuSign. Two contracts a month',
+    'and the math is no longer interesting.',
+    '',
+    'Nathan',
+    'Founder, CyberSygn',
+    'I read and reply to every email at nathan@cybersygn.io.',
+  ].join('\n');
+  const html = renderDripDay7Html({ name, url });
+  return deliver(env, { to, subject, text, html });
 }
 
 export async function deliver(env, { to, subject, text, html, attachments }) {
