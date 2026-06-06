@@ -1071,6 +1071,35 @@ async function handleHealth(env) {
     }
   }
 
+  // ---- Anthropic (auth probe via /v1/models, zero token cost) -------------
+  async function probeAnthropic() {
+    if (!env || !env.ANTHROPIC_API_KEY) {
+      return { ok: false, mode: 'unconfigured', detail: 'ANTHROPIC_API_KEY not set' };
+    }
+    try {
+      // /v1/models is a listing endpoint — auth required, no token usage.
+      // Returns { data: [...models] } on success, 401 on bad key.
+      const res = await withTimeout(
+        fetch('https://api.anthropic.com/v1/models', {
+          headers: {
+            'x-api-key': env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+        }),
+        4000,
+      );
+      if (res.status === 401 || res.status === 403) {
+        return { ok: false, mode: 'auth-failed', detail: `HTTP ${res.status}` };
+      }
+      if (!res.ok) return { ok: false, mode: 'anthropic', detail: `HTTP ${res.status}` };
+      const data = await res.json();
+      const modelCount = Array.isArray(data && data.data) ? data.data.length : 0;
+      return { ok: true, mode: 'live', detail: `${modelCount} models visible` };
+    } catch (err) {
+      return { ok: false, mode: 'anthropic', detail: shortErr(err) };
+    }
+  }
+
   // ---- Analytics Engine (no probe possible; report binding presence) --------
   function probeAnalytics() {
     if (env && env.CYBERSYGN_EVENTS && typeof env.CYBERSYGN_EVENTS.writeDataPoint === 'function') {
@@ -1090,7 +1119,9 @@ async function handleHealth(env) {
 
   // Run probes in parallel; each has its own timeout so the overall
   // response time is bounded by the slowest single probe.
-  const [kv, resend, stripe] = await Promise.all([probeKv(), probeResend(), probeStripe()]);
+  const [kv, resend, stripe, anthropic] = await Promise.all([
+    probeKv(), probeResend(), probeStripe(), probeAnthropic(),
+  ]);
   const ae = probeAnalytics();
   const owner = probeOwner();
 
@@ -1107,7 +1138,7 @@ async function handleHealth(env) {
     checkedAt: new Date().toISOString(),
     durationMs: Date.now() - startedAt,
     subsystems: {
-      kv, resend, stripe,
+      kv, resend, stripe, anthropic,
       analytics_engine: ae,
       owner_backdoor: owner,
     },
