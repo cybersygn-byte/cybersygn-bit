@@ -1391,8 +1391,8 @@ button { font: inherit; cursor: pointer; }
   color: var(--accent-text);
 }
 
-/* ── Money-back guarantee strip ──────────────────────────── */
-.money-back {
+/* ── Demo-first reassurance strip ─────────────────────────── */
+.demo-first {
   display: flex;
   align-items: flex-start;
   gap: var(--s-3);
@@ -1406,14 +1406,14 @@ button { font: inherit; cursor: pointer; }
   font-size: var(--t-sm);
   line-height: 1.55;
 }
-.money-back svg {
+.demo-first svg {
   flex: 0 0 18px;
   color: var(--accent-text);
   margin-top: 1px;
 }
-.money-back strong { color: var(--accent-text); }
+.demo-first strong { color: var(--accent-text); }
 @media (max-width: 640px) {
-  .money-back { text-align: left; }
+  .demo-first { text-align: left; }
 }
 
 /* ── Exit-intent modal ───────────────────────────────────── */
@@ -4154,7 +4154,7 @@ button { font: inherit; cursor: pointer; }
 }
 
 /* ========================================================================
-   13e. LEGAL PAGES (privacy, terms, refund)
+   13e. LEGAL PAGES (privacy, terms)
    ======================================================================== */
 
 .legal {
