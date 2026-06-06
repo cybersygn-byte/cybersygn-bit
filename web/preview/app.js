@@ -2866,6 +2866,165 @@ function paintProgress(filledCount, totalCount) {
   }
 }
 
+/**
+ * Free-tier signup gate (slice 104). User clicked Download PDF without
+ * a freeToken — bring the gate form into view and focus the first
+ * input. If the dropzone is hidden because they're mid-doc, surface
+ * a modal instead so the experience stays in context.
+ */
+function showFreeSignupGate(message) {
+  // Surface a modal asking the user to sign up before they can
+  // download. They've already used the product (drop, detect, fill);
+  // the gate now activates the freeToken pipeline so the 3-doc
+  // counter can begin enforcing.
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  const card = document.createElement('div');
+  card.className = 'modal-card';
+  card.innerHTML = `
+    <div class="modal-card__head">
+      <span class="modal-card__kicker">One step left.</span>
+      <h2 class="modal-card__title">${escapeHtmlLite(message || 'Sign up to download.')}</h2>
+    </div>
+    <div class="modal-card__body">
+      <p class="modal-card__lede">Three free signs, no credit card. Your email binds the count
+        so it survives a cookie clear. Upgrade anytime — the same email keeps your history.</p>
+      <form id="gate-form" class="exit-intent__form" autocomplete="on">
+        <div class="exit-intent__row">
+          <input class="exit-intent__input" id="gate-first" type="text" name="firstName" placeholder="First name" autocomplete="given-name" required />
+        </div>
+        <div class="exit-intent__row">
+          <input class="exit-intent__input" id="gate-last" type="text" name="lastName" placeholder="Last name" autocomplete="family-name" required />
+        </div>
+        <div class="exit-intent__row">
+          <input class="exit-intent__input" id="gate-email" type="email" name="email" placeholder="you@email.com" autocomplete="email" required />
+          <button class="btn btn--primary" type="submit">
+            Send Me the Freebies
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+        <p id="gate-status" class="exit-intent__small">Goes to CyberSygn, nowhere else.</p>
+      </form>
+    </div>
+  `;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const close = () => {
+    document.body.style.overflow = '';
+    overlay.remove();
+    window.removeEventListener('keydown', onKey);
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  window.addEventListener('keydown', onKey);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  setTimeout(() => { const f = document.getElementById('gate-first'); if (f) f.focus(); }, 60);
+  const form = document.getElementById('gate-form');
+  if (form) form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('gate-status');
+    const firstName = document.getElementById('gate-first').value.trim();
+    const lastName = document.getElementById('gate-last').value.trim();
+    const email = document.getElementById('gate-email').value.trim();
+    if (!firstName || !lastName || !email) { status.textContent = 'Fill in all three.'; return; }
+    status.textContent = 'Signing up.';
+    try {
+      const res = await fetch('/api/free/signup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) { status.textContent = data.message || data.error || 'Signup failed.'; return; }
+      try { localStorage.setItem('cybersygn.freeToken', data.freeToken); } catch (e) {}
+      try { localStorage.setItem('cybersygn.freeUsed', JSON.stringify({ used: data.used || 0, remaining: data.remaining })); } catch (e) {}
+      close();
+      try { paintFreeStatus(); } catch (e) {}
+      // Now retry the download — the user expected one click.
+      onSignClick();
+    } catch (err) {
+      status.textContent = 'Network error. Try again.';
+    }
+  });
+}
+
+/**
+ * Paywall modal (slice 104). User has used all 3 free signs. Show
+ * Solo + Studio pricing in-context with one-click checkout.
+ */
+function showPaywallModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const card = document.createElement('div');
+  card.className = 'modal-card modal-card--wide';
+  card.innerHTML = `
+    <div class="modal-card__head">
+      <span class="modal-card__kicker">You've used all 3 free signs.</span>
+      <h2 class="modal-card__title">Pick a plan to keep going.</h2>
+      <button type="button" class="modal-card__close" aria-label="Close">×</button>
+    </div>
+    <div class="modal-card__body">
+      <p class="modal-card__lede">Unlimited documents from here forward. 30-day money-back if it
+        doesn't save you time.</p>
+      <div class="paywall-grid">
+        <div class="paywall-tier">
+          <p class="kicker">Solo</p>
+          <p class="paywall-tier__price"><strong>$12</strong>/mo</p>
+          <ul>
+            <li>Unlimited documents</li>
+            <li>Multi-signer routing</li>
+            <li>Templates auto-apply</li>
+            <li>Audit certificate</li>
+          </ul>
+          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="solo">Choose Solo</button>
+        </div>
+        <div class="paywall-tier paywall-tier--featured">
+          <span class="paywall-tier__badge">3 seats</span>
+          <p class="kicker">Studio</p>
+          <p class="paywall-tier__price"><strong>$29</strong>/mo</p>
+          <ul>
+            <li>Everything in Solo</li>
+            <li>3 seats included</li>
+            <li>Shared workspace</li>
+            <li>Bulk send + member roles</li>
+          </ul>
+          <button class="btn btn--ink btn--block" type="button" data-checkout-tier="team">Choose Studio</button>
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+  const close = () => { document.body.style.overflow = ''; overlay.remove(); window.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+  window.addEventListener('keydown', onKey);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  const closeBtn = card.querySelector('.modal-card__close');
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  // Existing checkout.js wires data-checkout-tier buttons globally;
+  // we re-trigger by dispatching click on those buttons since the
+  // modal is added after the page's existing wirings.
+  card.querySelectorAll('[data-checkout-tier]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Defer to global checkout helper if available.
+      if (window.cybersygn && typeof window.cybersygn.checkout === 'function') {
+        window.cybersygn.checkout(btn.dataset.checkoutTier);
+      } else {
+        window.location.href = '/#pricing';
+      }
+    });
+  });
+}
+
+function escapeHtmlLite(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 async function onSignClick() {
   track('preview_send_clicked');
 
@@ -2888,6 +3047,39 @@ async function onSignClick() {
   if (isMultiSigner) {
     openSendModal();
     return;
+  }
+
+  // Free-tier gate. Free users must consume one of their three signs
+  // before any flattened PDF leaves their browser. Paid customers
+  // skip the consume call entirely (their token equals 'paid:...').
+  // Returning 402 from /api/free/consume opens the paywall modal.
+  const freeToken = readFreeToken();
+  if (!freeToken) {
+    // No token = never signed up. Surface the gate.
+    showFreeSignupGate('Sign up first to download. Three free signs, no card needed.');
+    return;
+  }
+  if (freeToken.indexOf('paid:') !== 0) {
+    try {
+      const res = await fetch('/api/free/consume', {
+        method: 'POST',
+        headers: { 'X-CyberSygn-Free': freeToken },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 402 || data.error === 'free_cap_reached') {
+        showPaywallModal();
+        return;
+      }
+      if (!res.ok) {
+        showToast('Could not validate free quota: HTTP ' + res.status + '. Try again.');
+        return;
+      }
+      // Repaint the remaining-pill so the count updates.
+      try { paintFreeStatus(); } catch (e) {}
+    } catch (err) {
+      showToast('Network error verifying free quota. Try again.');
+      return;
+    }
   }
 
   try {

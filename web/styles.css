@@ -2962,6 +2962,68 @@ button { font: inherit; cursor: pointer; }
   }
 }
 
+/* ── Paywall modal (slice 104) ───────────────────────── */
+.paywall-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+  margin-top: var(--s-3);
+}
+@media (max-width: 640px) {
+  .paywall-grid { grid-template-columns: 1fr; }
+}
+.paywall-tier {
+  position: relative;
+  padding: var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+.paywall-tier--featured {
+  border-color: var(--accent);
+  box-shadow: 0 6px 24px -10px var(--accent-glow);
+}
+.paywall-tier__badge {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  padding: 2px 10px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-radius: 999px;
+}
+.paywall-tier__price {
+  margin: var(--s-2) 0;
+  font-family: var(--display, var(--sans));
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.paywall-tier__price strong { font-weight: 700; font-size: 36px; }
+.paywall-tier ul {
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+}
+.paywall-tier li {
+  padding: 4px 0 4px 18px;
+  position: relative;
+  color: var(--text-2);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.paywall-tier li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
 /* ── Blog cache (slice 103) ───────────────────────────── */
 .blog-controls {
   display: grid;

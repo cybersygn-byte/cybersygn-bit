@@ -45,9 +45,12 @@ async function drawViralFooter(pdfDoc, font) {
 
   const pages = pdfDoc.getPages();
   const url = 'https://cybersygn.io/?ref=footer';
-  const label = 'Signed with CyberSygn';
-  const arrow = '↗';
-  const text = `${label} ${arrow}`;
+  // Note: pdf-lib's default Helvetica is WinAnsi-encoded and cannot
+  // render unicode arrows like ↗ (U+2197). Older builds used that
+  // glyph and silently broke every download with 'WinAnsi cannot
+  // encode' errors. Stick to ASCII. The URI annotation still wraps
+  // the visible text so it stays clickable.
+  const text = 'Signed with CyberSygn  -  cybersygn.io';
   const size = 7;
   // Brand cyan, slightly desaturated for paper friendliness.
   const fg = rgb(0.00, 0.55, 0.72);
