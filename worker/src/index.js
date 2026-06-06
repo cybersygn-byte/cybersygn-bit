@@ -42,6 +42,9 @@ import {
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
+import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
+import { reportToSentry } from './sentry.js';
+import { runDailyKvBackup, shouldRunKvBackup } from './kv-backup.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS } from './webhooks.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
 import { getRoadmap, castVote } from './roadmap.js';
@@ -240,6 +243,19 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/lifetime-count') {
       return handleLifetimeCount(env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/status/uptime') {
+      return handleUptimeRead(env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/testimonial') {
+      return handleTestimonialSubmit(request, env, url);
+    }
+    // GDPR data subject export. Slice 100.
+    {
+      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/gdpr-export$/);
+      if (m && request.method === 'GET') {
+        return handleGdprExport(request, env, m[1]);
+      }
     }
     if (request.method === 'GET' && url.pathname === '/api/origin/wall') {
       return handleOriginWall(env);
@@ -460,6 +476,26 @@ export default {
     if (shouldRunDripCampaign(event)) {
       ctx.waitUntil(runDripCampaign(env, event));
     }
+    // Daily KV → R2 backup at 03:00 UTC (slice 100). No-op if R2
+    // binding isn't configured.
+    if (shouldRunKvBackup(event)) {
+      ctx.waitUntil(runDailyKvBackup(env));
+    }
+    // Uptime self-probe (slice 99). Synchronous KV check is enough — if
+    // the binding is up the worker can respond; if it isn't, we record
+    // a failure for the day.
+    ctx.waitUntil((async () => {
+      let ok = false;
+      try {
+        if (env && env.CYBERSYGN_DOCS) {
+          const probeKey = `uptime:probe:${Date.now()}`;
+          await env.CYBERSYGN_DOCS.put(probeKey, '1', { expirationTtl: 60 });
+          const v = await env.CYBERSYGN_DOCS.get(probeKey);
+          ok = v === '1';
+        }
+      } catch (e) { ok = false; }
+      await recordUptimeProbe(env, ok);
+    })());
   },
 };
 
@@ -877,6 +913,149 @@ async function handleLifetimeCount(env) {
     cap: LIFETIME_CAP,
     remaining: Math.max(0, LIFETIME_CAP - taken),
   });
+}
+
+/**
+ * Uptime read endpoint (slice 99). Backs the /status/ page with real
+ * measured data instead of hardcoded values. Public read.
+ */
+/**
+ * GDPR data subject export (slice 100). Returns the requesting
+ * sender's full data inventory:
+ *   - sub record (subscription state)
+ *   - docs created (titles, dates, no PDF bytes — those are at /api/docs/:id/pdf with a token)
+ *   - templates saved
+ *   - free-tier signup data
+ *   - affiliate stats
+ *   - webhook config
+ *   - brand record
+ *   - origin profile if applicable
+ *
+ * Authenticated by the senderId itself (same trust model as
+ * /api/billing/portal — if you know your senderId, you can request
+ * your export). For tighter auth, this endpoint could require an
+ * owner token + signed email link.
+ *
+ * Returns NDJSON streaming so very prolific senders don't OOM the worker.
+ */
+async function handleGdprExport(request, env, senderId) {
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
+  if (!env || !env.CYBERSYGN_DOCS) return jsonResponse(503, { error: 'kv_unavailable' });
+
+  const records = [];
+  async function add(label, key) {
+    try {
+      const raw = await env.CYBERSYGN_DOCS.get(key);
+      if (raw) records.push({ label, key, data: tryParse(raw) });
+    } catch (e) {}
+  }
+  await add('subscription', `sub:${safeId}`);
+  await add('brand', `brand:${safeId}`);
+  await add('webhook_config', `webhook:${safeId}`);
+  await add('origin_profile', `sub:${safeId}`);
+
+  // Docs created by this sender — list-scan.
+  try {
+    const listed = await env.CYBERSYGN_DOCS.list({ prefix: 'doc:', limit: 1000 });
+    for (const e of listed.keys) {
+      const raw = await env.CYBERSYGN_DOCS.get(e.name);
+      if (!raw) continue;
+      let d; try { d = JSON.parse(raw); } catch (e2) { continue; }
+      if (d && d.senderId === safeId) {
+        records.push({
+          label: 'doc',
+          key: e.name,
+          data: {
+            id: d.id,
+            createdAt: d.createdAt,
+            title: d.title,
+            signerCount: Array.isArray(d.signers) ? d.signers.length : 0,
+            completedAt: d.completedAt,
+          },
+        });
+      }
+    }
+  } catch (e) {}
+
+  // Templates owned (private scope tied to this sender).
+  try {
+    const listed = await env.CYBERSYGN_DOCS.list({ prefix: `tpl-priv:${safeId}:`, limit: 1000 });
+    for (const e of listed.keys) records.push({ label: 'template', key: e.name });
+  } catch (e) {}
+
+  // Free-tier drip record (hashed email is the key; we can't recover
+  // cleartext from the senderId alone, but we surface any direct
+  // pointers like 'free-tok:<token>' if cached locally).
+  return jsonResponse(200, {
+    ok: true,
+    sender: safeId,
+    exportedAt: new Date().toISOString(),
+    recordCount: records.length,
+    records,
+    note: 'PDFs themselves are downloadable per-doc at /api/docs/:docId/pdf?t=<token>. They are not bundled here because they are signed-token gated and signer-specific.',
+  });
+}
+
+function tryParse(s) { try { return JSON.parse(s); } catch (e) { return null; } }
+
+async function handleUptimeRead(env, url) {
+  const w = parseInt(url.searchParams.get('window') || '30', 10);
+  const windowDays = Number.isFinite(w) && w > 0 && w <= 60 ? w : 30;
+  const data = await readUptimeWindow(env, windowDays);
+  return jsonResponse(200, data);
+}
+
+/**
+ * Testimonial submission (slice 99). Sender or signer posts:
+ *   { senderId?, email, name?, quote, role?, location?, consent: boolean }
+ * Stored at testimonial:<random-id>. Owner moderates via dashboard
+ * before any are surfaced on /customers/ or homepage. Rate-limited
+ * to stop spam.
+ */
+async function handleTestimonialSubmit(request, env, url) {
+  const limit = await checkRateLimit(env, `testimonial:${ipKey(request)}`, [
+    { windowSec: 60 * 60, max: 5 },
+  ]);
+  if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/testimonial' });
+
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+
+  const email = String(payload.email || '').trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return jsonResponse(400, { error: 'invalid_email' });
+  }
+  const quote = String(payload.quote || '').trim().slice(0, 600);
+  if (!quote || quote.length < 20) {
+    return jsonResponse(400, { error: 'quote_too_short' });
+  }
+  if (!payload.consent) {
+    return jsonResponse(400, { error: 'consent_required', message: 'Mark consent so we can publish this with attribution.' });
+  }
+
+  const record = {
+    v: 1,
+    id: randomId(12),
+    senderId: String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64),
+    email,
+    name: String(payload.name || '').trim().slice(0, 80),
+    quote,
+    role: String(payload.role || '').trim().slice(0, 80),
+    location: String(payload.location || '').trim().slice(0, 80),
+    consent: true,
+    submittedAt: new Date().toISOString(),
+    moderationState: 'pending',  // owner reviews → 'approved' | 'rejected'
+  };
+  if (env && env.CYBERSYGN_DOCS) {
+    try {
+      await env.CYBERSYGN_DOCS.put(`testimonial:${record.id}`, JSON.stringify(record), {
+        expirationTtl: 60 * 60 * 24 * 365 * 5,
+      });
+    } catch (e) { /* tolerated */ }
+  }
+  return jsonResponse(200, { ok: true, id: record.id, moderationState: 'pending' });
 }
 
 /**

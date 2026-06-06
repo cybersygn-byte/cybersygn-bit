@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Security and compliance. CyberSygn.</title>
+  <meta name="description" content="CyberSygn's security posture. ESIGN + UETA compliant. SOC 2 Type 1 in progress. Built on Cloudflare with zero customer data at rest in any third-party datacenter." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cybersygn.io/compliance/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">compliance</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Compliance">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try the demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Security and compliance.</p>
+        <h1 class="h-display hero__title">
+          The boring, important details<span class="dot">.</span>
+        </h1>
+        <p class="lede hero__lede">
+          E-signature handles legally binding documents. You should know what we do with
+          them and how. No marketing fluff on this page — facts only.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container container--prose">
+
+        <h2 class="h-section">Legal compliance.</h2>
+        <ul>
+          <li><strong>ESIGN Act (United States, 2000).</strong> Electronic signatures executed through CyberSygn have the same legal weight as ink signatures. We collect intent, attribution, and a tamper-evident record.</li>
+          <li><strong>UETA (United States).</strong> Applicable in 49 states. We provide the consumer-disclosure language required by §103.</li>
+          <li><strong>eIDAS (European Union).</strong> CyberSygn signatures qualify as Simple Electronic Signatures (SES) under eIDAS. Qualified Electronic Signatures (QES) require dedicated certificate authorities and are on our 2026 roadmap.</li>
+        </ul>
+
+        <h2 class="h-section">Audit certificate.</h2>
+        <p>Every signed document we produce ships with a one-page audit certificate listing:</p>
+        <ul>
+          <li>SHA-256 fingerprint of the original PDF bytes</li>
+          <li>Every signer's name, email, IP address, and timestamp</li>
+          <li>Every signing event (invite, view, sign, decline, complete) with timestamps</li>
+          <li>The document's CyberSygn ID, sender, and creation timestamp</li>
+        </ul>
+        <p>Keep the audit certificate with the signed PDF. It is the contemporaneous record of who signed what and when.</p>
+
+        <h2 class="h-section">SOC 2.</h2>
+        <p><strong>SOC 2 Type 1 — in progress.</strong> We are working through Vanta's controls framework. Target completion: Q3 2026. Type 2 follows 6 months after Type 1.</p>
+        <p>Until then, we publish our security controls explicitly so customers can evaluate them directly.</p>
+
+        <h2 class="h-section">Data flow.</h2>
+        <ul>
+          <li><strong>Detection runs in your browser.</strong> The first pass of field detection executes entirely in JavaScript on the visitor's device. The PDF does not leave the page until the sender clicks Send.</li>
+          <li><strong>Storage is Cloudflare KV + R2.</strong> No third-party datacenter ever holds your document. KV encrypts at rest. R2 encrypts at rest.</li>
+          <li><strong>Transit is TLS 1.3.</strong> Every connection from browser to worker is encrypted in transit. We enforce HSTS.</li>
+          <li><strong>Email delivery is Resend.</strong> Magic links to signers travel through Resend's infrastructure. DKIM + SPF + DMARC fully configured on cybersygn.io.</li>
+        </ul>
+
+        <h2 class="h-section">Encryption.</h2>
+        <ul>
+          <li>At rest: AES-256 (Cloudflare KV native).</li>
+          <li>In transit: TLS 1.3 only.</li>
+          <li>Signing tokens: 32 bytes of CSPRNG output, constant-time comparison on validation, 30-day TTL.</li>
+          <li>Owner password: SHA-256 with 32-byte random salt.</li>
+        </ul>
+
+        <h2 class="h-section">Access control.</h2>
+        <ul>
+          <li>Worker secrets (Stripe key, Anthropic key, etc.) are stored in Cloudflare's encrypted-at-rest secret store. They are never printed in logs.</li>
+          <li>Owner backdoor uses a 64-char SHA-256 hash of a passphrase. Not the passphrase itself.</li>
+          <li>Magic-link tokens are unique per signer per document. Forwarding the link means the recipient can sign as you; we surface this warning in every invite email.</li>
+        </ul>
+
+        <h2 class="h-section">Data retention.</h2>
+        <ul>
+          <li><strong>Active documents</strong> remain accessible for 365 days after creation. After that, magic links 404 unless the sender extends.</li>
+          <li><strong>Audit certificates</strong> are immutable once generated. We do not modify them in-place.</li>
+          <li><strong>Free tier</strong> drip records retain email + name for 5 years for transactional drip. Deletable on request (see GDPR below).</li>
+          <li><strong>Owner-only datasets:</strong> we retain a labeled-PDF training corpus from free-tier consent, used for improving detection. No document content; positions and types only.</li>
+        </ul>
+
+        <h2 class="h-section">GDPR + data subject rights.</h2>
+        <p>Right to access, right to deletion, right to portability — all supported. Email <a href="mailto:privacy@cybersygn.io">privacy@cybersygn.io</a> from the address on file and we respond within 30 days. Programmatic export endpoint shipping in slice 100; until then we handle requests manually.</p>
+
+        <h2 class="h-section">Incident response.</h2>
+        <p>If we discover a security incident affecting your documents, we notify affected senders within 72 hours by the email on file. Our incident log is published at <a href="../status/">/status/</a>.</p>
+
+        <h2 class="h-section">Subprocessors.</h2>
+        <table class="compare" style="margin-top: var(--s-3);">
+          <thead>
+            <tr><th>Service</th><th>Purpose</th><th>Data category</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cloudflare</td><td>Hosting, KV, R2, Workers</td><td>PDFs, fills, audit cert, signer records</td></tr>
+            <tr><td>Stripe</td><td>Payments + customer portal</td><td>Email, name, subscription state</td></tr>
+            <tr><td>Resend</td><td>Transactional email</td><td>Email recipient, magic link</td></tr>
+            <tr><td>Anthropic</td><td>Optional vision detection (Phase 2b)</td><td>Page bitmap (opt-in only)</td></tr>
+          </tbody>
+        </table>
+
+        <h2 class="h-section">Contact.</h2>
+        <p>Security disclosures: <a href="mailto:security@cybersygn.io">security@cybersygn.io</a> (PGP key on request).</p>
+        <p>Privacy + GDPR: <a href="mailto:privacy@cybersygn.io">privacy@cybersygn.io</a>.</p>
+        <p>Compliance questionnaires: <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a>. Reply within 1 business day.</p>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+        <a href="mailto:hello@cybersygn.io">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>

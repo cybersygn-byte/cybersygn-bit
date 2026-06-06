@@ -309,6 +309,15 @@ async function main() {
     console.log('  wrote dist/status/index.html');
   }
 
+  // /compliance/: security + compliance overview (slice 99).
+  const compSrc = join(SRC, 'compliance');
+  if (await exists(compSrc)) {
+    const compOut = join(OUT, 'compliance');
+    await mkdir(compOut, { recursive: true });
+    await copyFile(join(compSrc, 'index.html'), join(compOut, 'index.html'));
+    console.log('  wrote dist/compliance/index.html');
+  }
+
   // /control/: hidden owner workbench (login + analytics + demo + tools).
   // robots-blocked, noindex meta. Copy index.html + control.js verbatim.
   const ctrlSrc = join(SRC, 'control');
