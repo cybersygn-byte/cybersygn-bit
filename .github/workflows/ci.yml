@@ -1,0 +1,61 @@
+name: CI
+
+# Runs on every push to main and every pull request.
+# Three gates: parse-check every JS file, lint CSS, run the worker
+# E2E + synthetic detection test suites. Any failure blocks merge.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: Parse + lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        # --omit=dev keeps the install footprint small; smoke + css-check
+        # are pure-node scripts with zero deps, so dev-deps aren't needed
+        # here.
+        run: npm install --omit=dev || npm install
+
+      - name: Smoke (parse every JS file)
+        run: npm run smoke
+
+      - name: Lint CSS
+        run: npm run lint:css
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm install
+
+      - name: Synthetic detection (10 PDFs)
+        run: npm test
+
+      - name: Worker E2E (141 tests)
+        run: npm run test:worker
