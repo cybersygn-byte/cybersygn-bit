@@ -164,7 +164,7 @@ function renderPage(doc, vert) {
             </div>
             <span class="hero__note">
               <span class="hero__note-dot" aria-hidden="true"></span>
-              Detection works on 37 of 37 real-world contracts. ESIGN + UETA compliant.
+              Detection works on 499 of 499 real-world contracts. ESIGN + UETA compliant.
             </span>
           </div>
           <aside class="demo-doc" aria-hidden="true">

@@ -40,7 +40,7 @@ const ITEMS = [
   { id: 'mobile-sheet', status: 'shipped', title: 'Mobile bottom-sheet UX', desc: 'Phone signing redesigned around thumb reachability. Slice 79.' },
   { id: 'signer-microsite', status: 'shipped', title: 'Signer microsite', desc: 'Magic-link signers see a post-submit "want your own account?" wedge. Slice 75.' },
   { id: 'viral-footer', status: 'shipped', title: 'Viral PDF footer', desc: 'Every signed PDF carries a discreet "Signed with CyberSygn" link. Slice 74.' },
-  { id: 'detect-100', status: 'shipped', title: '100% detection on 37 contracts', desc: 'Regression set passes 37 of 37 real-world contracts + 10 of 10 synthetic.' },
+  { id: 'detect-100', status: 'shipped', title: '100% detection on 499 contracts', desc: 'Regression set passes 499 of 499 real-world contracts + 10 of 10 synthetic.' },
   { id: 'origin-tier', status: 'shipped', title: 'Origin tier (Charter 100)', desc: '$9/mo locked for the life of your account. Capped at 100 founders.' },
   { id: 'audit-cert', status: 'shipped', title: 'Audit certificate', desc: 'SHA-256 fingerprint, every signing event, IP + timestamp. Built in.' },
 ];
