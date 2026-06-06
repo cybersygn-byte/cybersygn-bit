@@ -17,7 +17,7 @@ CyberSygn replaces DocuSign, Dropbox Sign (formerly HelloSign), and SignWell for
 ## How it works, three steps
 
 1. Upload a PDF or Word document. Word files are converted to PDF in the browser before detection so the entire pipeline post-upload is PDF-native.
-2. CyberSygn finds the fields. Detection runs in the browser and highlights every signature line, initial mark, date placeholder, checkbox, and text field. Detection currently passes 10 of 10 synthetic test PDFs and 499 of 499 real-world contracts.
+2. CyberSygn finds the fields. Detection runs in the browser and highlights every signature line, initial mark, date placeholder, checkbox, and text field. Detection currently passes 20 of 20 synthetic test PDFs and 499 of 499 real-world contracts.
 3. Sign in person or send. Pass the device around for in-person signing, or route a unique magic link to each remote signer by email. No account required for signers.
 
 When the last signer completes, CyberSygn generates a tamper-evident audit certificate with every event timestamp, IP, user agent, and a SHA-256 fingerprint of the original PDF.
@@ -72,7 +72,7 @@ CyberSygn was started by Nathan Vogt in Colorado, in 2026. The team is part-time
 
 ## Frequently asked questions
 
-How accurate is detection? Currently 100% on a regression set of 499 real-world contracts and 10 synthetic test PDFs. The detector is text-based; it walks the PDF operators and matches against labeled patterns (Signature:, /s/, (Initial), Date:, X______, [ ]). Word documents are converted to PDF in the browser first.
+How accurate is detection? Currently 100% on a regression set of 499 real-world contracts and 20 synthetic test PDFs (10 text-layer + 10 vision-fallback). The detector is text-based; it walks the PDF operators and matches against labeled patterns (Signature:, /s/, (Initial), Date:, X______, [ ]). Word documents are converted to PDF in the browser first.
 
 What if a field is missed or wrong? Click any field to adjust it, or click empty space to add one. Detection is a starting point, not a constraint.
 

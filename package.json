@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "generate-pdfs": "python3 scripts/generate-pdfs.py",
+    "generate-pdfs:vision": "python3 scripts/generate-vision-pdfs.py",
     "test": "node scripts/run-detection.js",
+    "test:vision": "node scripts/probe-vision-pdfs.mjs",
     "test:real": "node scripts/run-real-detection.js",
+    "test:bulk": "node scripts/run-bulk-detection.mjs",
     "test:worker": "node scripts/test-multi-signer.js",
     "test:stripe": "node scripts/test-stripe.js",
     "test:docx": "node scripts/test-docx-pipeline.js",
