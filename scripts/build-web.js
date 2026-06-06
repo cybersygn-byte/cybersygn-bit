@@ -172,7 +172,7 @@ async function main() {
 
   // 2d. Legal pages + public Origin wall. Each in its own subdirectory
   // with a clean trailing-slash URL.
-  for (const name of ['privacy', 'terms', 'refund', 'origin']) {
+  for (const name of ['privacy', 'terms', 'origin']) {
     const src = join(SRC, name);
     const dst = join(OUT, name);
     if (await exists(join(src, 'index.html'))) {

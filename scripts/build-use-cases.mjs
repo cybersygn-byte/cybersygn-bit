@@ -238,7 +238,6 @@ function renderPage(doc, vert) {
         <a href="../../../">Home</a>
         <a href="/privacy/">Privacy</a>
         <a href="/terms/">Terms</a>
-        <a href="/refund/">Refund</a>
         <a href="mailto:hello@cybersygn.io">Contact</a>
       </nav>
     </div>

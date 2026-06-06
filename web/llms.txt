@@ -28,7 +28,6 @@ CyberSygn is an e-signature service for independent professionals and small serv
 
 - [Privacy policy](https://cybersygn.io/privacy/)
 - [Terms of service](https://cybersygn.io/terms/)
-- [Refund policy](https://cybersygn.io/refund/)
 
 ## Reference
 

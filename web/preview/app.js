@@ -2966,8 +2966,7 @@ function showPaywallModal() {
       <button type="button" class="modal-card__close" aria-label="Close">×</button>
     </div>
     <div class="modal-card__body">
-      <p class="modal-card__lede">Unlimited documents from here forward. 30-day money-back if it
-        doesn't save you time.</p>
+      <p class="modal-card__lede">Unlimited documents from here forward. Cancel anytime in one click — the next month does not bill.</p>
       <div class="paywall-grid">
         <div class="paywall-tier">
           <p class="kicker">Solo</p>

@@ -51,11 +51,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://cybersygn.io/refund/</loc>
-    <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://cybersygn.io/about/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -209,6 +204,10 @@
     <priority>0.65</priority>
   </url>
 <!-- BLOG_CLOSE -->
+
+
+
+
 
 
 
