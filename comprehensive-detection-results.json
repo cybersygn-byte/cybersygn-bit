@@ -1,0 +1,731 @@
+{
+  "overall": {
+    "categories": 10,
+    "totalPDFs": 100,
+    "totalFields": 344,
+    "perCategory": {
+      "acroforms": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 30,
+        "withSignature": 2,
+        "withDate": 1,
+        "withCheckbox": 4,
+        "empty": 0,
+        "errors": 0
+      },
+      "adversarial": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 20,
+        "withSignature": 9,
+        "withDate": 1,
+        "withCheckbox": 1,
+        "empty": 0,
+        "errors": 0
+      },
+      "checkboxes": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 33,
+        "withSignature": 0,
+        "withDate": 0,
+        "withCheckbox": 6,
+        "empty": 4,
+        "errors": 0
+      },
+      "dates": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 28,
+        "withSignature": 0,
+        "withDate": 10,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "initials": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 34,
+        "withSignature": 0,
+        "withDate": 0,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "international": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 40,
+        "withSignature": 1,
+        "withDate": 1,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "multi-signer": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 69,
+        "withSignature": 10,
+        "withDate": 10,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "positioning": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 33,
+        "withSignature": 8,
+        "withDate": 6,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "signatures": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 31,
+        "withSignature": 9,
+        "withDate": 10,
+        "withCheckbox": 0,
+        "empty": 0,
+        "errors": 0
+      },
+      "text-fields": {
+        "pdfs": 10,
+        "parsed": 10,
+        "totalFields": 26,
+        "withSignature": 2,
+        "withDate": 0,
+        "withCheckbox": 0,
+        "empty": 1,
+        "errors": 0
+      }
+    }
+  },
+  "results": {
+    "acroforms": {
+      "01-text-field.pdf": {
+        "fields": 1,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "02-checkbox-field.pdf": {
+        "fields": 1,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 1
+      },
+      "03-radio-group.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 3
+      },
+      "04-signature-field.pdf": {
+        "fields": 3,
+        "sigs": 3,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-dropdown-list.pdf": {
+        "fields": 1,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "06-listbox.pdf": {
+        "fields": 1,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "07-button.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 1
+      },
+      "08-mixed-form.pdf": {
+        "fields": 4,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 1
+      },
+      "09-required-fields.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "10-large-form.pdf": {
+        "fields": 11,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      }
+    },
+    "adversarial": {
+      "01-signature-in-body-text.pdf": {
+        "fields": 3,
+        "sigs": 3,
+        "dates": 0,
+        "cbs": 0
+      },
+      "02-date-in-clause.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "03-fake-checkboxes.pdf": {
+        "fields": 4,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 3
+      },
+      "04-horizontal-rule.pdf": {
+        "fields": 2,
+        "sigs": 2,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-toc-dotted-leaders.pdf": {
+        "fields": 1,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "06-page-number-line.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "07-quote-block-frame.pdf": {
+        "fields": 1,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-list-bullets-as-checkbox.pdf": {
+        "fields": 1,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "09-footnote-line.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "10-already-signed.pdf": {
+        "fields": 1,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      }
+    },
+    "checkboxes": {
+      "01-empty-square.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 3
+      },
+      "02-parens-yes-no.pdf": {
+        "fields": 0,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "03-square-brackets.pdf": {
+        "fields": 0,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "04-circle-radio.pdf": {
+        "fields": 0,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-pre-checked.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 3
+      },
+      "06-multi-choice-column.pdf": {
+        "fields": 5,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 5
+      },
+      "07-agree-disagree.pdf": {
+        "fields": 0,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-acknowledge-each.pdf": {
+        "fields": 7,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 7
+      },
+      "09-large-boxes.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 3
+      },
+      "10-checkbox-table.pdf": {
+        "fields": 12,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 12
+      }
+    },
+    "dates": {
+      "01-date-colon.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "02-dated-this.pdf": {
+        "fields": 5,
+        "sigs": 0,
+        "dates": 2,
+        "cbs": 0
+      },
+      "03-mmddyyyy-format.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "04-effective-date.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 2,
+        "cbs": 0
+      },
+      "05-execution-date.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "06-todays-date.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "07-as-of-date.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 1,
+        "cbs": 0
+      },
+      "08-date-signed.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 3,
+        "cbs": 0
+      },
+      "09-european-format.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 2,
+        "cbs": 0
+      },
+      "10-iso-format.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 2,
+        "cbs": 0
+      }
+    },
+    "initials": {
+      "01-single-initial.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "02-initials-plural.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "03-page-corner-initial.pdf": {
+        "fields": 1,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "04-page-center-initial.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-margin-per-clause.pdf": {
+        "fields": 6,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "06-section-initials.pdf": {
+        "fields": 5,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "07-parens-initial.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-witness-initials.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "09-both-parties-initial.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "10-header-footer-initials.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      }
+    },
+    "international": {
+      "01-spanish.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "02-french.pdf": {
+        "fields": 4,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "03-german.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "04-italian.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-portuguese.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "06-dutch.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "07-polish.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-russian-translit.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "09-japanese-translit.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "10-arabic-translit.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      }
+    },
+    "multi-signer": {
+      "01-two-parties-side-by-side.pdf": {
+        "fields": 8,
+        "sigs": 2,
+        "dates": 2,
+        "cbs": 0
+      },
+      "02-three-parties-stacked.pdf": {
+        "fields": 6,
+        "sigs": 3,
+        "dates": 3,
+        "cbs": 0
+      },
+      "03-buyer-seller-witness.pdf": {
+        "fields": 9,
+        "sigs": 3,
+        "dates": 3,
+        "cbs": 0
+      },
+      "04-cofounders-safe.pdf": {
+        "fields": 6,
+        "sigs": 3,
+        "dates": 3,
+        "cbs": 0
+      },
+      "05-co-tenants.pdf": {
+        "fields": 8,
+        "sigs": 4,
+        "dates": 4,
+        "cbs": 0
+      },
+      "06-board-officers.pdf": {
+        "fields": 8,
+        "sigs": 4,
+        "dates": 4,
+        "cbs": 0
+      },
+      "07-husband-wife.pdf": {
+        "fields": 6,
+        "sigs": 2,
+        "dates": 2,
+        "cbs": 0
+      },
+      "08-employer-employee.pdf": {
+        "fields": 6,
+        "sigs": 1,
+        "dates": 2,
+        "cbs": 0
+      },
+      "09-coach-client.pdf": {
+        "fields": 4,
+        "sigs": 2,
+        "dates": 2,
+        "cbs": 0
+      },
+      "10-grantor-grantee-witness.pdf": {
+        "fields": 8,
+        "sigs": 4,
+        "dates": 4,
+        "cbs": 0
+      }
+    },
+    "positioning": {
+      "01-top-of-page.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "02-bottom-of-page.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "03-left-margin.pdf": {
+        "fields": 5,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "04-right-margin.pdf": {
+        "fields": 5,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-table-cell.pdf": {
+        "fields": 4,
+        "sigs": 2,
+        "dates": 2,
+        "cbs": 0
+      },
+      "06-mid-page.pdf": {
+        "fields": 4,
+        "sigs": 3,
+        "dates": 1,
+        "cbs": 0
+      },
+      "07-header.pdf": {
+        "fields": 2,
+        "sigs": 2,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-footer.pdf": {
+        "fields": 2,
+        "sigs": 2,
+        "dates": 0,
+        "cbs": 0
+      },
+      "09-floating-overlay.pdf": {
+        "fields": 4,
+        "sigs": 3,
+        "dates": 1,
+        "cbs": 0
+      },
+      "10-near-page-break.pdf": {
+        "fields": 3,
+        "sigs": 2,
+        "dates": 1,
+        "cbs": 0
+      }
+    },
+    "signatures": {
+      "01-signature-colon.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "02-sign-here.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "03-slash-s-legal.pdf": {
+        "fields": 3,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "04-x-marker.pdf": {
+        "fields": 3,
+        "sigs": 1,
+        "dates": 2,
+        "cbs": 0
+      },
+      "05-authorize-label.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "06-by-label.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 1,
+        "cbs": 0
+      },
+      "07-witness-signature.pdf": {
+        "fields": 5,
+        "sigs": 1,
+        "dates": 2,
+        "cbs": 0
+      },
+      "08-print-and-sign.pdf": {
+        "fields": 3,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "09-signature-with-title.pdf": {
+        "fields": 5,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      },
+      "10-electronic-signature.pdf": {
+        "fields": 2,
+        "sigs": 1,
+        "dates": 1,
+        "cbs": 0
+      }
+    },
+    "text-fields": {
+      "01-name-field.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "02-address-multiline.pdf": {
+        "fields": 5,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "03-phone.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "04-email.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "05-ssn.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "06-amount.pdf": {
+        "fields": 2,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "07-company.pdf": {
+        "fields": 3,
+        "sigs": 1,
+        "dates": 0,
+        "cbs": 0
+      },
+      "08-title-role.pdf": {
+        "fields": 3,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "09-comments-long.pdf": {
+        "fields": 0,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      },
+      "10-account-number.pdf": {
+        "fields": 4,
+        "sigs": 0,
+        "dates": 0,
+        "cbs": 0
+      }
+    }
+  }
+}
