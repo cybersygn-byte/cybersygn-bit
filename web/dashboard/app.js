@@ -537,7 +537,7 @@ function paintAffiliatePanel(record) {
   // Tweet intent.
   const tweet = document.getElementById('aff-share-tweet');
   if (tweet) {
-    const text = encodeURIComponent("I've been using CyberSygn — automatic field detection, no DocuSign drag-and-drop. Try it free:");
+    const text = encodeURIComponent("I've been using CyberSygn for contracts. Drop a PDF and it finds every signature field automatically. Worth a look:");
     tweet.href = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
   }
 }

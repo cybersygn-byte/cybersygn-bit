@@ -24,13 +24,15 @@ When the last signer completes, CyberSygn generates a tamper-evident audit certi
 
 ## Pricing in detail
 
-Free: $0 per month. Three documents per month. Single signer per document. Browser-side signing only. Includes a CyberSygn footer on the signed PDF. No card required.
+Demo: $0. Three documents lifetime per email. Single signer per document. Browser-side signing only. Includes a small CyberSygn footer on the signed PDF. No card required.
 
 Solo: $12 per month. Unlimited documents. Multi-signer routing with magic-link email delivery. In-person mode for shared-device signing. Camera scan upload for paper documents. Audit certificate on every completed document. No footer.
 
-Founding: $9 per month, locked for life. First 100 customers only. Everything in Solo, plus a direct email line to the founder and the first look at every new feature. Once 100 spots are taken, the rate disappears and remaining customers move to Solo pricing.
+Studio: $29 per month for 3 seats. Shared workspace with aggregated dashboard. Member roles. Bulk send. Webhooks for automation. Everything in Solo for each seat. Add additional seats at $9 per seat per month.
 
-Team: $29 per month for 3 seats. Shared workspace with aggregated dashboard. Member roles. Everything in Solo for each seat. Add additional seats at $9 per seat per month.
+Origin (early adopter): $9 per month, locked for the life of the account. First 100 customers only. Everything in Solo, plus a direct email line to the founder and the first look at every new feature. Once 100 spots are taken, the option closes and new customers move to Solo pricing.
+
+Lifetime (early adopter): $299 one-time. No recurring charge. First 50 customers only. Every Solo feature for the life of the product. 30-day money-back guarantee. After 50, the option closes.
 
 ## Security and audit
 
@@ -66,7 +68,7 @@ Versus SignWell: closest analog at the small-business price point. CyberSygn win
 
 ## Founding
 
-CyberSygn was started by Nathan Vogt in Colorado, in 2026. The team is part-time. Launch is targeted for August 2026. The product is being built in public with a small founding-member cohort of 100 customers.
+CyberSygn was started by Nathan Vogt in Colorado, in 2026. The team is part-time. Launch is targeted for August 2026. The product is being built in public with a small Origin-member cohort of 100 customers and a Lifetime cohort of 50.
 
 ## Frequently asked questions
 
@@ -90,4 +92,4 @@ Is there an API? Not at launch. Defer until a partner asks.
 
 ## How to contact
 
-Email hello@cybersygn.io. Founding members get a direct line to the founder. Bug reports also welcome at the same address.
+Email hello@cybersygn.io. Origin members get a direct line to the founder. Bug reports also welcome at the same address.

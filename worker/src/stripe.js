@@ -120,7 +120,7 @@ export async function checkFreeTierAllowance(env, senderId) {
  * caller's responsibility.
  *
  * Returns the updated record on success, null if the record doesn't
- * exist or isn't a Origin member.
+ * exist or isn't an Origin member.
  */
 export async function setOriginProfile(env, senderId, { displayName, city }) {
   if (!senderId) return null;

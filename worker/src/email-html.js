@@ -266,7 +266,7 @@ export function renderDripDay1Html({ name, url }) {
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
         Drop a contract PDF on the preview page. Watch every signature line,
         initial, date, and checkbox appear automatically in about 3 seconds.
-        No dragging. No box placement. No 30-minute DocuSign ritual.
+        No dragging. No box placement. No 30-minute manual field ritual.
       </p>
       ${ctaButton({ url: preview, label: 'Try the preview now →' })}
       <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
@@ -342,13 +342,13 @@ export function renderDripDay7Html({ name, url }) {
         month forever, direct line to me, a vote on what we build next, and
         your name on the Origin wall when we ship it.
       </p>
-      ${ctaButton({ url: founding, label: 'Claim a Origin spot →' })}
+      ${ctaButton({ url: founding, label: 'Claim an Origin spot →' })}
       <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
         If Origin is full or not your thing, <a href="${esc(pricing)}" style="color:${CYAN};">Solo is $12/month with no cap</a>.
       </p>
       <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
         Honest math: at $60/hour, Origin pays for itself the first time you
-        avoid 9 minutes of dragging boxes in DocuSign. Two contracts a month
+        avoid 9 minutes of placing fields by hand. Two contracts a month
         and the math is no longer interesting.
       </p>
       <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />

@@ -636,11 +636,15 @@
 
       const tier = data.tier;
       const tierLabels = {
-        owner:    'Owner mode',
-        free:     'Free plan',
-        solo:     'Solo plan',
-        founding: 'Founding member',
-        team:     'Team plan',
+        owner:           'Owner mode',
+        free:            'Demo',
+        solo:            'Solo',
+        solo_annual:     'Solo (annual)',
+        founding:        'Origin member',
+        founding_annual: 'Origin (annual)',
+        team:            'Studio',
+        team_annual:     'Studio (annual)',
+        lifetime:        'Lifetime',
       };
       tierEl.textContent = tierLabels[tier] || tier;
       banner.dataset.tier = tier;
@@ -656,7 +660,9 @@
           ? `You have used all ${cap} free documents this month. Upgrade to keep signing.`
           : `${used} of ${cap} free documents used this month. ${remaining} remaining.`;
       } else if (tier === 'founding' && data.foundingNumber) {
-        detailEl.textContent = `Founding member #${data.foundingNumber} of 100. $9 / mo locked for life.`;
+        detailEl.textContent = `Origin member #${data.foundingNumber} of 100. $9 / mo locked for the life of your account.`;
+      } else if (tier === 'lifetime') {
+        detailEl.textContent = `Lifetime. One-time purchase, every feature, no recurring charge.`;
       } else if (data.currentPeriodEnd) {
         const d = new Date(data.currentPeriodEnd);
         detailEl.textContent = `Active. Next renewal ${d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}.`;

@@ -1211,7 +1211,7 @@ async function handleOriginWall(env) {
  * Origin member self-edit: update displayName + city for the public
  * wall. Mirrors the auth pattern of /api/billing/portal — caller passes
  * senderId in the body, and the server only updates if a sub:senderId
- * record exists AND the record is a Origin member with a foundingNumber.
+ * record exists AND the record is an Origin member with a foundingNumber.
  * Owner override via X-CyberSygn-Owner is also accepted.
  *
  * No editing of foundingNumber, joinedAt, or any billing field.

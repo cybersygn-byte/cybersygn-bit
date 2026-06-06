@@ -118,7 +118,7 @@ function renderPage(doc, vert) {
           {
             "@type": "Question",
             "name": "What does this cost?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Demo: 3 documents lifetime, free, no credit card. Solo: $12/month unlimited. Origin: $9/month locked for life (first 100 founders only). Studio: $29/month for a 3-seat team." }
+            "acceptedAnswer": { "@type": "Answer", "text": "Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain." }
           }
         ]
       }
@@ -181,7 +181,7 @@ function renderPage(doc, vert) {
         <header class="section__head">
           <div>
             <p class="kicker kicker--muted">The flow.</p>
-            <h2 class="h-section section__title">Three steps. No drag-and-drop.</h2>
+            <h2 class="h-section section__title">Three steps. Field detection does the placement.</h2>
           </div>
           <p class="lede section__lede">
             ${esc(doc.description)} CyberSygn was built so the slowest part of signing — finding and placing
@@ -217,13 +217,14 @@ function renderPage(doc, vert) {
             <h2 class="h-section section__title">Pricing that respects ${esc(vert.singular)}.</h2>
           </div>
           <p class="lede section__lede">
-            Demo is free for three documents lifetime. Paid plans start at $9/month with the Origin
-            rate, locked for the life of your account if you're one of the first hundred.
+            Demo is free for three documents lifetime. Solo is $12 a month, unlimited. Studio is $29
+            a month for three seats. Early-adopter Origin and Lifetime tiers are available while
+            founding spots remain.
           </p>
         </header>
         <div class="hero__actions" style="margin-top: var(--s-5);">
-          <a class="btn btn--primary btn--lg" href="../../../#pricing">See full pricing →</a>
-          <a class="btn btn--ghost btn--lg" href="../../../#founding">Claim a Origin spot →</a>
+          <a class="btn btn--primary btn--lg" href="../../../preview/">Start free →</a>
+          <a class="btn btn--ghost btn--lg" href="../../../#pricing">See plans →</a>
         </div>
       </div>
     </section>

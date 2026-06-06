@@ -3715,7 +3715,7 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
       '<p class="kicker">What just happened.</p>' +
       '<h3 class="h-card">You signed a document in seconds, with no account.</h3>' +
       '<p>The sender used CyberSygn to find every signature line, initial, and date automatically. ' +
-      'No drag-and-drop. No DocuSign account-creation friction. The signed PDF arrives in your inbox with a SHA-256 audit certificate.</p>' +
+      'No manual field placement. No account creation for signers. The signed PDF arrives in your inbox with a SHA-256 audit certificate.</p>' +
       '<p><strong>Want to send your own document for free?</strong> You already have an email on file — one click and you have three free signs of your own.</p>' +
     '</div>';
   body.appendChild(conv);
@@ -4478,7 +4478,7 @@ function openSendModal() {
         allComplete
           ? `Downloaded. Every signer has signed their fields.`
           : `Downloaded a partial. ${fillStore.size()} of ${docState.fields.length} fields filled.`,
-        { action: { href: '../#founding', label: 'Join founding members' } },
+        { action: { href: '../#founding', label: 'Join Origin members' } },
       );
     } catch (err) {
       report(err, 'flatten');

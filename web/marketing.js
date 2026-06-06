@@ -67,11 +67,11 @@ if (form) {
     } catch (err) {
       cybersygn.report(err, 'founding_form');
       // Fallback: open a mailto link so we never silently lose the lead.
-      const subject = encodeURIComponent('Founding member, CyberSygn');
+      const subject = encodeURIComponent('Origin member, CyberSygn');
       const body = encodeURIComponent(
         `Email: ${email}\n` +
         (context ? `Contracts: ${context}\n` : '') +
-        '\nSent from the CyberSygn founding-members form.',
+        '\nSent from the CyberSygn Origin-members form.',
       );
       showResult(
         'Our signup endpoint is not responding right now. Click the link below ' +

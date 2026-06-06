@@ -6,14 +6,15 @@ CyberSygn is an e-signature service for independent professionals and small serv
 
 ## Pricing
 
-- Free: 3 documents per month, single signer per document, no card required.
+- Demo: 3 documents lifetime per email, single signer per document, no card required.
 - Solo: $12 per month, unlimited documents, multi-signer routing, in-person mode, camera scan upload, audit certificate.
-- Founding: $9 per month locked for life, first 100 customers only, everything in Solo plus a direct line to the founder.
-- Team: $29 per month for 3 seats, shared workspace, aggregated dashboard.
+- Studio: $29 per month for 3 seats, shared workspace, member roles, aggregated dashboard, bulk send.
+- Origin (early adopter): $9 per month locked for the life of the account, first 100 customers only, everything in Solo plus a direct line to the founder.
+- Lifetime (early adopter): $299 one-time, no recurring fees, first 50 customers only, every Solo feature for the life of the product.
 
 ## Core docs
 
-- [Homepage](https://cybersygn.io/): product overview, the three-step flow, founding-member signup
+- [Homepage](https://cybersygn.io/): product overview, the three-step flow, plans, early-adopter signup
 - [Try detection](https://cybersygn.io/preview/): upload a PDF and see fields detected in your browser, no account required
 - [Sender dashboard](https://cybersygn.io/dashboard/): document index with per-signer status (account required)
 
