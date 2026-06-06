@@ -49,7 +49,9 @@
             foot.className = 'tier__price-foot';
             unit.parentElement.appendChild(foot);
           }
-          foot.textContent = '$' + annualTotal + ' / year · save 20%';
+          const monthlyTotal = Number(monthly) * 12;
+          const savedDollars = monthlyTotal - Number(annualTotal);
+          foot.textContent = '$' + annualTotal + ' / year · save $' + savedDollars;
         } else {
           num.textContent = '$' + monthly;
           unit.textContent = (tier.dataset.tier === 'origin') ? '/mo forever' : '/mo';
