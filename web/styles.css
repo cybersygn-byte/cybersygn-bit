@@ -7391,6 +7391,218 @@ body[data-free-gated="true"] .free-gate__lede {
   color: var(--text-2);
 }
 
+/* ──────────────────────────────────────────────────────────
+   Signers panel (slice 97 redesign)
+   The original layout stacked a tiny ordinal chip, name input,
+   email input, field-count number, and "Signing as" select in
+   loose vertical order. Hard to parse at a glance. The new card:
+     - Each signer = a single card with avatar (large), inputs,
+       fields-owned badge, and remove button in one row.
+     - "Signing as" lives at the bottom under a clear divider
+       so it reads as a perspective control, not a fifth signer.
+     - "+ Add" sits to the right of "Signers." in the header,
+       not floating in the panel body.
+   ────────────────────────────────────────────────────────── */
+.signers-panel {
+  padding: var(--s-4) var(--s-5);
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
+.signers-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-bottom: var(--s-3);
+}
+.signers-panel__title {
+  margin: 0;
+  font-family: var(--display, var(--sans));
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.signers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.signer-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--signer-color, var(--accent));
+  border-radius: 10px;
+  transition: border-color 140ms var(--ease), background 140ms var(--ease);
+}
+.signer-row:hover {
+  border-color: var(--line-2);
+}
+.signer-row__swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--signer-color, var(--accent));
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+.signer-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.signer-row__name,
+.signer-row__email {
+  width: 100%;
+  padding: 5px 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.4;
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.signer-row__name {
+  font-weight: 600;
+}
+.signer-row__email {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+.signer-row__name:focus,
+.signer-row__email:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-line);
+}
+.signer-row__name::placeholder,
+.signer-row__email::placeholder {
+  color: var(--text-3);
+}
+.signer-row__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+.signer-row__count::after {
+  content: " fields";
+  font-weight: 400;
+  color: var(--text-3);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.signer-row__remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--text-3);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transition: opacity 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease);
+}
+.signer-row:hover .signer-row__remove,
+.signer-row:focus-within .signer-row__remove {
+  opacity: 1;
+}
+.signer-row__remove:hover {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+/* Add-signer button gets a clean shape next to the section title. */
+.signers-panel #add-signer {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.signers-panel #add-signer:hover {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+/* "Signing as" perspective control. Visually separate from the signer
+   cards above so the user reads it as a viewing-mode control, not a
+   fifth signer. */
+.signers-panel__as {
+  margin: var(--s-3) 0 0;
+  padding-top: var(--s-3);
+  border-top: 1px dashed var(--line);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}
+.signers-panel__as-label {
+  white-space: nowrap;
+}
+.signers-panel__as-select {
+  flex: 1 1 auto;
+  padding: 5px 28px 5px 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' stroke='%23ACB2C8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.signers-panel__as-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-line);
+}
+
 /* Generic input invalid state. Used by signer-row__email and any
    future field that flags client-side validation errors before send.
    Subtle border + light warn-tinted background; not loud, just clear. */

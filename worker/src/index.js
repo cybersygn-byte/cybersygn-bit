@@ -54,8 +54,10 @@ import {
   incrementUsage,
   checkFreeTierAllowance,
   getFoundingCount,
+  getLifetimeCount,
   setOriginProfile,
   foundingCap,
+  LIFETIME_CAP,
   createCheckoutSession,
   createBillingPortalSession,
   verifyStripeSignature,
@@ -235,6 +237,9 @@ export default {
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/founding-count') {
       return handleFoundingCount(env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/billing/lifetime-count') {
+      return handleLifetimeCount(env);
     }
     if (request.method === 'GET' && url.pathname === '/api/origin/wall') {
       return handleOriginWall(env);
@@ -862,6 +867,15 @@ async function handleFoundingCount(env) {
     taken,
     cap,
     remaining: Math.max(0, cap - taken),
+  });
+}
+
+async function handleLifetimeCount(env) {
+  const taken = await getLifetimeCount(env);
+  return jsonResponse(200, {
+    taken,
+    cap: LIFETIME_CAP,
+    remaining: Math.max(0, LIFETIME_CAP - taken),
   });
 }
 

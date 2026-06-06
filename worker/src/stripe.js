@@ -30,7 +30,14 @@ export const TIERS = {
   founding_annual: { id: 'founding_annual', docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING_ANNUAL',  label: 'Origin (annual)' },
   team:            { id: 'team',            docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM',             label: 'Studio' },
   team_annual:     { id: 'team_annual',     docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM_ANNUAL',      label: 'Studio (annual)' },
+  // Lifetime tier (slice 98): one-time $299, capped at first 50 customers.
+  // No recurring billing. Same feature set as Solo. Tracked separately
+  // so the tier label and Stripe checkout-mode differ from subscriptions.
+  lifetime:        { id: 'lifetime',        docs: Infinity, priceEnv: 'STRIPE_PRICE_LIFETIME',         label: 'Lifetime', oneTime: true },
 };
+
+// Cap for Lifetime tier — only the first N customers can claim it.
+export const LIFETIME_CAP = 50;
 
 // ---- Public API surface called from index.js ------------------------------
 
@@ -147,6 +154,16 @@ export async function getFoundingCount(env) {
   return Number.isFinite(n) && n >= 0 ? Math.min(n, FOUNDING_CAP) : 0;
 }
 
+/**
+ * Read the live Lifetime count (slice 98). Capped at LIFETIME_CAP.
+ */
+export async function getLifetimeCount(env) {
+  const storage = pickStorage(env);
+  const raw = await storage.get('meta:lifetime-count');
+  const n = parseInt(raw || '0', 10);
+  return Number.isFinite(n) && n >= 0 ? Math.min(n, LIFETIME_CAP) : 0;
+}
+
 export function foundingCap() {
   return FOUNDING_CAP;
 }
@@ -176,11 +193,21 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
       throw stripeError('founding_full', 'All 100 founding spots are taken. Pick Solo or Team.');
     }
   }
+  if (tier === 'lifetime') {
+    const taken = await getLifetimeCount(env);
+    if (taken >= LIFETIME_CAP) {
+      throw stripeError('lifetime_full', `All ${LIFETIME_CAP} Lifetime spots are taken. Pick Solo, Origin, or Studio.`);
+    }
+  }
 
   const reUseCustomer = await maybeExistingCustomer(env, senderId);
 
   const body = new URLSearchParams();
-  body.set('mode', 'subscription');
+  // Lifetime is a one-time payment ('payment' mode in Stripe Checkout);
+  // every other tier is recurring ('subscription' mode). subscription_data
+  // metadata only applies to subscription mode.
+  const isOneTime = tier === 'lifetime' || tierConf.oneTime;
+  body.set('mode', isOneTime ? 'payment' : 'subscription');
   body.set('line_items[0][price]', priceId);
   body.set('line_items[0][quantity]', '1');
   body.set('success_url', successUrl || `${origin}/dashboard/?checkout=success&session_id={CHECKOUT_SESSION_ID}`);
@@ -190,13 +217,15 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   body.set('billing_address_collection', 'auto');
   body.set('metadata[tier]', tier);
   body.set('metadata[senderId]', senderId || '');
-  body.set('subscription_data[metadata][tier]', tier);
-  body.set('subscription_data[metadata][senderId]', senderId || '');
+  if (!isOneTime) {
+    body.set('subscription_data[metadata][tier]', tier);
+    body.set('subscription_data[metadata][senderId]', senderId || '');
+  }
   // Affiliate ref: only set if the client supplied a real code shape.
   // The webhook reads subscription.metadata.ref to credit the affiliate.
   if (typeof ref === 'string' && /^[a-z0-9]{4,16}$/.test(ref)) {
     body.set('metadata[ref]', ref);
-    body.set('subscription_data[metadata][ref]', ref);
+    if (!isOneTime) body.set('subscription_data[metadata][ref]', ref);
   }
   if (reUseCustomer) {
     body.set('customer', reUseCustomer);
