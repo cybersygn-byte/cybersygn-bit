@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Free contract templates. Download or email yourself a copy. CyberSygn.</title>
+  <meta name="description" content="Sixteen free contract template structures — NDAs, MSAs, leases, photography contracts, SAFE agreements, more. Email yourself a copy or download direct. Brought to you by CyberSygn." />
+  <meta name="keywords" content="free contract templates, NDA template, MSA template, photography contract template, freelance contract template, SAFE template" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/templates/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <meta property="og:title" content="Free contract templates from CyberSygn." />
+  <meta property="og:description" content="Sixteen template structures. Email yourself or download direct." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/templates/" />
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">templates</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Templates">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../#pricing">Pricing</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Launch preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Free contract templates.</p>
+        <h1 class="h-display hero__title">Sixteen contract structures. Download or email to yourself.</h1>
+        <p class="lede hero__lede">Generic structural templates for the contracts solo professionals and small teams send most often. Replace the placeholders. Send them through CyberSygn for automatic field detection. No credit card to get a copy.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+
+        <div class="tmpl-controls">
+          <input id="tmpl-search" class="blog-search" type="search" placeholder="Search templates." />
+          <div class="tmpl-cats" role="tablist" aria-label="Categories">
+            <button class="blog-cat is-active" data-cat="all" type="button">All 16</button>
+            <button class="blog-cat" data-cat="business" type="button">Business</button>
+            <button class="blog-cat" data-cat="creative" type="button">Creative</button>
+            <button class="blog-cat" data-cat="hr" type="button">HR</button>
+            <button class="blog-cat" data-cat="real-estate" type="button">Real estate</button>
+            <button class="blog-cat" data-cat="service" type="button">Service</button>
+          </div>
+        </div>
+
+        <ol class="tmpl-grid" id="tmpl-grid"></ol>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container container--prose">
+        <h2 class="h-section">Why are these free?</h2>
+        <p>Because solo professionals and small teams hit the same five or six contracts over and over, and gating real value behind paywalls is rude. Take what you need.</p>
+        <p>What we'd love in exchange: try CyberSygn on one of these templates. Drop the PDF into the preview, watch every signature field detect automatically, send it for signing. <a href="../preview/">It takes 30 seconds.</a> If you like it, three free signs are yours (no credit card). Solo is $12/month for unlimited, Studio is $29/month for a 3-seat team.</p>
+        <p><strong>Important.</strong> These are structural templates. They do not constitute legal advice. Replace placeholders, review with a licensed attorney in your jurisdiction, and adjust for your specific situation before signing.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Email-gate modal (slice 105). Hidden until a template tile is clicked. -->
+  <div id="tmpl-modal" class="modal-overlay" hidden role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-card__head">
+        <span class="modal-card__kicker">Free template.</span>
+        <h2 id="tmpl-modal-title" class="modal-card__title">— template title —</h2>
+        <button type="button" class="modal-card__close" id="tmpl-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-card__body">
+        <p class="modal-card__lede" id="tmpl-modal-blurb">— blurb —</p>
+        <form id="tmpl-modal-form" autocomplete="on">
+          <div class="exit-intent__row">
+            <input class="exit-intent__input" id="tmpl-first" type="text" name="firstName" placeholder="First name" autocomplete="given-name" required />
+          </div>
+          <div class="exit-intent__row">
+            <input class="exit-intent__input" id="tmpl-email" type="email" name="email" placeholder="you@email.com" autocomplete="email" required />
+          </div>
+          <div class="tmpl-modal__actions">
+            <button class="btn btn--primary" type="submit" data-mode="email">Email it to me</button>
+            <button class="btn btn--ghost" type="button" data-mode="download" id="tmpl-direct-dl">Download direct</button>
+          </div>
+          <p id="tmpl-status" class="exit-intent__small">Goes to CyberSygn, nowhere else.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Templates registry — keep synced with worker/src/templates-library.js
+    var TEMPLATES = [
+      { slug:'master-services-agreement', title:'Master Services Agreement', category:'business', short:'Vendor contracts, retainer agreements, consulting MSAs.' },
+      { slug:'non-disclosure-agreement', title:'Non-Disclosure Agreement', category:'business', short:'Mutual NDAs, one-way confidentiality, due-diligence wrappers.' },
+      { slug:'employment-agreement', title:'Employment Agreement', category:'hr', short:'W-2 offer letters, 1099 contractor agreements, advisor terms.' },
+      { slug:'rental-lease', title:'Rental Lease', category:'real-estate', short:'Residential leases, commercial subleases, room rentals.' },
+      { slug:'photography-contract', title:'Photography Contract', category:'creative', short:'Shoot agreements, model releases, image licensing.' },
+      { slug:'coaching-agreement', title:'Coaching Agreement', category:'service', short:'Engagement terms, intake forms, cancellation policies.' },
+      { slug:'freelance-contract', title:'Freelance Contract', category:'creative', short:'Project SOWs, milestone payments, IP transfer clauses.' },
+      { slug:'safe-investor-agreement', title:'SAFE / Investor Agreement', category:'business', short:'YC SAFE templates, convertible notes, advisor agreements.' },
+      { slug:'consulting-agreement', title:'Consulting Agreement', category:'business', short:'Consulting engagements, scope-of-work, retainer terms.' },
+      { slug:'contractor-agreement', title:'Contractor Agreement', category:'business', short:'Independent contractor engagements with 1099 reporting.' },
+      { slug:'model-release', title:'Model Release', category:'creative', short:'Standard model release for commercial photo + video use.' },
+      { slug:'speaker-agreement', title:'Speaker Agreement', category:'service', short:'Conference, podcast, and workshop speaking terms.' },
+      { slug:'sponsorship-agreement', title:'Sponsorship Agreement', category:'business', short:'Event, podcast, and content-creator sponsorship terms.' },
+      { slug:'subscription-services', title:'Subscription Services Agreement', category:'business', short:'SaaS, retainer, and recurring-service subscription terms.' },
+      { slug:'mutual-nda', title:'Mutual Non-Disclosure Agreement', category:'business', short:'Two-way confidentiality for partnerships and diligence.' },
+      { slug:'advisor-agreement', title:'Advisor Agreement', category:'business', short:'Equity-compensated advisor terms with vesting.' }
+    ];
+
+    // Render grid.
+    var grid = document.getElementById('tmpl-grid');
+    grid.innerHTML = TEMPLATES.map(function (t) {
+      return '<li class="tmpl-card" data-cat="' + t.category + '" data-search="' + (t.title + ' ' + t.short).toLowerCase() + '">' +
+        '<button class="tmpl-card__btn" type="button" data-slug="' + t.slug + '" data-title="' + t.title.replace(/"/g,'&quot;') + '" data-blurb="' + t.short.replace(/"/g,'&quot;') + '">' +
+          '<div class="tmpl-card__preview">' +
+            '<div class="tmpl-card__lines">' +
+              '<span></span><span></span><span></span>' +
+            '</div>' +
+            '<div class="tmpl-card__fields">' +
+              '<i class="tmpl-card__field tmpl-card__field--sig"></i>' +
+              '<i class="tmpl-card__field tmpl-card__field--init"></i>' +
+            '</div>' +
+          '</div>' +
+          '<h3 class="tmpl-card__title">' + t.title + '</h3>' +
+          '<p class="tmpl-card__short">' + t.short + '</p>' +
+        '</button>' +
+      '</li>';
+    }).join('');
+
+    // Filter + search.
+    var search = document.getElementById('tmpl-search');
+    var cats = document.querySelectorAll('.tmpl-cats .blog-cat');
+    var cards = grid.querySelectorAll('.tmpl-card');
+    var state = { cat: 'all', q: '' };
+    function refresh() {
+      cards.forEach(function (c) {
+        var matchCat = state.cat === 'all' || c.dataset.cat === state.cat;
+        var matchQ = !state.q || c.dataset.search.indexOf(state.q) !== -1;
+        c.style.display = matchCat && matchQ ? '' : 'none';
+      });
+    }
+    search.addEventListener('input', function () {
+      state.q = search.value.trim().toLowerCase();
+      refresh();
+    });
+    cats.forEach(function (b) {
+      b.addEventListener('click', function () {
+        cats.forEach(function (x) { x.classList.remove('is-active'); });
+        b.classList.add('is-active');
+        state.cat = b.dataset.cat;
+        refresh();
+      });
+    });
+
+    // Modal flow.
+    var modal = document.getElementById('tmpl-modal');
+    var modalTitle = document.getElementById('tmpl-modal-title');
+    var modalBlurb = document.getElementById('tmpl-modal-blurb');
+    var modalForm = document.getElementById('tmpl-modal-form');
+    var statusEl = document.getElementById('tmpl-status');
+    var emailEl = document.getElementById('tmpl-email');
+    var firstEl = document.getElementById('tmpl-first');
+    var directBtn = document.getElementById('tmpl-direct-dl');
+    var closeBtn = document.getElementById('tmpl-modal-close');
+    var currentSlug = null;
+
+    grid.addEventListener('click', function (e) {
+      var btn = e.target.closest('.tmpl-card__btn');
+      if (!btn) return;
+      currentSlug = btn.dataset.slug;
+      modalTitle.textContent = btn.dataset.title + ' template';
+      modalBlurb.textContent = btn.dataset.blurb;
+      statusEl.textContent = 'Goes to CyberSygn, nowhere else.';
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { firstEl.focus(); }, 60);
+    });
+    function close() {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+    }
+    closeBtn.addEventListener('click', close);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) close(); });
+
+    async function emailFlow(e) {
+      e.preventDefault();
+      var email = emailEl.value.trim();
+      var firstName = firstEl.value.trim();
+      if (!email || !firstName) { statusEl.textContent = 'Fill in both.'; return; }
+      statusEl.textContent = 'Sending the PDF.';
+      try {
+        var res = await fetch('/api/templates/send', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ templateSlug: currentSlug, email: email, firstName: firstName }),
+        });
+        var data = await res.json();
+        if (data && data.ok) {
+          statusEl.textContent = 'Sent. Check your inbox in ~30 seconds.';
+          setTimeout(close, 2400);
+        } else {
+          statusEl.textContent = (data && (data.message || data.error)) || 'Could not send.';
+        }
+      } catch (err) {
+        statusEl.textContent = 'Network error. Try again.';
+      }
+    }
+    modalForm.addEventListener('submit', emailFlow);
+
+    directBtn.addEventListener('click', function () {
+      var email = emailEl.value.trim();
+      var firstName = firstEl.value.trim();
+      if (!email || !firstName) { statusEl.textContent = 'Email + first name required to download.'; return; }
+      statusEl.textContent = 'Starting download.';
+      window.location.href = '/api/templates/download/' + encodeURIComponent(currentSlug) +
+        '?email=' + encodeURIComponent(email) +
+        '&firstName=' + encodeURIComponent(firstName);
+      setTimeout(close, 1200);
+    });
+  </script>
+
+</body>
+</html>

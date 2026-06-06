@@ -318,6 +318,15 @@ async function main() {
     console.log('  wrote dist/compliance/index.html');
   }
 
+  // /templates/: contract templates library (slice 105).
+  const tmplSrc = join(SRC, 'templates');
+  if (await exists(tmplSrc)) {
+    const tmplOut = join(OUT, 'templates');
+    await mkdir(tmplOut, { recursive: true });
+    await copyFile(join(tmplSrc, 'index.html'), join(tmplOut, 'index.html'));
+    console.log('  wrote dist/templates/index.html');
+  }
+
   // /control/: hidden owner workbench (login + analytics + demo + tools).
   // robots-blocked, noindex meta. Copy index.html + control.js verbatim.
   const ctrlSrc = join(SRC, 'control');
