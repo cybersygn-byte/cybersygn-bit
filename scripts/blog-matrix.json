@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "purpose": "Blog post schedule + outline matrix. Slice 103. Tue/Thu publish cadence from 2026-06-09 to early 2028. The generator (scripts/build-blog-cache.mjs) reads this file and emits HTML for any post whose publishDate is <= today.",
+    "cadence": "Tuesday + Thursday",
+    "startDate": "2026-06-09",
+    "totalPosts": 156,
+    "ctaRules": "Each post promotes either Solo ($12/mo unlimited) or Studio ($29/mo, 3 seats). Origin and Lifetime are time-limited and NOT mentioned in evergreen content.",
+    "legalDisclaimer": "Posts in compliance/legal categories include 'not legal advice' disclaimer. Generator wraps via disclaimerNeeded flag."
+  },
+  "posts": [
+    {
+      "slug": "what-is-an-electronic-signature",
+      "title": "What is an electronic signature, exactly?",
+      "publishDate": "2026-05-26",
+      "category": "fundamentals",
+      "primaryKeyword": "what is an electronic signature",
+      "secondaryKeywords": ["electronic signature definition", "e-signature meaning"],
+      "metaDescription": "An electronic signature is any digital mark made with intent to sign. Here's the precise definition, how it works, and why it's legally binding in the US and EU.",
+      "audienceTier": "solo",
+      "hook": "Most people use 'electronic signature' loosely, but the legal definition is specific and worth knowing.",
+      "intro": "An electronic signature is any electronic sound, symbol, or process attached to a document with the intent to sign it. That intent is the part that matters legally — not the format of the signature itself. We'll break down what counts, what doesn't, and how the technology behind modern e-signature platforms actually works.",
+      "sections": [
+        {"heading": "The legal definition",
+         "content": "Under the ESIGN Act (United States, 2000) and UETA (adopted in 49 states), an electronic signature is defined as 'an electronic sound, symbol, or process attached to or logically associated with a contract or other record and executed or adopted by a person with the intent to sign the record.' The key phrase is 'intent to sign.' Typing your name into a checkbox counts. Drawing your signature on a tablet counts. Clicking 'I agree' on a contract counts. The format is flexible; the intent is required."},
+        {"heading": "What separates electronic signatures from digital signatures",
+         "content": "These two terms get used interchangeably, but they mean different things. An electronic signature is the legal concept above. A digital signature is a specific cryptographic technique that uses public-key cryptography to verify the signer's identity and detect tampering. Every digital signature is an electronic signature, but not every electronic signature is digital. Modern e-signature platforms often use digital signatures under the hood while presenting a friendlier interface to the signer."},
+        {"heading": "Why this matters for your contracts",
+         "content": "If you send contracts for signature, your method needs to capture clear intent, attribute the signature to the right person, preserve the document's integrity, and produce records you can show if challenged. A typed-name-on-a-Word-doc fails most of these. A dedicated e-signature platform handles them automatically — magic links verify the recipient, every event is logged with timestamp and IP, and a hash fingerprint of the document detects tampering."}
+      ],
+      "cta": "CyberSygn handles intent, attribution, integrity, and the audit trail automatically — so every signed document carries the records that prove it. Try the demo free, then Solo is $12/month for unlimited documents.",
+      "disclaimerNeeded": false,
+      "relatedSlugs": ["how-electronic-signatures-work-technically", "are-electronic-signatures-legally-binding"]
+    },
+    {
+      "slug": "how-electronic-signatures-work-technically",
+      "title": "How electronic signatures actually work, technically",
+      "publishDate": "2026-05-28",
+      "category": "fundamentals",
+      "primaryKeyword": "how electronic signatures work",
+      "secondaryKeywords": ["electronic signature technology", "e-signature backend"],
+      "metaDescription": "A plain-English walkthrough of what happens when you click 'sign' on an electronic document. From magic links to SHA-256 fingerprints, here's the actual flow.",
+      "audienceTier": "solo",
+      "hook": "Most people sign electronically without ever wondering what happens between 'click sign' and 'document received.' It's worth knowing.",
+      "intro": "When you sign a document electronically, six things happen in the background: identity check, document fingerprinting, signature capture, event logging, file modification, and delivery. Understanding the stack helps you evaluate whether the platform you're using produces records that will hold up.",
+      "sections": [
+        {"heading": "Identity verification: the magic link",
+         "content": "Modern e-signature platforms send a unique URL to each signer's email. That URL contains a one-time token that ties the signing session to the signer. The token is random (typically 32 bytes of cryptographic-grade entropy) and stored server-side so the platform can verify it on access. When the signer clicks the link, the platform records their IP address and timestamp before showing them the document. This becomes the 'signer identity' part of the audit record."},
+        {"heading": "Document fingerprinting: SHA-256",
+         "content": "Before any modification, the platform computes a SHA-256 hash of the original document bytes. A SHA-256 hash is a 64-character hexadecimal string. Change one byte of the document and the hash changes completely. The platform stores this hash in the audit certificate. Years later, anyone can verify 'yes, this is the document that was actually signed' by re-hashing the original PDF and comparing to the recorded hash."},
+        {"heading": "Event logging: the audit trail",
+         "content": "Every signing event is logged: invite sent, link clicked, document viewed, field filled, signature drawn, doc submitted. Each event records its timestamp, IP address, user agent, and event type. Together these form the chain of custody — the documentary evidence that the signing took place the way the platform says it did. When you receive a signed document, you should receive the audit certificate alongside it."}
+      ],
+      "cta": "Every CyberSygn document includes a SHA-256 fingerprint and a complete event audit cert — built in, no add-on. Try the demo free; Solo is $12/month for unlimited.",
+      "disclaimerNeeded": false,
+      "relatedSlugs": ["what-is-an-electronic-signature", "audit-certificates-explained"]
+    },
+    {
+      "slug": "electronic-vs-digital-signature",
+      "title": "Electronic signature vs digital signature: the difference, in plain English",
+      "publishDate": "2026-06-02",
+      "category": "fundamentals",
+      "primaryKeyword": "electronic vs digital signature",
+      "secondaryKeywords": ["e-signature versus digital", "digital signature meaning"],
+      "metaDescription": "Electronic signatures and digital signatures get used interchangeably. They aren't the same. Here's the technical difference and why it matters.",
+      "audienceTier": "solo",
+      "hook": "If you've ever wondered whether your signing platform produces 'real' digital signatures, you're asking the right question.",
+      "intro": "An electronic signature is any electronic mark of intent. A digital signature is a specific cryptographic mechanism. Most signed documents in business contexts are electronic signatures; a smaller subset are also digital signatures. The difference matters when stakes are high.",
+      "sections": [
+        {"heading": "Electronic signatures: the legal category",
+         "content": "Electronic signature is a legal term. The ESIGN Act defines it as any electronic sound, symbol, or process attached to a record with intent to sign. Typing your name, drawing your signature, clicking an 'I agree' button — all count. This is the umbrella category that includes everything from a typed name in an email to a notarized digital seal."},
+        {"heading": "Digital signatures: the cryptographic mechanism",
+         "content": "Digital signatures are a specific technology using public-key cryptography. A signer's private key generates a unique hash of the document; anyone with the signer's public key can verify the signature came from the corresponding private key. This provides three guarantees: identity (only the keyholder could sign), integrity (any document change invalidates the signature), and non-repudiation (the signer can't deny it later). PDF digital signatures embed this verification directly into the document."},
+        {"heading": "Which one you need depends on the document",
+         "content": "For most business contracts, sales agreements, and employment forms, a standard electronic signature is sufficient and legally binding. For high-stakes financial transactions, government filings in some jurisdictions, or documents that need to verify long after the signer is reachable, a digital signature backed by a public-key infrastructure adds an extra layer. Most modern e-signature platforms use digital signatures under the hood while presenting a friendly electronic-signature interface."}
+      ],
+      "cta": "CyberSygn produces ESIGN-compliant electronic signatures with full audit trail. Higher-grade qualified digital signatures (eIDAS QES) are on our 2027 roadmap. For now, Solo at $12/month covers every standard business contract use case.",
+      "disclaimerNeeded": false,
+      "relatedSlugs": ["what-is-an-electronic-signature", "how-electronic-signatures-work-technically"]
+    },
+    {
+      "slug": "are-electronic-signatures-legally-binding",
+      "title": "Are electronic signatures legally binding? (Yes — here's how)",
+      "publishDate": "2026-06-18",
+      "category": "compliance",
+      "primaryKeyword": "are electronic signatures legally binding",
+      "secondaryKeywords": ["e-signature legal", "ESIGN Act"],
+      "metaDescription": "Electronic signatures have been legally binding in the US since 2000. Here's the law, the requirements, and the edge cases where physical signatures are still required.",
+      "audienceTier": "solo",
+      "hook": "The legality of electronic signatures isn't a gray area. It's been settled in US federal law for 25 years.",
+      "intro": "Electronic signatures are legally binding in the United States under the ESIGN Act (2000) and in nearly every state under UETA. Most other developed economies have parallel laws (eIDAS in the EU, IT Act in India, Electronic Communications Act in the UK). There are specific exceptions — wills, court orders, some real-estate filings — but they're narrow.",
+      "sections": [
+        {"heading": "The ESIGN Act in plain English",
+         "content": "The Electronic Signatures in Global and National Commerce Act, signed by President Clinton in 2000, established that electronic signatures, contracts, and records have the same legal weight as their paper counterparts. The Act applies to interstate and international commerce. UETA (the Uniform Electronic Transactions Act) provides parallel rules at the state level. Together they cover essentially all routine commercial contracts."},
+        {"heading": "What an e-signature needs to be enforceable",
+         "content": "Four elements make an electronic signature enforceable in court: intent to sign, consent to do business electronically, association of the signature with the record being signed, and record retention. A platform that captures clear consent, ties the signature to the specific document, logs the event with attribution data, and retains the signed record satisfies all four. Most reputable e-signature platforms handle this automatically."},
+        {"heading": "Documents you still can't sign electronically",
+         "content": "Certain document types are excluded from ESIGN: wills, codicils, and testamentary trusts; court documents and notices; certain notices about utility services; family law documents like adoption and divorce; and product recalls or safety warnings. State laws vary on real-estate documents — some require a notary's wet signature, some accept a notary's e-signature, some accept fully remote online notarization. Check your state when real estate is involved."}
+      ],
+      "cta": "CyberSygn captures intent, attribution, association, and retention by default. Every signed PDF includes an audit certificate you can present if challenged. Solo is $12/month for unlimited binding signatures.",
+      "disclaimerNeeded": true,
+      "relatedSlugs": ["esign-act-overview", "ueta-vs-esign"]
+    },
+    {
+      "slug": "history-of-electronic-signatures",
+      "title": "The unexpectedly long history of electronic signatures",
+      "publishDate": "2026-06-23",
+      "category": "fundamentals",
+      "primaryKeyword": "history of electronic signatures",
+      "secondaryKeywords": ["e-signature history", "first electronic signature"],
+      "metaDescription": "Electronic signatures didn't start with DocuSign. The technology and law go back decades. Here's the surprisingly long path from telegraph signatures to your iPhone.",
+      "audienceTier": "solo",
+      "hook": "The first court case enforcing an electronic signature was decided in 1869.",
+      "intro": "We tend to think of electronic signatures as a 2000s innovation, but the legal foundation goes back to the 19th century telegraph era. The modern technology stack and the laws that authorize it took a century to converge.",
+      "sections": [
+        {"heading": "The 1869 telegraph signature case",
+         "content": "Howley v. Whipple (1869) was the first US court ruling on the validity of telegraph signatures. The New Hampshire Supreme Court held that a contract signed by telegraphed message was enforceable. The reasoning: the signature served the same intent function as ink on paper. This is the same logical foundation used in modern electronic signature law."},
+        {"heading": "Public-key cryptography arrives (1976)",
+         "content": "Whitfield Diffie and Martin Hellman published 'New Directions in Cryptography' in 1976, introducing public-key cryptography. RSA followed in 1977. These mechanisms made it possible to digitally sign documents in a way that could be cryptographically verified — the technology foundation for what we now call digital signatures, distinct from but enabling electronic signatures more broadly."},
+        {"heading": "The modern era: ESIGN, UETA, and the internet",
+         "content": "The Uniform Electronic Transactions Act (UETA) was adopted in 1999, then the Electronic Signatures in Global and National Commerce Act (ESIGN) was signed into law in 2000. Together they established the legal framework that powers today's e-signature industry. DocuSign launched in 2003, HelloSign in 2010, and a generation of competitors followed — but the law made all of it possible."}
+      ],
+      "cta": "Twenty-five years after the law was settled, the user experience still hasn't caught up. CyberSygn removes the worst part of the process — manual field placement — using automatic detection. Try the demo free; Solo at $12/month for unlimited.",
+      "disclaimerNeeded": false,
+      "relatedSlugs": ["what-is-an-electronic-signature", "are-electronic-signatures-legally-binding"]
+    }
+  ]
+}

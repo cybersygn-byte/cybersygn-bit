@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Electronic signature vs digital signature: the difference, in plain English — CyberSygn</title>
+  <meta name="description" content="Electronic signatures and digital signatures get used interchangeably. They aren&#39;t the same. Here&#39;s the technical difference and why it matters." />
+  <meta name="keywords" content="electronic vs digital signature, e-signature versus digital, digital signature meaning" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/blog/electronic-vs-digital-signature/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
+  <meta property="og:title" content="Electronic signature vs digital signature: the difference, in plain English" />
+  <meta property="og:description" content="Electronic signatures and digital signatures get used interchangeably. They aren&#39;t the same. Here&#39;s the technical difference and why it matters." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/blog/electronic-vs-digital-signature/" />
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2026-06-02T12:00:00Z" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../../vendor/fonts.css" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "CyberSygn",
+          "item": "https://cybersygn.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://cybersygn.io/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Electronic signature vs digital signature: the difference, in plain English",
+          "item": "https://cybersygn.io/blog/electronic-vs-digital-signature/"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Electronic signature vs digital signature: the difference, in plain English",
+      "description": "Electronic signatures and digital signatures get used interchangeably. They aren't the same. Here's the technical difference and why it matters.",
+      "datePublished": "2026-06-02T12:00:00Z",
+      "dateModified": "2026-06-02T12:00:00Z",
+      "author": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "url": "https://cybersygn.io/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cybersygn.io/brand/lockup-navy@2x.png"
+        }
+      },
+      "mainEntityOfPage": "https://cybersygn.io/blog/electronic-vs-digital-signature/",
+      "articleSection": "fundamentals",
+      "keywords": "electronic vs digital signature, e-signature versus digital, digital signature meaning"
+    }
+  ]
+}
+  </script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Blog">
+        <a class="masthead__link" href="../">Blog index</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try the demo</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="post">
+    <article class="post__article">
+      <div class="container container--prose">
+        <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">fundamentals</span></p>
+        <h1 class="post__title">Electronic signature vs digital signature: the difference, in plain English</h1>
+        <p class="post__date"><time datetime="2026-06-02">June 2, 2026</time></p>
+        <p class="post__hook">If you&#39;ve ever wondered whether your signing platform produces &#39;real&#39; digital signatures, you&#39;re asking the right question.</p>
+        <p class="post__intro">An electronic signature is any electronic mark of intent. A digital signature is a specific cryptographic mechanism. Most signed documents in business contexts are electronic signatures; a smaller subset are also digital signatures. The difference matters when stakes are high.</p>
+        <h2 class="post__h2">Electronic signatures: the legal category</h2>
+<p class="post__p">Electronic signature is a legal term. The ESIGN Act defines it as any electronic sound, symbol, or process attached to a record with intent to sign. Typing your name, drawing your signature, clicking an &#39;I agree&#39; button — all count. This is the umbrella category that includes everything from a typed name in an email to a notarized digital seal.</p>
+<h2 class="post__h2">Digital signatures: the cryptographic mechanism</h2>
+<p class="post__p">Digital signatures are a specific technology using public-key cryptography. A signer&#39;s private key generates a unique hash of the document; anyone with the signer&#39;s public key can verify the signature came from the corresponding private key. This provides three guarantees: identity (only the keyholder could sign), integrity (any document change invalidates the signature), and non-repudiation (the signer can&#39;t deny it later). PDF digital signatures embed this verification directly into the document.</p>
+<h2 class="post__h2">Which one you need depends on the document</h2>
+<p class="post__p">For most business contracts, sales agreements, and employment forms, a standard electronic signature is sufficient and legally binding. For high-stakes financial transactions, government filings in some jurisdictions, or documents that need to verify long after the signer is reachable, a digital signature backed by a public-key infrastructure adds an extra layer. Most modern e-signature platforms use digital signatures under the hood while presenting a friendly electronic-signature interface.</p>
+        
+
+        <section class="post__cta">
+          <p class="kicker">Ready to try it?</p>
+          <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
+          <p>CyberSygn produces ESIGN-compliant electronic signatures with full audit trail. Higher-grade qualified digital signatures (eIDAS QES) are on our 2027 roadmap. For now, Solo at $12/month covers every standard business contract use case.</p>
+          <a class="btn btn--primary btn--lg" href="/preview/">
+            Try the demo, free →
+          </a>
+        </section>
+
+        
+    <section class="post__related">
+      <p class="kicker kicker--muted">Related reading</p>
+      <ul class="post__related-list">
+        <li><a href="/blog/what-is-an-electronic-signature/"><strong>What is an electronic signature, exactly?</strong><span>An electronic signature is any digital mark made with intent to sign. Here&#39;s the precise definition,</span></a></li>
+<li><a href="/blog/how-electronic-signatures-work-technically/"><strong>How electronic signatures actually work, technically</strong><span>A plain-English walkthrough of what happens when you click &#39;sign&#39; on an electronic document. From ma</span></a></li>
+      </ul>
+    </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../../">Home</a>
+        <a href="../">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+</body>
+</html>

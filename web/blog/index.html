@@ -3,27 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CyberSygn blog. Notes from a solo founder.</title>
-  <meta name="description" content="Field notes from building CyberSygn solo on Cloudflare. E-signature, PDF detection, indie SaaS, founder lessons." />
+  <title>CyberSygn blog. The boring details about contracts, signing, and time.</title>
+  <meta name="description" content="Twice-a-week reading on electronic signatures, contracts, workflow, compliance, and the indie-founder side of building CyberSygn." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/blog/" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
-
   <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
-
-  <meta property="og:title" content="CyberSygn blog." />
-  <meta property="og:description" content="Field notes from building CyberSygn solo on Cloudflare." />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <meta property="og:title" content="CyberSygn blog" />
+  <meta property="og:description" content="Reading on e-signature, contracts, workflow, and compliance. Twice a week." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/blog/" />
-
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
-
   <script src="/telemetry.js"></script>
-  <script src="/polish.js" defer></script>
 </head>
 <body>
 
@@ -42,68 +38,52 @@
   <main>
     <section class="hero">
       <div class="container">
-        <p class="kicker hero__kicker">Blog.</p>
-        <h1 class="h-display">Notes from <em>building this solo.</em></h1>
-        <p class="lede" style="max-width: 720px;">
-          Field detection, e-signature law, the why-DocuSign-sucks story, and the indie-founder
-          mechanics of shipping a SaaS without investors or a team. Updated weekly.
-        </p>
+        <p class="kicker hero__kicker">CyberSygn blog.</p>
+        <h1 class="h-display hero__title">The boring details about signing, contracts, and time.</h1>
+        <p class="lede hero__lede">Twice a week. E-signature mechanics, contract workflow, compliance basics, indie-founder lessons. Real value, no fluff.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <div class="blog-list">
-          
-    <article class="blog-card">
-      <p class="kicker">2026-06-05 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="how-to-sign-a-pdf-without-docusign/">How to sign a PDF without DocuSign</a></h2>
-      <p>The signing-software market is crowded but the user experience is broken in the same way across all of it. Here&#39;s a faster, cheaper, simpler way that doesn&#39;t require an account or a 30-minute drag-and-drop session.</p>
-    </article>
-  
 
-    <article class="blog-card">
-      <p class="kicker">2026-06-04 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="what-is-automatic-field-detection/">What is automatic field detection?</a></h2>
-      <p>The technical wedge that makes CyberSygn different from every other e-signature tool. Heuristic detection of signature lines, initials, dates, and checkboxes — in about three seconds per document.</p>
-    </article>
-  
-
-    <article class="blog-card">
-      <p class="kicker">2026-06-03 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="cheapest-e-signature-for-solos-2026/">Cheapest e-signature for solos in 2026</a></h2>
-      <p>A straight comparison of the cheapest e-signature options for freelancers, contractors, coaches, and one-person shops. No fluff. Prices, what you get, what you don&#39;t.</p>
-    </article>
-  
-
-    <article class="blog-card">
-      <p class="kicker">2026-06-02 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="why-receivers-hate-signing-accounts/">Why receivers hate signing accounts</a></h2>
-      <p>Receivers are the people you send a contract to. They never wanted DocuSign accounts. They never wanted the email re-verification. They never wanted to remember a password. Here&#39;s how to send contracts without forcing your clients into the most-hated UX in business software.</p>
-    </article>
-  
-
-    <article class="blog-card">
-      <p class="kicker">2026-06-01 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="five-docusign-features-you-dont-need/">5 DocuSign features you don&#39;t need</a></h2>
-      <p>DocuSign ships a hundred features. You probably use four. Here&#39;s the honest list of what&#39;s optional and what isn&#39;t, so you can pick a tool sized for your actual workflow.</p>
-    </article>
-  
-
-    <article class="blog-card">
-      <p class="kicker">2026-05-31 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="how-to-add-signature-to-pdf-free/">How to add a signature to a contract for free</a></h2>
-      <p>Step-by-step on adding a signature to a PDF without paying for DocuSign, with multiple free options ranked by speed and use case.</p>
-    </article>
-  
-
-    <article class="blog-card">
-      <p class="kicker">2026-05-30 · Nathan Vogt</p>
-      <h2 class="h-card"><a href="built-cybersygn-solo-on-cloudflare/">How I built CyberSygn solo on Cloudflare in 60 days</a></h2>
-      <p>The stack, the slices, the numbers, the hard parts. A field report from one founder shipping an e-signature SaaS with no team, no investors, and a deliberately small surface area.</p>
-    </article>
-  
+        <div class="blog-controls">
+          <input id="blog-search" class="blog-search" type="search" placeholder="Search the archive." />
+          <div class="blog-cats" role="tablist" aria-label="Categories">
+            <button class="blog-cat is-active" data-cat="all" type="button">All 3</button>
+            <button class="blog-cat" data-cat="fundamentals" type="button">fundamentals</button>
+          </div>
         </div>
+
+        <ol class="blog-grid" id="blog-grid">
+          
+          <li class="blog-card" data-cat="fundamentals" data-search="electronic signature vs digital signature: the difference, in plain english electronic signatures and digital signatures get used interchangeably. they aren&#39;t the same. here&#39;s the technical difference and why it matters. electronic vs digital signature">
+            <a class="blog-card__link" href="/blog/electronic-vs-digital-signature/">
+              <p class="blog-card__cat">fundamentals</p>
+              <h3 class="blog-card__title">Electronic signature vs digital signature: the difference, in plain English</h3>
+              <p class="blog-card__desc">Electronic signatures and digital signatures get used interchangeably. They aren&#39;t the same. Here&#39;s the technical difference and why it matters.</p>
+              <p class="blog-card__date"><time datetime="2026-06-02">June 2, 2026</time></p>
+            </a>
+          </li>
+          <li class="blog-card" data-cat="fundamentals" data-search="how electronic signatures actually work, technically a plain-english walkthrough of what happens when you click &#39;sign&#39; on an electronic document. from magic links to sha-256 fingerprints, here&#39;s the actual flow. how electronic signatures work">
+            <a class="blog-card__link" href="/blog/how-electronic-signatures-work-technically/">
+              <p class="blog-card__cat">fundamentals</p>
+              <h3 class="blog-card__title">How electronic signatures actually work, technically</h3>
+              <p class="blog-card__desc">A plain-English walkthrough of what happens when you click &#39;sign&#39; on an electronic document. From magic links to SHA-256 fingerprints, here&#39;s the actual flow.</p>
+              <p class="blog-card__date"><time datetime="2026-05-28">May 28, 2026</time></p>
+            </a>
+          </li>
+          <li class="blog-card" data-cat="fundamentals" data-search="what is an electronic signature, exactly? an electronic signature is any digital mark made with intent to sign. here&#39;s the precise definition, how it works, and why it&#39;s legally binding in the us and eu. what is an electronic signature">
+            <a class="blog-card__link" href="/blog/what-is-an-electronic-signature/">
+              <p class="blog-card__cat">fundamentals</p>
+              <h3 class="blog-card__title">What is an electronic signature, exactly?</h3>
+              <p class="blog-card__desc">An electronic signature is any digital mark made with intent to sign. Here&#39;s the precise definition, how it works, and why it&#39;s legally binding in the US and EU.</p>
+              <p class="blog-card__date"><time datetime="2026-05-26">May 26, 2026</time></p>
+            </a>
+          </li>
+        </ol>
+
+        <p id="blog-empty" class="blog-empty" hidden>No posts match.</p>
       </div>
     </section>
   </main>
@@ -115,11 +95,44 @@
         <a href="../">Home</a>
         <a href="/privacy/">Privacy</a>
         <a href="/terms/">Terms</a>
-        <a href="/refund/">Refund</a>
-        <a href="mailto:hello@cybersygn.io">Contact</a>
+        <a href="/compliance/">Compliance</a>
       </nav>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var search = document.getElementById('blog-search');
+      var grid = document.getElementById('blog-grid');
+      var empty = document.getElementById('blog-empty');
+      var cats = document.querySelectorAll('.blog-cat');
+      var cards = grid.querySelectorAll('.blog-card');
+      var state = { cat: 'all', q: '' };
+      function refresh() {
+        var visible = 0;
+        cards.forEach(function (c) {
+          var matchCat = state.cat === 'all' || c.dataset.cat === state.cat;
+          var matchQ = !state.q || c.dataset.search.indexOf(state.q) !== -1;
+          var show = matchCat && matchQ;
+          c.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        empty.hidden = visible > 0;
+      }
+      if (search) search.addEventListener('input', function () {
+        state.q = search.value.trim().toLowerCase();
+        refresh();
+      });
+      cats.forEach(function (b) {
+        b.addEventListener('click', function () {
+          cats.forEach(function (x) { x.classList.remove('is-active'); });
+          b.classList.add('is-active');
+          state.cat = b.dataset.cat;
+          refresh();
+        });
+      });
+    })();
+  </script>
 
 </body>
 </html>
