@@ -36,7 +36,7 @@
           "content": "If you send contracts for signature, your method needs to capture clear intent, attribute the signature to the right person, preserve the document's integrity, and produce records you can show if challenged. A typed-name-on-a-Word-doc fails most of these. A dedicated e-signature platform handles them automatically — magic links verify the recipient, every event is logged with timestamp and IP, and a hash fingerprint of the document detects tampering."
         }
       ],
-      "cta": "CyberSygn handles intent, attribution, integrity, and the audit trail automatically — so every signed document carries the records that prove it. Try the demo free, then Solo is $12/month for unlimited documents.",
+      "cta": "CyberSygn handles intent, attribution, integrity, and the audit trail automatically — so every signed document carries the records that prove it. Try It Out free, then Solo is $12/month for unlimited documents.",
       "disclaimerNeeded": false,
       "relatedSlugs": [
         "how-electronic-signatures-work-technically",
@@ -71,7 +71,7 @@
           "content": "Every signing event is logged: invite sent, link clicked, document viewed, field filled, signature drawn, doc submitted. Each event records its timestamp, IP address, user agent, and event type. Together these form the chain of custody — the documentary evidence that the signing took place the way the platform says it did. When you receive a signed document, you should receive the audit certificate alongside it."
         }
       ],
-      "cta": "Every CyberSygn document includes a SHA-256 fingerprint and a complete event audit cert — built in, no add-on. Try the demo free; Solo is $12/month for unlimited.",
+      "cta": "Every CyberSygn document includes a SHA-256 fingerprint and a complete event audit cert — built in, no add-on. Try It Out free; Solo is $12/month for unlimited.",
       "disclaimerNeeded": false,
       "relatedSlugs": [
         "what-is-an-electronic-signature",
@@ -176,7 +176,7 @@
           "content": "The Uniform Electronic Transactions Act (UETA) was adopted in 1999, then the Electronic Signatures in Global and National Commerce Act (ESIGN) was signed into law in 2000. Together they established the legal framework that powers today's e-signature industry. DocuSign launched in 2003, HelloSign in 2010, and a generation of competitors followed — but the law made all of it possible."
         }
       ],
-      "cta": "Twenty-five years after the law was settled, the user experience still hasn't caught up. CyberSygn removes the worst part of the process — manual field placement — using automatic detection. Try the demo free; Solo at $12/month for unlimited.",
+      "cta": "Twenty-five years after the law was settled, the user experience still hasn't caught up. CyberSygn removes the worst part of the process — manual field placement — using automatic detection. Try It Out free; Solo at $12/month for unlimited.",
       "disclaimerNeeded": false,
       "relatedSlugs": [
         "what-is-an-electronic-signature",

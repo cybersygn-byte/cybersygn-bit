@@ -127,6 +127,9 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/free/consume') {
       return handleFreeConsume(request, env);
     }
+    if (request.method === 'POST' && url.pathname === '/api/free/email-signed-pdf') {
+      return handleEmailSignedPdf(request, env);
+    }
     if (request.method === 'GET' && url.pathname === '/api/dataset/count') {
       return handleDatasetCount(env);
     }
@@ -1676,6 +1679,76 @@ async function handleFreeConsume(request, env) {
     return jsonResponse(status, result);
   }
   return jsonResponse(200, result);
+}
+
+/**
+ * Email the signed PDF the user just downloaded to the address on file
+ * for their freeToken. The user gets a copy in their inbox; we get
+ * delivery confirmation back from Resend, which doubles as a real-time
+ * verification that the email address they submitted at signup is valid.
+ *
+ * Body: { pdfBase64: string, filename: string }
+ * Header: X-CyberSygn-Free: <freeToken>
+ *
+ * Failures are tolerated (no surface error to the user) — the download
+ * already worked client-side; this is a best-effort copy.
+ */
+async function handleEmailSignedPdf(request, env) {
+  const token = request.headers.get('x-cybersygn-free') || '';
+  if (!token) return jsonResponse(401, { ok: false, error: 'missing_token' });
+  // Resolve email from freeToken pointer.
+  const emailHash = await env.KV.get(`free:token:${token}`);
+  if (!emailHash) return jsonResponse(401, { ok: false, error: 'unknown_token' });
+  const emailRaw = await env.KV.get(`free:emailHash:${emailHash}`);
+  if (!emailRaw) return jsonResponse(404, { ok: false, error: 'no_email_on_file' });
+  let emailRecord;
+  try { emailRecord = JSON.parse(emailRaw); } catch (e) { return jsonResponse(500, { ok: false, error: 'bad_record' }); }
+  const email = emailRecord.email;
+  const firstName = emailRecord.firstName || 'there';
+  if (!email) return jsonResponse(404, { ok: false, error: 'no_email_on_record' });
+
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { pdfBase64, filename } = body.value || {};
+  if (!pdfBase64 || !filename) return jsonResponse(400, { ok: false, error: 'missing_pdf' });
+
+  const apiKey = env && env.RESEND_API_KEY;
+  if (!apiKey) {
+    return jsonResponse(200, { ok: true, mode: 'console', detail: 'RESEND_API_KEY not set; download succeeded client-side' });
+  }
+
+  const subject = `Your signed PDF, from CyberSygn.`;
+  const text =
+    `Hi ${firstName},\n\n` +
+    `Your signed PDF "${filename}" is attached for your records.\n\n` +
+    `CyberSygn keeps every signed document and audit certificate available in your account. Open https://cybersygn.io/dashboard/ to see the full history.\n\n` +
+    `If you did not just sign a document with CyberSygn, reply to this email and we will look into it.\n\n` +
+    `CyberSygn. Built in Colorado.`;
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: env.CYBERSYGN_FROM || 'hello@cybersygn.io',
+        to: [email],
+        subject,
+        text,
+        attachments: [{ filename, content: pdfBase64 }],
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      return jsonResponse(200, { ok: false, error: `resend_${res.status}`, detail: txt.slice(0, 200) });
+    }
+    const r = await res.json();
+    return jsonResponse(200, { ok: true, providerId: r.id || null });
+  } catch (e) {
+    return jsonResponse(200, { ok: false, error: 'exception', detail: (e && e.message) || String(e) });
+  }
 }
 
 async function handleDatasetCount(env) {

@@ -201,7 +201,7 @@ function renderPage(c) {
       </a>
       <nav class="masthead__nav" aria-label="Compare">
         <a class="masthead__link" href="../../">Home</a>
-        <a class="masthead__link masthead__link--cta" href="../../preview/">Try the demo</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
       </nav>
     </div>
   </header>
@@ -224,7 +224,7 @@ function renderPage(c) {
             </p>
             <div class="hero__actions">
               <a class="btn btn--primary btn--lg" href="../../preview/">
-                Try the demo, free
+                Try It Out
                 <span class="btn-arrow" aria-hidden="true">→</span>
               </a>
               <a class="btn btn--ghost btn--lg" href="#compare">See the comparison</a>
@@ -342,7 +342,7 @@ function renderPage(c) {
 
         <div class="hero__actions" style="margin-top: var(--s-5);">
           <a class="btn btn--primary btn--lg" href="../../preview/">
-            Try the demo now
+            Try It Out now
             <span class="btn-arrow" aria-hidden="true">→</span>
           </a>
           <a class="btn btn--ghost btn--lg" href="../../#founding">Claim an Origin spot →</a>

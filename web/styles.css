@@ -7762,29 +7762,21 @@ details[open] > .field-list__group--toggle::after {
 }
 .free-status__cap a { color: var(--accent-text); }
 
-/* Free-gated state (no signup yet): the upload buttons and hints stay
-   visible so users can try a doc immediately. Detection runs locally —
-   no signup is required for the wow moment. The gate form becomes a
-   smaller 'Sign up to send' card below the upload area; signup is only
-   actually needed before send-by-email. Lower friction → higher
-   completion. */
+/* Free-gated state (no signup yet): the upload buttons and hints HIDE
+   completely. The free-gate becomes the only path forward — the
+   conversion paywall. Once signup succeeds the data-free-gated flips
+   to "false" and the upload buttons reveal. Three uploads counted by
+   email (server-side) so cookie clears can't reset the count. */
+body[data-free-gated="true"] .dropzone-card__actions,
+body[data-free-gated="true"] .dropzone-card__hints {
+  display: none;
+}
 body[data-free-gated="true"] .free-gate {
-  margin-top: var(--s-5);
-  padding: var(--s-4);
-  background: var(--bg-2);
-  border: 1px solid var(--line);
+  margin-top: var(--s-4);
+  padding: var(--s-5);
+  background: var(--bg-1);
+  border: 1px solid var(--accent-line);
   border-radius: var(--r);
-}
-body[data-free-gated="true"] .free-gate__kicker {
-  color: var(--text-3);
-  font-size: 10px;
-}
-body[data-free-gated="true"] .free-gate__title {
-  font-size: 18px;
-}
-body[data-free-gated="true"] .free-gate__lede {
-  font-size: var(--t-sm);
-  color: var(--text-2);
 }
 
 /* ──────────────────────────────────────────────────────────

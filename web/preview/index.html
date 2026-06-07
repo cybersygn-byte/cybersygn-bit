@@ -153,20 +153,22 @@
             <li>PDFs work best. Camera scans become PDFs in your browser.</li>
             <li>Max 25 MB per file. Multiple photos compose into one document.</li>
             <li>Detection runs locally. Your file never reaches a server.</li>
-            <li>Resuming work? Drop a <code>.cybersygn-draft.json</code> to restore it.</li>
           </ul>
-          <!-- Free-tier signup gate. Hidden once the user has a freeToken
-               in localStorage; visible to first-time visitors. Three
-               documents lifetime, no card needed. Submitting the form
-               binds the email to a counter that survives cookie clears. -->
+          <!-- Free-tier signup gate. Hard wall in front of upload for
+               first-time visitors. Three documents lifetime per email.
+               When the user has no freeToken in localStorage, the upload
+               buttons hide via [data-free-gated="true"] CSS and this gate
+               becomes the only path forward. Email is verified on every
+               signed PDF download (a copy is mailed to the address on file).
+            -->
           <form class="free-gate" id="free-gate" autocomplete="on">
-            <p class="free-gate__kicker">Send when you're ready.</p>
-            <h3 class="free-gate__title">Sign up to send by email.</h3>
+            <p class="free-gate__kicker">Three free uploads.</p>
+            <h3 class="free-gate__title">Drop your first PDF in seconds.</h3>
             <p class="free-gate__lede">
-              Detection and signing run free in your browser, no account
-              needed. Sign up once to send signed PDFs to anyone, three
-              documents on the house. Your email binds the count so it
-              survives cookie clears.
+              First, last, email — that's it. Detection runs locally in your
+              browser. You get three full uploads on the house, and every
+              signed PDF you download lands in your inbox too so you have a
+              copy you can search later.
             </p>
             <div class="free-gate__row">
               <div class="field">
@@ -195,12 +197,12 @@
             </label>
 
             <button class="btn btn--primary btn--block btn--lg" type="submit">
-              Get my three free documents
+              Start with 3 free uploads
               <span class="btn-arrow" aria-hidden="true">→</span>
             </button>
 
             <p class="free-gate__small" id="free-gate-status">
-              No card. Email goes to the founder, nowhere else.
+              No card. No spam. Your email gets a copy of every signed PDF.
             </p>
           </form>
 

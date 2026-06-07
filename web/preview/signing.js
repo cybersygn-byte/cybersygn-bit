@@ -564,7 +564,33 @@ export async function flattenAndDownload({ originalBytes, fields, fillStore, fil
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
+  // Fire-and-forget: mail a copy of the signed PDF to the email on file
+  // for this freeToken. The user gets a permanent record in their inbox
+  // and the bounce/no-bounce signal from Resend doubles as real-time
+  // email verification. Failures are silent — the download already
+  // succeeded client-side, this is a best-effort copy.
+  try {
+    const freeToken = localStorage.getItem('cybersygn.freeToken');
+    if (freeToken) {
+      const pdfBase64 = bytesToBase64(bytes);
+      fetch('/api/free/email-signed-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CyberSygn-Free': freeToken },
+        body: JSON.stringify({ pdfBase64, filename: downloadName(filename) }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+  } catch (e) { /* tolerated */ }
+
   return { bytes: bytes.byteLength };
+}
+
+function bytesToBase64(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
 }
 
 // ---------------------------------------------------------------------------

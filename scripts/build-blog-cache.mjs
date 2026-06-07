@@ -57,7 +57,7 @@ function buildCta(post) {
     title: 'CyberSygn Solo. $12/month. Unlimited.',
     body: post.cta || 'Drop a PDF, watch every signature field appear in 3 seconds, send for signing. Solo gives you unlimited documents, templates that auto-apply, and a full audit certificate on every sign.',
     href: '/preview/',
-    label: 'Try the demo, free →',
+    label: 'Try It Out →',
   };
 }
 
@@ -158,7 +158,7 @@ ${JSON.stringify({
       </a>
       <nav class="masthead__nav" aria-label="Blog">
         <a class="masthead__link" href="../">Blog index</a>
-        <a class="masthead__link masthead__link--cta" href="../../preview/">Try the demo</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
       </nav>
     </div>
   </header>
@@ -241,7 +241,7 @@ function renderIndex(published) {
       </a>
       <nav class="masthead__nav" aria-label="Blog">
         <a class="masthead__link" href="../">Home</a>
-        <a class="masthead__link masthead__link--cta" href="../preview/">Try the demo</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Try It Out</a>
       </nav>
     </div>
   </header>
