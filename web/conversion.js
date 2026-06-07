@@ -252,9 +252,9 @@
       '<div class="exit-intent__card">' +
         '<button type="button" class="exit-intent__close" aria-label="Close" data-close>×</button>' +
         '<p class="kicker">Before you go.</p>' +
-        '<h2 id="exit-intent-title" class="h-card exit-intent__title">Three signed documents. On the house.</h2>' +
-        '<p class="exit-intent__lede">No credit card. No app to install. See the field-detection in 30 seconds. ' +
-        'Your three free signs never expire.</p>' +
+        '<h2 id="exit-intent-title" class="h-card exit-intent__title">Your first signed documents. On the house.</h2>' +
+        '<p class="exit-intent__lede">No credit card. No app to install. See the field-detection magic for yourself. ' +
+        'Your free signs never expire.</p>' +
         '<form class="exit-intent__form" autocomplete="on">' +
           '<div class="exit-intent__row">' +
             '<input class="exit-intent__input" type="email" name="email" placeholder="your@email.com" autocomplete="email" required />' +
