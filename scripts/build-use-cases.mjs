@@ -162,10 +162,6 @@ function renderPage(doc, vert) {
               </a>
               <a class="btn btn--ghost btn--lg" href="#how">How it works</a>
             </div>
-            <span class="hero__note">
-              <span class="hero__note-dot" aria-hidden="true"></span>
-              Detection works on 499 of 499 real-world contracts. ESIGN + UETA compliant.
-            </span>
           </div>
           <aside class="demo-doc" aria-hidden="true">
             <span class="demo-doc__filename">${esc(doc.slug.toUpperCase())}.PDF</span>

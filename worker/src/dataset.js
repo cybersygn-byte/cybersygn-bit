@@ -221,7 +221,7 @@ export async function getDatasetStats(env) {
         currentDetectionMethod: 'text-pattern heuristics + optional Claude Vision API on opt-in',
         currentMLModelStatus: 'no custom ML model in production',
         whatThisCorpusEnables: 'future Phase 3 custom CV training when threshold is met',
-        marketingClaim: 'Labeled PDFs in our improvement dataset (truthful)',
+        marketingClaim: 'Labeled PDFs in our improvement corpus (truthful, internal-use)',
       },
     };
   } catch (e) {

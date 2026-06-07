@@ -342,4 +342,86 @@
       trigger();
     }
   });
+
+  // ─────────────────────────────────────────────────────────────
+  // 3. Free-template tile randomizer.
+  //    Renders 8 randomly-selected tiles per page load into the
+  //    #template-tile-grid container on the homepage. The pool
+  //    is hand-curated so every shuffle surfaces a coherent mix.
+  //    Each tile links to /templates/?cat=<slug> so the library
+  //    can filter to the category the user clicked.
+  // ─────────────────────────────────────────────────────────────
+  const TEMPLATE_TILES = [
+    { type: 'msa',          name: 'Master Services Agreement',  sub: 'Vendor contracts, retainer agreements, consulting MSAs.', layout: 'sig' },
+    { type: 'nda',          name: 'Non-Disclosure Agreement',   sub: 'Mutual NDAs, one-way confidentiality, due-diligence wrappers.', layout: 'sig-init' },
+    { type: 'employment',   name: 'Employment Agreement',       sub: 'W-2 offer letters, 1099 contractor agreements, advisor terms.', layout: 'sig-date' },
+    { type: 'lease',        name: 'Rental Lease',               sub: 'Residential leases, commercial subleases, room rentals.', layout: 'sig-init' },
+    { type: 'photography',  name: 'Photography Contract',       sub: 'Shoot agreements, model releases, image licensing.', layout: 'sig-date' },
+    { type: 'coaching',     name: 'Coaching Agreement',         sub: 'Engagement terms, intake forms, cancellation policies.', layout: 'sig' },
+    { type: 'freelance',    name: 'Freelance Contract',         sub: 'Project SOWs, milestone payments, IP transfer clauses.', layout: 'sig-date' },
+    { type: 'safe',         name: 'SAFE / Investor Agreement',  sub: 'YC SAFE templates, convertible notes, advisor agreements.', layout: 'sig' },
+    { type: 'consulting',   name: 'Consulting Agreement',       sub: 'Independent consultant engagements, scope, IP, term.', layout: 'sig-date' },
+    { type: 'contractor',   name: 'Independent Contractor',     sub: '1099 contractor work-for-hire, IP assignment, fee schedule.', layout: 'sig-date' },
+    { type: 'advisor',      name: 'Advisor Agreement',          sub: 'FAST-style agreement, equity grant, vesting, IP.', layout: 'sig' },
+    { type: 'vendor',       name: 'Vendor Agreement',           sub: 'Standard vendor terms, payment, performance, exit.', layout: 'sig-init' },
+    { type: 'speaker',      name: 'Speaker Agreement',          sub: 'Event speaker terms, fee, recording rights, cancellation.', layout: 'sig-date' },
+    { type: 'sponsorship',  name: 'Sponsorship Agreement',      sub: 'Brand partnership tiers, deliverables, exclusivity.', layout: 'sig' },
+    { type: 'safe-note',    name: 'Convertible Note',           sub: 'Promissory note that converts at next priced round.', layout: 'sig' },
+    { type: 'promissory',   name: 'Promissory Note',            sub: 'Borrower, lender, principal, interest, repayment terms.', layout: 'sig-date' },
+    { type: 'bill-of-sale', name: 'Bill of Sale',               sub: 'Asset transfer, vehicle title, equipment sale.', layout: 'sig-date' },
+    { type: 'poa',          name: 'Power of Attorney',          sub: 'General, durable, healthcare, financial POA forms.', layout: 'sig-init' },
+    { type: 'will',         name: 'Last Will and Testament',    sub: 'State-specific will templates and witness blocks.', layout: 'sig' },
+    { type: 'advance-dir',  name: 'Advance Healthcare Directive',sub: 'Living will, healthcare proxy, end-of-life wishes.', layout: 'sig' },
+    { type: 'llc',          name: 'LLC Operating Agreement',    sub: 'Multi-member or single-member LLC operating terms.', layout: 'sig-init' },
+    { type: 'partnership',  name: 'Partnership Agreement',      sub: 'Partners, contributions, profit split, dissolution.', layout: 'sig-init' },
+    { type: 'licensing',    name: 'Licensing Agreement',        sub: 'IP license, scope, royalties, quality control, term.', layout: 'sig' },
+    { type: 'model-release',name: 'Model Release',              sub: 'Image-rights grant for commercial and editorial use.', layout: 'sig-date' },
+    { type: 'mutual-nda',   name: 'Mutual NDA',                 sub: 'Bilateral confidentiality between two business parties.', layout: 'sig' },
+    { type: 'sow',          name: 'Statement of Work',          sub: 'Scoped project under an MSA — deliverables, dates, fee.', layout: 'sig-date' },
+    { type: 'mou',          name: 'Memorandum of Understanding',sub: 'Non-binding pre-contract alignment between parties.', layout: 'sig' },
+    { type: 'subscription', name: 'Subscription Agreement',     sub: 'SaaS subscription terms, billing, data, termination.', layout: 'sig' },
+  ];
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function lineHTML() {
+    const widths = ['80', '60', '90', '70'];
+    return widths.map(w => '<span class="pdf-tile__line pdf-tile__line--' + w + '"></span>').join('');
+  }
+
+  function tileHTML(t) {
+    const accents =
+      t.layout === 'sig-init'  ? '<span class="pdf-tile__sig"></span><span class="pdf-tile__init"></span>' :
+      t.layout === 'sig-date'  ? '<span class="pdf-tile__sig"></span><span class="pdf-tile__date"></span>' :
+      /* sig */                  '<span class="pdf-tile__sig"></span>';
+    return (
+      '<a class="pdf-tile" href="./templates/?cat=' + t.type + '" data-type="' + t.type + '">' +
+        '<div class="pdf-tile__paper" aria-hidden="true">' +
+          lineHTML() + accents +
+        '</div>' +
+        '<p class="pdf-tile__name">' + t.name + '</p>' +
+        '<p class="pdf-tile__sub">' + t.sub + '</p>' +
+      '</a>'
+    );
+  }
+
+  function renderTiles() {
+    const grid = document.getElementById('template-tile-grid');
+    if (!grid) return;
+    const picks = shuffle(TEMPLATE_TILES).slice(0, 8);
+    grid.innerHTML = picks.map(tileHTML).join('');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderTiles, { once: true });
+  } else {
+    renderTiles();
+  }
 })();
