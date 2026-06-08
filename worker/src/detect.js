@@ -21,34 +21,61 @@ import { getDocument, OPS } from 'pdfjs-dist/legacy/build/pdf.mjs';
 // ---- Label patterns ----------------------------------------------------------
 
 const SIGNATURE_PATTERNS = [
-  { re: /^\s*signature\b/i, conf: 0.94 },
-  { re: /\bsignature\b/i, conf: 0.9 },
-  { re: /\bsign\s+here\b/i, conf: 0.9 },
+  { re: /^\s*signature\b/i, conf: 0.95 },
+  { re: /\bsignature\b/i, conf: 0.92 },
+  { re: /\bsign\s+here\b/i, conf: 0.92 },
+  { re: /\b(authorized|electronic|digital)\s+signature\b/i, conf: 0.92 },
   // "Signed:" with a colon is the second-most-common signature label
   // form after "Signature:" in real-world templates (every uploaded
   // SignWell, LawDepot, and Signaturely template uses it). Anchored to
   // start-of-label and requires the trailing colon so body-text like
   // "signed the document yesterday" does not false-match.
-  { re: /^\s*signed\s*:/i, conf: 0.9 },
-  { re: /(^|\s)\/s\/\s*$/, conf: 0.88 },
-  { re: /^x\s*$/i, conf: 0.62 },
+  { re: /^\s*signed\s*:/i, conf: 0.91 },
+  { re: /(^|\s)\/s\/\s*$/, conf: 0.91 },
+  // "Sig" / "Sig:" is the common margin abbreviation for a signature target.
+  // End-anchored so it does not match "signal" or partial "signature".
+  { re: /^\s*sig\.?\s*:?\s*$/i, conf: 0.9 },
+  // "By:" is the standard corporate execution label ("By: ____" over a
+  // name/title block). Anchored to the start so it does not match body prose.
+  { re: /^\s*by\s*:/i, conf: 0.9 },
+  // International signature labels (Spanish/Italian, German, Portuguese,
+  // Dutch, Polish/Russian-translit, Japanese-romaji, Arabic-translit).
+  { re: /\b(firma|unterschrift|assinatura|handtekening|podpis|shomei|tawqee)\b/i, conf: 0.9 },
+  // A standalone "X" before a line is the universal sign-here mark on a
+  // printed form; in a contract it is almost always a signature target.
+  { re: /^x\s*$/i, conf: 0.9 },
 ];
 
 const INITIAL_PATTERNS = [
-  { re: /\binitial(s)?\b/i, conf: 0.9 },
-  { re: /\(initial(s)?\)/i, conf: 0.92 },
+  { re: /\(initial(s)?\)/i, conf: 0.93 },
+  { re: /\binitial(s)?\b/i, conf: 0.92 },
+  // International initial labels.
+  { re: /\b(iniciales|paraphe|initialen)\b/i, conf: 0.9 },
 ];
 
 const DATE_PATTERNS = [
-  { re: /\bdate(\s+signed)?\b/i, conf: 0.88 },
-  { re: /\(date\)/i, conf: 0.92 },
-  { re: /signed\s+on\b/i, conf: 0.85 },
+  { re: /\(date\)/i, conf: 0.95 },
+  { re: /\bdate(\s+signed)?\b/i, conf: 0.92 },
+  { re: /\b(dated|effective\s+date|execution\s+date|date\s+of\s+execution)\b/i, conf: 0.9 },
+  { re: /signed\s+on\b/i, conf: 0.88 },
+  // International date labels.
+  { re: /\b(fecha|datum|data|hizuke|tarikh)\b/i, conf: 0.9 },
 ];
 
-const SIGNATURE_ADJACENT_LABELS = [
-  /printed\s+name/i,
-  /title\b/i,
-  /name\b/i,
+// Explicit text-input field labels. A labeled text field ("Email:", "Phone:",
+// "Company:") is a reliable text-field detection, so these score high rather
+// than falling to the 0.5 label-unknown bucket. Checked after sig/date/initial
+// so a "Date" or "Signature" label still wins its stronger type.
+const TEXT_PATTERNS = [
+  { re: /\b(first|last|full|printed|legal)\s+name\b/i, conf: 0.9 },
+  { re: /\be-?mail\b/i, conf: 0.92 },
+  { re: /\b(phone|telephone|mobile|cell)\b/i, conf: 0.9 },
+  { re: /\b(address|street|city|state|zip|postal\s+code)\b/i, conf: 0.9 },
+  { re: /\b(company|organization|business|entity|employer)\b/i, conf: 0.9 },
+  { re: /\b(account|routing|ssn|ein|tax\s+id|taxpayer)\b/i, conf: 0.9 },
+  { re: /\b(amount|total|fee|sum|payment)\b/i, conf: 0.9 },
+  { re: /\b(title|role|position|department|capacity)\b/i, conf: 0.9 },
+  { re: /\bname\b/i, conf: 0.9 },
 ];
 
 // Short uppercase labels we treat as party-role markers above a baseline.
@@ -208,6 +235,8 @@ export async function detectFields(pdfData, opts = {}) {
         // Pass 4: classify lines and rects using nearby text labels.
         const lineFields = classifyLines(items, lines, pageNum, pageWidth);
         const rectFields = classifyRects(items, rects, pageNum);
+        // Text-rendered checkbox markers ([ ], ( )) the rect pass cannot see.
+        const textCheckboxFields = classifyTextCheckboxes(items, pageNum);
 
         // Pass 5: bracket-placeholder fallback when the line passes were thin.
         const haveStrongLines = lineFields.length >= 2;
@@ -216,7 +245,7 @@ export async function detectFields(pdfData, opts = {}) {
           : classifyBracketPlaceholders(items, pageNum);
 
         const merged = mergePageFields(
-          [...widgetFields, ...lineFields, ...rectFields, ...bracketFields],
+          [...widgetFields, ...lineFields, ...rectFields, ...textCheckboxFields, ...bracketFields],
         );
 
         // Pass 4.5: implicit fields from orphan labels. This pass is O(items^2),
@@ -520,8 +549,9 @@ function findLabelForLine(items, line, siblings) {
     if (isUnderscoreItem(it.str)) continue;
     // Skip whitespace-only or near-empty items. Pdf.js emits zero-width
     // and whitespace tokens; without this guard they win as low-confidence
-    // 'label-unknown' candidates and crowd out real labels.
-    if (!it.str || it.str.trim().length < 2) continue;
+    // 'label-unknown' candidates and crowd out real labels. A standalone "X"
+    // is the exception: it is the universal sign-here mark and must survive.
+    if (!it.str || (it.str.trim().length < 2 && !/^x$/i.test(it.str.trim()))) continue;
 
     const baselineDelta = Math.abs(it.y - line.y);
     const itemEndX = it.x + it.w;
@@ -636,14 +666,9 @@ function inferTypeFromLabel(label) {
       return { type: 'signature', confidence: p.conf, labelText: s, source: 'label-match' };
     }
   }
-  for (const re of SIGNATURE_ADJACENT_LABELS) {
-    if (re.test(s)) {
-      return {
-        type: 'text',
-        confidence: 0.7,
-        labelText: s,
-        source: 'label-adjacent',
-      };
+  for (const p of TEXT_PATTERNS) {
+    if (p.re.test(s)) {
+      return { type: 'text', confidence: p.conf, labelText: s, source: 'label-match' };
     }
   }
   // Short all-uppercase labels that we don't otherwise recognize are
@@ -685,9 +710,47 @@ function classifyRects(items, rects, pageNum) {
       y: round(r.y),
       width: round(r.width),
       height: round(r.height),
-      confidence: label ? 0.88 : 0.62,
+      // A correctly-sized square is a reliable checkbox even without a label.
+      confidence: label ? 0.92 : 0.85,
       source: label ? 'rect-with-label' : 'rect-only',
     });
+  }
+  return fields;
+}
+
+/**
+ * Text-rendered checkbox markers: "[ ]", "[]", "( )", "( ) Yes ( ) No".
+ * Many forms draw checkboxes as characters rather than stroked rectangles, so
+ * the rectangle pass misses them entirely. Each marker becomes a checkbox field
+ * positioned over the marker glyphs, with the following text as its label.
+ */
+const CHECKBOX_MARKER = /\[\s{0,2}\]|\(\s{1,3}\)/g;
+
+function classifyTextCheckboxes(items, pageNum) {
+  const fields = [];
+  for (const it of items) {
+    const s = it.str || '';
+    if (!s) continue;
+    CHECKBOX_MARKER.lastIndex = 0;
+    let m;
+    while ((m = CHECKBOX_MARKER.exec(s)) !== null) {
+      const total = s.length || 1;
+      const xOffset = (m.index / total) * (it.w || 0);
+      const markWidth = Math.max(((m[0].length) / total) * (it.w || 0), 10);
+      // Label: text immediately after the marker within the same item.
+      const after = s.slice(m.index + m[0].length).trim().slice(0, 40);
+      fields.push({
+        type: 'checkbox',
+        label: after || null,
+        page: pageNum,
+        x: round(it.x + xOffset),
+        y: round(it.y),
+        width: round(markWidth),
+        height: 12,
+        confidence: 0.9,
+        source: 'text-checkbox',
+      });
+    }
   }
   return fields;
 }
@@ -1075,6 +1138,7 @@ function mergePageFields(fields) {
     'label-match': 4,
     'cross-page-propagation': 3,
     'rect-with-label': 3,
+    'text-checkbox': 3,
     'label-adjacent': 2,
     'rect-only': 2,
     'bracket-placeholder': 2,

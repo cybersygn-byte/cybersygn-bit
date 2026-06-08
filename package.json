@@ -33,7 +33,8 @@
     "smoke": "node scripts/smoke-check.mjs",
     "lint:css": "node scripts/css-check.mjs",
     "lint": "npm run smoke && npm run lint:css",
-    "deploy": "npm run lint && npm run build && npm run test:worker && npx wrangler deploy"
+    "deploy": "npm run lint && npm run build && npm run test:worker && npx wrangler deploy",
+    "test:accuracy": "node scripts/measure-element-accuracy.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",
