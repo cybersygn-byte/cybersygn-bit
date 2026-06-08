@@ -23,6 +23,11 @@ export const SIGNER_PALETTE = [
   { id: 'p4', hex: '#2F6D6A', name: 'Co-signer'   },
 ];
 
+// A signing request to an invalid or duplicate email silently fails to reach
+// the signer, which means the document can never complete. We validate format
+// and flag duplicates so the send flow can warn before routing.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // ---------------------------------------------------------------------------
 // Signers store
 // ---------------------------------------------------------------------------
@@ -68,6 +73,12 @@ export function createSignersStore() {
       email: cleanEmail,
       color: slot.hex,
       initials: initialsFor(cleanName),
+      // Empty email is "not yet provided" (null), not invalid. A non-empty
+      // email is validated against EMAIL_RE. duplicateEmail flags a collision
+      // with an existing signer (case-insensitive). The send flow reads both.
+      emailValid: cleanEmail === '' ? null : EMAIL_RE.test(cleanEmail),
+      duplicateEmail: cleanEmail !== '' && signers.some(
+        s => s.email && s.email.toLowerCase() === cleanEmail.toLowerCase()),
     };
     signers.push(signer);
     notify();
@@ -76,7 +87,7 @@ export function createSignersStore() {
 
   /**
    * Replace a signer's name or email in place. Falls back to defaults
-   * if name becomes empty.
+   * if name becomes empty. Recomputes email validity and duplicate flags.
    */
   function update(id, patch) {
     const i = signers.findIndex(s => s.id === id);
@@ -86,6 +97,9 @@ export function createSignersStore() {
     next.name = next.name.trim();
     next.email = (next.email || '').trim();
     next.initials = initialsFor(next.name);
+    next.emailValid = next.email === '' ? null : EMAIL_RE.test(next.email);
+    next.duplicateEmail = next.email !== '' && signers.some(
+      (s, j) => j !== i && s.email && s.email.toLowerCase() === next.email.toLowerCase());
     signers[i] = next;
     notify();
     return next;
@@ -116,8 +130,14 @@ export function createSignersStore() {
  * Map of fieldId -> signerId. Every field is assigned to exactly one
  * signer. New fields default to the first signer (the sender).
  */
-export function createAssignmentStore(defaultSignerId) {
+export function createAssignmentStore(defaultSignerId, opts = {}) {
   let defaultId = defaultSignerId;
+  // When wired to the signers store (production usage), `liveSigners` returns
+  // the current live signer ids. With it, get() SELF-HEALS: a field assigned
+  // to a signer who has since been removed resolves to the default (if live)
+  // or the first live signer, so a field can never be silently orphaned to a
+  // ghost. Without it, behavior matches the old store.
+  const liveSigners = typeof opts.liveSigners === 'function' ? opts.liveSigners : null;
   const map = new Map();
   const listeners = new Set();
 
@@ -125,7 +145,20 @@ export function createAssignmentStore(defaultSignerId) {
 
   function setDefault(id) { defaultId = id; }
 
-  function get(fieldId) { return map.get(fieldId) || defaultId; }
+  function liveSet() { return liveSigners ? new Set(liveSigners()) : null; }
+
+  // Resolve a raw owner to a guaranteed-live owner. Never returns undefined:
+  // returns a live id when any signer exists, else null.
+  function resolve(rawOwner) {
+    const live = liveSet();
+    if (!live) return rawOwner != null ? rawOwner : (defaultId != null ? defaultId : null);
+    if (rawOwner != null && live.has(rawOwner)) return rawOwner;
+    if (defaultId != null && live.has(defaultId)) return defaultId;
+    const first = live.values().next().value;
+    return first != null ? first : null;
+  }
+
+  function get(fieldId) { return resolve(map.get(fieldId)); }
 
   function set(fieldId, signerId) {
     map.set(fieldId, signerId);
@@ -156,11 +189,44 @@ export function createAssignmentStore(defaultSignerId) {
     notify();
   }
 
+  /**
+   * Rewrite every stored assignment that points to a non-live signer onto a
+   * live fallback. Idempotent. Call after any signer removal to keep the map
+   * physically clean (get() already heals reads, but reconcile fixes the
+   * underlying store too).
+   */
+  function reconcile(fallbackId) {
+    const live = liveSet();
+    if (!live) return;
+    const fb = (fallbackId != null && live.has(fallbackId))
+      ? fallbackId
+      : (live.values().next().value ?? null);
+    if (fb == null) return;
+    let changed = false;
+    for (const [fid, sid] of map.entries()) {
+      if (!live.has(sid)) { map.set(fid, fb); changed = true; }
+    }
+    if (changed) notify();
+  }
+
+  /**
+   * Field ids whose RAW assignment points to a signer that is not live. The
+   * send gate uses this to surface "these fields belong to a removed signer"
+   * before routing, even though get() would heal them.
+   */
+  function orphanedFieldIds(allFields) {
+    const live = liveSet();
+    if (!live) return [];
+    return allFields
+      .map(f => f.id)
+      .filter(id => { const raw = map.get(id); return raw != null && !live.has(raw); });
+  }
+
   function reset() { map.clear(); notify(); }
 
   function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
-  return { get, set, bulkAssign, countFor, reassignFrom, reset, setDefault, onChange };
+  return { get, set, bulkAssign, countFor, reassignFrom, reconcile, orphanedFieldIds, reset, setDefault, onChange };
 }
 
 // ---------------------------------------------------------------------------

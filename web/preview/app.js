@@ -585,7 +585,11 @@ const fieldElements = new Map();
 
 const fillStore = createFillStore();
 const signers = createSignersStore();
-const assignments = createAssignmentStore();
+// Wire the assignment store to the live signer list so a field can never be
+// silently orphaned to a removed signer (it self-heals reads to a live owner).
+const assignments = createAssignmentStore(undefined, {
+  liveSigners: () => signers.list().map(s => s.id),
+});
 const signingAs = createSigningAsStore();
 
 const docState = {
@@ -4007,6 +4011,10 @@ function removeSigner(id) {
   if (remaining) assignments.reassignFrom(id, remaining.id);
   if (signingAs.get() === id && remaining) signingAs.set(remaining.id);
   signers.remove(id);
+  // Defense in depth: physically rewrite any assignment that still points to a
+  // non-live signer onto the first live one. get() already heals reads, but
+  // this keeps the underlying map clean too.
+  if (remaining) assignments.reconcile(remaining.id);
   track('preview_signer_removed');
 }
 
