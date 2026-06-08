@@ -97,123 +97,176 @@ const FN_RECTANGLE = OPS.rectangle;
 
 // ---- Public API --------------------------------------------------------------
 
+// ---- Robustness budgets (defense against pathological / malicious PDFs) ------
+// These never affect a real contract (a normal page has well under a thousand
+// text items and well under a hundred lines). They exist so a crafted or
+// corrupt PDF can never hang the worker or exhaust memory. The detector's
+// hard contract: it ALWAYS returns { pageCount, fields }, NEVER throws.
+const MAX_PAGES = 300;          // cap total pages processed
+const MAX_TEXT_ITEMS = 4000;    // per-page text item cap
+const MAX_LINES = 2000;         // per-page line cap
+const MAX_FIELDS_TOTAL = 5000;  // overall output cap
+const IMPLICIT_ITEM_LIMIT = 1500; // skip the O(n^2) implicit pass above this
+const BUDGET_MS = 8000;         // wall-clock budget; stop and return partial
+
 export async function detectFields(pdfData, opts = {}) {
   const verbose = !!opts.verbose;
-  const doc = await getDocument({
-    data: pdfData,
-    useSystemFonts: true,
-    disableFontFace: true,
-    verbosity: 0,
-  }).promise;
+  const empty = (error) => (error ? { pageCount: 0, fields: [], error } : { pageCount: 0, fields: [] });
 
-  const allFields = [];
-  // Per-page orphan labels: signature/date/initial labels in the bottom
-  // band of a page that did NOT pair with any detected line. These feed
-  // pass 5.5 cross-page propagation.
-  const orphanLabelsByPage = new Map();
+  // Input validation: must be non-empty binary. Guards null/undefined and
+  // zero-length buffers before pdf.js ever sees them.
+  const len = pdfData && (pdfData.byteLength != null ? pdfData.byteLength : pdfData.length);
+  if (!pdfData || !len) return empty('empty or missing input');
 
-  for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
-    const page = await doc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 1 });
-    const pageHeight = viewport.height;
-    const pageWidth = viewport.width;
-
-    // Pass 1: AcroForm widget annotations.
-    const annotations = await page.getAnnotations();
-    const widgetFields = [];
-    for (const a of annotations) {
-      if (a.subtype !== 'Widget') continue;
-      const f = widgetToField(a, pageNum);
-      if (f) widgetFields.push(f);
-    }
-
-    // Pass 2: extract text items with positions.
-    const content = await page.getTextContent();
-    const items = content.items
-      .filter(it => it.str && it.str.length > 0)
-      .map(it => ({
-        str: it.str,
-        x: it.transform[4],
-        y: it.transform[5],
-        w: it.width || 0,
-        h: it.height || 11,
-      }));
-
-    // Pass 3: extract horizontal lines and rectangles from the operator stream.
-    const opList = await page.getOperatorList();
-    const { lines: drawnLines, rects } = extractGeometry(opList);
-
-    // Pass 3b: harvest text-rendered underscore runs as synthetic baselines.
-    // Many real-world contracts draw their fill-in lines as long underscore
-    // strings rather than stroked paths.
-    const underscoreLines = extractUnderscoreLines(items);
-
-    const lines = [...drawnLines, ...underscoreLines];
-
-    if (verbose) {
-      console.error(
-        `page ${pageNum}: ${items.length} text items, ${drawnLines.length} drawn lines, ` +
-        `${underscoreLines.length} underscore lines, ${rects.length} rects, ` +
-        `${widgetFields.length} widgets`,
-      );
-    }
-
-    // Pass 4: classify lines and rects using nearby text labels.
-    const lineFields = classifyLines(items, lines, pageNum, pageWidth);
-    const rectFields = classifyRects(items, rects, pageNum);
-
-    // Pass 5: bracket-placeholder tokens. Some templates use [Insert Date]
-    // or [Seller's Name] instead of underscore lines. We only fall back to
-    // brackets when the rule-based passes returned little or nothing on
-    // this page, to avoid double-counting documents that have both styles.
-    const haveStrongLines = lineFields.length >= 2;
-    const bracketFields = haveStrongLines
-      ? []
-      : classifyBracketPlaceholders(items, pageNum);
-
-    // Merge per-page, prefer widget > line > rect > bracket when overlapping.
-    const merged = mergePageFields(
-      [...widgetFields, ...lineFields, ...rectFields, ...bracketFields],
-    );
-
-    // Pass 4.5: implicit fields from orphan labels. Catches release-form
-    // patterns where a signature/date label is printed with no underline
-    // or widget under it (the form expects a hand-drawn signature in the
-    // adjacent whitespace).
-    const implicit = findImplicitFields(items, merged, pageNum, pageWidth);
-    const mergedWithImplicit = implicit.length
-      ? mergePageFields([...merged, ...implicit])
-      : merged;
-
-    allFields.push(...mergedWithImplicit);
-
-    // Harvest orphan labels for cross-page propagation. A signature or
-    // date label at the bottom of the page whose underlying line was
-    // not detected (no merged field within ~25 PDF units of the label's
-    // mid-x and y) will be matched to bare lines at the top of the
-    // next page.
-    const bottomLabels = findOrphanLabels(items, mergedWithImplicit, pageNum, pageHeight);
-    if (bottomLabels.length > 0) {
-      orphanLabelsByPage.set(pageNum, bottomLabels);
-    }
+  // Open the document. Corrupt, encrypted, truncated, or not-a-PDF inputs all
+  // throw here in pdf.js; we catch and degrade gracefully instead of crashing.
+  let doc;
+  try {
+    doc = await getDocument({
+      data: pdfData,
+      useSystemFonts: true,
+      disableFontFace: true,
+      verbosity: 0,
+      password: '',            // never block on a password prompt
+      stopAtErrors: false,     // recover through minor stream corruption
+    }).promise;
+  } catch (e) {
+    return empty(`unreadable PDF: ${String((e && e.message) || e).slice(0, 140)}`);
   }
 
-  // Pass 5.5: cross-page label propagation. Bare unlabeled lines at the
-  // top of page N+1 inherit type/label from orphan labels at the bottom
-  // of page N (collected during the per-page loop above).
-  const fieldsWithPropagation = propagateLabelsAcrossPages(allFields, orphanLabelsByPage);
+  try {
+    const start = Date.now();
+    const allFields = [];
+    const orphanLabelsByPage = new Map();
+    const numPages = Math.min(Math.max(0, doc.numPages | 0), MAX_PAGES);
 
-  // Pass 6: walk all detected fields, identify the dedicated signature
-  // block at the end of the document, mark its fields primary=true. All
-  // other fields get primary=false. The UI can show primary fields by
-  // default and offer an "show all" toggle for the rest.
-  const fieldsWithPrimary = markPrimarySignatureBlock(fieldsWithPropagation, doc.numPages);
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      // Wall-clock budget: on a pathological document, stop and return what we
+      // have rather than hang the worker. Real documents finish in well under
+      // this budget.
+      if (Date.now() - start > BUDGET_MS) {
+        if (verbose) console.error(`detector budget hit at page ${pageNum}, returning partial`);
+        break;
+      }
 
-  return {
-    pageCount: doc.numPages,
-    fields: fieldsWithPrimary,
-  };
+      // Per-page isolation: a single malformed page must never kill the whole
+      // document. Anything that throws inside here is logged and skipped.
+      try {
+        const page = await doc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1 });
+        const pageHeight = viewport.height;
+        const pageWidth = viewport.width;
+
+        // Pass 1: AcroForm widget annotations.
+        let annotations = [];
+        try { annotations = await page.getAnnotations(); } catch (_) { annotations = []; }
+        const widgetFields = [];
+        for (const a of annotations) {
+          if (!a || a.subtype !== 'Widget') continue;
+          const f = widgetToField(a, pageNum);
+          if (f) widgetFields.push(f);
+        }
+
+        // Pass 2: extract text items with positions. Guard against items with
+        // a missing/short transform (malformed content streams), and cap the
+        // count so a page with tens of thousands of glyphs cannot blow the
+        // O(n^2) pairing passes below.
+        let content = { items: [] };
+        try { content = await page.getTextContent(); } catch (_) { content = { items: [] }; }
+        const items = content.items
+          .filter(it => it && it.str && it.str.length > 0
+            && Array.isArray(it.transform) && it.transform.length >= 6
+            && Number.isFinite(it.transform[4]) && Number.isFinite(it.transform[5]))
+          .map(it => ({
+            str: it.str,
+            x: it.transform[4],
+            y: it.transform[5],
+            w: Number.isFinite(it.width) ? it.width : 0,
+            h: Number.isFinite(it.height) ? it.height : 11,
+          }))
+          .slice(0, MAX_TEXT_ITEMS);
+
+        // Pass 3: extract horizontal lines and rectangles from the operator
+        // stream. extractGeometry now drops any non-finite coordinate.
+        let opList = { fnArray: [], argsArray: [] };
+        try { opList = await page.getOperatorList(); } catch (_) { opList = { fnArray: [], argsArray: [] }; }
+        const { lines: drawnLines, rects } = extractGeometry(opList);
+
+        // Pass 3b: harvest text-rendered underscore runs as synthetic baselines.
+        const underscoreLines = extractUnderscoreLines(items);
+
+        const lines = [...drawnLines, ...underscoreLines].slice(0, MAX_LINES);
+
+        if (verbose) {
+          console.error(
+            `page ${pageNum}: ${items.length} text items, ${drawnLines.length} drawn lines, ` +
+            `${underscoreLines.length} underscore lines, ${rects.length} rects, ` +
+            `${widgetFields.length} widgets`,
+          );
+        }
+
+        // Pass 4: classify lines and rects using nearby text labels.
+        const lineFields = classifyLines(items, lines, pageNum, pageWidth);
+        const rectFields = classifyRects(items, rects, pageNum);
+
+        // Pass 5: bracket-placeholder fallback when the line passes were thin.
+        const haveStrongLines = lineFields.length >= 2;
+        const bracketFields = haveStrongLines
+          ? []
+          : classifyBracketPlaceholders(items, pageNum);
+
+        const merged = mergePageFields(
+          [...widgetFields, ...lineFields, ...rectFields, ...bracketFields],
+        );
+
+        // Pass 4.5: implicit fields from orphan labels. This pass is O(items^2),
+        // so skip it on pages with an abnormally high item count (the rule-based
+        // passes above already covered such pages well).
+        const implicit = items.length <= IMPLICIT_ITEM_LIMIT
+          ? findImplicitFields(items, merged, pageNum, pageWidth)
+          : [];
+        const mergedWithImplicit = implicit.length
+          ? mergePageFields([...merged, ...implicit])
+          : merged;
+
+        allFields.push(...mergedWithImplicit);
+
+        const bottomLabels = findOrphanLabels(items, mergedWithImplicit, pageNum, pageHeight);
+        if (bottomLabels.length > 0) {
+          orphanLabelsByPage.set(pageNum, bottomLabels);
+        }
+
+        // Release page resources eagerly to bound memory on large documents.
+        try { page.cleanup && page.cleanup(); } catch (_) {}
+      } catch (pageErr) {
+        if (verbose) console.error(`page ${pageNum} skipped: ${(pageErr && pageErr.message) || pageErr}`);
+        continue;
+      }
+    }
+
+    // Pass 5.5: cross-page label propagation.
+    const fieldsWithPropagation = propagateLabelsAcrossPages(allFields, orphanLabelsByPage);
+
+    // Pass 6: mark the dedicated signature block primary=true.
+    const fieldsWithPrimary = markPrimarySignatureBlock(fieldsWithPropagation, numPages);
+
+    return {
+      pageCount: doc.numPages | 0,
+      fields: fieldsWithPrimary.slice(0, MAX_FIELDS_TOTAL),
+    };
+  } catch (e) {
+    // Last-resort safety net: detectFields must never throw to its caller.
+    return empty(`detection error: ${String((e && e.message) || e).slice(0, 140)}`);
+  } finally {
+    try { doc && doc.destroy && doc.destroy(); } catch (_) {}
+  }
 }
+
+// Stack-safe min/max. Math.min(...arr) / Math.max(...arr) throw a RangeError
+// ("Maximum call stack size exceeded") when arr has ~100k+ elements, which a
+// pathological PDF can produce. These loop instead and never overflow.
+function safeMax(arr) { let m = -Infinity; for (let i = 0; i < arr.length; i++) if (arr[i] > m) m = arr[i]; return m; }
+function safeMin(arr) { let m = Infinity; for (let i = 0; i < arr.length; i++) if (arr[i] < m) m = arr[i]; return m; }
 
 // ---- Widget annotations ------------------------------------------------------
 
@@ -293,7 +346,13 @@ function extractGeometry(opList) {
       } else if (code === FN_LINE_TO) {
         const nx = points[p++];
         const ny = points[p++];
-        if (lastX !== null && Math.abs(ny - lastY) < 0.5 && Math.abs(nx - lastX) > 8) {
+        // Guard against malformed op streams where the points array is short
+        // (p runs past the end -> undefined -> NaN). Only emit lines whose
+        // coordinates are all finite numbers.
+        if (lastX !== null
+          && Number.isFinite(nx) && Number.isFinite(ny)
+          && Number.isFinite(lastX) && Number.isFinite(lastY)
+          && Math.abs(ny - lastY) < 0.5 && Math.abs(nx - lastX) > 8) {
           // Horizontal line of meaningful length.
           lines.push({
             x: Math.min(lastX, nx),
@@ -309,7 +368,9 @@ function extractGeometry(opList) {
         const ry = points[p++];
         const rw = points[p++];
         const rh = points[p++];
-        rects.push({ x: rx, y: ry, width: rw, height: rh });
+        if (Number.isFinite(rx) && Number.isFinite(ry) && Number.isFinite(rw) && Number.isFinite(rh)) {
+          rects.push({ x: rx, y: ry, width: rw, height: rh });
+        }
       } else {
         // Skip op we don't care about; consume no points by default.
         // pdf.js path ops we care about are moveTo/lineTo/rectangle only.
@@ -822,7 +883,7 @@ function propagateLabelsAcrossPages(fields, orphanLabelsByPage) {
     const pageNext = pageN + 1;
     const nextFields = byPage.get(pageNext);
     if (!nextFields || nextFields.length === 0) continue;
-    const maxNextY = Math.max(...nextFields.map(f => f.y));
+    const maxNextY = safeMax(nextFields.map(f => f.y));
 
     // Bare lines at the top of page N+1 (within ~60 units of maxNextY).
     const topBares = nextFields.filter(f =>
@@ -965,8 +1026,8 @@ function markPrimarySignatureBlock(fields, pageCount) {
       primaryPage = p;
       const blockFields = [...hiConfSigs, ...hiConfDates];
       const ys = blockFields.map(f => f.y);
-      const minY = Math.min(...ys);
-      const maxY = Math.max(...ys);
+      const minY = safeMin(ys);
+      const maxY = safeMax(ys);
       // Expand the band by ~120 PDF units (about 1.7 inches) on the
       // bottom side to catch a trailing date row beneath the signature
       // row, and ~40 units on top for any "SIGNATURE AND DATE" header.
