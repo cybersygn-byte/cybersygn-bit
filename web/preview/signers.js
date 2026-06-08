@@ -16,11 +16,23 @@
 // Distinct from the field-type palette so signer identity and field
 // type stay separately readable. Order matches typical signing order:
 // sender first, counterparty second, witnesses after.
+// Up to twelve signers per document, matching the "up to 20" product promise
+// far more closely than the old four-color prototype and clearing the
+// ten-signer minimum. Each colour is visually distinct for at-a-glance field
+// ownership. The first four keep their role names; the rest are numbered.
 export const SIGNER_PALETTE = [
-  { id: 'p1', hex: '#B83227', name: 'Sender'      },
-  { id: 'p2', hex: '#2F4D7A', name: 'Counterparty' },
-  { id: 'p3', hex: '#B47A1F', name: 'Witness'     },
-  { id: 'p4', hex: '#2F6D6A', name: 'Co-signer'   },
+  { id: 'p1',  hex: '#B83227', name: 'Sender'       },
+  { id: 'p2',  hex: '#2F4D7A', name: 'Counterparty' },
+  { id: 'p3',  hex: '#B47A1F', name: 'Witness'      },
+  { id: 'p4',  hex: '#2F6D6A', name: 'Co-signer'    },
+  { id: 'p5',  hex: '#7A2F6D', name: 'Signer 5'     },
+  { id: 'p6',  hex: '#3B6A2F', name: 'Signer 6'     },
+  { id: 'p7',  hex: '#A84A1F', name: 'Signer 7'     },
+  { id: 'p8',  hex: '#2F6A8A', name: 'Signer 8'     },
+  { id: 'p9',  hex: '#8A2F4A', name: 'Signer 9'     },
+  { id: 'p10', hex: '#4A4A8A', name: 'Signer 10'    },
+  { id: 'p11', hex: '#6A6A2F', name: 'Signer 11'    },
+  { id: 'p12', hex: '#2F8A6A', name: 'Signer 12'    },
 ];
 
 // A signing request to an invalid or duplicate email silently fails to reach

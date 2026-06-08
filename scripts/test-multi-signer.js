@@ -642,6 +642,72 @@ async function main() {
   const editsCert = await PDFDocument.load(editsAuditBytes);
   ok(editsCert.getPageCount() >= 1, `edits audit cert has at least one page (${editsCert.getPageCount()})`);
 
+  // 30. Sequential signing-order routing (server-side).
+  console.log('\n30. Sequential signing-order routing');
+  const seqPdf = (await readFile(resolve(ROOT, 'test-pdfs', '01-simple-signature.pdf'))).toString('base64');
+  const seqCreate = await call('POST', '/api/docs', {
+    title: 'Sequential Routing Test',
+    senderName: 'Nathan',
+    pdfBase64: seqPdf,
+    signingOrder: 'sequential',
+    fields: [
+      { id: 'f1', page: 1, x: 100, y: 100, width: 200, height: 20, type: 'signature', label: 'S1', confidence: 0.9 },
+      { id: 'f2', page: 1, x: 100, y: 80,  width: 200, height: 20, type: 'signature', label: 'S2', confidence: 0.9 },
+      { id: 'f3', page: 1, x: 100, y: 60,  width: 200, height: 20, type: 'signature', label: 'S3', confidence: 0.9 },
+    ],
+    signers: [
+      { id: 'p1', name: 'First Signer',  email: 'first@example.com'  },
+      { id: 'p2', name: 'Second Signer', email: 'second@example.com' },
+      { id: 'p3', name: 'Third Signer',  email: 'third@example.com'  },
+    ],
+    assignments: { f1: 'p1', f2: 'p2', f3: 'p3' },
+  });
+  ok(seqCreate.status === 201, `sequential doc created (got ${seqCreate.status})`);
+  const seqLinks = seqCreate.json.signerLinks;
+  const sl1 = seqLinks.find(l => l.signerId === 'p1');
+  const sl2 = seqLinks.find(l => l.signerId === 'p2');
+  const sl3 = seqLinks.find(l => l.signerId === 'p3');
+  ok(sl1.sent === true && !sl1.queued, 'signer 1 invited up front');
+  ok(sl2.queued === true && sl2.sent === false, 'signer 2 queued, not yet invited');
+  ok(sl3.queued === true && sl3.sent === false, 'signer 3 queued, not yet invited');
+
+  const seqStorage = (await import('../worker/src/storage.js')).getStorage({});
+  let seqDoc = await seqStorage.docs.get(`doc:${seqCreate.json.docId}`, { json: true });
+  ok(seqDoc.signingOrder === 'sequential', 'doc records sequential order');
+  ok(!!seqDoc.signers.find(s => s.id === 'p1').notifiedAt, 'signer 1 has notifiedAt stamp');
+  ok(!seqDoc.signers.find(s => s.id === 'p2').notifiedAt, 'signer 2 not yet notified');
+
+  // Signer 1 completes -> signer 2 should be invited next.
+  await call('POST', `/api/docs/${seqCreate.json.docId}/signer/${sl1.token}/fills`, {
+    fills: { f1: { kind: 'signature', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' } },
+  });
+  seqDoc = await seqStorage.docs.get(`doc:${seqCreate.json.docId}`, { json: true });
+  ok(!!seqDoc.signers.find(s => s.id === 'p2').notifiedAt, 'signer 2 invited after signer 1 completes');
+  ok(!seqDoc.signers.find(s => s.id === 'p3').notifiedAt, 'signer 3 still queued (one at a time)');
+
+  // Signer 2 completes -> signer 3 invited.
+  await call('POST', `/api/docs/${seqCreate.json.docId}/signer/${sl2.token}/fills`, {
+    fills: { f2: { kind: 'signature', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' } },
+  });
+  seqDoc = await seqStorage.docs.get(`doc:${seqCreate.json.docId}`, { json: true });
+  ok(!!seqDoc.signers.find(s => s.id === 'p3').notifiedAt, 'signer 3 invited after signer 2 completes');
+
+  // 31. Parallel default still invites everyone at once.
+  console.log('\n31. Parallel default routing');
+  const parCreate = await call('POST', '/api/docs', {
+    title: 'Parallel Routing Test', senderName: 'Nathan', pdfBase64: seqPdf,
+    fields: [
+      { id: 'f1', page: 1, x: 100, y: 100, width: 200, height: 20, type: 'signature', confidence: 0.9 },
+      { id: 'f2', page: 1, x: 100, y: 80,  width: 200, height: 20, type: 'signature', confidence: 0.9 },
+    ],
+    signers: [
+      { id: 'p1', name: 'A', email: 'a@example.com' },
+      { id: 'p2', name: 'B', email: 'b@example.com' },
+    ],
+    assignments: { f1: 'p1', f2: 'p2' },
+  });
+  ok(parCreate.json.signerLinks.every(l => l.sent === true && !l.queued), 'parallel: all signers invited up front');
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

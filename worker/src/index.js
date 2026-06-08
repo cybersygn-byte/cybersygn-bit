@@ -2691,13 +2691,23 @@ async function handleCreateDoc(request, env, url, ctx) {
   const workspaceId = String(payload.workspaceId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64) || null;
   const storage = getStorage(env);
 
+  // Signing order. 'sequential' routes the document to one signer at a time,
+  // in order: only the first signer is emailed up front, and each subsequent
+  // signer is emailed when the previous one completes (see handleSubmitFills).
+  // 'parallel' (the default) emails everyone at once. Backward compatible:
+  // documents created without signingOrder behave exactly as before.
+  const sequential = payload.signingOrder === 'sequential' && payload.signers.length > 1;
+
   // Build the doc record. Each signer gets a fresh random token so the
-  // magic-link URL is unguessable.
-  const signers = payload.signers.map(s => ({
+  // magic-link URL is unguessable. `order` is the signing position (explicit
+  // or array index); `notifiedAt` records when their invite was actually sent.
+  const signers = payload.signers.map((s, idx) => ({
     id: String(s.id),
     name: String(s.name || '').trim() || 'Signer',
     email: String(s.email || '').trim(),
     token: randomId(32),
+    order: Number.isFinite(s.order) ? s.order : idx,
+    notifiedAt: null,
     fills: {}, // populated as the signer submits
     completedAt: null,
   }));
@@ -2736,6 +2746,7 @@ async function handleCreateDoc(request, env, url, ctx) {
       : {},
     assignments: payload.assignments,
     signers,
+    signingOrder: sequential ? 'sequential' : 'parallel',
     cc,
     completedAt: null,
     events: [],
@@ -2793,11 +2804,25 @@ async function handleCreateDoc(request, env, url, ctx) {
   // same logo + accent. Free senders have no brand record; the email
   // renderer falls back to CyberSygn defaults.
   const senderBrand = await loadSenderBrand(env, senderId);
+
+  // Sequential: only the first signer by order is invited now; the rest are
+  // queued and emailed as each predecessor completes. Parallel: invite all.
+  const orderedSigners = [...signers].sort((a, b) => a.order - b.order);
+  const notifyNowIds = new Set(
+    sequential
+      ? (orderedSigners.length ? [orderedSigners[0].id] : [])
+      : signers.map(s => s.id),
+  );
+
   const signerLinks = await Promise.all(signers.map(async s => {
     const magicLink = `${baseUrl}/preview/?doc=${docId}&t=${s.token}`;
     let sent = false;
     let error = null;
-    if (isValidEmail(s.email)) {
+    let queued = false;
+    if (!notifyNowIds.has(s.id)) {
+      // Sequential and not this signer's turn yet.
+      queued = true;
+    } else if (isValidEmail(s.email)) {
       const result = await sendInvite(env, {
         to: s.email,
         name: s.name,
@@ -2807,7 +2832,8 @@ async function handleCreateDoc(request, env, url, ctx) {
         brand: senderBrand,
       });
       sent = !!result.delivered;
-      if (!sent) error = result.error || 'send failed';
+      if (sent) s.notifiedAt = new Date().toISOString();
+      else error = result.error || 'send failed';
     }
     return {
       signerId: s.id,
@@ -2815,10 +2841,17 @@ async function handleCreateDoc(request, env, url, ctx) {
       email: s.email,
       token: s.token,
       magicLink,
+      order: s.order,
       sent,
+      queued,
       error,
     };
   }));
+
+  // Persist the notifiedAt stamps set during dispatch (the doc was written
+  // before sending so the records existed; this re-write captures who was
+  // actually invited, which sequential routing reads on each completion).
+  await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
 
   // Fire doc.created webhook (slice 91). Studio-only — fireWebhook
   // returns early if the sender has no config. waitUntil hands the
@@ -2986,6 +3019,33 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
       completedAt: doc.completedAt,
       signerCount: doc.signers.length,
     }));
+  }
+
+  // Sequential signing-order routing: when this signer just completed and the
+  // document is not yet fully done, invite the next signer in order who has
+  // not been notified or completed. This is what makes ordered routing work,
+  // one signer at a time. Parallel docs skip this (everyone was emailed up
+  // front). Best-effort send; notifiedAt is stamped so we never double-invite.
+  if (doc.signingOrder === 'sequential' && signer.completedAt && !wasSignerComplete && !doc.completedAt) {
+    const ordered = [...doc.signers].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const next = ordered.find(s => !s.completedAt && !s.notifiedAt);
+    if (next) {
+      const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+      const magicLink = `${baseUrl}/preview/?doc=${docId}&t=${next.token}`;
+      next.notifiedAt = new Date().toISOString();
+      recordEvent(doc, { type: 'signer-invited', signerId: next.id, request, meta: { order: next.order } });
+      if (isValidEmail(next.email)) {
+        const senderBrand = await loadSenderBrand(env, doc.senderId);
+        waitUntil(sendInvite(env, {
+          to: next.email,
+          name: next.name,
+          docTitle: doc.title,
+          magicLink,
+          senderName: doc.senderName,
+          brand: senderBrand,
+        }));
+      }
+    }
   }
 
   doc.signers[signerIdx] = signer;
