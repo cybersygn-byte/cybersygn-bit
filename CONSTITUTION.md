@@ -61,6 +61,14 @@ Modern: typography hierarchy that breathes, generous whitespace, restrained colo
 
 Every page, every screen, every email has one primary action the visitor should take, and that action must be obvious within three seconds of arrival. If you can describe a page and not name its single primary CTA, the page is broken.
 
+1.13 Product excellence is non-negotiable, at every scale.
+
+Every artifact CyberSygn ships to a user, no matter how small or how free, must be substantively complete, professionally structured, internally coherent, and genuinely useful on its own merits. This applies fully to templates, downloads, freebies, and lead magnets. A wireframe is not a product. Section headings with blank space under them are not a product. "Good enough for a freebie" is not a standard we hold. If a downloadable template would embarrass us if a paying customer received it, it is not done. Do not ship it, and do not let a thin version sit live while a better one is "coming." The bar for a free template is the same bar as a paid feature: would a competent professional in that field look at this and judge it credible work? If not, keep going until the answer is yes.
+
+1.14 Excellence that creates liability is not excellence.
+
+This rule binds together with 1.13 and never yields to it. We never provide legal advice and never expose the business or our users to legal backlash (this restates a standing non-negotiable). Therefore every contract or legal-document artifact ships as a clearly-framed, customizable starting draft, with fill-in placeholders and a prominent, unavoidable instruction to have a licensed attorney in the governing jurisdiction review it before anyone relies on it, plus the standing "not legal advice, CyberSygn is not a law firm" disclaimer on the first page and every page footer. We author substantively complete drafts (real clause language, not headings) precisely so the customer has an excellent starting point, and we frame them honestly so the customer, and we, stay protected. A polished document presented as finished and ready-to-sign is more dangerous than an obvious wireframe, because users rely on it. Never present an AI-authored legal document as attorney-reviewed, jurisdiction-certified, or guaranteed enforceable. When the two halves of this rule appear to conflict, both still bind: make it excellent and make it safe, or do not ship it.
+
 ============================================================
 SECTION 2, WHO I AM
 ============================================================

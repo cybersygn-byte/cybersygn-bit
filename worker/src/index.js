@@ -45,7 +45,7 @@ import { maybeInjectAnalytics } from './analytics-inject.js';
 import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry } from './sentry.js';
 import { runDailyKvBackup, shouldRunKvBackup } from './kv-backup.js';
-import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail } from './templates-library.js';
+import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS } from './webhooks.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
 import { getRoadmap, castVote } from './roadmap.js';
@@ -76,6 +76,7 @@ const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 export default {
   async fetch(request, env, ctx) {
+   try {
     const url = new URL(request.url);
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
@@ -150,8 +151,8 @@ export default {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
-      const rl = await checkRateLimit(env, ipKey(request, 'signup'), { max: 8, windowSeconds: 600 });
-      if (!rl.ok) return rateLimitedResponse(rl);
+      const rl = await checkRateLimit(env, `signup:${ipKey(request)}`, [{ windowSec: 600, max: 8 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/signup' });
       return handleSignup(request, env);
     }
 
@@ -177,8 +178,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/error') {
       // Tight rate limit on client-error reports — bug-spam is a real
       // failure mode and we don't want it to hot-spot Resend.
-      const rl = await checkRateLimit(env, ipKey(request, 'err'), { max: 30, windowSeconds: 60 });
-      if (!rl.ok) return rateLimitedResponse(rl);
+      const rl = await checkRateLimit(env, `err:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/error' });
       return handleClientError(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/contact') {
@@ -292,8 +293,8 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/docs') {
       // Generous rate limit on doc creation — paid customers send
       // dozens a day, but a flood-loop should still be capped.
-      const rl = await checkRateLimit(env, ipKey(request, 'docs'), { max: 60, windowSeconds: 600 });
-      if (!rl.ok) return rateLimitedResponse(rl);
+      const rl = await checkRateLimit(env, `docs:${ipKey(request)}`, [{ windowSec: 600, max: 60 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs' });
       return handleCreateDoc(request, env, url, ctx);
     }
 
@@ -468,6 +469,17 @@ export default {
       status: 404,
       headers: { 'content-type': 'text/plain; charset=utf-8' },
     });
+   } catch (err) {
+      // Top-level safety net: never let an unhandled exception surface as a raw
+      // Cloudflare 1101 page. Report it, then return clean JSON for API routes
+      // and a generic 500 for everything else.
+      try { await reportToSentry(env, err, { where: 'fetch', url: request.url }); } catch (_) {}
+      console.error('[fetch] unhandled:', (err && err.stack) || err);
+      let isApi = false;
+      try { isApi = new URL(request.url).pathname.startsWith('/api/'); } catch (_) {}
+      if (isApi) return jsonResponse(500, { error: 'internal_error', message: 'Something went wrong. Please try again.' });
+      return new Response('Internal error.', { status: 500, headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    }
   },
 
   /**
@@ -980,6 +992,7 @@ async function handleTemplateSend(request, env, url) {
     email: email.trim().toLowerCase(),
     firstName: (firstName || '').trim().slice(0, 80),
     lastName: (lastName || '').trim().slice(0, 80),
+    originUrl: request.url,
   });
   if (!result.ok) {
     return jsonResponse(500, result);
@@ -997,29 +1010,50 @@ async function handleTemplateDownload(request, env, url, slug) {
     { windowSec: 60 * 60, max: 30 },
   ]);
   if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/templates/download' });
-  const tmpl = findTemplate(slug);
-  if (!tmpl) return jsonResponse(404, { error: 'unknown_template' });
+
+  // Sanitize first — never allow path traversal into the asset path.
+  const clean = sanitizeSlug(slug);
+  if (!clean) return jsonResponse(404, { error: 'unknown_template' });
+
   const email = (url.searchParams.get('email') || '').trim().toLowerCase();
   const firstName = (url.searchParams.get('firstName') || '').trim().slice(0, 80);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return jsonResponse(400, { error: 'invalid_email', message: 'Provide ?email=you@example.com to download.' });
   }
-  // Fire-and-forget the lead capture so the user isn't held up.
-  try {
-    await import('./templates-library.js').then(m =>
-      // Reuse sendTemplateByEmail's signup pipeline path by hand to
-      // avoid double-emailing: only register the drip record.
-      // The freeSignup call is idempotent on email so a duplicate
-      // direct-download + email-it doesn't double-register.
-      m.sendTemplateByEmail.constructor // noop, just ensures import resolves
-    );
-  } catch (e) {}
-  const pdfBytes = await generateTemplatePdf(tmpl);
+
+  // Resolve the bytes: prefer the real pre-rendered static PDF served via
+  // env.ASSETS at /templates-pdf/<slug>.pdf. Fall back to the legacy
+  // generated wireframe only if the static asset is missing. Return 404
+  // only when BOTH the static asset is absent AND findTemplate is null.
+  let pdfBytes = await fetchStaticTemplatePdf(env, clean, request.url);
+  if (!pdfBytes) {
+    const tmpl = findTemplate(clean);
+    if (!tmpl) return jsonResponse(404, { error: 'unknown_template' });
+    pdfBytes = await generateTemplatePdf(tmpl);
+  }
+
+  // Lead-capture side effect: register the email into the free-tier drip
+  // funnel (idempotent on email), without emailing. We reuse freeSignup
+  // directly so a direct-download doesn't double-register vs. email-it.
+  if (email) {
+    try {
+      const signup = await freeSignup(env, {
+        firstName: firstName || 'there',
+        lastName: 'friend',
+        email,
+      });
+      if (signup && signup.ok && signup.freeToken) {
+        const emailHash = await sha256Hex(new TextEncoder().encode(email));
+        await writeFreeTokenPointer(env, signup.freeToken, emailHash);
+      }
+    } catch (e) { /* lead-capture is best-effort; never block the download */ }
+  }
+
   return new Response(pdfBytes, {
     status: 200,
     headers: {
       'content-type': 'application/pdf',
-      'content-disposition': `attachment; filename="${slug}.pdf"`,
+      'content-disposition': `attachment; filename="${clean}.pdf"`,
       'cache-control': 'no-store',
     },
   });
@@ -1924,7 +1958,7 @@ async function handleClientError(request, env) {
  */
 async function handleContact(request, env, url) {
   const ip = ipKey(request);
-  const limit = await checkRateLimit(env, `contact:${ip}`, 5, 60 * 60);
+  const limit = await checkRateLimit(env, `contact:${ip}`, [{ windowSec: 60 * 60, max: 5 }]);
   if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/contact' });
 
   const body = await readJsonBody(request);

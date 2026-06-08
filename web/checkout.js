@@ -23,8 +23,15 @@ function readOwnerToken() {
 }
 
 async function startCheckout(button) {
-  const tier = button.dataset.checkoutTier;
-  if (!tier) return;
+  const baseTier = button.dataset.checkoutTier;
+  if (!baseTier) return;
+  // Honor the monthly/annual billing toggle. conversion.js sets
+  // data-checkout-cycle="annual" on the tier buttons when Annual is active; map
+  // to the tier's annual price id so the buyer is charged the ADVERTISED annual
+  // rate. The *_annual tiers resolve to STRIPE_PRICE_*_ANNUAL server-side and are
+  // accepted by TIERS in the worker. Lifetime/free have no annual variant.
+  const ANNUAL = { solo: 'solo_annual', founding: 'founding_annual', team: 'team_annual' };
+  const tier = (button.dataset.checkoutCycle === 'annual' && ANNUAL[baseTier]) ? ANNUAL[baseTier] : baseTier;
   const originalLabel = button.textContent;
   const senderId = getSenderId();
   const ownerToken = readOwnerToken();

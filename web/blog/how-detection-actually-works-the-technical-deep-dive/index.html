@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn Detection Technical Guide: How Two Layers Find Every Field — CyberSygn</title>
+  <meta name="description" content="CyberSygn detection technical guide: a fast text walker reads your PDF first, then vision catches the rest. See how both layers place every field for you." />
+  <meta name="keywords" content="CyberSygn detection technical, PDF detection pipeline, signature detection engineering, detection algorithm, automatic field detection, PDF content stream parsing" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/blog/how-detection-actually-works-the-technical-deep-dive/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
+  <meta property="og:title" content="CyberSygn Detection Technical Guide: How Two Layers Find Every Field" />
+  <meta property="og:description" content="CyberSygn detection technical guide: a fast text walker reads your PDF first, then vision catches the rest. See how both layers place every field for you." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/blog/how-detection-actually-works-the-technical-deep-dive/" />
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2026-06-08T12:00:00Z" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../../vendor/fonts.css" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "CyberSygn",
+          "item": "https://cybersygn.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://cybersygn.io/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "CyberSygn Detection Technical Guide: How Two Layers Find Every Field",
+          "item": "https://cybersygn.io/blog/how-detection-actually-works-the-technical-deep-dive/"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "CyberSygn Detection Technical Guide: How Two Layers Find Every Field",
+      "description": "CyberSygn detection technical guide: a fast text walker reads your PDF first, then vision catches the rest. See how both layers place every field for you.",
+      "datePublished": "2026-06-08T12:00:00Z",
+      "dateModified": "2026-06-08T12:00:00Z",
+      "author": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "url": "https://cybersygn.io/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cybersygn.io/brand/lockup-navy@2x.png"
+        }
+      },
+      "mainEntityOfPage": "https://cybersygn.io/blog/how-detection-actually-works-the-technical-deep-dive/",
+      "articleSection": "founder",
+      "keywords": "CyberSygn detection technical, PDF detection pipeline, signature detection engineering, detection algorithm, automatic field detection, PDF content stream parsing"
+    }
+  ]
+}
+  </script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <div class="post-progress" id="post-progress" aria-hidden="true"><span class="post-progress__bar" id="post-progress-bar"></span></div>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Blog">
+        <a class="masthead__link" href="../">Blog index</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="post">
+    <article class="post__article">
+      <div class="container container--prose">
+        <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">founder</span></p>
+        <h1 class="post__title">CyberSygn Detection Technical Guide: How Two Layers Find Every Field</h1>
+        <div class="post__meta">
+          <span class="post__meta-item post__meta-cat">founder</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <time class="post__meta-item" datetime="2026-06-08">June 8, 2026</time>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">6 min read</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">1,155 words</span>
+        </div>
+        
+    <div class="post__share" aria-label="Share this article">
+      <span class="post__share-label">Share</span>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-detection-actually-works-the-technical-deep-dive%2F&amp;text=CyberSygn%20Detection%20Technical%20Guide%3A%20How%20Two%20Layers%20Find%20Every%20Field" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-detection-actually-works-the-technical-deep-dive%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
+      <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/how-detection-actually-works-the-technical-deep-dive/" aria-label="Copy link to this article">Copy link</button>
+    </div>
+        <div class="post__body">
+          <p class="post__hook">Most signature spots are already labeled inside the file. The hard part is reading all of them in milliseconds.</p>
+          <p class="post__intro">You drop a contract into CyberSygn, and a second later every signature line, initial box, and date field already sits in place. No dragging, no squinting. That is the CyberSygn detection technical engine doing its job, and here is the part most people overlook. The detector runs across two distinct layers, and the first one needs no AI at all. A fast text-based reader resolves about ninety-five percent of contracts on its own, while a vision model steps in only for the unusual cases that defeat it. In this post you will see how each layer of the PDF detection pipeline works, why the split exists, and what this automatic field detection means for the contracts you send every week.</p>
+          <h2 class="post__h2">Layer One: The Text Walker That Reads Your PDF Like a Recipe</h2>
+<p class="post__p">A PDF page is not actually a picture, even though it looks like one on screen. Underneath the surface, the page is a sequence of drawing commands that tell the renderer to move here, set this font, draw this text, and draw this line. Think of it as a recipe the page follows in order to paint itself.
+
+The detector reads that recipe one instruction at a time, and this traversal is what we call the walk. As it proceeds, it tracks the current font and position, then assembles the loose fragments of text into clean labels and lines. This stage matters more than it first sounds, because in a raw PDF the word &quot;Signature&quot; might be scattered across several commands and drawn letter by letter, which forces the walker to reconstruct those fragments into a single word before it can match anything.
+
+Every command also carries exact coordinates, which means the detector always knows where each word sits, down to the point. That precision is what makes accurate placement possible, because PDF content stream parsing delivers both the text and its location on the page at the same time.</p>
+<h2 class="post__h2">How the Matcher Turns Labels Into Placed Fields</h2>
+<p class="post__p">Once the text is clean, the matching stage begins, and this is where the signature detection engineering searches for familiar shapes. It identifies &quot;Signature:&quot; followed by a line, &quot;(Initial)&quot; beside a short underscore, &quot;Date:&quot; next to a blank, or a checkbox square paired with its label. Each match returns two facts, the field type and where it belongs, so a hit on &quot;Date:&quot; becomes a date field placed right after the colon, while a long underscore after &quot;Signature&quot; becomes a signature field sized to that exact line.
+
+The pattern list is deliberately narrow, and it stays conservative because a mistaken addition is worse than an omission. If the detector inserts a field you never wanted, you have to find it and delete it, whereas if it overlooks one, you simply click once to add it. So the parser only commits to fields it is genuinely confident about.
+
+This principle is the foundation of the CyberSygn detection technical design. The detector is not examining a flat image and guessing, because it reads the page&#39;s own underlying instructions directly. That is exactly why this layer of the PDF detection pipeline finishes in milliseconds, runs free inside your browser, and still gets the placement right.</p>
+<h2 class="post__h2">Layer Two: When the Text Walker Comes Up Empty</h2>
+<p class="post__p">So what happens with a contract that contains no labels at all? Consider a hand-drawn form, or a scanned page run through OCR where the text was interpreted from a photograph and came back messy or incomplete. Consider a contract that marks where to sign using nothing more than a visual cue and no actual words.
+
+For documents like these, the text walker returns nothing, because there is no clean label embedded in the recipe to match against. The page itself might be a single large image with no genuine text underneath it, and that is the moment when CyberSygn deliberately switches paths.
+
+The detection algorithm falls back to vision. The page is rendered into an image, and that image is forwarded to a multimodal model, Anthropic&#39;s Claude Sonnet 4.5, accompanied by a structured prompt that tells the model exactly what to look for and what shape of answer to return.
+
+The model then examines the page much the way your own eyes would. It recognizes the empty line beneath a typed name and the box waiting for an initial, then returns those positions in the identical format the text walker uses. As a result, the rest of the app never has to care which layer discovered them. This vision fallback is the safety net of the CyberSygn detection technical design, and it captures the line a human would obviously notice even when no text marks it.
+
+The trade-off here is real and worth stating plainly. This path runs slower, measured in seconds rather than milliseconds, and it consumes API credit on every run, and like any model it is not perfect, so you still get a quick chance to confirm before you send. That is why vision remains in reserve as the careful specialist, called in only when the fast reader comes up empty, which delivers the safety net without imposing the speed or cost penalty on every single contract.</p>
+<h2 class="post__h2">Why the CyberSygn Detection Technical Split Wins for You</h2>
+<p class="post__p">Here is the reason two layers outperform one. The text walker runs in milliseconds, costs nothing, and clears roughly ninety-five percent of contracts, whereas the vision layer is slower, consumes credit, and handles the remainder. By attempting text first and reserving vision as the fallback, the pipeline captures both advantages at once: speed and zero cost on the common case, plus accuracy on the rare one.
+
+Compare that to a vision-only design, where some tools forward every page to a model regardless. That approach is slower for everyone, and it wastes credit on contracts that never needed it, because your plain NDA does not require a vision model to find a line that literally reads &quot;Signature:&quot; beside it. A text-only design carries the opposite weakness, because it would simply fail on a scanned or hand-drawn page and leave you dragging boxes by hand. The split neatly sidesteps both failure modes.
+
+So what does this mean for you in practice? You never have to know which path ran, because you upload a contract and the fields appear. A straightforward NDA gets the fast lane, a scanned and hand-drawn page gets the careful lane, and either way the work finishes before you reach the end of the first paragraph.
+
+That outcome is the entire purpose of disciplined signature detection engineering, because the machinery stays hidden and you see one smooth result, contract after contract. The design quietly keeps costs low too, which is part of why the price can stay low. Every field gets placed, and you spend your time signing instead of dragging boxes by hand.</p>
+          
+        </div>
+
+        <section class="post__cta">
+          <p class="kicker">Ready to try it?</p>
+          <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
+          <p>You should not have to place fields by hand on contract after contract. CyberSygn runs the full detection pipeline for you, fast text first and vision as backup, so the work simply gets done. Start with Solo at twelve dollars a month for unlimited automatic field detection and unlimited documents, or choose Studio at twenty-nine dollars a month once your team is sending at volume. Try it free on your next contract.</p>
+          <a class="btn btn--primary btn--lg" href="/preview/">
+            Try It Out →
+          </a>
+        </section>
+
+        
+        
+    <section class="post__related" aria-label="Related reading">
+      <p class="kicker kicker--muted">Related reading</p>
+      <ul class="post__related-list">
+        <li><a href="/blog/how-electronic-signatures-work-technically/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>How Electronic Signatures Work: The 6 Steps Behind One Click</strong>
+            <span class="post__related-desc">How electronic signatures work, explained simply. From the magic link to the SHA-256 fingerprint, here are the</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/electronic-vs-digital-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>Electronic vs Digital Signature: The Difference in Plain English</strong>
+            <span class="post__related-desc">Electronic vs digital signature: they sound the same, but they are not. Here is the real difference, in plain </span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+<li><a href="/blog/what-is-an-electronic-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>What Is an Electronic Signature? The Plain-English Answer</strong>
+            <span class="post__related-desc">What is an electronic signature? It is any digital mark you make with intent to sign. Here is the real definit</span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+      </ul>
+    </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../../">Home</a>
+        <a href="../">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Copy-link buttons — uses navigator.clipboard, no external SDK.
+      document.querySelectorAll('.post__share-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var url = btn.getAttribute('data-copy-url') || window.location.href;
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('is-copied');
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove('is-copied');
+            }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(function () { done(); });
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            done();
+          }
+        });
+      });
+
+      // Reading-progress bar. Respects prefers-reduced-motion (we still
+      // update width, just skip the smoothing transition via CSS).
+      var bar = document.getElementById('post-progress-bar');
+      if (bar) {
+        var ticking = false;
+        var update = function () {
+          var doc = document.documentElement;
+          var scrollable = (doc.scrollHeight - doc.clientHeight) || 1;
+          var pct = Math.min(1, Math.max(0, window.scrollY / scrollable));
+          bar.style.width = (pct * 100).toFixed(2) + '%';
+          ticking = false;
+        };
+        var onScroll = function () {
+          if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      }
+    })();
+  </script>
+
+</body>
+</html>

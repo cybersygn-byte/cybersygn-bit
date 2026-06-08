@@ -31,6 +31,16 @@
 
   const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Glassy opening haze: a frosted sheen behind the logo / in front of the
+  // video. CSS runs the fade; here we just retire the element once it has
+  // faded so it never lingers as a backdrop-filter layer (keeps scroll and
+  // compositing cheap, especially on Android). Reduced-motion: drop it outright.
+  const haze = document.querySelector('.cinematic-hero__haze');
+  if (haze) {
+    if (reduced) { haze.style.display = 'none'; }
+    else { haze.addEventListener('animationend', () => { haze.remove(); }, { once: true }); }
+  }
+
   function fadeDurationFor(totalSec) {
     if (!isFinite(totalSec) || totalSec <= 0) return 1.6;
     return Math.min(1.6, totalSec * 0.15);

@@ -45,9 +45,9 @@
       <p class="state-card__kicker">Step 1</p>
       <h2 class="state-card__body" style="font-weight: 600;">Pick the PDF.</h2>
       <p class="state-card__body">Upload your PDF once. CyberSygn detects every field. The same field set goes to every recipient.</p>
-      <div style="display: flex; gap: var(--s-3); align-items: center; margin-top: var(--s-3);">
+      <div style="display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-top: var(--s-3);">
         <input type="file" id="bulk-pdf" accept="application/pdf" />
-        <span id="bulk-pdf-status" class="caption">No file selected.</span>
+        <span id="bulk-pdf-status" class="caption" style="min-width: 0; overflow-wrap: anywhere;">No file selected.</span>
       </div>
     </section>
 
@@ -68,7 +68,7 @@
       </div>
 
       <textarea id="bulk-recipients"
-                style="width:100%;min-height:140px;margin-top:var(--s-3);padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.6;"
+                style="width:100%;min-height:140px;margin-top:var(--s-3);padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg-2);color:var(--text);font-family:var(--mono);font-size:16px;line-height:1.6;"
                 placeholder="Jane Doe,jane@example.com&#10;John Smith,john@firm.com&#10;..."></textarea>
       <p id="bulk-recipients-status" class="caption" style="margin-top: var(--s-2);">No recipients parsed yet.</p>
       <!-- Slice 96: per-row validation preview. Bad-email rows show in
@@ -91,7 +91,7 @@
     <section id="bulk-results" class="state-card" hidden>
       <p class="state-card__kicker">Sent.</p>
       <h2 class="state-card__body" style="font-weight: 600;"><span id="bulk-results-sent">0</span> sent · <span id="bulk-results-failed">0</span> failed.</h2>
-      <div id="bulk-results-list" style="margin-top: var(--s-3); max-height: 360px; overflow-y: auto; font-family: var(--mono); font-size: 12px; line-height: 1.7;"></div>
+      <div id="bulk-results-list" style="margin-top: var(--s-3); max-height: 360px; overflow-y: auto; overflow-x: hidden; font-family: var(--mono); font-size: 12px; line-height: 1.7;"></div>
     </section>
 
   </main>
@@ -307,8 +307,8 @@
             row.style.cssText = 'display:grid;grid-template-columns:14px 1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid var(--line);';
             row.innerHTML =
               '<span style="color:' + (r.ok ? 'var(--ok)' : 'var(--warn)') + '">' + (r.ok ? '✓' : '×') + '</span>' +
-              '<span>' + escape(r.recipient) + '</span>' +
-              '<span style="color:var(--text-3)">' + (r.ok ? (r.docId || '').slice(0, 8) : escape(r.error || '')) + '</span>';
+              '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escape(r.recipient) + '</span>' +
+              '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-3)">' + (r.ok ? (r.docId || '').slice(0, 8) : escape(r.error || '')) + '</span>';
             resultsList.appendChild(row);
           }
         }

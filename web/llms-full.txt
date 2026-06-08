@@ -32,7 +32,7 @@ Studio: $29 per month for 3 seats. Shared workspace with aggregated dashboard. M
 
 Origin (early adopter): $9 per month, locked for the life of the account. First 100 customers only. Everything in Solo, plus a direct email line to the founder and the first look at every new feature. Once 100 spots are taken, the option closes and new customers move to Solo pricing.
 
-Lifetime (early adopter): $299 one-time. No recurring charge. First 50 customers only. Every Solo feature for the life of the product. Final sale once your first document signs. After 50, the option closes.
+Lifetime (early adopter): $299 one-time. No recurring charge. First 50 customers only. Every Solo feature for the life of the product. After 50, the option closes.
 
 ## Security and audit
 
@@ -44,7 +44,7 @@ Automatic reminder cron runs hourly. Walks every pending signer and sends a gent
 
 ## Templates
 
-CyberSygn ships a small curated library of generic, jurisdiction-neutral starting points (NDA, Independent Contractor Agreement, Services Agreement). Every template carries a "not legal advice" disclaimer. The library is intentionally small; for the launch we are not competing on template volume.
+CyberSygn ships a library of 500+ professionally drafted, customizable starting templates spanning common business and personal agreements. Each template is a starting draft, not legal advice, and carries a "not legal advice" disclaimer. Templates are downloadable individually or as a single zip of the full library. Bring your own document too: upload any PDF or Word file and the library is optional.
 
 ## Geographic markets
 

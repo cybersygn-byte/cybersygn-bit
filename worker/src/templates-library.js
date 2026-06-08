@@ -22,6 +22,11 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { deliver } from './email.js';
 import { freeSignup, writeFreeTokenPointer } from './free-tier.js';
+// Slug -> title map generated from scripts/templates-catalog.json (all 500+
+// owned templates). Bundled into the worker so we can title the email
+// subject/body for any catalogued slug, not just the legacy 16 in TEMPLATES.
+// esbuild (used by wrangler) supports JSON imports natively.
+import TEMPLATE_TITLES from './template-titles.json' with { type: 'json' };
 
 const PAGE_W = 612;   // US letter
 const PAGE_H = 792;
@@ -134,6 +139,74 @@ export function findTemplate(slug) {
 
 export function listTemplates() {
   return TEMPLATES.map(t => ({ slug: t.slug, title: t.title, short: t.short }));
+}
+
+/**
+ * Sanitize a slug for use in an asset path. Lowercase, allow only
+ * [a-z0-9-]. Strips anything else (so no path traversal, no '/', no '.').
+ * Returns '' for non-strings or empty results.
+ */
+export function sanitizeSlug(slug) {
+  if (typeof slug !== 'string') return '';
+  return slug.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120);
+}
+
+/**
+ * Title-case a slug as a last-resort fallback when the slug is not in the
+ * generated catalog map nor the legacy TEMPLATES registry.
+ */
+function titleCaseSlug(slug) {
+  return String(slug)
+    .split('-')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * Resolve a human title for a slug. Prefers the generated catalog map,
+ * then the legacy registry, then a title-cased fallback.
+ */
+export function titleForSlug(slug) {
+  const clean = sanitizeSlug(slug);
+  if (clean && Object.prototype.hasOwnProperty.call(TEMPLATE_TITLES, clean)) {
+    return TEMPLATE_TITLES[clean];
+  }
+  const tmpl = findTemplate(clean);
+  if (tmpl) return tmpl.title;
+  return titleCaseSlug(clean) || 'Contract';
+}
+
+/**
+ * Fetch the pre-rendered static PDF for a slug via the ASSETS binding.
+ * Builds an absolute-URL Request to the same origin at
+ * /templates-pdf/<slug>.pdf. Returns a Uint8Array of the PDF bytes on a
+ * 200, or null if the asset is missing / ASSETS is unavailable.
+ *
+ * `originUrl` is any URL on the same origin (typically the inbound request
+ * URL) used to construct an absolute asset URL. If omitted, a stable
+ * placeholder origin is used (the ASSETS binding ignores the host).
+ */
+export async function fetchStaticTemplatePdf(env, slug, originUrl) {
+  const clean = sanitizeSlug(slug);
+  if (!clean) return null;
+  if (!env || !env.ASSETS || typeof env.ASSETS.fetch !== 'function') return null;
+  let assetUrl;
+  try {
+    const base = originUrl ? new URL(originUrl) : new URL('https://cybersygn.io/');
+    assetUrl = new URL(`/templates-pdf/${clean}.pdf`, base);
+  } catch (e) {
+    return null;
+  }
+  try {
+    const res = await env.ASSETS.fetch(new Request(assetUrl.toString(), { method: 'GET' }));
+    if (!res || res.status !== 200) return null;
+    const buf = await res.arrayBuffer();
+    if (!buf || buf.byteLength === 0) return null;
+    return new Uint8Array(buf);
+  } catch (e) {
+    return null;
+  }
 }
 
 /**
@@ -295,10 +368,21 @@ function wrap(s, maxChars) {
  * Send a template via Resend with the PDF as an attachment.
  * Captures the email into the free-tier drip funnel as a side effect.
  */
-export async function sendTemplateByEmail(env, { templateSlug, email, firstName, lastName }) {
-  const tmpl = findTemplate(templateSlug);
-  if (!tmpl) return { ok: false, error: 'unknown_template' };
-  const pdfBytes = await generateTemplatePdf(tmpl);
+export async function sendTemplateByEmail(env, { templateSlug, email, firstName, lastName, originUrl }) {
+  const slug = sanitizeSlug(templateSlug);
+  if (!slug) return { ok: false, error: 'unknown_template' };
+
+  // Validation: a template is valid if a real rendered PDF asset exists
+  // OR it's in the legacy registry. Prefer the static asset; only fall
+  // back to the generated wireframe when the asset is missing.
+  let pdfBytes = await fetchStaticTemplatePdf(env, slug, originUrl);
+  let usedStatic = !!pdfBytes;
+  const tmpl = findTemplate(slug);
+  if (!pdfBytes) {
+    if (!tmpl) return { ok: false, error: 'unknown_template' };
+    pdfBytes = await generateTemplatePdf(tmpl);
+  }
+  const title = titleForSlug(slug);
   const pdfBase64 = bytesToBase64(pdfBytes);
 
   // Lead capture: write the drip:<emailHash> record so the welcome
@@ -319,11 +403,11 @@ export async function sendTemplateByEmail(env, { templateSlug, email, firstName,
   if (!apiKey) {
     return { ok: false, mode: 'console', detail: 'RESEND_API_KEY not set' };
   }
-  const subject = `Your ${tmpl.title} template, from CyberSygn.`;
+  const subject = `Your ${title} template, from CyberSygn.`;
   const body =
     `Hi ${firstName || 'there'},\n\n` +
-    `Attached is your ${tmpl.title} template. It's a structural starting point — replace the bracketed placeholders, then send it for signature through CyberSygn (https://cybersygn.io/preview/) to get a fully-detected, signable version with audit certificate.\n\n` +
-    `Important: this template is for general structure only. It is not legal advice. Talk to a licensed attorney in your jurisdiction for guidance on your specific situation.\n\n` +
+    `Attached is your ${title} template. It's a customizable starting draft — replace the bracketed placeholders, then send it for signature through CyberSygn (https://cybersygn.io/preview/) to get a fully-detected, signable version with audit certificate.\n\n` +
+    `Important: this template is a starting draft for general structure only. It is not legal advice. Have a licensed attorney in your jurisdiction review it for your specific situation.\n\n` +
     `CyberSygn. Built in Colorado.`;
 
   const reqBody = {
@@ -332,7 +416,7 @@ export async function sendTemplateByEmail(env, { templateSlug, email, firstName,
     subject,
     text: body,
     attachments: [{
-      filename: `${tmpl.slug}.pdf`,
+      filename: `${slug}.pdf`,
       content: pdfBase64,
     }],
   };
@@ -350,7 +434,7 @@ export async function sendTemplateByEmail(env, { templateSlug, email, firstName,
       return { ok: false, error: `resend_${res.status}`, detail: txt.slice(0, 200) };
     }
     const r = await res.json();
-    return { ok: true, providerId: r.id || null, mode: 'resend' };
+    return { ok: true, providerId: r.id || null, mode: 'resend', source: usedStatic ? 'static' : 'generated' };
   } catch (e) {
     return { ok: false, error: 'exception', detail: (e && e.message) || String(e) };
   }

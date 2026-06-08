@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Free contract templates. Download or email yourself a copy. CyberSygn.</title>
-  <meta name="description" content="Sixteen free contract template structures — NDAs, MSAs, leases, photography contracts, SAFE agreements, more. Email yourself a copy or download direct. Brought to you by CyberSygn." />
+  <meta name="description" content="Over 500 free contract templates. NDAs, MSAs, leases, and more. Email yourself a copy or download direct. Customizable starting drafts, not legal advice." />
   <meta name="keywords" content="free contract templates, NDA template, MSA template, photography contract template, freelance contract template, SAFE template" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/templates/" />
@@ -15,7 +15,7 @@
   <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
   <meta property="og:title" content="Free contract templates from CyberSygn." />
-  <meta property="og:description" content="Sixteen template structures. Email yourself or download direct." />
+  <meta property="og:description" content="Over 500 free contract templates. NDAs, MSAs, leases, and more. Email yourself a copy or download direct. Customizable starting drafts, not legal advice." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/templates/" />
   <link rel="stylesheet" href="../vendor/fonts.css" />
@@ -41,8 +41,9 @@
     <section class="hero">
       <div class="container">
         <p class="kicker hero__kicker">Free contract templates.</p>
-        <h1 class="h-display hero__title">Sixteen contract structures. Download or email to yourself.</h1>
-        <p class="lede hero__lede">Generic structural templates for the contracts solo professionals and small teams send most often. Replace the placeholders. Send them through CyberSygn for automatic field detection. No credit card to get a copy.</p>
+        <h1 class="h-display hero__title">Over 500 contract templates. Download or email any of them.</h1>
+        <p class="lede hero__lede">Professionally drafted starting templates for the contracts solo professionals and small teams send most often. Replace the placeholders, review with a licensed attorney, then send them through CyberSygn for automatic field detection. No credit card to get a copy.</p>
+        <p style="margin-top: 18px;"><a class="btn btn--ghost" href="/templates-all.zip" download>Download all 502 as a zip</a></p>
       </div>
     </section>
 
@@ -52,12 +53,12 @@
         <div class="tmpl-controls">
           <input id="tmpl-search" class="blog-search" type="search" placeholder="Search templates." />
           <div class="tmpl-cats" role="tablist" aria-label="Categories">
-            <button class="blog-cat is-active" data-cat="all" type="button">All 16</button>
+            <button class="blog-cat is-active" data-cat="all" type="button">All 502</button>
             <button class="blog-cat" data-cat="business" type="button">Business</button>
-            <button class="blog-cat" data-cat="creative" type="button">Creative</button>
-            <button class="blog-cat" data-cat="hr" type="button">HR</button>
-            <button class="blog-cat" data-cat="real-estate" type="button">Real estate</button>
-            <button class="blog-cat" data-cat="service" type="button">Service</button>
+            <button class="blog-cat" data-cat="confidentiality" type="button">Confidentiality &amp; IP</button>
+            <button class="blog-cat" data-cat="employment" type="button">Employment &amp; HR</button>
+            <button class="blog-cat" data-cat="real-estate" type="button">Real Estate</button>
+            <button class="blog-cat" data-cat="creative" type="button">Creative &amp; Media</button>
           </div>
         </div>
 
@@ -115,70 +116,115 @@
   </div>
 
   <script>
-    // Templates registry — keep synced with worker/src/templates-library.js
-    var TEMPLATES = [
-      { slug:'master-services-agreement', title:'Master Services Agreement', category:'business', short:'Vendor contracts, retainer agreements, consulting MSAs.' },
-      { slug:'non-disclosure-agreement', title:'Non-Disclosure Agreement', category:'business', short:'Mutual NDAs, one-way confidentiality, due-diligence wrappers.' },
-      { slug:'employment-agreement', title:'Employment Agreement', category:'hr', short:'W-2 offer letters, 1099 contractor agreements, advisor terms.' },
-      { slug:'rental-lease', title:'Rental Lease', category:'real-estate', short:'Residential leases, commercial subleases, room rentals.' },
-      { slug:'photography-contract', title:'Photography Contract', category:'creative', short:'Shoot agreements, model releases, image licensing.' },
-      { slug:'coaching-agreement', title:'Coaching Agreement', category:'service', short:'Engagement terms, intake forms, cancellation policies.' },
-      { slug:'freelance-contract', title:'Freelance Contract', category:'creative', short:'Project SOWs, milestone payments, IP transfer clauses.' },
-      { slug:'safe-investor-agreement', title:'SAFE / Investor Agreement', category:'business', short:'YC SAFE templates, convertible notes, advisor agreements.' },
-      { slug:'consulting-agreement', title:'Consulting Agreement', category:'business', short:'Consulting engagements, scope-of-work, retainer terms.' },
-      { slug:'contractor-agreement', title:'Contractor Agreement', category:'business', short:'Independent contractor engagements with 1099 reporting.' },
-      { slug:'model-release', title:'Model Release', category:'creative', short:'Standard model release for commercial photo + video use.' },
-      { slug:'speaker-agreement', title:'Speaker Agreement', category:'service', short:'Conference, podcast, and workshop speaking terms.' },
-      { slug:'sponsorship-agreement', title:'Sponsorship Agreement', category:'business', short:'Event, podcast, and content-creator sponsorship terms.' },
-      { slug:'subscription-services', title:'Subscription Services Agreement', category:'business', short:'SaaS, retainer, and recurring-service subscription terms.' },
-      { slug:'mutual-nda', title:'Mutual Non-Disclosure Agreement', category:'business', short:'Two-way confidentiality for partnerships and diligence.' },
-      { slug:'advisor-agreement', title:'Advisor Agreement', category:'business', short:'Equity-compensated advisor terms with vesting.' }
+    // The full owned library (500+) is loaded from /templates-data.json (built by
+    // scripts/build-templates-library.mjs from the catalog + authored content +
+    // rendered PDFs). This small fallback only renders if that fetch fails, so the
+    // page is never empty.
+    var FALLBACK = [
+      { slug:'master-services-agreement', title:'Master Services Agreement', group:'business', groupLabel:'Business', short:'Umbrella terms for ongoing vendor and consulting work.' },
+      { slug:'non-disclosure-agreement', title:'Non-Disclosure Agreement', group:'confidentiality', groupLabel:'Confidentiality & IP', short:'Mutual NDAs, one-way confidentiality, diligence wrappers.' },
+      { slug:'employment-agreement', title:'Employment Agreement', group:'employment', groupLabel:'Employment & HR', short:'Offer letters, contractor agreements, advisor terms.' },
+      { slug:'rental-lease', title:'Rental Lease', group:'real-estate', groupLabel:'Real Estate', short:'Residential leases, commercial subleases, room rentals.' },
+      { slug:'photography-contract', title:'Photography Contract', group:'creative', groupLabel:'Creative & Media', short:'Shoot agreements, model releases, image licensing.' },
+      { slug:'freelance-contract', title:'Freelance Contract', group:'freelance', groupLabel:'Freelance', short:'Project SOWs, milestone payments, IP transfer clauses.' }
     ];
 
-    // Render grid.
     var grid = document.getElementById('tmpl-grid');
-    grid.innerHTML = TEMPLATES.map(function (t) {
-      return '<li class="tmpl-card" data-cat="' + t.category + '" data-search="' + (t.title + ' ' + t.short).toLowerCase() + '">' +
-        '<button class="tmpl-card__btn" type="button" data-slug="' + t.slug + '" data-title="' + t.title.replace(/"/g,'&quot;') + '" data-blurb="' + t.short.replace(/"/g,'&quot;') + '">' +
+    var catsWrap = document.querySelector('.tmpl-cats');
+    var search = document.getElementById('tmpl-search');
+    var ALL = [];
+    var state = { cat: 'all', q: '' };
+
+    // A live result count + a real empty state, created once.
+    var controls = catsWrap && catsWrap.parentNode;
+    var countEl = document.createElement('p');
+    countEl.id = 'tmpl-count'; countEl.className = 'tmpl-count caption';
+    if (controls) controls.appendChild(countEl);
+    var emptyEl = document.createElement('p');
+    emptyEl.id = 'tmpl-empty'; emptyEl.className = 'blog-empty'; emptyEl.hidden = true;
+    emptyEl.textContent = 'No templates match that search. Try a broader term or another category.';
+    if (grid && grid.parentNode) grid.parentNode.insertBefore(emptyEl, grid.nextSibling);
+
+    function cardHTML(t) {
+      var cat = t.group || t.category || 'other';
+      var hay = (t.title + ' ' + (t.short || '') + ' ' + (t.groupLabel || '')).toLowerCase().replace(/"/g, '');
+      return '<li class="tmpl-card" data-cat="' + cat + '" data-search="' + hay + '">' +
+        '<button class="tmpl-card__btn" type="button" data-slug="' + t.slug + '" data-title="' + String(t.title).replace(/"/g,'&quot;') + '" data-blurb="' + String(t.short || '').replace(/"/g,'&quot;') + '">' +
           '<div class="tmpl-card__preview">' +
-            '<div class="tmpl-card__lines">' +
-              '<span></span><span></span><span></span>' +
-            '</div>' +
+            '<div class="tmpl-card__lines"><span></span><span></span><span></span></div>' +
             '<div class="tmpl-card__fields">' +
               '<i class="tmpl-card__field tmpl-card__field--sig"></i>' +
               '<i class="tmpl-card__field tmpl-card__field--init"></i>' +
             '</div>' +
           '</div>' +
           '<h3 class="tmpl-card__title">' + t.title + '</h3>' +
-          '<p class="tmpl-card__short">' + t.short + '</p>' +
+          '<p class="tmpl-card__short">' + (t.short || '') + '</p>' +
         '</button>' +
       '</li>';
-    }).join('');
+    }
 
-    // Filter + search.
-    var search = document.getElementById('tmpl-search');
-    var cats = document.querySelectorAll('.tmpl-cats .blog-cat');
-    var cards = grid.querySelectorAll('.tmpl-card');
-    var state = { cat: 'all', q: '' };
+    function buildCats(list) {
+      var seen = {}, groups = [];
+      list.forEach(function (t) {
+        var k = t.group || t.category;
+        if (k && !seen[k]) { seen[k] = true; groups.push({ key: k, label: t.groupLabel || k }); }
+      });
+      groups.sort(function (a, b) { return a.label.localeCompare(b.label); });
+      catsWrap.innerHTML = '<button class="blog-cat is-active" data-cat="all" type="button">All ' + list.length + '</button>' +
+        groups.map(function (g) { return '<button class="blog-cat" data-cat="' + g.key + '" type="button">' + g.label + '</button>'; }).join('');
+    }
+
+    // refresh always re-queries the live DOM, so it works after any re-render.
     function refresh() {
-      cards.forEach(function (c) {
+      var shown = 0;
+      grid.querySelectorAll('.tmpl-card').forEach(function (c) {
         var matchCat = state.cat === 'all' || c.dataset.cat === state.cat;
         var matchQ = !state.q || c.dataset.search.indexOf(state.q) !== -1;
-        c.style.display = matchCat && matchQ ? '' : 'none';
+        var show = matchCat && matchQ;
+        c.style.display = show ? '' : 'none';
+        if (show) shown++;
       });
+      countEl.textContent = state.q || state.cat !== 'all'
+        ? 'Showing ' + shown + ' of ' + ALL.length + ' templates'
+        : ALL.length + ' free templates, ready to send';
+      emptyEl.hidden = shown > 0;
     }
-    search.addEventListener('input', function () {
-      state.q = search.value.trim().toLowerCase();
+
+    function render(list) {
+      ALL = list;
+      buildCats(list);
+      grid.innerHTML = list.map(cardHTML).join('');
+      state.cat = 'all'; state.q = '';
+      refresh();
+    }
+
+    if (search) search.addEventListener('input', function () { state.q = search.value.trim().toLowerCase(); refresh(); });
+    catsWrap.addEventListener('click', function (e) {
+      var b = e.target.closest('.blog-cat');
+      if (!b) return;
+      catsWrap.querySelectorAll('.blog-cat').forEach(function (x) { x.classList.remove('is-active'); });
+      b.classList.add('is-active');
+      state.cat = b.dataset.cat;
       refresh();
     });
-    cats.forEach(function (b) {
-      b.addEventListener('click', function () {
-        cats.forEach(function (x) { x.classList.remove('is-active'); });
-        b.classList.add('is-active');
-        state.cat = b.dataset.cat;
-        refresh();
-      });
-    });
+
+    // After a render, honor a ?cat= deep link (e.g. /templates/?cat=business)
+    // if it matches a real group key present in the rendered cards.
+    function applyCatFromURL() {
+      var wanted = new URLSearchParams(location.search).get('cat');
+      if (!wanted) return;
+      var btn = catsWrap.querySelector('.blog-cat[data-cat="' + wanted + '"]');
+      if (!btn) return;
+      catsWrap.querySelectorAll('.blog-cat').forEach(function (x) { x.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      state.cat = wanted;
+      refresh();
+    }
+
+    fetch('/templates-data.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { render(d && d.templates && d.templates.length ? d.templates : FALLBACK); applyCatFromURL(); })
+      .catch(function () { render(FALLBACK); applyCatFromURL(); });
 
     // Modal flow.
     var modal = document.getElementById('tmpl-modal');

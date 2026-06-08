@@ -252,7 +252,7 @@ function renderPage(c) {
           </p>
         </header>
 
-        <div class="compare-table">
+        <div class="compare-table-wrap">
           <table class="compare">
             <thead>
               <tr>

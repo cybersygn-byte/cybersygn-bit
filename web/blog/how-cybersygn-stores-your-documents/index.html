@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How CyberSygn Data Storage Works: Where Your Contracts Actually Live — CyberSygn</title>
+  <meta name="description" content="CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare&#39;s edge in three places at once. See how your contracts are stored and protected." />
+  <meta name="keywords" content="CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, Cloudflare edge storage, encrypted contract storage" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
+  <meta property="og:title" content="How CyberSygn Data Storage Works: Where Your Contracts Actually Live" />
+  <meta property="og:description" content="CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare&#39;s edge in three places at once. See how your contracts are stored and protected." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" />
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2026-06-08T12:00:00Z" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../../vendor/fonts.css" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "CyberSygn",
+          "item": "https://cybersygn.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://cybersygn.io/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "How CyberSygn Data Storage Works: Where Your Contracts Actually Live",
+          "item": "https://cybersygn.io/blog/how-cybersygn-stores-your-documents/"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "How CyberSygn Data Storage Works: Where Your Contracts Actually Live",
+      "description": "CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare's edge in three places at once. See how your contracts are stored and protected.",
+      "datePublished": "2026-06-08T12:00:00Z",
+      "dateModified": "2026-06-08T12:00:00Z",
+      "author": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "url": "https://cybersygn.io/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cybersygn.io/brand/lockup-navy@2x.png"
+        }
+      },
+      "mainEntityOfPage": "https://cybersygn.io/blog/how-cybersygn-stores-your-documents/",
+      "articleSection": "security",
+      "keywords": "CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, Cloudflare edge storage, encrypted contract storage"
+    }
+  ]
+}
+  </script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <div class="post-progress" id="post-progress" aria-hidden="true"><span class="post-progress__bar" id="post-progress-bar"></span></div>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Blog">
+        <a class="masthead__link" href="../">Blog index</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="post">
+    <article class="post__article">
+      <div class="container container--prose">
+        <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">security</span></p>
+        <h1 class="post__title">How CyberSygn Data Storage Works: Where Your Contracts Actually Live</h1>
+        <div class="post__meta">
+          <span class="post__meta-item post__meta-cat">security</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <time class="post__meta-item" datetime="2026-06-08">June 8, 2026</time>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">6 min read</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">1,111 words</span>
+        </div>
+        
+    <div class="post__share" aria-label="Share this article">
+      <span class="post__share-label">Share</span>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-cybersygn-stores-your-documents%2F&amp;text=How%20CyberSygn%20Data%20Storage%20Works%3A%20Where%20Your%20Contracts%20Actually%20Live" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-cybersygn-stores-your-documents%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
+      <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" aria-label="Copy link to this article">Copy link</button>
+    </div>
+        <div class="post__body">
+          <p class="post__hook">Where does a signed contract actually go once you hit send? The honest answer is more interesting than the vague reassurances most signing tools tend to give you.</p>
+          <p class="post__intro">You just signed a contract worth real money, and now it lives somewhere specific, but where exactly, and what stops it from vanishing the moment a server fails? Most signing tools wave their hands and say something about &quot;the cloud,&quot; which is not a real answer to a question this important. CyberSygn data storage runs on Cloudflare Workers, the same global edge network that powers a large portion of the modern internet, so your signed PDFs and audit certificates are encrypted and copied across many data centers at once rather than parked on a single fragile machine. In this post you will see precisely how CyberSygn data storage works, from where a contract sits while it is being signed to where it goes for the long haul, and why losing it would take a disaster on a scale that almost never happens.</p>
+          <h2 class="post__h2">Where Your Contract Lives While Someone Is Signing It</h2>
+<p class="post__p">Let me walk you through the first stage, which covers the window after you send a contract but before your signer has finished their part of it.
+
+During this window the unsigned PDF lives in **Cloudflare KV**, a fast key-value store positioned at the edge and physically close to your signer no matter where they are. This is Cloudflare edge storage doing its core job: keeping the document near the person who needs it, rather than across an ocean. So when your signer in Berlin opens the link, the file loads from a nearby server instead of a distant one, and the signing feels quick. KV holds far more than the document itself, because it also tracks the signer&#39;s progress, including half-filled fields, the magic-link token, and the active session. That means if they step away and come back later, nothing is lost.
+
+Here is a smart touch worth knowing. **Each unsigned file in KV carries a thirty-day timer**, called a TTL, or time to live, which means the system cleans up after itself once that window expires. If a signer never finishes, the leftover data clears on its own after thirty days, so there is no clutter and no stale files piling up in your account. This is CyberSygn data storage handling the housekeeping so you never have to, and it answers the first question about where contracts stored mid-signature actually reside.</p>
+<h2 class="post__h2">Where Signed Contracts Go for the Long Haul</h2>
+<p class="post__p">Once the signing is done, you reach the moment that truly counts.
+
+The signed PDF and its audit certificate move to **Cloudflare R2**, object storage built to hold files at scale for as long as your account stays active, which means your signed contracts live there not for thirty days but for as long as you need them. Everything stored in R2 is **encrypted at rest**, so the underlying bytes are scrambled and useless to anyone who is not you, and that encrypted contract storage is not an optional add-on but simply the default way every signed file is held.
+
+Here is a detail worth knowing. Whenever you download a contract from your dashboard, CyberSygn builds a fresh signed URL on each request, and that URL expires fast on a deliberately short timer. So what threat does this neutralize? A leaked link, because a URL someone grabbed yesterday becomes a dead end today, leaving them unable to reach your file.
+
+Why does CyberSygn rely on R2 for the permanent copy rather than leaving everything in KV? Because the two systems are built for very different jobs: KV is tuned for fast, small reads at the edge, while R2 is tuned to hold large files cheaply for years. Using each system for the task it does best is exactly what keeps CyberSygn data storage both quick and durable, and this KV signed PDF storage handoff is the quiet part that keeps your contracts private.</p>
+<h2 class="post__h2">Why CyberSygn Data Storage Survives a Real Disaster</h2>
+<p class="post__p">Here is the question that should keep you up at night, except it really should not: what happens if an entire data center burns to the ground? Your contracts survive intact, and the architecture explains exactly why.
+
+**R2 copies every object across many Cloudflare data centers** on its own, so a single copy is never the only copy. CyberSygn then adds a second layer, because a backup job runs every single day, exporting the KV namespace to R2 for safekeeping. So count the copies. Your signed PDF exists in active R2, it exists in replicated R2 across other data centers, and it exists in the daily backup archive. That is three separate places at any given moment. If one data center goes dark, your contracts are still there and availability never flickers.
+
+Compare that resilience to the old way, where a signed contract on your laptop is one spilled coffee away from gone, and a single file in one folder has no backup at all. CyberSygn data storage removes that single point of failure entirely, and that redundancy sits at the heart of the CyberSygn security architecture. The same durable Cloudflare edge storage the platform trusts for its own data is the storage holding your signed contracts, so you inherit that level of safety without arranging it yourself.</p>
+<h2 class="post__h2">The Bottom Line on Where Your Contracts Live</h2>
+<p class="post__p">So here is the practical summary of where your contracts ultimately reside, and why each layer is there.
+
+You get active R2 for the working copy, the version you open and download every day from your dashboard. You get replicated R2 spread across other data centers, the safety copies that step in the instant one location fails. And you get a daily backup archive reserved for the genuine worst case, the scenario that should never arrive but is covered anyway. That arrangement adds up to three independent layers, all encrypted at rest, all running on their own without a single button for you to press.
+
+The quiet brilliance of this design is that you never have to think about any of it. Most people who sign a contract assume the storage question is somebody else&#39;s problem, and with CyberSygn data storage that assumption finally holds true. The platform inherits the same edge infrastructure that keeps massive websites online, then applies it to the far smaller but far more personal job of protecting your signed agreements. Your responsibility shrinks to a single action: sign and send. Where contracts stored on flimsier systems quietly disappear, yours are held in encrypted contract storage that simply refuses to lose them, and the whole apparatus takes care of itself.</p>
+          
+        </div>
+
+        <section class="post__cta">
+          <p class="kicker">Ready to try it?</p>
+          <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
+          <p>Your signed contracts deserve infrastructure that refuses to lose them. CyberSygn data storage keeps every PDF encrypted and replicated across Cloudflare&#39;s edge in three separate places simultaneously. Begin with Solo at twelve dollars a month for unlimited signed contracts, retained with the same durability the platform trusts for its own data, or step up to Studio at twenty-nine dollars a month when your team needs additional room to grow. Send your first document completely free.</p>
+          <a class="btn btn--primary btn--lg" href="/preview/">
+            Try It Out →
+          </a>
+        </section>
+
+        
+        
+    <section class="post__related" aria-label="Related reading">
+      <p class="kicker kicker--muted">Related reading</p>
+      <ul class="post__related-list">
+        <li><a href="/blog/electronic-vs-digital-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>Electronic vs Digital Signature: The Difference in Plain English</strong>
+            <span class="post__related-desc">Electronic vs digital signature: they sound the same, but they are not. Here is the real difference, in plain </span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+<li><a href="/blog/how-electronic-signatures-work-technically/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>How Electronic Signatures Work: The 6 Steps Behind One Click</strong>
+            <span class="post__related-desc">How electronic signatures work, explained simply. From the magic link to the SHA-256 fingerprint, here are the</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/what-is-an-electronic-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>What Is an Electronic Signature? The Plain-English Answer</strong>
+            <span class="post__related-desc">What is an electronic signature? It is any digital mark you make with intent to sign. Here is the real definit</span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+      </ul>
+    </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../../">Home</a>
+        <a href="../">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Copy-link buttons — uses navigator.clipboard, no external SDK.
+      document.querySelectorAll('.post__share-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var url = btn.getAttribute('data-copy-url') || window.location.href;
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('is-copied');
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove('is-copied');
+            }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(function () { done(); });
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            done();
+          }
+        });
+      });
+
+      // Reading-progress bar. Respects prefers-reduced-motion (we still
+      // update width, just skip the smoothing transition via CSS).
+      var bar = document.getElementById('post-progress-bar');
+      if (bar) {
+        var ticking = false;
+        var update = function () {
+          var doc = document.documentElement;
+          var scrollable = (doc.scrollHeight - doc.clientHeight) || 1;
+          var pct = Math.min(1, Math.max(0, window.scrollY / scrollable));
+          bar.style.width = (pct * 100).toFixed(2) + '%';
+          ticking = false;
+        };
+        var onScroll = function () {
+          if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      }
+    })();
+  </script>
+
+</body>
+</html>

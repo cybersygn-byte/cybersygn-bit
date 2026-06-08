@@ -17,7 +17,7 @@
  * visitors will open devtools.
  */
 
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
@@ -69,6 +69,104 @@ function check(file) {
   });
 }
 
+async function exists(p) {
+  try { await stat(p); return true; } catch { return false; }
+}
+
+/**
+ * Templates-library integrity check.
+ *
+ * A missing or out-of-sync templates library is an audit-blocker: the
+ * /templates/ page silently falls back to a tiny stub list and every PDF
+ * download 404s into a generated wireframe. This asserts the source library
+ * under web/ is complete and internally consistent BEFORE build-web.js copies
+ * it into dist. Any violation exits the process non-zero.
+ */
+async function checkTemplatesLibrary() {
+  const errors = [];
+
+  const dataPath = join(ROOT, 'web', 'templates-data.json');
+  const pdfDir = join(ROOT, 'web', 'templates-pdf');
+  const zipPath = join(ROOT, 'web', 'templates-all.zip');
+
+  // 1. templates-data.json exists and parses.
+  let data = null;
+  if (!(await exists(dataPath))) {
+    errors.push('web/templates-data.json is missing');
+  } else {
+    try {
+      data = JSON.parse(await readFile(dataPath, 'utf8'));
+    } catch (e) {
+      errors.push(`web/templates-data.json does not parse as JSON: ${e.message}`);
+    }
+  }
+
+  // Resolve the template list. Support either a bare array or an object with a
+  // `templates` array.
+  let templates = null;
+  if (data !== null) {
+    if (Array.isArray(data)) templates = data;
+    else if (Array.isArray(data.templates)) templates = data.templates;
+    else errors.push('web/templates-data.json has no templates array');
+  }
+
+  // 2. Count *.pdf files in web/templates-pdf/.
+  let pdfFiles = [];
+  if (!(await exists(pdfDir))) {
+    errors.push('web/templates-pdf/ is missing');
+  } else {
+    pdfFiles = (await readdir(pdfDir)).filter(f => f.toLowerCase().endsWith('.pdf'));
+  }
+
+  // 3. templates length === number of PDFs (expect 502).
+  if (templates !== null && pdfFiles.length > 0) {
+    if (templates.length !== pdfFiles.length) {
+      errors.push(
+        `templates-data.json has ${templates.length} templates but web/templates-pdf/ ` +
+        `has ${pdfFiles.length} PDFs — they must match`,
+      );
+    }
+    if (templates.length !== 502) {
+      errors.push(`expected 502 templates, found ${templates.length} in templates-data.json`);
+    }
+    if (pdfFiles.length !== 502) {
+      errors.push(`expected 502 PDFs in web/templates-pdf/, found ${pdfFiles.length}`);
+    }
+  }
+
+  // 4. Every slug in templates-data.json has a matching web/templates-pdf/<slug>.pdf.
+  if (templates !== null && (await exists(pdfDir))) {
+    const pdfSet = new Set(pdfFiles);
+    const missing = [];
+    for (const t of templates) {
+      const slug = t && typeof t === 'object' ? t.slug : null;
+      if (!slug) { missing.push('(template with no slug)'); continue; }
+      if (!pdfSet.has(`${slug}.pdf`)) missing.push(slug);
+    }
+    if (missing.length > 0) {
+      const shown = missing.slice(0, 10).join(', ');
+      errors.push(
+        `${missing.length} template slug(s) have no matching web/templates-pdf/<slug>.pdf: ` +
+        `${shown}${missing.length > 10 ? ', …' : ''}`,
+      );
+    }
+  }
+
+  // 5. templates-all.zip exists.
+  if (!(await exists(zipPath))) {
+    errors.push('web/templates-all.zip is missing');
+  }
+
+  if (errors.length > 0) {
+    console.error('\n[smoke] FAIL — templates library integrity:');
+    for (const e of errors) console.error(`  - ${e}`);
+    console.error('');
+    process.exit(1);
+  }
+
+  console.log(`[smoke] OK — templates library: ${templates.length} templates, ${pdfFiles.length} PDFs, zip present`);
+}
+
 async function main() {
   const files = [];
   for (const root of SCAN_ROOTS) {
@@ -110,6 +208,10 @@ async function main() {
   }
 
   console.log(`[smoke] OK — ${results.length} JS files parse cleanly`);
+
+  // Templates library integrity (audit-blocker #3): assert the owned library is
+  // present and internally consistent before build-web.js copies it into dist.
+  await checkTemplatesLibrary();
 }
 
 main().catch(err => {

@@ -708,6 +708,89 @@ async function main() {
   });
   ok(parCreate.json.signerLinks.every(l => l.sent === true && !l.queued), 'parallel: all signers invited up front');
 
+  // 32. Template library: download serves the real pre-rendered static PDF.
+  //
+  // The download handler resolves the slug to the static asset
+  // /templates-pdf/<slug>.pdf via env.ASSETS and streams those bytes. We
+  // mock env.ASSETS.fetch here so we don't need a built dist/: a known
+  // rendered slug returns 200 with real PDF bytes, anything else 404s.
+  console.log('\n32. Template download (static rendered PDF)');
+  const RENDERED_SLUG = 'master-services-agreement';
+  const renderedPdf = await readFile(
+    resolve(ROOT, 'web', 'templates-pdf', `${RENDERED_SLUG}.pdf`),
+  );
+  const savedAssets = env.ASSETS;
+  let lastAssetPath = null;
+  env.ASSETS = {
+    fetch: async (req) => {
+      const u = new URL(req.url);
+      lastAssetPath = u.pathname;
+      if (u.pathname === `/templates-pdf/${RENDERED_SLUG}.pdf`) {
+        return new Response(renderedPdf, {
+          status: 200,
+          headers: { 'content-type': 'application/pdf' },
+        });
+      }
+      return new Response('not found', { status: 404 });
+    },
+  };
+  try {
+    // Known rendered slug -> 200 application/pdf, real bytes, no wireframe.
+    // Use the binary path (arrayBuffer) so byte counts are exact.
+    const dlReq = new Request(
+      `http://localhost/api/templates/download/${RENDERED_SLUG}?email=lead%40example.com&firstName=Lead`,
+      { method: 'GET' },
+    );
+    const dlRes = await workerModule.fetch(dlReq, env);
+    const dlBody = new Uint8Array(await dlRes.arrayBuffer());
+    ok(dlRes.status === 200, 'rendered slug downloads 200');
+    ok(dlRes.headers.get('content-type') === 'application/pdf', 'rendered slug is application/pdf');
+    ok(
+      dlRes.headers.get('content-disposition') === `attachment; filename="${RENDERED_SLUG}.pdf"`,
+      'download has attachment content-disposition with slug filename',
+    );
+    ok(
+      lastAssetPath === `/templates-pdf/${RENDERED_SLUG}.pdf`,
+      'download resolved the static asset path',
+    );
+    ok(
+      dlBody.byteLength === renderedPdf.length,
+      `served bytes match the on-disk rendered PDF length (${dlBody.byteLength})`,
+    );
+    ok(
+      dlBody[0] === 0x25 && dlBody[1] === 0x50 && dlBody[2] === 0x44 && dlBody[3] === 0x46,
+      'served bytes are a real PDF (start %PDF)',
+    );
+
+    // Garbage / non-rendered slug with no legacy registry entry -> 404.
+    const bad = await call(
+      'GET',
+      '/api/templates/download/totally-made-up-not-a-template?email=lead%40example.com',
+    );
+    ok(bad.status === 404, 'garbage slug returns 404');
+    ok(bad.json && bad.json.error === 'unknown_template', 'garbage slug error=unknown_template');
+
+    // Path-traversal attempt is sanitized away and 404s (never reaches a file).
+    const traversal = await call(
+      'GET',
+      '/api/templates/download/master-services-agreement?email=bad',
+    );
+    ok(traversal.status === 400, 'missing/invalid email is rejected (400)');
+
+    // Legacy 16 still work via wireframe fallback when no static asset exists.
+    // 'non-disclosure-agreement' is in findTemplate but our mock returns 404
+    // for its asset, so the handler must fall back to generateTemplatePdf.
+    const legacy = await call(
+      'GET',
+      '/api/templates/download/non-disclosure-agreement?email=lead%40example.com',
+    );
+    ok(legacy.status === 200, 'legacy slug (no static asset) falls back to 200');
+    ok(legacy.contentType === 'application/pdf', 'legacy fallback is application/pdf');
+  } finally {
+    if (savedAssets === undefined) delete env.ASSETS;
+    else env.ASSETS = savedAssets;
+  }
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

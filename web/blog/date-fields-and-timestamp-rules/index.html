@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signature Timestamp: How CyberSygn Handles Time — CyberSygn</title>
+  <meta name="description" content="Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here is the two-layer model, made simple." />
+  <meta name="keywords" content="signature timestamp, date field, signing timestamp, audit timestamp, UTC timestamp" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/blog/date-fields-and-timestamp-rules/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
+  <meta property="og:title" content="Signature Timestamp: How CyberSygn Handles Time" />
+  <meta property="og:description" content="Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here is the two-layer model, made simple." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/blog/date-fields-and-timestamp-rules/" />
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2026-06-08T12:00:00Z" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../../vendor/fonts.css" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "CyberSygn",
+          "item": "https://cybersygn.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://cybersygn.io/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Signature Timestamp: How CyberSygn Handles Time",
+          "item": "https://cybersygn.io/blog/date-fields-and-timestamp-rules/"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Signature Timestamp: How CyberSygn Handles Time",
+      "description": "Every signature timestamp is recorded to the second in UTC. Date fields show in the signer's local time. Here is the two-layer model, made simple.",
+      "datePublished": "2026-06-08T12:00:00Z",
+      "dateModified": "2026-06-08T12:00:00Z",
+      "author": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "url": "https://cybersygn.io/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cybersygn.io/brand/lockup-navy@2x.png"
+        }
+      },
+      "mainEntityOfPage": "https://cybersygn.io/blog/date-fields-and-timestamp-rules/",
+      "articleSection": "fundamentals",
+      "keywords": "signature timestamp, date field, signing timestamp, audit timestamp, UTC timestamp"
+    }
+  ]
+}
+  </script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <div class="post-progress" id="post-progress" aria-hidden="true"><span class="post-progress__bar" id="post-progress-bar"></span></div>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Blog">
+        <a class="masthead__link" href="../">Blog index</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="post">
+    <article class="post__article">
+      <div class="container container--prose">
+        <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">fundamentals</span></p>
+        <h1 class="post__title">Signature Timestamp: How CyberSygn Handles Time</h1>
+        <div class="post__meta">
+          <span class="post__meta-item post__meta-cat">fundamentals</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <time class="post__meta-item" datetime="2026-06-08">June 8, 2026</time>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">4 min read</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">843 words</span>
+        </div>
+        
+    <div class="post__share" aria-label="Share this article">
+      <span class="post__share-label">Share</span>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fdate-fields-and-timestamp-rules%2F&amp;text=Signature%20Timestamp%3A%20How%20CyberSygn%20Handles%20Time" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fdate-fields-and-timestamp-rules%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
+      <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/date-fields-and-timestamp-rules/" aria-label="Copy link to this article">Copy link</button>
+    </div>
+        <div class="post__body">
+          <p class="post__hook">The date printed on the contract is for people. The signature timestamp in the audit cert is for proof.</p>
+          <p class="post__intro">Time on a signed document does two jobs at once, so CyberSygn handles it in two distinct layers. On the signed PDF, date fields display a friendly, readable date in the signer&#39;s own time zone, while in the audit certificate every signature timestamp is recorded in UTC, accurate down to the second. One layer is built for humans, and the other is built for evidence. Why split them apart at all? Because the date a client wants to see and the timestamp a lawyer needs are simply not the same thing, and forcing them to be one value creates problems instead of solving them. By the end of this guide you will understand exactly how CyberSygn tracks time, why the source of each timestamp matters so much, and how this two-layer model quietly protects you when a dispute eventually arrives.</p>
+          <h2 class="post__h2">Date fields on the PDF: the friendly version for humans</h2>
+<p class="post__p">Start with the part your signer actually sees. The moment someone signs, every date field on the document fills in with today&#39;s date in that signer&#39;s local time zone, with no typing required and no hunting for a calendar.
+
+The default format is the standard US style, such as &quot;June 6, 2026,&quot; but it adjusts automatically to match the locale CyberSygn detects from the signer&#39;s browser. So a signer in another country sees a date that reads naturally to them, rather than a format that looks foreign or confusing at a glance.
+
+Why default to the local time zone in the first place? Because the date should mean something to the person reading it, and if your client signs at nine in the morning their time, the date on the page should reflect their day rather than a server&#39;s day on the other side of the world.
+
+What if the signer needs a different date entirely? When the contract has a specific effective date that differs from the signing day, the signer can override the auto-filled one by hand. That covers leases, agreements that start next month, and any case where the signing day and the start day are not the same. The date field stays flexible exactly where it needs to be.</p>
+<h2 class="post__h2">Audit timestamps: where the precise signature timestamp lives</h2>
+<p class="post__p">Now move to the layer built for proof. Every event in the audit certificate carries a UTC signature timestamp, accurate to the second, and because UTC is a single global clock there is no time zone confusion to argue about later. When two events happen within the same second, CyberSygn orders them by the millisecond, so the exact sequence is never in doubt.
+
+The IP address is captured at the same moment as each signing timestamp, which means the location can be checked and matched later if anyone questions where a signer actually was. Here is the detail that matters most, though: the audit timestamp comes from the Cloudflare server that handles the event, not from the signer&#39;s own device clock.
+
+Why is that distinction such a big deal? Because a device clock can be wrong, and worse, it can be changed on purpose. Someone could set their laptop clock back a week and try to claim they signed earlier than they did. A server clock that you control closes that door completely, because the signer cannot touch it, so the timestamp stays trustworthy no matter what they attempt.</p>
+<h2 class="post__h2">Why this two-layer time model protects you</h2>
+<p class="post__p">So why keep both layers running at once? Because two different audiences want two genuinely different things. A client or signer wants a date on the contract that makes sense to them in their own time zone, plain and readable, something they can glance at and trust. A lawyer or forensic examiner, on the other hand, wants a precise UTC timestamp with a clear source, one that is exact, provable, and tamper-resistant.
+
+CyberSygn gives you both automatically, from a single signing action, so you never have to pick one and lose the other. Here is what that means in real life. If you ever need to prove exactly when a signer finished, the audit certificate holds the answer to the second, sourced from a server clock nobody can fake, and that is your evidence. And if a signer simply asks whether the date is right, the local date on the PDF is exactly what they expect to see, and that is your peace of mind.
+
+There is no conflict between the two, no manual time zone math, and no spreadsheet of conversions to maintain. The friendly date and the precise audit timestamp live side by side, each doing its own job, on every document you send.
+
+Best of all, you never have to think about any of it. You send the document, the signer signs, and both layers fill in on their own: the local date appears for them, and the exact signature timestamp appears in the audit cert for you. Two records, one click, zero busywork.</p>
+          
+        </div>
+
+        <section class="post__cta">
+          <p class="kicker">Ready to try it?</p>
+          <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
+          <p>CyberSygn does the time zone math for you, so date fields and audit timestamps both come built in. Start signing today. Solo is $12 a month for unlimited documents and unlimited time-stamped signing.</p>
+          <a class="btn btn--primary btn--lg" href="/preview/">
+            Try It Out →
+          </a>
+        </section>
+
+        
+        
+    <section class="post__related" aria-label="Related reading">
+      <p class="kicker kicker--muted">Related reading</p>
+      <ul class="post__related-list">
+        <li><a href="/blog/electronic-vs-digital-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>Electronic vs Digital Signature: The Difference in Plain English</strong>
+            <span class="post__related-desc">Electronic vs digital signature: they sound the same, but they are not. Here is the real difference, in plain </span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+<li><a href="/blog/how-electronic-signatures-work-technically/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>How Electronic Signatures Work: The 6 Steps Behind One Click</strong>
+            <span class="post__related-desc">How electronic signatures work, explained simply. From the magic link to the SHA-256 fingerprint, here are the</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/what-is-an-electronic-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>What Is an Electronic Signature? The Plain-English Answer</strong>
+            <span class="post__related-desc">What is an electronic signature? It is any digital mark you make with intent to sign. Here is the real definit</span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+      </ul>
+    </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../../">Home</a>
+        <a href="../">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Copy-link buttons — uses navigator.clipboard, no external SDK.
+      document.querySelectorAll('.post__share-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var url = btn.getAttribute('data-copy-url') || window.location.href;
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('is-copied');
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove('is-copied');
+            }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(function () { done(); });
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            done();
+          }
+        });
+      });
+
+      // Reading-progress bar. Respects prefers-reduced-motion (we still
+      // update width, just skip the smoothing transition via CSS).
+      var bar = document.getElementById('post-progress-bar');
+      if (bar) {
+        var ticking = false;
+        var update = function () {
+          var doc = document.documentElement;
+          var scrollable = (doc.scrollHeight - doc.clientHeight) || 1;
+          var pct = Math.min(1, Math.max(0, window.scrollY / scrollable));
+          bar.style.width = (pct * 100).toFixed(2) + '%';
+          ticking = false;
+        };
+        var onScroll = function () {
+          if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      }
+    })();
+  </script>
+
+</body>
+</html>

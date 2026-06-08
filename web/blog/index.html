@@ -49,42 +49,60 @@
       <div class="container">
 
         <div class="blog-controls">
-          <input id="blog-search" class="blog-search" type="search" placeholder="Search the archive." />
+          <input id="blog-search" class="blog-search" type="search" placeholder="Search the archive." aria-label="Search the archive" />
           <div class="blog-cats" role="tablist" aria-label="Categories">
             <button class="blog-cat is-active" data-cat="all" type="button">All 3</button>
             <button class="blog-cat" data-cat="fundamentals" type="button">fundamentals</button>
           </div>
         </div>
 
+        <p id="blog-count" class="blog-count" role="status" aria-live="polite" data-total="3">Showing 3 of 3 posts</p>
+
         <ol class="blog-grid" id="blog-grid">
           
-          <li class="blog-card" data-cat="fundamentals" data-search="electronic signature vs digital signature: the difference, in plain english electronic signatures and digital signatures get used interchangeably. they aren&#39;t the same. here&#39;s the technical difference and why it matters. electronic vs digital signature">
+          <li class="blog-card blog-card--featured" data-cat="fundamentals" data-search="electronic vs digital signature: the difference in plain english electronic vs digital signature: they sound the same, but they are not. here is the real difference, in plain english, and which one your documents need. electronic vs digital signature">
             <a class="blog-card__link" href="/blog/electronic-vs-digital-signature/">
-              <p class="blog-card__cat">fundamentals</p>
-              <h3 class="blog-card__title">Electronic signature vs digital signature: the difference, in plain English</h3>
-              <p class="blog-card__desc">Electronic signatures and digital signatures get used interchangeably. They aren&#39;t the same. Here&#39;s the technical difference and why it matters.</p>
-              <p class="blog-card__date"><time datetime="2026-06-02">June 2, 2026</time></p>
+              <span class="blog-card__ribbon">Latest</span>
+              <span class="blog-card__meta">
+                <span class="blog-card__cat">fundamentals</span>
+                <span class="blog-card__dot" aria-hidden="true">·</span>
+                <time class="blog-card__date" datetime="2026-06-02">June 2, 2026</time>
+                <span class="blog-card__dot" aria-hidden="true">·</span>
+                <span class="blog-card__read">5 min read</span>
+              </span>
+              <h2 class="blog-card__title">Electronic vs Digital Signature: The Difference in Plain English</h2>
+              <p class="blog-card__desc">Electronic vs digital signature: they sound the same, but they are not. Here is the real difference, in plain English, and which one your documents need.</p>
+              <span class="blog-card__more">Read the post →</span>
             </a>
           </li>
-          <li class="blog-card" data-cat="fundamentals" data-search="how electronic signatures actually work, technically a plain-english walkthrough of what happens when you click &#39;sign&#39; on an electronic document. from magic links to sha-256 fingerprints, here&#39;s the actual flow. how electronic signatures work">
+          
+          <li class="blog-card" data-cat="fundamentals" data-search="how electronic signatures work: the 6 steps behind one click how electronic signatures work, explained simply. from the magic link to the sha-256 fingerprint, here are the 6 steps that happen the moment you click sign. how electronic signatures work">
             <a class="blog-card__link" href="/blog/how-electronic-signatures-work-technically/">
-              <p class="blog-card__cat">fundamentals</p>
-              <h3 class="blog-card__title">How electronic signatures actually work, technically</h3>
-              <p class="blog-card__desc">A plain-English walkthrough of what happens when you click &#39;sign&#39; on an electronic document. From magic links to SHA-256 fingerprints, here&#39;s the actual flow.</p>
-              <p class="blog-card__date"><time datetime="2026-05-28">May 28, 2026</time></p>
+              <span class="blog-card__meta">
+                <span class="blog-card__cat">fundamentals</span>
+                <span class="blog-card__dot" aria-hidden="true">·</span>
+                <span class="blog-card__read">4 min read</span>
+              </span>
+              <h3 class="blog-card__title">How Electronic Signatures Work: The 6 Steps Behind One Click</h3>
+              <p class="blog-card__desc">How electronic signatures work, explained simply. From the magic link to the SHA-256 fingerprint, here are the 6 steps that happen the moment you click sign.</p>
+              <time class="blog-card__date" datetime="2026-05-28">May 28, 2026</time>
             </a>
           </li>
-          <li class="blog-card" data-cat="fundamentals" data-search="what is an electronic signature, exactly? an electronic signature is any digital mark made with intent to sign. here&#39;s the precise definition, how it works, and why it&#39;s legally binding in the us and eu. what is an electronic signature">
+          <li class="blog-card" data-cat="fundamentals" data-search="what is an electronic signature? the plain-english answer what is an electronic signature? it is any digital mark you make with intent to sign. here is the real definition, how it works, and why it holds up in court. what is an electronic signature">
             <a class="blog-card__link" href="/blog/what-is-an-electronic-signature/">
-              <p class="blog-card__cat">fundamentals</p>
-              <h3 class="blog-card__title">What is an electronic signature, exactly?</h3>
-              <p class="blog-card__desc">An electronic signature is any digital mark made with intent to sign. Here&#39;s the precise definition, how it works, and why it&#39;s legally binding in the US and EU.</p>
-              <p class="blog-card__date"><time datetime="2026-05-26">May 26, 2026</time></p>
+              <span class="blog-card__meta">
+                <span class="blog-card__cat">fundamentals</span>
+                <span class="blog-card__dot" aria-hidden="true">·</span>
+                <span class="blog-card__read">5 min read</span>
+              </span>
+              <h3 class="blog-card__title">What Is an Electronic Signature? The Plain-English Answer</h3>
+              <p class="blog-card__desc">What is an electronic signature? It is any digital mark you make with intent to sign. Here is the real definition, how it works, and why it holds up in court.</p>
+              <time class="blog-card__date" datetime="2026-05-26">May 26, 2026</time>
             </a>
           </li>
         </ol>
 
-        <p id="blog-empty" class="blog-empty" hidden>No posts match.</p>
+        <p id="blog-empty" class="blog-empty" hidden>No posts match your search. Try a different word or clear the filter.</p>
       </div>
     </section>
   </main>
@@ -106,8 +124,10 @@
       var search = document.getElementById('blog-search');
       var grid = document.getElementById('blog-grid');
       var empty = document.getElementById('blog-empty');
+      var count = document.getElementById('blog-count');
       var cats = document.querySelectorAll('.blog-cat');
       var cards = grid.querySelectorAll('.blog-card');
+      var total = count ? parseInt(count.getAttribute('data-total'), 10) || cards.length : cards.length;
       var state = { cat: 'all', q: '' };
       function refresh() {
         var visible = 0;
@@ -119,6 +139,9 @@
           if (show) visible++;
         });
         empty.hidden = visible > 0;
+        if (count) {
+          count.textContent = 'Showing ' + visible + ' of ' + total + ' post' + (total === 1 ? '' : 's');
+        }
       }
       if (search) search.addEventListener('input', function () {
         state.q = search.value.trim().toLowerCase();

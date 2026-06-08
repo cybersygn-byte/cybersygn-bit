@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CyberSygn Backup and Disaster Recovery, Explained Simply — CyberSygn</title>
+  <meta name="description" content="CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap." />
+  <meta name="keywords" content="CyberSygn backup, e-signature backup, CyberSygn disaster recovery, KV backup R2, data recovery, document durability" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/blog/backup-and-disaster-recovery/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
+  <meta property="og:title" content="CyberSygn Backup and Disaster Recovery, Explained Simply" />
+  <meta property="og:description" content="CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/blog/backup-and-disaster-recovery/" />
+  <meta property="og:type" content="article" />
+  <meta property="article:published_time" content="2026-06-08T12:00:00Z" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../../vendor/fonts.css" />
+  <link rel="stylesheet" href="../../styles.css" />
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "CyberSygn",
+          "item": "https://cybersygn.io/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://cybersygn.io/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "CyberSygn Backup and Disaster Recovery, Explained Simply",
+          "item": "https://cybersygn.io/blog/backup-and-disaster-recovery/"
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "CyberSygn Backup and Disaster Recovery, Explained Simply",
+      "description": "CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap.",
+      "datePublished": "2026-06-08T12:00:00Z",
+      "dateModified": "2026-06-08T12:00:00Z",
+      "author": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "url": "https://cybersygn.io/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "CyberSygn",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cybersygn.io/brand/lockup-navy@2x.png"
+        }
+      },
+      "mainEntityOfPage": "https://cybersygn.io/blog/backup-and-disaster-recovery/",
+      "articleSection": "security",
+      "keywords": "CyberSygn backup, e-signature backup, CyberSygn disaster recovery, KV backup R2, data recovery, document durability"
+    }
+  ]
+}
+  </script>
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <div class="post-progress" id="post-progress" aria-hidden="true"><span class="post-progress__bar" id="post-progress-bar"></span></div>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Blog">
+        <a class="masthead__link" href="../">Blog index</a>
+        <a class="masthead__link masthead__link--cta" href="../../preview/">Try It Out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="post">
+    <article class="post__article">
+      <div class="container container--prose">
+        <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">security</span></p>
+        <h1 class="post__title">CyberSygn Backup and Disaster Recovery, Explained Simply</h1>
+        <div class="post__meta">
+          <span class="post__meta-item post__meta-cat">security</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <time class="post__meta-item" datetime="2026-06-08">June 8, 2026</time>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">4 min read</span>
+          <span class="post__meta-sep" aria-hidden="true">·</span>
+          <span class="post__meta-item">864 words</span>
+        </div>
+        
+    <div class="post__share" aria-label="Share this article">
+      <span class="post__share-label">Share</span>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fbackup-and-disaster-recovery%2F&amp;text=CyberSygn%20Backup%20and%20Disaster%20Recovery%2C%20Explained%20Simply" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fbackup-and-disaster-recovery%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
+      <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/backup-and-disaster-recovery/" aria-label="Copy link to this article">Copy link</button>
+    </div>
+        <div class="post__body">
+          <p class="post__hook">Your signed contracts live in the cloud, but what happens the day the cloud has a genuinely bad day?</p>
+          <p class="post__intro">Most people never think about backups until something breaks, and by then it is already too late, so let me show you the safety net before you ever need it. CyberSygn backup runs every single day, copying your data from one storage system to another across many data centers, and on top of that every signed PDF is already mirrored in multiple locations the moment it is created. The result is a system built to survive bad days rather than merely hope they never come. Over the next two minutes you will see exactly how the daily CyberSygn backup works, the three disasters it protects you from, and the one gap worth knowing about so that nothing surprises you later.</p>
+          <h2 class="post__h2">How the Daily CyberSygn Backup Actually Works</h2>
+<p class="post__p">Let me walk you through what happens behind the scenes every night, because the process is more deliberate than it looks.
+
+At 03:00 UTC, a worker wakes up and scans the KV namespace, which is the fast storage that holds your live data, and it copies every entry into a dated R2 bucket, the durable storage built to keep files safe for the long haul. So what gets copied in the CyberSygn backup? Signing sessions in progress, signer state, magic-link tokens, and your account settings, which together make up the entire working picture of your account at that moment.
+
+This KV backup R2 job runs hands-off, every single day, with no action required from you, so you never have to remember to press anything, and these backups are kept for ninety days before they roll off to keep storage clean and current. Here is a detail that should reassure you: your finished signed PDFs and audit certificates do not even depend on this backup, because they land in R2 the instant they are completed and stay mirrored across multiple data centers on their own, which means that built-in document durability keeps the most important files safe by default.
+
+So two layers really work together here. The signed documents are already durable on their own, and the daily job adds a second safety net underneath everything else, which is belt and suspenders running quietly while you sleep.</p>
+<h2 class="post__h2">The Three Disasters This Backup Saves You From</h2>
+<p class="post__p">So why does any of this matter to you in practice? Because three real things can go wrong, and the e-signature backup covers all of them.
+
+First, operator error, where you delete an active signing session by accident, something most of us have done a version of, and the backup has yesterday&#39;s copy waiting for you. Second, account compromise, where an attacker gets in and deletes your data on purpose, yet the backup sits safely in separate storage they cannot easily reach, so a destructive attack does not turn into a permanent loss. Third, platform-level loss, where a regional issue hits Cloudflare KV, which is rare but possible, and the most recent daily backup becomes your recovery point. For any of these the answer is the same, because the latest daily CyberSygn disaster recovery copy gets you back on your feet.
+
+One honest note on how data recovery actually happens: it is hands-on rather than a one-click button, so it needs CyberSygn support to step in, and the time depends on how much needs restoring. Why be upfront about that? Because a vague promise of instant recovery would be a lie, and you deserve the real picture instead. The important part is simple: the data is there, in separate storage, ready to be restored, which is what truly counts when a bad day finally hits.</p>
+<h2 class="post__h2">The One Gap You Should Plan Around</h2>
+<p class="post__p">I will be straight with you, because every honest backup story has a limit worth naming.
+
+The daily job runs once a day, so it cannot save something that was created and lost inside the same day before the backup ran. Here is a concrete example: a signing session deleted at 02:50 UTC, just ten minutes before the 03:00 run, would not be in that night&#39;s backup yet, so the window is real even though it is small. Does that worry you? For most operators it should not, because the odds of losing exactly the wrong thing in exactly that ten-minute window are low, and remember that finished signed documents are never at risk here, since they live in R2 the moment they complete, which is the document durability piece doing its quiet work.
+
+But if your work demands tighter protection, you have a move available: run your own export through the GDPR and data-export flow whenever you want, whether that is daily, hourly, or on whatever schedule fits your risk. That puts a second copy for data recovery in your own hands, on your own clock, so you are never waiting on anyone else. For nearly everyone the daily cadence is plenty, and for the cautious there is a self-serve backup lever you fully control. Either way the point of any CyberSygn backup is the same: your signed work survives the bad day, and you sleep fine on the good ones.</p>
+          
+        </div>
+
+        <section class="post__cta">
+          <p class="kicker">Ready to try it?</p>
+          <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
+          <p>You should never lose a signed deal to a bad day in the cloud. CyberSygn backup and recovery is built in, with daily exports and signed PDFs mirrored across data centers automatically. Start with Solo: twelve dollars a month for the platform with resilience built in. Send your first document free.</p>
+          <a class="btn btn--primary btn--lg" href="/preview/">
+            Try It Out →
+          </a>
+        </section>
+
+        
+        
+    <section class="post__related" aria-label="Related reading">
+      <p class="kicker kicker--muted">Related reading</p>
+      <ul class="post__related-list">
+        <li><a href="/blog/electronic-vs-digital-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>Electronic vs Digital Signature: The Difference in Plain English</strong>
+            <span class="post__related-desc">Electronic vs digital signature: they sound the same, but they are not. Here is the real difference, in plain </span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+<li><a href="/blog/how-electronic-signatures-work-technically/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>How Electronic Signatures Work: The 6 Steps Behind One Click</strong>
+            <span class="post__related-desc">How electronic signatures work, explained simply. From the magic link to the SHA-256 fingerprint, here are the</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/what-is-an-electronic-signature/">
+            <span class="post__related-cat">fundamentals</span>
+            <strong>What Is an Electronic Signature? The Plain-English Answer</strong>
+            <span class="post__related-desc">What is an electronic signature? It is any digital mark you make with intent to sign. Here is the real definit</span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+      </ul>
+    </section>
+      </div>
+    </article>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../../">Home</a>
+        <a href="../">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      // Copy-link buttons — uses navigator.clipboard, no external SDK.
+      document.querySelectorAll('.post__share-copy').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var url = btn.getAttribute('data-copy-url') || window.location.href;
+          var done = function () {
+            var prev = btn.textContent;
+            btn.textContent = 'Copied';
+            btn.classList.add('is-copied');
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove('is-copied');
+            }, 1600);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(function () { done(); });
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+            done();
+          }
+        });
+      });
+
+      // Reading-progress bar. Respects prefers-reduced-motion (we still
+      // update width, just skip the smoothing transition via CSS).
+      var bar = document.getElementById('post-progress-bar');
+      if (bar) {
+        var ticking = false;
+        var update = function () {
+          var doc = document.documentElement;
+          var scrollable = (doc.scrollHeight - doc.clientHeight) || 1;
+          var pct = Math.min(1, Math.max(0, window.scrollY / scrollable));
+          bar.style.width = (pct * 100).toFixed(2) + '%';
+          ticking = false;
+        };
+        var onScroll = function () {
+          if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+        update();
+      }
+    })();
+  </script>
+
+</body>
+</html>

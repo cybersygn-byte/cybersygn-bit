@@ -56,21 +56,35 @@
       '-webkit-backdrop-filter:saturate(140%) blur(8px);' +
       'display:grid;place-items:center;padding:24px;';
 
+    // On small screens go full-bleed: a 90vh card inside a 24px-padded
+    // backdrop nests two viewports and is unstable under the iOS dynamic
+    // URL bar. Below 600px we drop the backdrop padding to 0 and let the
+    // card fill the dynamic viewport (100dvh) edge-to-edge.
+    var isSmall = window.matchMedia && window.matchMedia('(max-width:600px)').matches;
+    if (isSmall) {
+      backdrop.style.padding = '0';
+    }
+
     var card = document.createElement('div');
     card.style.cssText =
-      'position:relative;width:100%;max-width:1200px;height:90vh;' +
+      'position:relative;width:100%;max-width:1200px;height:90dvh;' +
       'background:#011434;border-radius:14px;overflow:hidden;' +
       'box-shadow:0 30px 90px rgba(0,0,0,0.45);';
+    if (isSmall) {
+      card.style.height = '100dvh';
+      card.style.maxWidth = 'none';
+      card.style.borderRadius = '0';
+    }
 
     var closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.textContent = '×';
     closeBtn.style.cssText =
-      'position:absolute;top:10px;right:14px;z-index:2;' +
-      'width:36px;height:36px;border:0;border-radius:18px;' +
+      'position:absolute;top:8px;right:8px;z-index:2;' +
+      'width:44px;height:44px;border:0;border-radius:22px;' +
       'background:rgba(255,255,255,0.12);color:#fff;font-size:24px;' +
-      'cursor:pointer;line-height:32px;padding:0;';
+      'cursor:pointer;line-height:44px;padding:0;';
 
     var iframe = document.createElement('iframe');
     iframe.src = CYBERSYGN_ORIGIN + '/preview/?' + params.toString();

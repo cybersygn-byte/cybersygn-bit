@@ -1,0 +1,3524 @@
+{
+  "_meta": {
+    "purpose": "Master catalog of every contract/document template CyberSygn authors and owns.",
+    "bar": "Each template authored to the gold standard in templates-content/master-services-agreement.md. Constitution 1.13 + 1.14.",
+    "framing": "Every template ships as an excellent, customizable starting draft with attorney-review framing. Not legal advice.",
+    "total": 502
+  },
+  "templates": [
+    {
+      "slug": "master-services-agreement",
+      "title": "Master Services Agreement",
+      "category": "business-commercial",
+      "subtitle": "Umbrella terms for ongoing vendor and consulting work.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "statement-of-work",
+      "title": "Statement of Work",
+      "category": "business-commercial",
+      "subtitle": "Scope, deliverables, timeline, and fee for one engagement under an MSA.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "consulting-agreement",
+      "title": "Consulting Agreement",
+      "category": "business-commercial",
+      "subtitle": "Independent consulting engagement with scope and fee terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "professional-services-agreement",
+      "title": "Professional Services Agreement",
+      "category": "business-commercial",
+      "subtitle": "General professional services with deliverables and payment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "retainer-agreement",
+      "title": "Retainer Agreement",
+      "category": "business-commercial",
+      "subtitle": "Ongoing monthly retainer for recurring professional work.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "independent-contractor-agreement",
+      "title": "Independent Contractor Agreement",
+      "category": "business-commercial",
+      "subtitle": "1099 contractor scope, payment, and IP terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "subcontractor-agreement",
+      "title": "Subcontractor Agreement",
+      "category": "business-commercial",
+      "subtitle": "Prime-to-sub terms, flow-down obligations, and payment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "vendor-agreement",
+      "title": "Vendor Agreement",
+      "category": "business-commercial",
+      "subtitle": "Supplier terms covering goods or services and payment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "supply-agreement",
+      "title": "Supply Agreement",
+      "category": "business-commercial",
+      "subtitle": "Recurring supply of goods with pricing and delivery terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "distribution-agreement",
+      "title": "Distribution Agreement",
+      "category": "business-commercial",
+      "subtitle": "Distributor rights, territory, and minimums.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "reseller-agreement",
+      "title": "Reseller Agreement",
+      "category": "business-commercial",
+      "subtitle": "Authorized reseller terms, margins, and branding.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "referral-agreement",
+      "title": "Referral Agreement",
+      "category": "business-commercial",
+      "subtitle": "Referral fees, attribution, and payment timing.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "affiliate-agreement",
+      "title": "Affiliate Agreement",
+      "category": "business-commercial",
+      "subtitle": "Affiliate commission terms and promotional rules.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "joint-venture-agreement",
+      "title": "Joint Venture Agreement",
+      "category": "business-commercial",
+      "subtitle": "Two parties combining resources for a defined venture.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "partnership-agreement",
+      "title": "Partnership Agreement",
+      "category": "business-commercial",
+      "subtitle": "General partnership formation, contributions, and profit split.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "limited-partnership-agreement",
+      "title": "Limited Partnership Agreement",
+      "category": "business-commercial",
+      "subtitle": "LP structure with general and limited partner roles.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "llc-operating-agreement",
+      "title": "LLC Operating Agreement",
+      "category": "business-commercial",
+      "subtitle": "Member-managed LLC governance and economics.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "founders-agreement",
+      "title": "Founders Agreement",
+      "category": "business-commercial",
+      "subtitle": "Early-stage co-founder equity, roles, and vesting.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "memorandum-of-understanding",
+      "title": "Memorandum of Understanding",
+      "category": "business-commercial",
+      "subtitle": "Non-binding statement of intent between parties.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "letter-of-intent",
+      "title": "Letter of Intent",
+      "category": "business-commercial",
+      "subtitle": "Preliminary deal terms before a definitive agreement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "term-sheet",
+      "title": "Term Sheet",
+      "category": "business-commercial",
+      "subtitle": "Summary of key commercial terms for negotiation.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "business-sale-agreement",
+      "title": "Business Sale Agreement",
+      "category": "business-commercial",
+      "subtitle": "Asset or share purchase of a small business.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "asset-purchase-agreement",
+      "title": "Asset Purchase Agreement",
+      "category": "business-commercial",
+      "subtitle": "Purchase of specific business assets.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "share-purchase-agreement",
+      "title": "Share Purchase Agreement",
+      "category": "business-commercial",
+      "subtitle": "Purchase of equity in a company.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "stock-option-agreement",
+      "title": "Stock Option Agreement",
+      "category": "business-commercial",
+      "subtitle": "Grant of options under an equity plan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "equity-grant-agreement",
+      "title": "Equity Grant Agreement",
+      "category": "business-commercial",
+      "subtitle": "Restricted equity grant with vesting.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "buy-sell-agreement",
+      "title": "Buy-Sell Agreement",
+      "category": "business-commercial",
+      "subtitle": "Owner exit, death, and transfer provisions.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "commission-agreement",
+      "title": "Commission Agreement",
+      "category": "business-commercial",
+      "subtitle": "Sales commission structure and payment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sales-representative-agreement",
+      "title": "Sales Representative Agreement",
+      "category": "business-commercial",
+      "subtitle": "Outside sales rep territory and commissions.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "manufacturing-agreement",
+      "title": "Manufacturing Agreement",
+      "category": "business-commercial",
+      "subtitle": "Contract manufacturing terms and quality standards.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "outsourcing-agreement",
+      "title": "Outsourcing Agreement",
+      "category": "business-commercial",
+      "subtitle": "Outsourced business process terms and SLAs.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "logistics-services-agreement",
+      "title": "Logistics Services Agreement",
+      "category": "business-commercial",
+      "subtitle": "Third-party logistics and fulfillment terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "procurement-agreement",
+      "title": "Procurement Agreement",
+      "category": "business-commercial",
+      "subtitle": "Purchasing terms for goods and services.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "strategic-alliance-agreement",
+      "title": "Strategic Alliance Agreement",
+      "category": "business-commercial",
+      "subtitle": "Non-equity strategic collaboration.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "co-marketing-agreement",
+      "title": "Co-Marketing Agreement",
+      "category": "business-commercial",
+      "subtitle": "Joint marketing campaign terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "white-label-agreement",
+      "title": "White Label Agreement",
+      "category": "business-commercial",
+      "subtitle": "Rebranding a product under a partner brand.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "franchise-agreement",
+      "title": "Franchise Agreement",
+      "category": "business-commercial",
+      "subtitle": "Franchisor-franchisee rights and fees.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "agency-agreement",
+      "title": "Agency Agreement",
+      "category": "business-commercial",
+      "subtitle": "Authority of an agent to act for a principal.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "brokerage-agreement",
+      "title": "Brokerage Agreement",
+      "category": "business-commercial",
+      "subtitle": "Broker engagement and commission terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "escrow-agreement",
+      "title": "Escrow Agreement",
+      "category": "business-commercial",
+      "subtitle": "Third-party holding of funds or documents.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "non-disclosure-agreement",
+      "title": "Non-Disclosure Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "One-way confidentiality for shared information.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "mutual-non-disclosure-agreement",
+      "title": "Mutual Non-Disclosure Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Two-way confidentiality for evaluation talks.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "employee-confidentiality-agreement",
+      "title": "Employee Confidentiality Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Worker confidentiality and trade-secret terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "visitor-nda",
+      "title": "Visitor NDA",
+      "category": "confidentiality-ip",
+      "subtitle": "Short confidentiality for site or facility visitors.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "due-diligence-nda",
+      "title": "Due Diligence NDA",
+      "category": "confidentiality-ip",
+      "subtitle": "Confidentiality wrapper for deal diligence.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "ip-assignment-agreement",
+      "title": "IP Assignment Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Assignment of invention and work-product rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "work-made-for-hire-agreement",
+      "title": "Work Made for Hire Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Ownership of commissioned creative work.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "trademark-license-agreement",
+      "title": "Trademark License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License to use a mark with quality control.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "copyright-license-agreement",
+      "title": "Copyright License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License to use copyrighted material.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "patent-license-agreement",
+      "title": "Patent License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License to practice a patented invention.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "software-license-agreement",
+      "title": "Software License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "On-premise software license terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "end-user-license-agreement",
+      "title": "End User License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "EULA for app or software end users.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "saas-subscription-agreement",
+      "title": "SaaS Subscription Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Cloud software subscription and SLA.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "technology-transfer-agreement",
+      "title": "Technology Transfer Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Transfer of know-how and technology.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "trade-secret-protection-agreement",
+      "title": "Trade Secret Protection Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Safeguards for proprietary processes.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "invention-assignment-agreement",
+      "title": "Invention Assignment Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Pre-assignment of future inventions.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "content-license-agreement",
+      "title": "Content License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License of articles, video, or media.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "royalty-agreement",
+      "title": "Royalty Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Ongoing royalty on sales or usage.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "brand-licensing-agreement",
+      "title": "Brand Licensing Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License of brand assets to a partner.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "open-source-contribution-agreement",
+      "title": "Open Source Contribution Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Contributor license for a project.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "data-license-agreement",
+      "title": "Data License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License of a dataset with use limits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "api-license-agreement",
+      "title": "API License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Terms for using a developer API.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "image-license-agreement",
+      "title": "Image License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License of photographs or illustrations.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "music-license-agreement",
+      "title": "Music License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "Sync or master use of a recording.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "font-license-agreement",
+      "title": "Font License Agreement",
+      "category": "confidentiality-ip",
+      "subtitle": "License of typeface for commercial use.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "employment-agreement",
+      "title": "Employment Agreement",
+      "category": "employment-hr",
+      "subtitle": "W-2 employment terms, pay, and IP.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "executive-employment-agreement",
+      "title": "Executive Employment Agreement",
+      "category": "employment-hr",
+      "subtitle": "Senior executive comp and severance.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "offer-letter",
+      "title": "Offer Letter",
+      "category": "employment-hr",
+      "subtitle": "At-will offer of employment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "at-will-employment-agreement",
+      "title": "At-Will Employment Agreement",
+      "category": "employment-hr",
+      "subtitle": "Confirms at-will status and basic terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "internship-agreement",
+      "title": "Internship Agreement",
+      "category": "employment-hr",
+      "subtitle": "Paid or unpaid intern scope and terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "apprenticeship-agreement",
+      "title": "Apprenticeship Agreement",
+      "category": "employment-hr",
+      "subtitle": "Structured apprenticeship terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "part-time-employment-agreement",
+      "title": "Part-Time Employment Agreement",
+      "category": "employment-hr",
+      "subtitle": "Reduced-hours employment terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "seasonal-employment-agreement",
+      "title": "Seasonal Employment Agreement",
+      "category": "employment-hr",
+      "subtitle": "Fixed-season worker terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "remote-work-agreement",
+      "title": "Remote Work Agreement",
+      "category": "employment-hr",
+      "subtitle": "Work-from-home expectations and equipment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "non-compete-agreement",
+      "title": "Non-Compete Agreement",
+      "category": "employment-hr",
+      "subtitle": "Post-employment competition limits.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "non-solicitation-agreement",
+      "title": "Non-Solicitation Agreement",
+      "category": "employment-hr",
+      "subtitle": "Limits on soliciting clients or staff.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "severance-agreement",
+      "title": "Severance Agreement",
+      "category": "employment-hr",
+      "subtitle": "Separation pay and release of claims.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "employee-handbook-acknowledgment",
+      "title": "Employee Handbook Acknowledgment",
+      "category": "employment-hr",
+      "subtitle": "Confirms receipt of policies.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "equity-incentive-agreement",
+      "title": "Equity Incentive Agreement",
+      "category": "employment-hr",
+      "subtitle": "Employee equity participation terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "commission-plan-agreement",
+      "title": "Commission Plan Agreement",
+      "category": "employment-hr",
+      "subtitle": "Documented sales commission plan.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "bonus-agreement",
+      "title": "Bonus Agreement",
+      "category": "employment-hr",
+      "subtitle": "Discretionary or target bonus terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "relocation-agreement",
+      "title": "Relocation Agreement",
+      "category": "employment-hr",
+      "subtitle": "Relocation assistance and clawback.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "employee-loan-agreement",
+      "title": "Employee Loan Agreement",
+      "category": "employment-hr",
+      "subtitle": "Advance or loan to an employee.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "telecommuting-policy",
+      "title": "Telecommuting Policy",
+      "category": "employment-hr",
+      "subtitle": "Remote-work policy document.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "code-of-conduct-policy",
+      "title": "Code of Conduct Policy",
+      "category": "employment-hr",
+      "subtitle": "Workplace conduct standards.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "workplace-safety-policy",
+      "title": "Workplace Safety Policy",
+      "category": "employment-hr",
+      "subtitle": "Safety expectations and reporting.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "anti-harassment-policy",
+      "title": "Anti-Harassment Policy",
+      "category": "employment-hr",
+      "subtitle": "Harassment prohibitions and process.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pto-policy",
+      "title": "PTO Policy",
+      "category": "employment-hr",
+      "subtitle": "Paid time off accrual and use.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "employee-nda",
+      "title": "Employee NDA",
+      "category": "employment-hr",
+      "subtitle": "Confidentiality for employees.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "contractor-conversion-agreement",
+      "title": "Contractor Conversion Agreement",
+      "category": "employment-hr",
+      "subtitle": "Move a contractor to employee.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "volunteer-agreement",
+      "title": "Volunteer Agreement",
+      "category": "employment-hr",
+      "subtitle": "Volunteer scope and liability waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "advisor-agreement",
+      "title": "Advisor Agreement",
+      "category": "employment-hr",
+      "subtitle": "Startup advisor scope and equity.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "board-member-agreement",
+      "title": "Board Member Agreement",
+      "category": "employment-hr",
+      "subtitle": "Director duties and indemnification.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "consulting-to-hire-agreement",
+      "title": "Consulting-to-Hire Agreement",
+      "category": "employment-hr",
+      "subtitle": "Trial consulting before hire.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "background-check-authorization",
+      "title": "Background Check Authorization",
+      "category": "employment-hr",
+      "subtitle": "Consent to a background check.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "residential-lease-agreement",
+      "title": "Residential Lease Agreement",
+      "category": "real-estate",
+      "subtitle": "Landlord-tenant residential rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "commercial-lease-agreement",
+      "title": "Commercial Lease Agreement",
+      "category": "real-estate",
+      "subtitle": "Office, retail, or industrial lease.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "month-to-month-rental-agreement",
+      "title": "Month-to-Month Rental Agreement",
+      "category": "real-estate",
+      "subtitle": "Rolling monthly tenancy.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sublease-agreement",
+      "title": "Sublease Agreement",
+      "category": "real-estate",
+      "subtitle": "Tenant subletting to a subtenant.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "room-rental-agreement",
+      "title": "Room Rental Agreement",
+      "category": "real-estate",
+      "subtitle": "Single-room rental in a shared home.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "roommate-agreement",
+      "title": "Roommate Agreement",
+      "category": "real-estate",
+      "subtitle": "Cost and chore split among roommates.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lease-amendment",
+      "title": "Lease Amendment",
+      "category": "real-estate",
+      "subtitle": "Change to an existing lease.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lease-renewal-agreement",
+      "title": "Lease Renewal Agreement",
+      "category": "real-estate",
+      "subtitle": "Extend a lease for a new term.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lease-termination-letter",
+      "title": "Lease Termination Letter",
+      "category": "real-estate",
+      "subtitle": "Notice ending a tenancy.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "notice-to-vacate",
+      "title": "Notice to Vacate",
+      "category": "real-estate",
+      "subtitle": "Tenant or landlord move-out notice.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "rent-increase-notice",
+      "title": "Rent Increase Notice",
+      "category": "real-estate",
+      "subtitle": "Notice of a rent change.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "eviction-notice",
+      "title": "Eviction Notice",
+      "category": "real-estate",
+      "subtitle": "Notice to quit for cause.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "property-management-agreement",
+      "title": "Property Management Agreement",
+      "category": "real-estate",
+      "subtitle": "Manager authority and fees.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "real-estate-purchase-agreement",
+      "title": "Real Estate Purchase Agreement",
+      "category": "real-estate",
+      "subtitle": "Buyer-seller home purchase terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "land-purchase-agreement",
+      "title": "Land Purchase Agreement",
+      "category": "real-estate",
+      "subtitle": "Purchase of vacant land.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "land-contract",
+      "title": "Land Contract",
+      "category": "real-estate",
+      "subtitle": "Seller-financed land installment sale.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "option-to-purchase-agreement",
+      "title": "Option to Purchase Agreement",
+      "category": "real-estate",
+      "subtitle": "Right to buy at a set price.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "lease-with-option-to-buy",
+      "title": "Lease with Option to Buy",
+      "category": "real-estate",
+      "subtitle": "Rent-to-own residential terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "listing-agreement",
+      "title": "Listing Agreement",
+      "category": "real-estate",
+      "subtitle": "Seller-broker listing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "buyer-representation-agreement",
+      "title": "Buyer Representation Agreement",
+      "category": "real-estate",
+      "subtitle": "Buyer-agent exclusive terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "commercial-sublease",
+      "title": "Commercial Sublease",
+      "category": "real-estate",
+      "subtitle": "Subletting commercial space.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "storage-unit-rental-agreement",
+      "title": "Storage Unit Rental Agreement",
+      "category": "real-estate",
+      "subtitle": "Self-storage rental terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "parking-space-rental-agreement",
+      "title": "Parking Space Rental Agreement",
+      "category": "real-estate",
+      "subtitle": "Rental of a parking spot.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "vacation-rental-agreement",
+      "title": "Vacation Rental Agreement",
+      "category": "real-estate",
+      "subtitle": "Short-term vacation property rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pet-addendum",
+      "title": "Pet Addendum",
+      "category": "real-estate",
+      "subtitle": "Lease addendum allowing pets.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lead-paint-disclosure",
+      "title": "Lead Paint Disclosure",
+      "category": "real-estate",
+      "subtitle": "Federal lead-paint disclosure.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "move-in-checklist",
+      "title": "Move-In Checklist",
+      "category": "real-estate",
+      "subtitle": "Condition record at move-in.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "security-deposit-return-letter",
+      "title": "Security Deposit Return Letter",
+      "category": "real-estate",
+      "subtitle": "Itemized deposit return.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "quitclaim-deed-cover-letter",
+      "title": "Quitclaim Deed Cover Letter",
+      "category": "real-estate",
+      "subtitle": "Cover note for a quitclaim deed.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "estoppel-certificate",
+      "title": "Estoppel Certificate",
+      "category": "real-estate",
+      "subtitle": "Tenant confirmation of lease terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "photography-contract",
+      "title": "Photography Contract",
+      "category": "creative-media",
+      "subtitle": "Shoot scope, deliverables, and rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "wedding-photography-contract",
+      "title": "Wedding Photography Contract",
+      "category": "creative-media",
+      "subtitle": "Event coverage and album terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "videography-contract",
+      "title": "Videography Contract",
+      "category": "creative-media",
+      "subtitle": "Video production scope and rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "model-release",
+      "title": "Model Release",
+      "category": "creative-media",
+      "subtitle": "Consent to use a person's likeness.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "property-release",
+      "title": "Property Release",
+      "category": "creative-media",
+      "subtitle": "Consent to depict private property.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "talent-release",
+      "title": "Talent Release",
+      "category": "creative-media",
+      "subtitle": "On-camera talent consent.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "location-release",
+      "title": "Location Release",
+      "category": "creative-media",
+      "subtitle": "Permission to film at a location.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "image-licensing-agreement",
+      "title": "Image Licensing Agreement",
+      "category": "creative-media",
+      "subtitle": "License of photos for defined use.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "print-release",
+      "title": "Print Release",
+      "category": "creative-media",
+      "subtitle": "Permission for client to print images.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "graphic-design-contract",
+      "title": "Graphic Design Contract",
+      "category": "creative-media",
+      "subtitle": "Design scope, revisions, and ownership.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "logo-design-agreement",
+      "title": "Logo Design Agreement",
+      "category": "creative-media",
+      "subtitle": "Logo project and rights transfer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "web-design-agreement",
+      "title": "Web Design Agreement",
+      "category": "creative-media",
+      "subtitle": "Website design scope and milestones.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "illustration-agreement",
+      "title": "Illustration Agreement",
+      "category": "creative-media",
+      "subtitle": "Commissioned illustration terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "ghostwriting-agreement",
+      "title": "Ghostwriting Agreement",
+      "category": "creative-media",
+      "subtitle": "Confidential authorship for hire.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "editing-services-agreement",
+      "title": "Editing Services Agreement",
+      "category": "creative-media",
+      "subtitle": "Copy or developmental editing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "influencer-agreement",
+      "title": "Influencer Agreement",
+      "category": "creative-media",
+      "subtitle": "Sponsored content scope and disclosure.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "brand-ambassador-agreement",
+      "title": "Brand Ambassador Agreement",
+      "category": "creative-media",
+      "subtitle": "Ongoing ambassador terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sponsorship-agreement",
+      "title": "Sponsorship Agreement",
+      "category": "creative-media",
+      "subtitle": "Sponsor deliverables and rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "podcast-guest-release",
+      "title": "Podcast Guest Release",
+      "category": "creative-media",
+      "subtitle": "Consent to publish a guest appearance.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "podcast-sponsorship-agreement",
+      "title": "Podcast Sponsorship Agreement",
+      "category": "creative-media",
+      "subtitle": "Ad placement in episodes.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "music-recording-agreement",
+      "title": "Music Recording Agreement",
+      "category": "creative-media",
+      "subtitle": "Artist recording and ownership.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "producer-agreement",
+      "title": "Producer Agreement",
+      "category": "creative-media",
+      "subtitle": "Music producer fee and points.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "band-partnership-agreement",
+      "title": "Band Partnership Agreement",
+      "category": "creative-media",
+      "subtitle": "Band member splits and rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sync-license-agreement",
+      "title": "Sync License Agreement",
+      "category": "creative-media",
+      "subtitle": "Music in film or video.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "film-production-agreement",
+      "title": "Film Production Agreement",
+      "category": "creative-media",
+      "subtitle": "Indie film production terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "voice-over-agreement",
+      "title": "Voice Over Agreement",
+      "category": "creative-media",
+      "subtitle": "VO talent scope and usage.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "art-commission-agreement",
+      "title": "Art Commission Agreement",
+      "category": "creative-media",
+      "subtitle": "Custom artwork commission.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "artwork-consignment-agreement",
+      "title": "Artwork Consignment Agreement",
+      "category": "creative-media",
+      "subtitle": "Gallery consignment terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tattoo-consent-form",
+      "title": "Tattoo Consent Form",
+      "category": "creative-media",
+      "subtitle": "Client consent and aftercare.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "content-creator-agreement",
+      "title": "Content Creator Agreement",
+      "category": "creative-media",
+      "subtitle": "UGC creator deliverables and rights.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "freelance-contract",
+      "title": "Freelance Contract",
+      "category": "freelance-services",
+      "subtitle": "General freelance scope and payment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "web-development-agreement",
+      "title": "Web Development Agreement",
+      "category": "freelance-services",
+      "subtitle": "Build scope, milestones, and handoff.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "mobile-app-development-agreement",
+      "title": "Mobile App Development Agreement",
+      "category": "freelance-services",
+      "subtitle": "App build scope and ownership.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "software-development-agreement",
+      "title": "Software Development Agreement",
+      "category": "freelance-services",
+      "subtitle": "Custom software build terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "copywriting-agreement",
+      "title": "Copywriting Agreement",
+      "category": "freelance-services",
+      "subtitle": "Copy deliverables and revisions.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "content-writing-agreement",
+      "title": "Content Writing Agreement",
+      "category": "freelance-services",
+      "subtitle": "Article and blog writing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "marketing-services-agreement",
+      "title": "Marketing Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Marketing scope and reporting.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "social-media-management-agreement",
+      "title": "Social Media Management Agreement",
+      "category": "freelance-services",
+      "subtitle": "Channel management scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "seo-services-agreement",
+      "title": "SEO Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Search optimization scope and KPIs.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "ppc-management-agreement",
+      "title": "PPC Management Agreement",
+      "category": "freelance-services",
+      "subtitle": "Paid ads management terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "virtual-assistant-agreement",
+      "title": "Virtual Assistant Agreement",
+      "category": "freelance-services",
+      "subtitle": "VA scope, hours, and confidentiality.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "bookkeeping-services-agreement",
+      "title": "Bookkeeping Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Bookkeeping scope and access.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "accounting-services-agreement",
+      "title": "Accounting Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Accounting engagement terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tax-preparation-agreement",
+      "title": "Tax Preparation Agreement",
+      "category": "freelance-services",
+      "subtitle": "Tax prep scope and limits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tutoring-agreement",
+      "title": "Tutoring Agreement",
+      "category": "freelance-services",
+      "subtitle": "Tutoring scope, rate, and scheduling.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "coaching-agreement",
+      "title": "Coaching Agreement",
+      "category": "freelance-services",
+      "subtitle": "Coaching engagement and policies.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "life-coaching-agreement",
+      "title": "Life Coaching Agreement",
+      "category": "freelance-services",
+      "subtitle": "Personal coaching scope and boundaries.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "business-coaching-agreement",
+      "title": "Business Coaching Agreement",
+      "category": "freelance-services",
+      "subtitle": "Business coaching terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "personal-training-agreement",
+      "title": "Personal Training Agreement",
+      "category": "freelance-services",
+      "subtitle": "Fitness training and liability waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "nutrition-coaching-agreement",
+      "title": "Nutrition Coaching Agreement",
+      "category": "freelance-services",
+      "subtitle": "Nutrition guidance scope and limits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "translation-services-agreement",
+      "title": "Translation Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Translation scope and accuracy terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "transcription-services-agreement",
+      "title": "Transcription Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Transcription turnaround and rates.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "consulting-retainer-agreement",
+      "title": "Consulting Retainer Agreement",
+      "category": "freelance-services",
+      "subtitle": "Monthly consulting retainer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "event-planning-agreement",
+      "title": "Event Planning Agreement",
+      "category": "freelance-services",
+      "subtitle": "Event planner scope and fees.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "interior-design-agreement",
+      "title": "Interior Design Agreement",
+      "category": "freelance-services",
+      "subtitle": "Design scope and procurement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "architecture-services-agreement",
+      "title": "Architecture Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Architectural scope and phases.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "engineering-services-agreement",
+      "title": "Engineering Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Engineering scope and standards.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "catering-agreement",
+      "title": "Catering Agreement",
+      "category": "freelance-services",
+      "subtitle": "Catering menu, headcount, and terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "dj-services-agreement",
+      "title": "DJ Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Event DJ scope and deposit.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "cleaning-services-agreement",
+      "title": "Cleaning Services Agreement",
+      "category": "freelance-services",
+      "subtitle": "Recurring cleaning scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "promissory-note",
+      "title": "Promissory Note",
+      "category": "finance-lending",
+      "subtitle": "Borrower promise to repay a loan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "loan-agreement",
+      "title": "Loan Agreement",
+      "category": "finance-lending",
+      "subtitle": "Formal loan with interest and terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "personal-loan-agreement",
+      "title": "Personal Loan Agreement",
+      "category": "finance-lending",
+      "subtitle": "Loan between individuals.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "business-loan-agreement",
+      "title": "Business Loan Agreement",
+      "category": "finance-lending",
+      "subtitle": "Loan to a business with covenants.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "line-of-credit-agreement",
+      "title": "Line of Credit Agreement",
+      "category": "finance-lending",
+      "subtitle": "Revolving credit terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "iou",
+      "title": "IOU",
+      "category": "finance-lending",
+      "subtitle": "Simple acknowledgment of debt.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "debt-settlement-agreement",
+      "title": "Debt Settlement Agreement",
+      "category": "finance-lending",
+      "subtitle": "Negotiated payoff of a debt.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "loan-guaranty-agreement",
+      "title": "Loan Guaranty Agreement",
+      "category": "finance-lending",
+      "subtitle": "Third-party guarantee of a loan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "security-agreement",
+      "title": "Security Agreement",
+      "category": "finance-lending",
+      "subtitle": "Collateral pledge for a loan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "convertible-note",
+      "title": "Convertible Note",
+      "category": "finance-lending",
+      "subtitle": "Debt convertible to equity.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "safe-agreement",
+      "title": "SAFE Agreement",
+      "category": "finance-lending",
+      "subtitle": "Simple Agreement for Future Equity.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "investment-agreement",
+      "title": "Investment Agreement",
+      "category": "finance-lending",
+      "subtitle": "Equity investment terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "subscription-agreement",
+      "title": "Subscription Agreement",
+      "category": "finance-lending",
+      "subtitle": "Investor subscription to securities.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "shareholder-agreement",
+      "title": "Shareholder Agreement",
+      "category": "finance-lending",
+      "subtitle": "Shareholder rights and transfers.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "profit-sharing-agreement",
+      "title": "Profit Sharing Agreement",
+      "category": "finance-lending",
+      "subtitle": "Distribution of profits to parties.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "revenue-sharing-agreement",
+      "title": "Revenue Sharing Agreement",
+      "category": "finance-lending",
+      "subtitle": "Share of revenue from a product.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pledge-agreement",
+      "title": "Pledge Agreement",
+      "category": "finance-lending",
+      "subtitle": "Pledge of assets as security.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "debt-assignment-agreement",
+      "title": "Debt Assignment Agreement",
+      "category": "finance-lending",
+      "subtitle": "Transfer of a debt to a new holder.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "loan-modification-agreement",
+      "title": "Loan Modification Agreement",
+      "category": "finance-lending",
+      "subtitle": "Changes to existing loan terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "payment-plan-agreement",
+      "title": "Payment Plan Agreement",
+      "category": "finance-lending",
+      "subtitle": "Installment payment schedule.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "gift-letter",
+      "title": "Gift Letter",
+      "category": "finance-lending",
+      "subtitle": "Confirms funds are a gift, not a loan.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "crowdfunding-agreement",
+      "title": "Crowdfunding Agreement",
+      "category": "finance-lending",
+      "subtitle": "Backer reward and refund terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "joint-bank-account-agreement",
+      "title": "Joint Bank Account Agreement",
+      "category": "finance-lending",
+      "subtitle": "Terms for a shared account.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "financial-power-of-attorney",
+      "title": "Financial Power of Attorney",
+      "category": "finance-lending",
+      "subtitle": "Authority over financial affairs.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "bill-of-sale",
+      "title": "Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Transfer of ownership of an item.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "vehicle-bill-of-sale",
+      "title": "Vehicle Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Sale of a car, truck, or motorcycle.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "boat-bill-of-sale",
+      "title": "Boat Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Sale of a watercraft.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "equipment-bill-of-sale",
+      "title": "Equipment Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Sale of business equipment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "firearm-bill-of-sale",
+      "title": "Firearm Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Private firearm transfer record.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "livestock-bill-of-sale",
+      "title": "Livestock Bill of Sale",
+      "category": "sales-goods",
+      "subtitle": "Sale of animals or livestock.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "purchase-agreement",
+      "title": "Purchase Agreement",
+      "category": "sales-goods",
+      "subtitle": "Buyer-seller goods purchase.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "purchase-order",
+      "title": "Purchase Order",
+      "category": "sales-goods",
+      "subtitle": "Buyer order for goods or services.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sales-agreement",
+      "title": "Sales Agreement",
+      "category": "sales-goods",
+      "subtitle": "General sale of goods terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "consignment-agreement",
+      "title": "Consignment Agreement",
+      "category": "sales-goods",
+      "subtitle": "Goods sold on consignment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "layaway-agreement",
+      "title": "Layaway Agreement",
+      "category": "sales-goods",
+      "subtitle": "Installment hold of merchandise.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "product-warranty",
+      "title": "Product Warranty",
+      "category": "sales-goods",
+      "subtitle": "Manufacturer warranty terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "return-and-refund-policy",
+      "title": "Return and Refund Policy",
+      "category": "sales-goods",
+      "subtitle": "Store return policy document.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "exchange-agreement",
+      "title": "Exchange Agreement",
+      "category": "sales-goods",
+      "subtitle": "Swap of goods between parties.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "trade-in-agreement",
+      "title": "Trade-In Agreement",
+      "category": "sales-goods",
+      "subtitle": "Credit for a traded item.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "wholesale-agreement",
+      "title": "Wholesale Agreement",
+      "category": "sales-goods",
+      "subtitle": "Bulk goods at wholesale price.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "dropshipping-agreement",
+      "title": "Dropshipping Agreement",
+      "category": "sales-goods",
+      "subtitle": "Supplier-to-customer fulfillment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "equipment-rental-agreement",
+      "title": "Equipment Rental Agreement",
+      "category": "sales-goods",
+      "subtitle": "Short-term equipment rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tool-rental-agreement",
+      "title": "Tool Rental Agreement",
+      "category": "sales-goods",
+      "subtitle": "Rental of tools with deposit.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "goods-delivery-agreement",
+      "title": "Goods Delivery Agreement",
+      "category": "sales-goods",
+      "subtitle": "Terms for delivering goods.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "general-contractor-agreement",
+      "title": "General Contractor Agreement",
+      "category": "construction-trades",
+      "subtitle": "Whole-project construction terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "subcontractor-agreement-construction",
+      "title": "Subcontractor Agreement",
+      "category": "construction-trades",
+      "subtitle": "Trade sub scope and flow-down.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "home-improvement-contract",
+      "title": "Home Improvement Contract",
+      "category": "construction-trades",
+      "subtitle": "Residential remodel terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "roofing-contract",
+      "title": "Roofing Contract",
+      "category": "construction-trades",
+      "subtitle": "Roof replacement or repair.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "hvac-service-contract",
+      "title": "HVAC Service Contract",
+      "category": "construction-trades",
+      "subtitle": "Heating and cooling service terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "plumbing-contract",
+      "title": "Plumbing Contract",
+      "category": "construction-trades",
+      "subtitle": "Plumbing work scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "electrical-contract",
+      "title": "Electrical Contract",
+      "category": "construction-trades",
+      "subtitle": "Electrical work scope and code.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "painting-contract",
+      "title": "Painting Contract",
+      "category": "construction-trades",
+      "subtitle": "Interior or exterior painting.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "flooring-contract",
+      "title": "Flooring Contract",
+      "category": "construction-trades",
+      "subtitle": "Flooring install scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "landscaping-contract",
+      "title": "Landscaping Contract",
+      "category": "construction-trades",
+      "subtitle": "Landscape design and install.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lawn-care-agreement",
+      "title": "Lawn Care Agreement",
+      "category": "construction-trades",
+      "subtitle": "Recurring lawn maintenance.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "snow-removal-agreement",
+      "title": "Snow Removal Agreement",
+      "category": "construction-trades",
+      "subtitle": "Seasonal snow removal terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pool-service-agreement",
+      "title": "Pool Service Agreement",
+      "category": "construction-trades",
+      "subtitle": "Pool maintenance terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pest-control-agreement",
+      "title": "Pest Control Agreement",
+      "category": "construction-trades",
+      "subtitle": "Recurring pest treatment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "handyman-agreement",
+      "title": "Handyman Agreement",
+      "category": "construction-trades",
+      "subtitle": "General handyman scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "concrete-contract",
+      "title": "Concrete Contract",
+      "category": "construction-trades",
+      "subtitle": "Concrete pour and finish.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "fencing-contract",
+      "title": "Fencing Contract",
+      "category": "construction-trades",
+      "subtitle": "Fence install scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "demolition-contract",
+      "title": "Demolition Contract",
+      "category": "construction-trades",
+      "subtitle": "Demolition scope and safety.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "architect-builder-agreement",
+      "title": "Architect-Builder Agreement",
+      "category": "construction-trades",
+      "subtitle": "Design-build delivery terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "change-order",
+      "title": "Change Order",
+      "category": "construction-trades",
+      "subtitle": "Construction scope change.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "punch-list-agreement",
+      "title": "Punch List Agreement",
+      "category": "construction-trades",
+      "subtitle": "Final completion items.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lien-waiver",
+      "title": "Lien Waiver",
+      "category": "construction-trades",
+      "subtitle": "Waiver of mechanic's lien rights.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "construction-draw-schedule",
+      "title": "Construction Draw Schedule",
+      "category": "construction-trades",
+      "subtitle": "Phased payment schedule.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "solar-installation-agreement",
+      "title": "Solar Installation Agreement",
+      "category": "construction-trades",
+      "subtitle": "Residential solar install.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "event-services-agreement",
+      "title": "Event Services Agreement",
+      "category": "events-hospitality",
+      "subtitle": "General event vendor terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "venue-rental-agreement",
+      "title": "Venue Rental Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Rental of an event space.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "wedding-vendor-agreement",
+      "title": "Wedding Vendor Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Wedding service vendor terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "performer-agreement",
+      "title": "Performer Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Live performer booking terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "speaker-agreement",
+      "title": "Speaker Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Keynote or session speaker terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "entertainment-booking-agreement",
+      "title": "Entertainment Booking Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Booking an act or entertainer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "party-rental-agreement",
+      "title": "Party Rental Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Rental of party equipment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "food-vendor-agreement",
+      "title": "Food Vendor Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Food vendor at an event.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "exhibitor-agreement",
+      "title": "Exhibitor Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Trade-show booth terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "conference-sponsorship-agreement",
+      "title": "Conference Sponsorship Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Event sponsorship package.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "ticket-sales-agreement",
+      "title": "Ticket Sales Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Terms for selling event tickets.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "hotel-block-agreement",
+      "title": "Hotel Block Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Room block for an event.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "photo-booth-rental-agreement",
+      "title": "Photo Booth Rental Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Photo booth at an event.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "bartending-services-agreement",
+      "title": "Bartending Services Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Event bartending terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "security-services-agreement",
+      "title": "Security Services Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Event security terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "equipment-loan-agreement",
+      "title": "Equipment Loan Agreement",
+      "category": "events-hospitality",
+      "subtitle": "Loan of gear for an event.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "last-will-and-testament",
+      "title": "Last Will and Testament",
+      "category": "personal-family",
+      "subtitle": "Direction of assets after death.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "living-will",
+      "title": "Living Will",
+      "category": "personal-family",
+      "subtitle": "End-of-life medical directives.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "advance-healthcare-directive",
+      "title": "Advance Healthcare Directive",
+      "category": "personal-family",
+      "subtitle": "Healthcare wishes and proxy.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "medical-power-of-attorney",
+      "title": "Medical Power of Attorney",
+      "category": "personal-family",
+      "subtitle": "Authority over medical decisions.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "durable-power-of-attorney",
+      "title": "Durable Power of Attorney",
+      "category": "personal-family",
+      "subtitle": "Broad authority over affairs.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "limited-power-of-attorney",
+      "title": "Limited Power of Attorney",
+      "category": "personal-family",
+      "subtitle": "Narrow, task-specific authority.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "revocation-of-power-of-attorney",
+      "title": "Revocation of Power of Attorney",
+      "category": "personal-family",
+      "subtitle": "Cancel an existing POA.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "prenuptial-agreement",
+      "title": "Prenuptial Agreement",
+      "category": "personal-family",
+      "subtitle": "Pre-marriage property terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "postnuptial-agreement",
+      "title": "Postnuptial Agreement",
+      "category": "personal-family",
+      "subtitle": "Post-marriage property terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "cohabitation-agreement",
+      "title": "Cohabitation Agreement",
+      "category": "personal-family",
+      "subtitle": "Unmarried partners' property terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "separation-agreement",
+      "title": "Separation Agreement",
+      "category": "personal-family",
+      "subtitle": "Terms of a marital separation.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "child-custody-agreement",
+      "title": "Child Custody Agreement",
+      "category": "personal-family",
+      "subtitle": "Custody and visitation plan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "co-parenting-agreement",
+      "title": "Co-Parenting Agreement",
+      "category": "personal-family",
+      "subtitle": "Shared parenting arrangements.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "child-support-agreement",
+      "title": "Child Support Agreement",
+      "category": "personal-family",
+      "subtitle": "Support payment terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "guardianship-agreement",
+      "title": "Guardianship Agreement",
+      "category": "personal-family",
+      "subtitle": "Appointment of a guardian.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "pet-custody-agreement",
+      "title": "Pet Custody Agreement",
+      "category": "personal-family",
+      "subtitle": "Shared pet care after split.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pet-care-agreement",
+      "title": "Pet Care Agreement",
+      "category": "personal-family",
+      "subtitle": "Boarding or sitting terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "babysitting-agreement",
+      "title": "Babysitting Agreement",
+      "category": "personal-family",
+      "subtitle": "Babysitter scope and rates.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "nanny-agreement",
+      "title": "Nanny Agreement",
+      "category": "personal-family",
+      "subtitle": "Household employee terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "elder-care-agreement",
+      "title": "Elder Care Agreement",
+      "category": "personal-family",
+      "subtitle": "Caregiver scope and schedule.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "personal-property-memorandum",
+      "title": "Personal Property Memorandum",
+      "category": "personal-family",
+      "subtitle": "Distribution of personal items.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "funeral-wishes-statement",
+      "title": "Funeral Wishes Statement",
+      "category": "personal-family",
+      "subtitle": "Preferences for arrangements.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "family-loan-agreement",
+      "title": "Family Loan Agreement",
+      "category": "personal-family",
+      "subtitle": "Loan between family members.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "roommate-move-out-agreement",
+      "title": "Roommate Move-Out Agreement",
+      "category": "personal-family",
+      "subtitle": "Settle shared obligations.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "terms-of-service",
+      "title": "Terms of Service",
+      "category": "tech-data",
+      "subtitle": "Rules for using a website or app.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "privacy-policy",
+      "title": "Privacy Policy",
+      "category": "tech-data",
+      "subtitle": "How user data is collected and used.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "cookie-policy",
+      "title": "Cookie Policy",
+      "category": "tech-data",
+      "subtitle": "Cookie disclosure and consent.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "data-processing-agreement",
+      "title": "Data Processing Agreement",
+      "category": "tech-data",
+      "subtitle": "GDPR processor terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "data-sharing-agreement",
+      "title": "Data Sharing Agreement",
+      "category": "tech-data",
+      "subtitle": "Terms for sharing datasets.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "acceptable-use-policy",
+      "title": "Acceptable Use Policy",
+      "category": "tech-data",
+      "subtitle": "Permitted platform behavior.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "beta-testing-agreement",
+      "title": "Beta Testing Agreement",
+      "category": "tech-data",
+      "subtitle": "Pre-release testing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "service-level-agreement",
+      "title": "Service Level Agreement",
+      "category": "tech-data",
+      "subtitle": "Uptime and support commitments.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "hosting-agreement",
+      "title": "Hosting Agreement",
+      "category": "tech-data",
+      "subtitle": "Web hosting service terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "domain-transfer-agreement",
+      "title": "Domain Transfer Agreement",
+      "category": "tech-data",
+      "subtitle": "Transfer of a domain name.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "software-maintenance-agreement",
+      "title": "Software Maintenance Agreement",
+      "category": "tech-data",
+      "subtitle": "Ongoing support and updates.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "it-support-agreement",
+      "title": "IT Support Agreement",
+      "category": "tech-data",
+      "subtitle": "Managed IT support scope.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "cloud-services-agreement",
+      "title": "Cloud Services Agreement",
+      "category": "tech-data",
+      "subtitle": "Cloud infrastructure terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "mobile-app-terms",
+      "title": "Mobile App Terms",
+      "category": "tech-data",
+      "subtitle": "App store app usage terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "affiliate-disclosure",
+      "title": "Affiliate Disclosure",
+      "category": "tech-data",
+      "subtitle": "FTC affiliate-link disclosure.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "dmca-policy",
+      "title": "DMCA Policy",
+      "category": "tech-data",
+      "subtitle": "Copyright takedown process.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "bug-bounty-agreement",
+      "title": "Bug Bounty Agreement",
+      "category": "tech-data",
+      "subtitle": "Researcher disclosure terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "data-breach-notification",
+      "title": "Data Breach Notification",
+      "category": "tech-data",
+      "subtitle": "Template breach notice.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "membership-agreement",
+      "title": "Membership Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Terms of a paid membership.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "gym-membership-agreement",
+      "title": "Gym Membership Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Fitness membership terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "club-membership-agreement",
+      "title": "Club Membership Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Social or hobby club terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "volunteer-agreement-nonprofit",
+      "title": "Volunteer Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Volunteer scope and waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "donation-agreement",
+      "title": "Donation Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Terms of a charitable gift.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pledge-agreement-nonprofit",
+      "title": "Pledge Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Multi-year giving pledge.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sponsorship-agreement-nonprofit",
+      "title": "Sponsorship Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Nonprofit sponsor benefits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "fiscal-sponsorship-agreement",
+      "title": "Fiscal Sponsorship Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Hosting an unincorporated project.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "grant-agreement",
+      "title": "Grant Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Grantor-grantee funding terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "board-resolution",
+      "title": "Board Resolution",
+      "category": "nonprofit-membership",
+      "subtitle": "Formal board decision record.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "conflict-of-interest-policy",
+      "title": "Conflict of Interest Policy",
+      "category": "nonprofit-membership",
+      "subtitle": "Board conflict disclosure.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "memorandum-of-association",
+      "title": "Memorandum of Association",
+      "category": "nonprofit-membership",
+      "subtitle": "Founding statement of an org.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "volunteer-waiver-and-release",
+      "title": "Volunteer Waiver and Release",
+      "category": "nonprofit-membership",
+      "subtitle": "Liability waiver for volunteers.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "fundraising-event-agreement",
+      "title": "Fundraising Event Agreement",
+      "category": "nonprofit-membership",
+      "subtitle": "Terms for a fundraiser.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "in-kind-donation-receipt",
+      "title": "In-Kind Donation Receipt",
+      "category": "nonprofit-membership",
+      "subtitle": "Record of a non-cash gift.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "liability-waiver",
+      "title": "Liability Waiver",
+      "category": "waivers-releases",
+      "subtitle": "Release of liability for activities.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "release-of-liability",
+      "title": "Release of Liability",
+      "category": "waivers-releases",
+      "subtitle": "General claim release.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "hold-harmless-agreement",
+      "title": "Hold Harmless Agreement",
+      "category": "waivers-releases",
+      "subtitle": "One party indemnifies another.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "indemnification-agreement",
+      "title": "Indemnification Agreement",
+      "category": "waivers-releases",
+      "subtitle": "Stand-alone indemnity terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "photo-release",
+      "title": "Photo Release",
+      "category": "waivers-releases",
+      "subtitle": "Consent to use photos.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "media-release",
+      "title": "Media Release",
+      "category": "waivers-releases",
+      "subtitle": "Consent to use media of a person.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "activity-waiver",
+      "title": "Activity Waiver",
+      "category": "waivers-releases",
+      "subtitle": "Waiver for a recreational activity.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "event-waiver",
+      "title": "Event Waiver",
+      "category": "waivers-releases",
+      "subtitle": "Participant waiver for an event.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "fitness-waiver",
+      "title": "Fitness Waiver",
+      "category": "waivers-releases",
+      "subtitle": "Gym or training liability waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "field-trip-permission-slip",
+      "title": "Field Trip Permission Slip",
+      "category": "waivers-releases",
+      "subtitle": "Parental consent for a trip.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "medical-treatment-authorization",
+      "title": "Medical Treatment Authorization",
+      "category": "waivers-releases",
+      "subtitle": "Consent to treat a minor.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "travel-consent-for-minor",
+      "title": "Travel Consent for Minor",
+      "category": "waivers-releases",
+      "subtitle": "Consent for a minor to travel.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "settlement-and-release-agreement",
+      "title": "Settlement and Release Agreement",
+      "category": "waivers-releases",
+      "subtitle": "Settle and release a dispute.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "mutual-release-agreement",
+      "title": "Mutual Release Agreement",
+      "category": "waivers-releases",
+      "subtitle": "Both parties release claims.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "waiver-of-subrogation",
+      "title": "Waiver of Subrogation",
+      "category": "waivers-releases",
+      "subtitle": "Insurer waives recovery rights.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "assumption-of-risk-agreement",
+      "title": "Assumption of Risk Agreement",
+      "category": "waivers-releases",
+      "subtitle": "Participant accepts known risks.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "demand-letter",
+      "title": "Demand Letter",
+      "category": "letters-notices",
+      "subtitle": "Formal demand for payment or action.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "cease-and-desist-letter",
+      "title": "Cease and Desist Letter",
+      "category": "letters-notices",
+      "subtitle": "Demand to stop conduct.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "breach-of-contract-notice",
+      "title": "Breach of Contract Notice",
+      "category": "letters-notices",
+      "subtitle": "Notice of a contract breach.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "notice-of-termination",
+      "title": "Notice of Termination",
+      "category": "letters-notices",
+      "subtitle": "End a contract per its terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "notice-of-default",
+      "title": "Notice of Default",
+      "category": "letters-notices",
+      "subtitle": "Notice that a party is in default.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "collection-letter",
+      "title": "Collection Letter",
+      "category": "letters-notices",
+      "subtitle": "Request to pay an overdue amount.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "complaint-letter",
+      "title": "Complaint Letter",
+      "category": "letters-notices",
+      "subtitle": "Formal complaint to a business.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "resignation-letter",
+      "title": "Resignation Letter",
+      "category": "letters-notices",
+      "subtitle": "Employee notice of resignation.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "termination-letter",
+      "title": "Termination Letter",
+      "category": "letters-notices",
+      "subtitle": "Employer notice of termination.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "reference-letter",
+      "title": "Reference Letter",
+      "category": "letters-notices",
+      "subtitle": "Recommendation for a person.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "verification-of-employment",
+      "title": "Verification of Employment",
+      "category": "letters-notices",
+      "subtitle": "Confirm employment details.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "authorization-letter",
+      "title": "Authorization Letter",
+      "category": "letters-notices",
+      "subtitle": "Authorize someone to act for you.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "consent-letter",
+      "title": "Consent Letter",
+      "category": "letters-notices",
+      "subtitle": "Grant consent for an action.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "acknowledgment-of-receipt",
+      "title": "Acknowledgment of Receipt",
+      "category": "letters-notices",
+      "subtitle": "Confirm something was received.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "notice-of-assignment",
+      "title": "Notice of Assignment",
+      "category": "letters-notices",
+      "subtitle": "Notice that a contract was assigned.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "rent-demand-letter",
+      "title": "Rent Demand Letter",
+      "category": "letters-notices",
+      "subtitle": "Demand for unpaid rent.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "debt-validation-letter",
+      "title": "Debt Validation Letter",
+      "category": "letters-notices",
+      "subtitle": "Request to validate a debt.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "goodwill-letter",
+      "title": "Goodwill Letter",
+      "category": "letters-notices",
+      "subtitle": "Request to remove a credit mark.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "catering-service-contract",
+      "title": "Catering Service Contract",
+      "category": "specialized-industry",
+      "subtitle": "Catering for a defined event.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "food-truck-vendor-agreement",
+      "title": "Food Truck Vendor Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Food truck at a venue.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "restaurant-lease-agreement",
+      "title": "Restaurant Lease Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Restaurant space lease.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "salon-booth-rental-agreement",
+      "title": "Salon Booth Rental Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Stylist chair rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "spa-services-waiver",
+      "title": "Spa Services Waiver",
+      "category": "specialized-industry",
+      "subtitle": "Treatment consent and waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "daycare-enrollment-agreement",
+      "title": "Daycare Enrollment Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Childcare enrollment terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tutoring-center-agreement",
+      "title": "Tutoring Center Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Learning center enrollment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "dance-studio-agreement",
+      "title": "Dance Studio Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Class enrollment and waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "music-lesson-agreement",
+      "title": "Music Lesson Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Recurring lesson terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "veterinary-services-consent",
+      "title": "Veterinary Services Consent",
+      "category": "specialized-industry",
+      "subtitle": "Consent to treat an animal.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "boarding-kennel-agreement",
+      "title": "Boarding Kennel Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Pet boarding terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "horse-boarding-agreement",
+      "title": "Horse Boarding Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Equine boarding terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "farm-lease-agreement",
+      "title": "Farm Lease Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Agricultural land lease.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "equipment-lease-agreement",
+      "title": "Equipment Lease Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Long-term equipment lease.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "aircraft-charter-agreement",
+      "title": "Aircraft Charter Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Private charter terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "yacht-charter-agreement",
+      "title": "Yacht Charter Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Boat charter terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "trucking-services-agreement",
+      "title": "Trucking Services Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Freight hauling terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "towing-services-agreement",
+      "title": "Towing Services Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Vehicle towing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "auto-repair-authorization",
+      "title": "Auto Repair Authorization",
+      "category": "specialized-industry",
+      "subtitle": "Consent to repair a vehicle.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "moving-services-agreement",
+      "title": "Moving Services Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Household move terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "junk-removal-agreement",
+      "title": "Junk Removal Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Hauling and disposal terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "staffing-agency-agreement",
+      "title": "Staffing Agency Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Temp staffing terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "recruiting-agreement",
+      "title": "Recruiting Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Placement fee terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "franchise-disclosure-acknowledgment",
+      "title": "Franchise Disclosure Acknowledgment",
+      "category": "specialized-industry",
+      "subtitle": "Confirm FDD receipt.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "vending-machine-agreement",
+      "title": "Vending Machine Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Placement and revenue split.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "atm-placement-agreement",
+      "title": "ATM Placement Agreement",
+      "category": "specialized-industry",
+      "subtitle": "ATM siting and fees.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "billboard-lease-agreement",
+      "title": "Billboard Lease Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Outdoor advertising lease.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "advertising-agreement",
+      "title": "Advertising Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Ad placement and run terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "sponsorship-activation-agreement",
+      "title": "Sponsorship Activation Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Activation deliverables.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "trade-show-booth-agreement",
+      "title": "Trade Show Booth Agreement",
+      "category": "specialized-industry",
+      "subtitle": "Booth rental and rules.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "non-circumvention-agreement",
+      "title": "Non-Circumvention Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Prevent bypassing an introducing party.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "teaming-agreement",
+      "title": "Teaming Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Joint bid or proposal collaboration.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "master-subscription-agreement",
+      "title": "Master Subscription Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Umbrella terms for software subscriptions.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "order-form",
+      "title": "Order Form",
+      "category": "business-deal-mechanics",
+      "subtitle": "Product or service order under a master agreement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "quote-acceptance-agreement",
+      "title": "Quote Acceptance Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Turn a quote into a binding order.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "services-renewal-agreement",
+      "title": "Services Renewal Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Renew an expiring services contract.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "novation-agreement",
+      "title": "Novation Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Replace a party to a contract.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "assignment-and-assumption-agreement",
+      "title": "Assignment and Assumption Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Transfer rights and obligations.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "guaranty-of-performance",
+      "title": "Guaranty of Performance",
+      "category": "business-deal-mechanics",
+      "subtitle": "Third-party guarantee of performance.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "exclusivity-agreement",
+      "title": "Exclusivity Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Exclusive dealing for a period.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "right-of-first-refusal-agreement",
+      "title": "Right of First Refusal Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "First right to match an offer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "earn-out-agreement",
+      "title": "Earn-Out Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Deferred deal payments on milestones.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "side-letter",
+      "title": "Side Letter",
+      "category": "business-deal-mechanics",
+      "subtitle": "Supplemental terms to a main agreement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "contract-amendment",
+      "title": "Contract Amendment",
+      "category": "business-deal-mechanics",
+      "subtitle": "Formal change to an existing contract.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "waiver-and-consent",
+      "title": "Waiver and Consent",
+      "category": "business-deal-mechanics",
+      "subtitle": "Waive a right or consent to an action.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "standstill-agreement",
+      "title": "Standstill Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Pause enforcement during negotiations.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "mutual-termination-agreement",
+      "title": "Mutual Termination Agreement",
+      "category": "business-deal-mechanics",
+      "subtitle": "Both parties end a contract.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "confidentiality-and-non-circumvention",
+      "title": "Confidentiality and Non-Circumvention",
+      "category": "business-deal-mechanics",
+      "subtitle": "Combined NDA and non-circumvent.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "retention-agreement",
+      "title": "Retention Agreement",
+      "category": "employment-hr-extended",
+      "subtitle": "Stay incentive for key staff.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "garden-leave-agreement",
+      "title": "Garden Leave Agreement",
+      "category": "employment-hr-extended",
+      "subtitle": "Paid leave during notice period.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "mutual-separation-agreement",
+      "title": "Mutual Separation Agreement",
+      "category": "employment-hr-extended",
+      "subtitle": "Agreed exit on negotiated terms.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "performance-improvement-plan",
+      "title": "Performance Improvement Plan",
+      "category": "employment-hr-extended",
+      "subtitle": "Structured plan to fix performance.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "disciplinary-action-form",
+      "title": "Disciplinary Action Form",
+      "category": "employment-hr-extended",
+      "subtitle": "Record of corrective action.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "expense-reimbursement-policy",
+      "title": "Expense Reimbursement Policy",
+      "category": "employment-hr-extended",
+      "subtitle": "Rules for expense claims.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "remote-equipment-loan-agreement",
+      "title": "Remote Equipment Loan Agreement",
+      "category": "employment-hr-extended",
+      "subtitle": "Loan of company gear to staff.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "social-media-policy",
+      "title": "Social Media Policy",
+      "category": "employment-hr-extended",
+      "subtitle": "Staff conduct on social channels.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "byod-policy",
+      "title": "BYOD Policy",
+      "category": "employment-hr-extended",
+      "subtitle": "Personal-device use at work.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "direct-deposit-authorization",
+      "title": "Direct Deposit Authorization",
+      "category": "employment-hr-extended",
+      "subtitle": "Authorize payroll direct deposit.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "emergency-contact-form",
+      "title": "Emergency Contact Form",
+      "category": "employment-hr-extended",
+      "subtitle": "Employee emergency contacts.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "exit-interview-form",
+      "title": "Exit Interview Form",
+      "category": "employment-hr-extended",
+      "subtitle": "Departing-employee feedback.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "confidential-information-return",
+      "title": "Confidential Information Return",
+      "category": "employment-hr-extended",
+      "subtitle": "Confirm return of materials at exit.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "stay-bonus-agreement",
+      "title": "Stay Bonus Agreement",
+      "category": "employment-hr-extended",
+      "subtitle": "Bonus for staying through a date.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "moonlighting-consent",
+      "title": "Moonlighting Consent",
+      "category": "employment-hr-extended",
+      "subtitle": "Approve outside employment.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "rental-application",
+      "title": "Rental Application",
+      "category": "real-estate-extended",
+      "subtitle": "Prospective tenant application.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "lease-guarantor-agreement",
+      "title": "Lease Guarantor Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Guarantor for a tenant lease.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "co-signer-agreement",
+      "title": "Co-Signer Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Co-signer for a rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "easement-agreement",
+      "title": "Easement Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Right to use part of a property.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "right-of-entry-agreement",
+      "title": "Right of Entry Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Temporary access to a property.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "property-access-license",
+      "title": "Property Access License",
+      "category": "real-estate-extended",
+      "subtitle": "License to enter for a purpose.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "utilities-responsibility-addendum",
+      "title": "Utilities Responsibility Addendum",
+      "category": "real-estate-extended",
+      "subtitle": "Who pays which utilities.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "renters-insurance-acknowledgment",
+      "title": "Renters Insurance Acknowledgment",
+      "category": "real-estate-extended",
+      "subtitle": "Tenant insurance requirement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "smoking-policy-addendum",
+      "title": "Smoking Policy Addendum",
+      "category": "real-estate-extended",
+      "subtitle": "No-smoking lease addendum.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "short-term-rental-house-rules",
+      "title": "Short-Term Rental House Rules",
+      "category": "real-estate-extended",
+      "subtitle": "Guest rules for a rental.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "subordination-agreement",
+      "title": "Subordination Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Rank one interest below another.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "boundary-line-agreement",
+      "title": "Boundary Line Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Agreed property boundary.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "home-inspection-agreement",
+      "title": "Home Inspection Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Inspector scope and limits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "seller-disclosure-statement",
+      "title": "Seller Disclosure Statement",
+      "category": "real-estate-extended",
+      "subtitle": "Seller property condition disclosure.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "occupancy-agreement",
+      "title": "Occupancy Agreement",
+      "category": "real-estate-extended",
+      "subtitle": "Pre- or post-closing occupancy.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "secured-promissory-note",
+      "title": "Secured Promissory Note",
+      "category": "finance-lending-extended",
+      "subtitle": "Note backed by collateral.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "unsecured-promissory-note",
+      "title": "Unsecured Promissory Note",
+      "category": "finance-lending-extended",
+      "subtitle": "Note with no collateral.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "balloon-payment-note",
+      "title": "Balloon Payment Note",
+      "category": "finance-lending-extended",
+      "subtitle": "Note with a large final payment.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "demand-promissory-note",
+      "title": "Demand Promissory Note",
+      "category": "finance-lending-extended",
+      "subtitle": "Note payable on demand.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "cosigner-agreement",
+      "title": "Cosigner Agreement",
+      "category": "finance-lending-extended",
+      "subtitle": "Cosigner for a loan.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "debt-acknowledgment",
+      "title": "Debt Acknowledgment",
+      "category": "finance-lending-extended",
+      "subtitle": "Confirm an amount owed.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "forbearance-agreement",
+      "title": "Forbearance Agreement",
+      "category": "finance-lending-extended",
+      "subtitle": "Pause loan collection temporarily.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "capital-call-notice",
+      "title": "Capital Call Notice",
+      "category": "finance-lending-extended",
+      "subtitle": "Request investor capital.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "distribution-notice",
+      "title": "Distribution Notice",
+      "category": "finance-lending-extended",
+      "subtitle": "Notice of a fund distribution.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "dividend-resolution",
+      "title": "Dividend Resolution",
+      "category": "finance-lending-extended",
+      "subtitle": "Board approval of a dividend.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "investment-letter",
+      "title": "Investment Letter",
+      "category": "finance-lending-extended",
+      "subtitle": "Investor representations letter.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "promissory-note-release",
+      "title": "Promissory Note Release",
+      "category": "finance-lending-extended",
+      "subtitle": "Release a note as paid.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "stock-footage-license",
+      "title": "Stock Footage License",
+      "category": "creative-media-extended",
+      "subtitle": "License of video clips.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "beat-license-agreement",
+      "title": "Beat License Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "License of a music beat.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "mixing-and-mastering-agreement",
+      "title": "Mixing and Mastering Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Audio post-production terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "booking-agent-agreement",
+      "title": "Booking Agent Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Agent representation for gigs.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "tour-agreement",
+      "title": "Tour Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Live tour terms and splits.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "merchandise-agreement",
+      "title": "Merchandise Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Merch production and sales.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "animation-production-agreement",
+      "title": "Animation Production Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Animation project terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "nft-sale-agreement",
+      "title": "NFT Sale Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Sale of a digital collectible.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "cameo-video-agreement",
+      "title": "Cameo Video Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Personalized video booking.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "streaming-collaboration-agreement",
+      "title": "Streaming Collaboration Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Joint stream or channel terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "comic-art-commission-agreement",
+      "title": "Comic Art Commission Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Commissioned comic artwork.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "audiobook-narration-agreement",
+      "title": "Audiobook Narration Agreement",
+      "category": "creative-media-extended",
+      "subtitle": "Narrator scope and royalties.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "subprocessor-agreement",
+      "title": "Subprocessor Agreement",
+      "category": "tech-data-extended",
+      "subtitle": "Approve a data subprocessor.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "security-addendum",
+      "title": "Security Addendum",
+      "category": "tech-data-extended",
+      "subtitle": "Security commitments addendum.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "penetration-test-authorization",
+      "title": "Penetration Test Authorization",
+      "category": "tech-data-extended",
+      "subtitle": "Authorize a security test.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "source-code-escrow-agreement",
+      "title": "Source Code Escrow Agreement",
+      "category": "tech-data-extended",
+      "subtitle": "Escrow of source for a buyer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "data-retention-policy",
+      "title": "Data Retention Policy",
+      "category": "tech-data-extended",
+      "subtitle": "How long data is kept.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "white-label-saas-agreement",
+      "title": "White-Label SaaS Agreement",
+      "category": "tech-data-extended",
+      "subtitle": "Rebrand a SaaS product.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "webhook-integration-agreement",
+      "title": "Webhook Integration Agreement",
+      "category": "tech-data-extended",
+      "subtitle": "Integration and callback terms.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "mobile-sdk-license",
+      "title": "Mobile SDK License",
+      "category": "tech-data-extended",
+      "subtitle": "License of a software SDK.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "uptime-sla-addendum",
+      "title": "Uptime SLA Addendum",
+      "category": "tech-data-extended",
+      "subtitle": "Availability commitments.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "ai-usage-policy",
+      "title": "AI Usage Policy",
+      "category": "tech-data-extended",
+      "subtitle": "Rules for using AI tools internally.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "covid-19-liability-waiver",
+      "title": "COVID-19 Liability Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Communicable-disease risk waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "drone-operation-waiver",
+      "title": "Drone Operation Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Drone flight liability waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "climbing-gym-waiver",
+      "title": "Climbing Gym Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Climbing activity waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "martial-arts-waiver",
+      "title": "Martial Arts Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Training injury waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "youth-sports-waiver",
+      "title": "Youth Sports Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Minor athlete participation waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "adventure-tour-waiver",
+      "title": "Adventure Tour Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Guided adventure waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "trampoline-park-waiver",
+      "title": "Trampoline Park Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Jump-park liability waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "workshop-participation-waiver",
+      "title": "Workshop Participation Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Hands-on workshop waiver.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "pool-use-waiver",
+      "title": "Pool Use Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Swimming pool liability waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "equine-activity-waiver",
+      "title": "Equine Activity Waiver",
+      "category": "waivers-extended",
+      "subtitle": "Horseback activity waiver.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "engagement-letter",
+      "title": "Engagement Letter",
+      "category": "professional-practice",
+      "subtitle": "Scope and fees for a professional engagement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "client-intake-agreement",
+      "title": "Client Intake Agreement",
+      "category": "professional-practice",
+      "subtitle": "Onboard a new client.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "fee-agreement",
+      "title": "Fee Agreement",
+      "category": "professional-practice",
+      "subtitle": "Professional fee structure.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "limited-scope-agreement",
+      "title": "Limited Scope Agreement",
+      "category": "professional-practice",
+      "subtitle": "Defined, narrow engagement.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "records-release-authorization",
+      "title": "Records Release Authorization",
+      "category": "professional-practice",
+      "subtitle": "Authorize release of records.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "conflict-waiver",
+      "title": "Conflict Waiver",
+      "category": "professional-practice",
+      "subtitle": "Waive a disclosed conflict.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "professional-services-engagement-letter",
+      "title": "Professional Services Engagement Letter",
+      "category": "professional-practice",
+      "subtitle": "Formal engagement letter.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "client-file-transfer-authorization",
+      "title": "Client File Transfer Authorization",
+      "category": "professional-practice",
+      "subtitle": "Transfer a file to another provider.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "scope-of-engagement",
+      "title": "Scope of Engagement",
+      "category": "professional-practice",
+      "subtitle": "Define what is and is not included.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "retainer-replenishment-notice",
+      "title": "Retainer Replenishment Notice",
+      "category": "professional-practice",
+      "subtitle": "Request to top up a retainer.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "crop-share-lease",
+      "title": "Crop Share Lease",
+      "category": "agriculture-land",
+      "subtitle": "Share-of-crop farm lease.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "grazing-lease",
+      "title": "Grazing Lease",
+      "category": "agriculture-land",
+      "subtitle": "Pasture and grazing rights.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "hunting-lease",
+      "title": "Hunting Lease",
+      "category": "agriculture-land",
+      "subtitle": "Hunting access to land.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "timber-sale-agreement",
+      "title": "Timber Sale Agreement",
+      "category": "agriculture-land",
+      "subtitle": "Sale of standing timber.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "solar-land-lease",
+      "title": "Solar Land Lease",
+      "category": "agriculture-land",
+      "subtitle": "Lease land for solar.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "wind-energy-lease",
+      "title": "Wind Energy Lease",
+      "category": "agriculture-land",
+      "subtitle": "Lease land for wind turbines.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "mineral-rights-lease",
+      "title": "Mineral Rights Lease",
+      "category": "agriculture-land",
+      "subtitle": "Lease subsurface mineral rights.",
+      "sensitivity": "high"
+    },
+    {
+      "slug": "beekeeping-agreement",
+      "title": "Beekeeping Agreement",
+      "category": "agriculture-land",
+      "subtitle": "Place hives on land.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "csa-membership-agreement",
+      "title": "CSA Membership Agreement",
+      "category": "agriculture-land",
+      "subtitle": "Community-supported agriculture share.",
+      "sensitivity": "normal"
+    },
+    {
+      "slug": "farm-equipment-lease",
+      "title": "Farm Equipment Lease",
+      "category": "agriculture-land",
+      "subtitle": "Lease of farm machinery.",
+      "sensitivity": "normal"
+    }
+  ]
+}

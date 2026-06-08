@@ -416,6 +416,28 @@ async function onCheckoutCompleted(env, session) {
     }
   }
 
+  // Lifetime ($299 one-time, capped at LIFETIME_CAP). One-time payment has no
+  // subscription to gate on, so idempotency rides a per-sender KV marker — webhook
+  // retries / duplicate checkout.session.completed events must never double-count.
+  // Without this the public "50 of 50 spots left" counter stays frozen at 0 and
+  // the cap is unenforced (the counter + cap gate READ meta:lifetime-count, which
+  // nothing was writing). Same KV non-atomicity tradeoff as the founding branch.
+  if (tier === 'lifetime') {
+    const claimedMarker = `meta:lifetime-claimed:${senderId}`;
+    const already = await storage.get(claimedMarker);
+    if (!already) {
+      const taken = await getLifetimeCount(env);
+      if (taken < LIFETIME_CAP) {
+        record.lifetimeNumber = taken + 1;
+        await storage.put('meta:lifetime-count', String(taken + 1));
+      } else {
+        record.lifetimeNumber = null;
+        record.lifetimeOverflow = true;
+      }
+      await storage.put(claimedMarker, '1');
+    }
+  }
+
   await storage.put(`sub:${senderId}`, JSON.stringify(record));
   await storage.put(`stripe:customer:${customerId}`, senderId);
 

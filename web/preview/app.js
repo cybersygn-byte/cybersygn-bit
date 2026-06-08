@@ -1979,7 +1979,27 @@ async function renderDocument(data, detection, opts = {}) {
   for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
     try {
       const page = await doc.getPage(pageNum);
-      const viewport = page.getViewport({ scale: RENDER_SCALE });
+
+      // Responsive fit (mobile/tablet): the desktop RENDER_SCALE makes the page
+      // wider than a phone/tablet container, which then CSS-shrinks the canvas
+      // while the absolutely-positioned field overlays keep their unscaled pixel
+      // coordinates — so taps land off-target and tap-to-sign is impossible.
+      // Instead render the page to FIT the real, measured container width so the
+      // canvas AND the field boxes (both derived from this viewport via
+      // convertToViewportRectangle) live in ONE coordinate space. Only ever
+      // shrink (never upscale past the crisp desktop default) and keep a legible
+      // floor. All downstream coordinate math reads this per-shell scale.
+      let renderScale = RENDER_SCALE;
+      try {
+        const base = page.getViewport({ scale: 1 });
+        const cs = (typeof getComputedStyle === 'function') ? getComputedStyle(documentStrip) : null;
+        const pad = cs ? (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) : 0;
+        const avail = (documentStrip.clientWidth || 0) - pad - 2;
+        if (avail > 40 && base.width > 0 && base.width * RENDER_SCALE > avail) {
+          renderScale = Math.max(0.4, avail / base.width);
+        }
+      } catch (e) { /* fall back to the desktop RENDER_SCALE */ }
+      const viewport = page.getViewport({ scale: renderScale });
 
       // Cap canvas to a sane device pixel ratio so very large pages do not
       // blow up memory on retina displays.
@@ -2014,7 +2034,7 @@ async function renderDocument(data, detection, opts = {}) {
       shell.dataset.pageNum = String(pageNum);
       shell.dataset.viewportWidth = String(viewport.width);
       shell.dataset.viewportHeight = String(viewport.height);
-      shell.dataset.scale = String(RENDER_SCALE);
+      shell.dataset.scale = String(renderScale);
 
       documentStrip.appendChild(shell);
 
@@ -2031,7 +2051,7 @@ async function renderDocument(data, detection, opts = {}) {
           const cvFields = cvDetect.detectVisually(canvas, {
             width: viewport.width,
             height: viewport.height,
-            scale: RENDER_SCALE,
+            scale: renderScale,
           }, pageNum);
           if (cvFields.length > 0) {
             docState.fields = cvDetect.mergeWithHeuristic(docState.fields, cvFields);
@@ -2057,7 +2077,7 @@ async function renderDocument(data, detection, opts = {}) {
           if (Array.isArray(visionFields) && visionFields.length > 0) {
             // Convert vision pixel coords (top-left origin) to PDF coords
             // (bottom-left). Same math as field-box drag-resize commit.
-            const scale = RENDER_SCALE;
+            const scale = renderScale;
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             const ks = scale * dpr;
             const pdfFields = visionFields.map(vf => {

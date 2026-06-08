@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CyberSygn. The signature tool you'll actually like. Built in Colorado.</title>
   <meta name="description" content="CyberSygn reads your PDF and finds every signature line, initial, date, and checkbox before you place a single field by hand. Sign in person or route to remote signers." />
   <meta name="keywords" content="e-signature, electronic signature, DocuSign alternative, Dropbox Sign alternative, SignWell alternative, PDF signing, signature detection, contract signing, field detection, in-person signing" />
@@ -263,6 +263,12 @@
              poster="brand/og-image.png">
         <source src="brand/hero.mp4" type="video/mp4" />
       </video>
+      <!-- Glassy haze: a brief frosted-glass sheen that sits in FRONT of the
+           video and BEHIND the logo on the opening. Visible for the first
+           moment, then fades away a touch faster than the logo. Styled in
+           .cinematic-hero__haze; self-removes after the fade (cinematic-hero.js)
+           so it never costs compositing once gone. -->
+      <div class="cinematic-hero__haze" aria-hidden="true"></div>
       <!-- CyberSygn logo overlay. Visible at the start and end of each
            video loop iteration; fades out during the cinematic so the
            video's own composition reads. Driven by cinematic-hero.js
@@ -635,23 +641,6 @@
     </div>
   </section>
 
-  <!-- ====================== AS SEEN ON =======================
-       Placeholder press strip. Replace href/img once actual press
-       lands. The visual exists from day one so adding a new logo
-       feels like incremental polish, not a redesign. -->
-  <section class="section press-strip">
-    <div class="container">
-      <p class="kicker kicker--muted press-strip__kicker">In good company.</p>
-      <ul class="press-grid" aria-label="Press and community mentions">
-        <li>Product Hunt</li>
-        <li>Indie Hackers</li>
-        <li>Hacker News</li>
-        <li>Built in Colorado</li>
-        <li>Open Source</li>
-      </ul>
-    </div>
-  </section>
-
   <!-- ====================== FAQ ABOVE PRICING =====================
        Five tight Q&As that kill the universal e-signature objections.
        Above the price grid because they need to land BEFORE the price.
@@ -696,14 +685,20 @@
       <header class="section__head">
         <div>
           <p class="kicker kicker--muted">Pricing.</p>
-          <h2 class="h-section section__title">Pick your <em>identity.</em></h2>
+          <h2 class="h-section section__title">Unlimited signing. <em>One flat price.</em></h2>
         </div>
         <p class="lede section__lede">
-          Demo to test-drive. Solo when you're operating on your own. Origin if you find us
-          in the first hundred. Studio when your team scales. Your founder rate, if you claim
-          one, never goes up.
+          Most e-signature tools meter your documents and charge for every seat. CyberSygn does
+          not. Pick a plan, send as many contracts as you want, cancel in one click. Start free,
+          no card.
         </p>
       </header>
+
+      <!-- Value anchor: position the flat price against the metered, per-seat norm. -->
+      <p class="price-anchor">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <span>The typical solo e-signature plan runs <strong>$20 to $25 a month</strong> and still caps how many documents you can send. <strong>CyberSygn Solo is $12 a month for unlimited.</strong></span>
+      </p>
 
       <!-- Billing-cycle toggle. Annual saves ~2 months/year per tier, monthly default. -->
       <div class="billing-toggle" role="radiogroup" aria-label="Billing cycle" data-cycle="monthly">
@@ -715,132 +710,133 @@
         </button>
       </div>
 
-      <!-- Demo-first reassurance. Test before you subscribe. -->
-      <p class="demo-first">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M9 12l2 2 4-4"/>
-        </svg>
-        <span><strong>Try the Demo first.</strong> Three free signs, no credit card. Confirm CyberSygn detects fields on your actual contracts before you pick a plan. Cancel any paid plan in one click — the next month does not bill.</span>
-      </p>
+      <!-- CORE LADDER: three clean choices. Solo is center-stage (most popular). -->
+      <div class="pricing pricing--core">
 
-      <!-- Placeholder so the original section header continues to render. -->
-      <p class="lede section__lede" hidden>
-        </p>
-      </header>
-
-      <div class="pricing">
-
-        <!-- DEMO. Free for 3 lifetime. Pain → relief → identity → action. -->
+        <!-- DEMO. The risk-free entry. -->
         <article class="tier" data-tier="demo">
           <p class="tier__name">Demo</p>
           <div class="tier__price">
             <span class="tier__price-num">$0</span>
-            <span class="tier__price-unit">lifetime</span>
+            <span class="tier__price-unit">free</span>
           </div>
-          <p class="tier__hook">Test-drive the tool that finds every field for you.</p>
+          <p class="tier__hook">Watch it find every field on your own contract before you pay a cent.</p>
           <ul class="tier__list">
-            <li>Three full sends, no time limit</li>
-            <li>Every paid feature unlocked, no restrictions</li>
-            <li>No credit card required to start</li>
-            <li>Same email keeps your history when you upgrade</li>
+            <li>Three full signed documents</li>
+            <li>Every feature unlocked, no restrictions</li>
+            <li>No credit card to start</li>
+            <li>Your history carries over when you upgrade</li>
           </ul>
-          <a class="btn btn--ghost btn--block" href="./preview/">Start the demo →</a>
+          <a class="btn btn--ghost btn--block" href="./preview/">Start free, no card →</a>
         </article>
 
-        <!-- SOLO. The center-stage tier for owner-operators. -->
-        <article class="tier" data-tier="solo" data-monthly="12" data-annual="10" data-annual-total="120">
+        <!-- SOLO. Most popular, center stage, the decoy-effect anchor. -->
+        <article class="tier tier--featured" data-tier="solo" data-monthly="12" data-annual="10" data-annual-total="120">
+          <span class="tier__badge">Most popular</span>
           <p class="tier__name">Solo</p>
           <div class="tier__price">
             <span class="tier__price-num">$12</span>
             <span class="tier__price-unit">/mo</span>
           </div>
-          <p class="tier__hook">The fastest path from contract to signed PDF.</p>
+          <p class="tier__hook">Unlimited contracts, each one sent and signed in about two minutes.</p>
           <ul class="tier__list">
-            <li>Unlimited documents, unlimited signers</li>
+            <li>Unlimited documents and signers</li>
             <li>Templates auto-apply to every repeat upload</li>
-            <li>In-person signing mode for closing meetings</li>
+            <li>In-person mode for closing meetings</li>
             <li>Camera scan turns paper into a signable PDF</li>
-            <li>Audit certificate with SHA-256 on every signed doc</li>
+            <li>SHA-256 audit certificate on every signed doc</li>
           </ul>
           <button class="btn btn--primary btn--block" type="button" data-checkout-tier="solo">
-            Start operating →
+            Go unlimited →
           </button>
+          <p class="tier__reassure">No card to try. Cancel in one click.</p>
         </article>
 
-        <!-- ORIGIN. Founding 100. The FOMO + lifetime-lock anchor. -->
-        <article class="tier tier--featured" data-tier="origin" data-monthly="9" data-annual="7" data-annual-total="84">
-          <span class="tier__badge" id="founding-badge">$9 for life, locked</span>
-          <p class="tier__name">Origin</p>
-          <div class="tier__price">
-            <span class="tier__price-num">$9</span>
-            <span class="tier__price-unit">/mo forever</span>
-          </div>
-          <p class="tier__hook">You found us before everyone else. We don't forget.</p>
-          <ul class="tier__list">
-            <li>Same Solo features, $3 less, locked for the life of your account</li>
-            <li>Direct line to the founder — replies within a day</li>
-            <li>Your name on the Origin wall when we ship it</li>
-            <li>Vote on what we build next</li>
-            <li>Once 100 spots fill, this rate disappears forever</li>
-          </ul>
-          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="founding">
-            Claim an Origin spot →
-          </button>
-          <p class="caption tier__remaining" id="founding-remaining">
-            <span class="tier__remaining-dot" aria-hidden="true"></span>
-            <span id="founding-remaining-count">100</span> of 100 Origin spots remaining.
-          </p>
-          <p class="caption" style="margin-top:8px;text-align:center;">
-            <a href="./origin/" style="color:var(--accent-text);">See the Origin wall →</a>
-          </p>
-        </article>
-
-        <!-- STUDIO. Small team. "Studio" beats "Team" — creative-collective identity. -->
+        <!-- STUDIO. Small team. -->
         <article class="tier" data-tier="studio" data-monthly="29" data-annual="23" data-annual-total="276">
           <p class="tier__name">Studio</p>
           <div class="tier__price">
             <span class="tier__price-num">$29</span>
             <span class="tier__price-unit">/mo</span>
           </div>
-          <p class="tier__hook">Your firm sends contracts. Make that the smallest part of your day.</p>
+          <p class="tier__hook">Three seats, one shared workspace, every send in view.</p>
           <ul class="tier__list">
-            <li>Three seats for partners and assistants</li>
-            <li>Shared workspace, every send visible to the team</li>
-            <li>Aggregated dashboard across every signer</li>
-            <li>Member roles — who can send, who can sign, who can audit</li>
-            <li>Bulk template library so the same NDA never gets re-drawn</li>
+            <li>Three seats, add more at $9 each</li>
+            <li>Shared workspace and aggregated dashboard</li>
+            <li>Member roles: who can send, sign, and audit</li>
+            <li>Bulk send and a shared template library</li>
+            <li>Webhooks to wire signing into your stack</li>
           </ul>
           <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="team">
-            Start your Studio →
+            Set up your team →
           </button>
         </article>
+      </div>
 
-        <!-- LIFETIME (slice 98). One-time $299, capped at 50. Solo features
-             locked forever. Pure FOMO play for indie audience launches. -->
-        <article class="tier tier--lifetime" data-tier="lifetime">
-          <span class="tier__badge tier__badge--lifetime">Limited · 50 spots</span>
-          <p class="tier__name">Lifetime</p>
-          <div class="tier__price">
-            <span class="tier__price-num">$299</span>
-            <span class="tier__price-unit">one time</span>
-          </div>
-          <p class="tier__hook">One payment. Use it forever. We'll never bill you again.</p>
-          <ul class="tier__list">
-            <li>Every Solo feature, locked for the life of the product</li>
-            <li>Pays for itself in three months vs Solo monthly</li>
-            <li>First 50 customers only — once gone, this option disappears</li>
-            <li>Direct line to the founder, just like Origin</li>
-            <li>One payment. Final sale once your first document signs.</li>
-          </ul>
-          <button class="btn btn--ink btn--block" type="button" data-checkout-tier="lifetime">
-            Claim Lifetime →
-          </button>
-          <p class="caption tier__remaining" id="lifetime-remaining">
-            <span class="tier__remaining-dot" aria-hidden="true"></span>
-            <span id="lifetime-remaining-count">50</span> of 50 Lifetime spots remaining.
-          </p>
-        </article>
+      <!-- Risk reversal, restated right under the choice. -->
+      <p class="demo-first">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <span><strong>Try the Demo first.</strong> Three free signs, no credit card. Confirm CyberSygn detects fields on your actual contracts before you pick a plan. Cancel any paid plan in one click, the next month does not bill.</span>
+      </p>
+
+      <!-- FOUNDING DEALS: Origin + Lifetime, scarcity-driven, set apart from the core ladder. -->
+      <div class="founder-deals">
+        <p class="founder-deals__head">
+          <span class="founder-deals__dot" aria-hidden="true"></span>
+          Founding deals, while spots last
+        </p>
+        <div class="pricing pricing--founder">
+
+          <!-- ORIGIN. Founding 100. Lifetime-lock + FOMO. -->
+          <article class="tier tier--founder" data-tier="origin" data-monthly="9" data-annual="7" data-annual-total="84">
+            <span class="tier__badge" id="founding-badge">$9 for life</span>
+            <p class="tier__name">Origin</p>
+            <div class="tier__price">
+              <span class="tier__price-num">$9</span>
+              <span class="tier__price-unit">/mo forever</span>
+            </div>
+            <p class="tier__hook">Every Solo feature, three dollars less, locked for the life of your account.</p>
+            <ul class="tier__list">
+              <li>The $9 rate never goes up, ever</li>
+              <li>A direct line to the founder</li>
+              <li>Your name on the Origin wall</li>
+              <li>A vote on what ships next</li>
+            </ul>
+            <button class="btn btn--primary btn--block" type="button" data-checkout-tier="founding">
+              Lock $9 for life →
+            </button>
+            <p class="caption tier__remaining" id="founding-remaining">
+              <span class="tier__remaining-dot" aria-hidden="true"></span>
+              <span id="founding-remaining-count">100</span> of 100 spots left. Then it closes forever.
+            </p>
+          </article>
+
+          <!-- LIFETIME. One-time $299, capped at 50. -->
+          <article class="tier tier--founder tier--lifetime" data-tier="lifetime">
+            <span class="tier__badge tier__badge--lifetime">50 spots only</span>
+            <p class="tier__name">Lifetime</p>
+            <div class="tier__price">
+              <span class="tier__price-num">$299</span>
+              <span class="tier__price-unit">once</span>
+            </div>
+            <p class="tier__hook">Pay one time. Use every Solo feature for as long as the product exists.</p>
+            <ul class="tier__list">
+              <li>No recurring charge, ever again</li>
+              <li>Pays for itself in about three months</li>
+              <li>A direct line to the founder</li>
+            </ul>
+            <button class="btn btn--ink btn--block" type="button" data-checkout-tier="lifetime">
+              Pay once, own it →
+            </button>
+            <p class="caption tier__remaining" id="lifetime-remaining">
+              <span class="tier__remaining-dot" aria-hidden="true"></span>
+              <span id="lifetime-remaining-count">50</span> of 50 spots left.
+            </p>
+          </article>
+        </div>
       </div>
     </div>
   </section>

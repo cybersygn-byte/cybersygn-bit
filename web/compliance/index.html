@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Security and compliance. CyberSygn.</title>
-  <meta name="description" content="CyberSygn's security posture. ESIGN + UETA compliant. SOC 2 Type 1 in progress. Built on Cloudflare with zero customer data at rest in any third-party datacenter." />
+  <meta name="description" content="CyberSygn's security posture. ESIGN + UETA compliant. SOC 2 Type 1 in progress. Built on Cloudflare, our sole infrastructure provider, with documents encrypted at rest." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://cybersygn.io/compliance/" />
   <meta name="color-scheme" content="light dark" />
@@ -75,7 +75,7 @@
         <h2 class="h-section">Data flow.</h2>
         <ul>
           <li><strong>Detection runs in your browser.</strong> The first pass of field detection executes entirely in JavaScript on the visitor's device. The PDF does not leave the page until the sender clicks Send.</li>
-          <li><strong>Storage is Cloudflare KV + R2.</strong> No third-party datacenter ever holds your document. KV encrypts at rest. R2 encrypts at rest.</li>
+          <li><strong>Storage is Cloudflare KV + R2.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. KV encrypts at rest. R2 encrypts at rest.</li>
           <li><strong>Transit is TLS 1.3.</strong> Every connection from browser to worker is encrypted in transit. We enforce HSTS.</li>
           <li><strong>Email delivery is Resend.</strong> Magic links to signers travel through Resend's infrastructure. DKIM + SPF + DMARC fully configured on cybersygn.io.</li>
         </ul>
@@ -97,7 +97,7 @@
 
         <h2 class="h-section">Data retention.</h2>
         <ul>
-          <li><strong>Active documents</strong> remain accessible for 365 days after creation. After that, magic links 404 unless the sender extends.</li>
+          <li><strong>Active documents</strong> remain accessible for 30 days after creation. After that, magic links 404 unless the sender extends.</li>
           <li><strong>Audit certificates</strong> are immutable once generated. We do not modify them in-place.</li>
           <li><strong>Free tier</strong> drip records retain email + name for 5 years for transactional drip. Deletable on request (see GDPR below).</li>
           <li><strong>Owner-only datasets:</strong> we retain a labeled-PDF training corpus from free-tier consent, used for improving detection. No document content; positions and types only.</li>
@@ -110,6 +110,7 @@
         <p>If we discover a security incident affecting your documents, we notify affected senders within 72 hours by the email on file. Our incident log is published at <a href="../status/">/status/</a>.</p>
 
         <h2 class="h-section">Subprocessors.</h2>
+        <div class="compare-table-wrap">
         <table class="compare" style="margin-top: var(--s-3);">
           <thead>
             <tr><th>Service</th><th>Purpose</th><th>Data category</th></tr>
@@ -121,6 +122,7 @@
             <tr><td>Anthropic</td><td>Optional vision detection (Phase 2b)</td><td>Page bitmap (opt-in only)</td></tr>
           </tbody>
         </table>
+        </div>
 
         <h2 class="h-section">Contact.</h2>
         <p>Security disclosures: <a href="mailto:security@cybersygn.io">security@cybersygn.io</a> (PGP key on request).</p>
