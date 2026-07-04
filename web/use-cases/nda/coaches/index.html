@@ -34,9 +34,7 @@
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
-          { "@type": "ListItem", "position": 2, "name": "Use cases", "item": "https://cybersygn.io/use-cases/" },
-          { "@type": "ListItem", "position": 3, "name": "NDA", "item": "https://cybersygn.io/use-cases/nda/" },
-          { "@type": "ListItem", "position": 4, "name": "For coaches", "item": "https://cybersygn.io/use-cases/nda/coaches/" }
+          { "@type": "ListItem", "position": 2, "name": "NDA for coaches", "item": "https://cybersygn.io/use-cases/nda/coaches/" }
         ]
       },
       {
@@ -50,28 +48,7 @@
       },
       {
         "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How does CyberSygn handle an NDA?",
-            "acceptedAnswer": { "@type": "Answer", "text": "A non-disclosure agreement is a legally binding contract that establishes confidential information cannot be shared with third parties without consent. CyberSygn locates every field automatically — typically name, company, date, signature, witness signature — without manual placement. Signers receive a magic link, sign in their browser, and the signed PDF returns to you with a SHA-256 audit certificate." }
-          },
-          {
-            "@type": "Question",
-            "name": "Is this legally binding for coaches?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign." }
-          },
-          {
-            "@type": "Question",
-            "name": "Do the signers need an account?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. Signers click a unique magic link and sign in the browser. No signup, no password, no app to install." }
-          },
-          {
-            "@type": "Question",
-            "name": "What does this cost?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain." }
-          }
-        ]
+        "mainEntity": [{"@type":"Question","name":"How does CyberSygn handle an NDA?","acceptedAnswer":{"@type":"Answer","text":"A non-disclosure agreement is a legally binding contract that establishes confidential information cannot be shared with third parties without consent. CyberSygn locates every field automatically, typically name, company, date, signature, witness signature, without manual placement. Signers receive a magic link, sign in their browser, and the signed PDF returns to you with a SHA-256 audit certificate."}},{"@type":"Question","name":"Is this legally binding for coaches?","acceptedAnswer":{"@type":"Answer","text":"Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign."}},{"@type":"Question","name":"Do the signers need an account?","acceptedAnswer":{"@type":"Answer","text":"No. Signers click a unique magic link and sign in the browser. No signup, no password, no app to install."}},{"@type":"Question","name":"What does this cost?","acceptedAnswer":{"@type":"Answer","text":"Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain."}}]
       }
     ]
   }
@@ -172,6 +149,35 @@
         <div class="hero__actions" style="margin-top: var(--s-5);">
           <a class="btn btn--primary btn--lg" href="../../../preview/">Start free →</a>
           <a class="btn btn--ghost btn--lg" href="../../../#pricing">See plans →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Questions.</p>
+            <h2 class="h-section section__title" id="faq-title">Common questions.</h2>
+          </div>
+        </header>
+        <div class="faq">
+          <details class="faq__item">
+            <summary class="faq__q">How does CyberSygn handle an NDA?</summary>
+            <div class="faq__a"><p>A non-disclosure agreement is a legally binding contract that establishes confidential information cannot be shared with third parties without consent. CyberSygn locates every field automatically, typically name, company, date, signature, witness signature, without manual placement. Signers receive a magic link, sign in their browser, and the signed PDF returns to you with a SHA-256 audit certificate.</p></div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Is this legally binding for coaches?</summary>
+            <div class="faq__a"><p>Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign.</p></div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">Do the signers need an account?</summary>
+            <div class="faq__a"><p>No. Signers click a unique magic link and sign in the browser. No signup, no password, no app to install.</p></div>
+          </details>
+          <details class="faq__item">
+            <summary class="faq__q">What does this cost?</summary>
+            <div class="faq__a"><p>Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain.</p></div>
+          </details>
         </div>
       </div>
     </section>

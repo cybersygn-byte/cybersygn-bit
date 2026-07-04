@@ -476,9 +476,9 @@ function renderIndex(published) {
 
         <div class="blog-controls">
           <input id="blog-search" class="blog-search" type="search" placeholder="Search the archive." aria-label="Search the archive" />
-          <div class="blog-cats" role="tablist" aria-label="Categories">
-            <button class="blog-cat is-active" data-cat="all" type="button">All ${published.length}</button>
-            ${categories.map(c => `<button class="blog-cat" data-cat="${esc(c)}" type="button">${esc(c)}</button>`).join('')}
+          <div class="blog-cats" role="group" aria-label="Categories">
+            <button class="blog-cat is-active" data-cat="all" type="button" aria-pressed="true">All ${published.length}</button>
+            ${categories.map(c => `<button class="blog-cat" data-cat="${esc(c)}" type="button" aria-pressed="false">${esc(c)}</button>`).join('')}
           </div>
         </div>
 
@@ -536,8 +536,9 @@ function renderIndex(published) {
       });
       cats.forEach(function (b) {
         b.addEventListener('click', function () {
-          cats.forEach(function (x) { x.classList.remove('is-active'); });
+          cats.forEach(function (x) { x.classList.remove('is-active'); x.setAttribute('aria-pressed', 'false'); });
           b.classList.add('is-active');
+          b.setAttribute('aria-pressed', 'true');
           state.cat = b.dataset.cat;
           refresh();
         });

@@ -979,12 +979,21 @@ fileInput.addEventListener('change', e => {
   if (files.length) handleFiles(files);
 });
 
+const fileChooseButton = $('file-choose');
+if (fileChooseButton) {
+  fileChooseButton.addEventListener('click', () => fileInput.click());
+}
+
 const cameraInput = $('camera-input');
 if (cameraInput) {
   cameraInput.addEventListener('change', e => {
     const files = Array.from(e.target.files || []);
     if (files.length) handleFiles(files);
   });
+  const cameraChooseButton = $('camera-choose');
+  if (cameraChooseButton) {
+    cameraChooseButton.addEventListener('click', () => cameraInput.click());
+  }
 }
 
 resetButton.addEventListener('click', resetApp);

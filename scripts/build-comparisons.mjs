@@ -116,6 +116,23 @@ function renderPage(c) {
   const title = `CyberSygn vs ${c.name}. Side by side.`;
   const description = `How CyberSygn compares to ${c.name} on speed, price, signer experience, and field placement. Automatic field detection vs. drag-and-drop, all the trade-offs honestly.`;
 
+  // Single source of truth for the FAQ: rendered visibly on the page AND
+  // emitted as FAQPage JSON-LD (Google requires marked-up FAQs to be visible).
+  const faqs = [
+    {
+      q: `How is CyberSygn different from ${c.name}?`,
+      a: `CyberSygn finds every signature line, initial, date, and checkbox automatically in about 3 seconds. ${c.name} makes you drag each box into place by hand. CyberSygn signers click a magic link and sign without creating an account. Same ESIGN Act and UETA compliance; very different time investment.`,
+    },
+    {
+      q: `Is CyberSygn cheaper than ${c.name}?`,
+      a: `${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. CyberSygn Solo is $12/month for unlimited documents. CyberSygn Origin is $9/month locked for the life of your account, available to the first 100 founders. The Origin rate disappears once the cap is filled.`,
+    },
+    {
+      q: `Can I migrate from ${c.name} to CyberSygn?`,
+      a: `Yes. Cancel your ${c.name} subscription, save your templates as PDFs, and upload them to CyberSygn. We detect the fields automatically. Past signed PDFs from ${c.name} remain valid signatures; they don't need to be re-signed.`,
+    },
+  ];
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -167,23 +184,7 @@ function renderPage(c) {
       },
       {
         "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": ${JSON.stringify(`How is CyberSygn different from ${c.name}?`)},
-            "acceptedAnswer": { "@type": "Answer", "text": ${JSON.stringify(`CyberSygn finds every signature line, initial, date, and checkbox automatically in about 3 seconds. ${c.name} makes you drag each box into place by hand. CyberSygn signers click a magic link and sign without creating an account. Same ESIGN Act and UETA compliance; very different time investment.`)} }
-          },
-          {
-            "@type": "Question",
-            "name": ${JSON.stringify(`Is CyberSygn cheaper than ${c.name}?`)},
-            "acceptedAnswer": { "@type": "Answer", "text": ${JSON.stringify(`${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. CyberSygn Solo is $12/month for unlimited documents. CyberSygn Origin is $9/month locked for the life of your account, available to the first 100 founders. The Origin rate disappears once the cap is filled.`)} }
-          },
-          {
-            "@type": "Question",
-            "name": ${JSON.stringify(`Can I migrate from ${c.name} to CyberSygn?`)},
-            "acceptedAnswer": { "@type": "Answer", "text": ${JSON.stringify(`Yes. Cancel your ${c.name} subscription, save your templates as PDFs, and upload them to CyberSygn. We detect the fields automatically. Past signed PDFs from ${c.name} remain valid signatures — they don't need to be re-signed.`)} }
-          }
-        ]
+        "mainEntity": ${JSON.stringify(faqs.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })))}
       }
     ]
   }
@@ -346,6 +347,23 @@ function renderPage(c) {
             <span class="btn-arrow" aria-hidden="true">→</span>
           </a>
           <a class="btn btn--ghost btn--lg" href="../../#founding">Claim an Origin spot →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Questions.</p>
+            <h2 class="h-section section__title" id="faq-title">Common questions.</h2>
+          </div>
+        </header>
+        <div class="faq">
+${faqs.map(f => `          <details class="faq__item">
+            <summary class="faq__q">${esc(f.q)}</summary>
+            <div class="faq__a"><p>${esc(f.a)}</p></div>
+          </details>`).join('\n')}
         </div>
       </div>
     </section>

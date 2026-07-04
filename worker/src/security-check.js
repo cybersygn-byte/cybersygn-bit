@@ -1,0 +1,153 @@
+/**
+ * Automated security self-check.
+ *
+ * Runs twice daily from the hourly cron in index.js scheduled() — gated to
+ * 12:00 and 00:00 UTC, which is 06:00 and 18:00 America/Denver during MDT
+ * (UTC-6). It verifies deployment posture in three ways:
+ *
+ *   1. Config / secrets   — the critical secrets are set, Stripe is a LIVE key,
+ *                           owner login is configured, the dev backdoor is closed.
+ *   2. KV reachability     — the doc store answers.
+ *   3. Live auth behavior  — self-probes the running site: protected endpoints
+ *                            must reject unauthenticated callers (401/403), and
+ *                            responses must carry the baseline security headers.
+ *
+ * The result is stored at meta:security-check:latest (readable by the owner
+ * panel via GET /api/owner/security-check) and the owner is emailed ONLY when a
+ * check fails — a green run is silent, so there is no twice-daily inbox noise.
+ *
+ * Every branch is wrapped so this can never throw into the cron handler.
+ */
+
+import { getStorage } from './storage.js';
+import { deliver } from './email.js';
+
+const RESULT_KEY = 'meta:security-check:latest';
+
+/**
+ * @param {object} env
+ * @param {{ origin?: string, trigger?: string }} [opts]
+ * @returns {Promise<object>} the result record
+ */
+export async function runSecurityCheck(env, opts = {}) {
+  const checks = [];
+  const add = (name, pass, detail = '', severity = 'high') =>
+    checks.push({ name, pass: !!pass, detail, severity });
+
+  const has = (k) => typeof (env && env[k]) === 'string' && env[k].length > 0;
+
+  // ---- 1. config / secrets --------------------------------------------------
+  add('stripe_secret_set', has('STRIPE_SECRET_KEY'), 'STRIPE_SECRET_KEY missing', 'critical');
+  add('stripe_secret_is_live',
+    !has('STRIPE_SECRET_KEY') || env.STRIPE_SECRET_KEY.startsWith('sk_live'),
+    'a TEST Stripe key is deployed to production', 'critical');
+  add('stripe_webhook_secret_set', has('STRIPE_WEBHOOK_SECRET'),
+    'STRIPE_WEBHOOK_SECRET missing — webhooks cannot be verified', 'critical');
+  add('resend_key_set', has('RESEND_API_KEY'), 'RESEND_API_KEY missing — email disabled', 'medium');
+
+  let ownerConfigured = has('OWNER_USERNAME') && has('OWNER_PASSWORD_HASH');
+  if (!ownerConfigured) {
+    try {
+      const raw = await getStorage(env).docs.get('owner:cred');
+      ownerConfigured = !!(raw && JSON.parse(raw).hash);
+    } catch { /* leave false */ }
+  }
+  add('owner_login_configured', ownerConfigured,
+    'owner login not configured (no username/hash and no KV credential)', 'critical');
+  add('owner_backdoor_closed', has('CYBERSYGN_OWNER_HASH'),
+    'CYBERSYGN_OWNER_HASH unset — the publicly-documented dev phrase can claim owner', 'high');
+
+  // ---- 2. KV reachability ---------------------------------------------------
+  let kvOk = false;
+  try { await getStorage(env).docs.get(RESULT_KEY); kvOk = true; } catch { /* fail */ }
+  add('kv_reachable', kvOk, 'CYBERSYGN_DOCS did not answer', 'high');
+
+  // ---- 3. live auth behavior (self-probe) -----------------------------------
+  const base = (opts.origin || (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io').replace(/\/$/, '');
+  await probe(add, 'v1_requires_key', `${base}/api/v1/me`, { expect: [401] });
+  await probe(add, 'v1_create_requires_key', `${base}/api/v1/documents`, { method: 'POST', body: '{}', expect: [401] });
+  await probe(add, 'owner_apikeys_requires_auth', `${base}/api/owner/apikeys`, { method: 'POST', body: '{}', expect: [401, 403] });
+  await probe(add, 'owner_metrics_requires_auth', `${base}/api/owner/metrics/dashboard`, { expect: [401, 403] });
+  await probe(add, 'health_responds', `${base}/api/health`, { belowServerError: true });
+  await probeHeaders(add, `${base}/`);
+
+  const failures = checks.filter((c) => !c.pass);
+  const result = {
+    ranAt: new Date().toISOString(),
+    trigger: opts.trigger || 'cron',
+    ok: failures.length === 0,
+    passed: checks.length - failures.length,
+    total: checks.length,
+    failures: failures.map((f) => ({ name: f.name, detail: f.detail, severity: f.severity })),
+    checks,
+  };
+
+  // persist latest (40-day TTL so a stale record self-expires)
+  try {
+    await getStorage(env).docs.put(RESULT_KEY, JSON.stringify(result), { expirationTtl: 60 * 60 * 24 * 40 });
+  } catch { /* non-fatal */ }
+
+  // alert owner ONLY on failure
+  if (!result.ok) {
+    const to = (env && (env.OWNER_EMAIL || env.CYBERSYGN_OWNER_EMAIL)) || null;
+    if (to) {
+      const lines = result.failures
+        .map((f) => `- [${f.severity}] ${f.name}${f.detail ? ': ' + f.detail : ''}`)
+        .join('\n');
+      try {
+        await deliver(env, {
+          to,
+          subject: `CyberSygn security check: ${result.failures.length} issue(s)`,
+          text: `The twice-daily security self-check found issues at ${result.ranAt}:\n\n${lines}\n\nFull report: ${base}/control/\n\nThis is automated; a passing run sends no email.`,
+        });
+      } catch { /* email best-effort */ }
+    }
+  }
+  return result;
+}
+
+/** Read the last stored result (for the owner panel / on-demand endpoint). */
+export async function getLatestSecurityCheck(env) {
+  try {
+    const raw = await getStorage(env).docs.get(RESULT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ---- helpers ---------------------------------------------------------------
+
+async function probe(add, name, url, opts = {}) {
+  try {
+    const res = await fetch(url, {
+      method: opts.method || 'GET',
+      headers: opts.body ? { 'content-type': 'application/json' } : undefined,
+      body: opts.body,
+      redirect: 'manual',
+    });
+    if (opts.belowServerError) {
+      add(name, res.status < 500, `HTTP ${res.status}`, 'medium');
+      return;
+    }
+    add(name, opts.expect.includes(res.status), `HTTP ${res.status} (expected ${opts.expect.join('/')})`);
+  } catch (e) {
+    add(name, false, 'probe failed: ' + (e && e.message ? e.message : String(e)));
+  }
+}
+
+async function probeHeaders(add, url) {
+  try {
+    const res = await fetch(url, { redirect: 'manual' });
+    const h = res.headers;
+    add('header_nosniff', (h.get('x-content-type-options') || '').toLowerCase() === 'nosniff',
+      'X-Content-Type-Options: nosniff missing', 'medium');
+    add('header_frame_protect',
+      !!(h.get('x-frame-options') || (h.get('content-security-policy') || '').includes('frame-ancestors')),
+      'no X-Frame-Options / CSP frame-ancestors (clickjacking)', 'medium');
+    add('header_referrer_policy', !!h.get('referrer-policy'),
+      'Referrer-Policy missing', 'low');
+  } catch (e) {
+    add('header_probe', false, String(e && e.message ? e.message : e), 'medium');
+  }
+}

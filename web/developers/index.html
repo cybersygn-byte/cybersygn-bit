@@ -172,10 +172,10 @@
               </ul>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="create-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="create-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-create-curl" data-tab="create-curl" type="button" role="tab" aria-selected="true" aria-controls="create-curl">curl</button>
+                <button class="dev-tab" id="tab-create-js" data-tab="create-js" type="button" role="tab" aria-selected="false" aria-controls="create-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="create-curl">
+              <div class="dev-panel is-active" id="create-curl" role="tabpanel" aria-labelledby="tab-create-curl">
 <pre><code>curl https://cybersygn.io/api/v1/documents \
   -H "Authorization: Bearer cs_live_xxx" \
   -H "Content-Type: application/json" \
@@ -189,7 +189,7 @@
     "signing_order": "sequential"
   }'</code></pre>
               </div>
-              <div class="dev-panel" id="create-js">
+              <div class="dev-panel" id="create-js" role="tabpanel" aria-labelledby="tab-create-js">
 <pre><code>const res = await fetch("https://cybersygn.io/api/v1/documents", {
   method: "POST",
   headers: {
@@ -241,14 +241,14 @@ console.log(doc.id, doc.signers[0].signing_url);</code></pre>
               <p>Fetch a document's current status and per-signer state. This is the simplest way to track progress: poll it until <code>status</code> is <code>completed</code> (see <a href="#webhooks">Webhooks</a> for the push-based alternative).</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="get-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="get-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-get-curl" data-tab="get-curl" type="button" role="tab" aria-selected="true" aria-controls="get-curl">curl</button>
+                <button class="dev-tab" id="tab-get-js" data-tab="get-js" type="button" role="tab" aria-selected="false" aria-controls="get-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="get-curl">
+              <div class="dev-panel is-active" id="get-curl" role="tabpanel" aria-labelledby="tab-get-curl">
 <pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123 \
   -H "Authorization: Bearer cs_live_xxx"</code></pre>
               </div>
-              <div class="dev-panel" id="get-js">
+              <div class="dev-panel" id="get-js" role="tabpanel" aria-labelledby="tab-get-js">
 <pre><code>const res = await fetch(
   "https://cybersygn.io/api/v1/documents/doc_abc123",
   { headers: { "Authorization": "Bearer cs_live_xxx" } }
@@ -286,15 +286,15 @@ if (doc.status === "completed") {
               <p>Returns the flattened, signed PDF bytes — the same document a signer receives. Only available once the document is <code>completed</code>; before that you get <code>409 not_completed</code>.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="dl-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="dl-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-dl-curl" data-tab="dl-curl" type="button" role="tab" aria-selected="true" aria-controls="dl-curl">curl</button>
+                <button class="dev-tab" id="tab-dl-js" data-tab="dl-js" type="button" role="tab" aria-selected="false" aria-controls="dl-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="dl-curl">
+              <div class="dev-panel is-active" id="dl-curl" role="tabpanel" aria-labelledby="tab-dl-curl">
 <pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123/download \
   -H "Authorization: Bearer cs_live_xxx" \
   -o signed.pdf</code></pre>
               </div>
-              <div class="dev-panel" id="dl-js">
+              <div class="dev-panel" id="dl-js" role="tabpanel" aria-labelledby="tab-dl-js">
 <pre><code>const res = await fetch(
   "https://cybersygn.io/api/v1/documents/doc_abc123/download",
   { headers: { "Authorization": "Bearer cs_live_xxx" } }
@@ -313,15 +313,15 @@ if (res.ok) {
               <p>Returns the tamper-evident audit certificate for a completed document: who signed, when, from where, and the document fingerprint. Like the download, it is available only once the document is <code>completed</code> and returns <code>409 not_completed</code> otherwise.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="audit-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="audit-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-audit-curl" data-tab="audit-curl" type="button" role="tab" aria-selected="true" aria-controls="audit-curl">curl</button>
+                <button class="dev-tab" id="tab-audit-js" data-tab="audit-js" type="button" role="tab" aria-selected="false" aria-controls="audit-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="audit-curl">
+              <div class="dev-panel is-active" id="audit-curl" role="tabpanel" aria-labelledby="tab-audit-curl">
 <pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123/audit \
   -H "Authorization: Bearer cs_live_xxx" \
   -o audit.pdf</code></pre>
               </div>
-              <div class="dev-panel" id="audit-js">
+              <div class="dev-panel" id="audit-js" role="tabpanel" aria-labelledby="tab-audit-js">
 <pre><code>const res = await fetch(
   "https://cybersygn.io/api/v1/documents/doc_abc123/audit",
   { headers: { "Authorization": "Bearer cs_live_xxx" } }
@@ -337,14 +337,14 @@ const auditBytes = new Uint8Array(await res.arrayBuffer());</code></pre>
               <p>Cancel an in-flight document so it can no longer be signed. A document that is already <code>completed</code> cannot be voided and returns <code>409 already_completed</code>. Voiding an already-voided document is idempotent and returns its current state.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="void-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="void-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-void-curl" data-tab="void-curl" type="button" role="tab" aria-selected="true" aria-controls="void-curl">curl</button>
+                <button class="dev-tab" id="tab-void-js" data-tab="void-js" type="button" role="tab" aria-selected="false" aria-controls="void-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="void-curl">
+              <div class="dev-panel is-active" id="void-curl" role="tabpanel" aria-labelledby="tab-void-curl">
 <pre><code>curl -X POST https://cybersygn.io/api/v1/documents/doc_abc123/void \
   -H "Authorization: Bearer cs_live_xxx"</code></pre>
               </div>
-              <div class="dev-panel" id="void-js">
+              <div class="dev-panel" id="void-js" role="tabpanel" aria-labelledby="tab-void-js">
 <pre><code>const res = await fetch(
   "https://cybersygn.io/api/v1/documents/doc_abc123/void",
   { method: "POST", headers: { "Authorization": "Bearer cs_live_xxx" } }
@@ -361,14 +361,14 @@ const doc = await res.json(); // doc.status === "voided"</code></pre>
               <p>List the templates available to your account. Use a returned <code>slug</code> as the <code>template</code> field when you <a href="#create">create a document</a>, instead of uploading a PDF every time.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="tmpl-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="tmpl-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-tmpl-curl" data-tab="tmpl-curl" type="button" role="tab" aria-selected="true" aria-controls="tmpl-curl">curl</button>
+                <button class="dev-tab" id="tab-tmpl-js" data-tab="tmpl-js" type="button" role="tab" aria-selected="false" aria-controls="tmpl-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="tmpl-curl">
+              <div class="dev-panel is-active" id="tmpl-curl" role="tabpanel" aria-labelledby="tab-tmpl-curl">
 <pre><code>curl https://cybersygn.io/api/v1/templates \
   -H "Authorization: Bearer cs_live_xxx"</code></pre>
               </div>
-              <div class="dev-panel" id="tmpl-js">
+              <div class="dev-panel" id="tmpl-js" role="tabpanel" aria-labelledby="tab-tmpl-js">
 <pre><code>const res = await fetch("https://cybersygn.io/api/v1/templates", {
   headers: { "Authorization": "Bearer cs_live_xxx" },
 });
@@ -392,16 +392,16 @@ const { count, templates } = await res.json();</code></pre>
               <p>Run field detection on a PDF without creating or sending anything. Useful to preview what CyberSygn would place, or to seed your own <code>fields</code> array. Pass <code>pdf_base64</code> in the body.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="detect-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="detect-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-detect-curl" data-tab="detect-curl" type="button" role="tab" aria-selected="true" aria-controls="detect-curl">curl</button>
+                <button class="dev-tab" id="tab-detect-js" data-tab="detect-js" type="button" role="tab" aria-selected="false" aria-controls="detect-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="detect-curl">
+              <div class="dev-panel is-active" id="detect-curl" role="tabpanel" aria-labelledby="tab-detect-curl">
 <pre><code>curl https://cybersygn.io/api/v1/detect \
   -H "Authorization: Bearer cs_live_xxx" \
   -H "Content-Type: application/json" \
   -d '{ "pdf_base64": "JVBERi0xLjcK..." }'</code></pre>
               </div>
-              <div class="dev-panel" id="detect-js">
+              <div class="dev-panel" id="detect-js" role="tabpanel" aria-labelledby="tab-detect-js">
 <pre><code>const res = await fetch("https://cybersygn.io/api/v1/detect", {
   method: "POST",
   headers: {
@@ -431,14 +431,14 @@ const { count, fields } = await res.json();</code></pre>
               <p>Sanity-check a key. Returns the account it resolves to, the key id, and the mode. Handy as a first call when wiring up an integration.</p>
 
               <div class="dev-tabs" role="tablist">
-                <button class="dev-tab is-active" data-tab="me-curl" type="button" role="tab">curl</button>
-                <button class="dev-tab" data-tab="me-js" type="button" role="tab">JavaScript</button>
+                <button class="dev-tab is-active" id="tab-me-curl" data-tab="me-curl" type="button" role="tab" aria-selected="true" aria-controls="me-curl">curl</button>
+                <button class="dev-tab" id="tab-me-js" data-tab="me-js" type="button" role="tab" aria-selected="false" aria-controls="me-js">JavaScript</button>
               </div>
-              <div class="dev-panel is-active" id="me-curl">
+              <div class="dev-panel is-active" id="me-curl" role="tabpanel" aria-labelledby="tab-me-curl">
 <pre><code>curl https://cybersygn.io/api/v1/me \
   -H "Authorization: Bearer cs_live_xxx"</code></pre>
               </div>
-              <div class="dev-panel" id="me-js">
+              <div class="dev-panel" id="me-js" role="tabpanel" aria-labelledby="tab-me-js">
 <pre><code>const res = await fetch("https://cybersygn.io/api/v1/me", {
   headers: { "Authorization": "Bearer cs_live_xxx" },
 });
@@ -499,8 +499,9 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
             <section id="embedded">
               <h2>Embedded signing <a class="dev-anchor" href="#embedded" aria-label="Link to this section">#</a></h2>
               <p>Keep signing inside your own app. Every signer in the create response carries a <code>signing_url</code> — drop it into an iframe and the full CyberSygn signing flow renders in place. No redirect to a third-party site.</p>
-<pre><code>&lt;iframe
-  src="https://cybersygn.io/x?t=..."   &lt;!-- the signer's signing_url --&gt;
+<pre><code>&lt;!-- src is the signer's signing_url from the create response --&gt;
+&lt;iframe
+  src="https://cybersygn.io/x?t=..."
   style="width:100%;height:90vh;border:0"
   allow="clipboard-read; clipboard-write; camera"
   title="Sign with CyberSygn"&gt;
@@ -572,7 +573,10 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
         var btn = e.target.closest('.dev-tab');
         if (!btn) return;
         var id = btn.getAttribute('data-tab');
-        tabs.querySelectorAll('.dev-tab').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+        tabs.querySelectorAll('.dev-tab').forEach(function (b) {
+          b.classList.toggle('is-active', b === btn);
+          b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+        });
         group.querySelectorAll('.dev-panel').forEach(function (p) { p.classList.toggle('is-active', p.id === id); });
       });
     });

@@ -94,11 +94,11 @@
     <div class="modal-card">
       <div class="modal-card__head">
         <span class="modal-card__kicker">Free template.</span>
-        <h2 id="tmpl-modal-title" class="modal-card__title">— template title —</h2>
+        <h2 id="tmpl-modal-title" class="modal-card__title">Template title</h2>
         <button type="button" class="modal-card__close" id="tmpl-modal-close" aria-label="Close">×</button>
       </div>
       <div class="modal-card__body">
-        <p class="modal-card__lede" id="tmpl-modal-blurb">— blurb —</p>
+        <p class="modal-card__lede" id="tmpl-modal-blurb">Template description</p>
         <form id="tmpl-modal-form" autocomplete="on">
           <div class="exit-intent__row">
             <input class="exit-intent__input" id="tmpl-first" type="text" name="firstName" placeholder="First name" autocomplete="given-name" required />
@@ -238,21 +238,42 @@
     var directBtn = document.getElementById('tmpl-direct-dl');
     var closeBtn = document.getElementById('tmpl-modal-close');
     var currentSlug = null;
+    var opener = null;
+
+    // Keep Tab focus cycling inside the open modal (aria-modal contract).
+    function trapFocus(e) {
+      if (e.key !== 'Tab' || modal.hidden) return;
+      var focusables = modal.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) return;
+      var first = focusables[0];
+      var last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
 
     grid.addEventListener('click', function (e) {
       var btn = e.target.closest('.tmpl-card__btn');
       if (!btn) return;
+      opener = btn;
       currentSlug = btn.dataset.slug;
       modalTitle.textContent = btn.dataset.title + ' template';
       modalBlurb.textContent = btn.dataset.blurb;
       statusEl.textContent = 'Goes to CyberSygn, nowhere else.';
       modal.hidden = false;
       document.body.style.overflow = 'hidden';
+      modal.addEventListener('keydown', trapFocus);
       setTimeout(function () { firstEl.focus(); }, 60);
     });
     function close() {
       modal.hidden = true;
       document.body.style.overflow = '';
+      modal.removeEventListener('keydown', trapFocus);
+      if (opener) { opener.focus(); opener = null; }
     }
     closeBtn.addEventListener('click', close);
     modal.addEventListener('click', function (e) { if (e.target === modal) close(); });

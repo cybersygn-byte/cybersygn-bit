@@ -131,17 +131,15 @@ export async function validateOwnerToken(token, env) {
 }
 
 /**
- * Extract owner token from a request, checking the header first then the
- * URL query string. Returns null if no token present.
+ * Extract owner token from a request. Header only: tokens in URLs end up in
+ * logs, browser history, and Referer headers, and no client flow ever sent
+ * the token via query string (the ?owner= page gesture carries the claim
+ * PHRASE, which the client exchanges via POST /api/owner/claim).
  */
-export function extractOwnerToken(request, url) {
+export function extractOwnerToken(request) {
   const header = request.headers.get('x-cybersygn-owner')
               || request.headers.get('X-CyberSygn-Owner');
   if (header && header.length === TOKEN_BYTES * 2) return header;
-  if (url && url.searchParams) {
-    const qp = url.searchParams.get('owner');
-    if (qp && qp.length === TOKEN_BYTES * 2) return qp;
-  }
   return null;
 }
 

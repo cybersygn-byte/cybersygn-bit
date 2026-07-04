@@ -47,6 +47,27 @@ function renderPage(doc, vert) {
   const h1 = `The fastest way for ${vert.name} to sign ${doc.indefinite || 'a'} ${doc.name}.`;
   const ogImage = 'https://cybersygn.io/brand/og-image.png';
 
+  // Single source of truth for the FAQ: rendered visibly on the page AND
+  // emitted as FAQPage JSON-LD (Google requires marked-up FAQs to be visible).
+  const faqs = [
+    {
+      q: `How does CyberSygn handle ${doc.indefinite || 'a'} ${doc.name}?`,
+      a: `${cap(doc.description)} CyberSygn locates every field automatically, typically ${doc.fields}, without manual placement. Signers receive a magic link, sign in their browser, and the signed PDF returns to you with a SHA-256 audit certificate.`,
+    },
+    {
+      q: `Is this legally binding for ${vert.name}?`,
+      a: 'Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign.',
+    },
+    {
+      q: 'Do the signers need an account?',
+      a: 'No. Signers click a unique magic link and sign in the browser. No signup, no password, no app to install.',
+    },
+    {
+      q: 'What does this cost?',
+      a: 'Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain.',
+    },
+  ];
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -83,9 +104,7 @@ function renderPage(doc, vert) {
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "CyberSygn", "item": "https://cybersygn.io/" },
-          { "@type": "ListItem", "position": 2, "name": "Use cases", "item": "https://cybersygn.io/use-cases/" },
-          { "@type": "ListItem", "position": 3, "name": "${esc(cap(doc.name))}", "item": "https://cybersygn.io/use-cases/${esc(doc.slug)}/" },
-          { "@type": "ListItem", "position": 4, "name": "For ${esc(vert.name)}", "item": "${esc(canonical)}" }
+          { "@type": "ListItem", "position": 2, "name": "${esc(cap(doc.name))} for ${esc(vert.name)}", "item": "${esc(canonical)}" }
         ]
       },
       {
@@ -99,28 +118,7 @@ function renderPage(doc, vert) {
       },
       {
         "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": ${JSON.stringify(`How does CyberSygn handle ${doc.indefinite || 'a'} ${doc.name}?`)},
-            "acceptedAnswer": { "@type": "Answer", "text": ${JSON.stringify(`${cap(doc.description)} CyberSygn locates every field automatically — typically ${doc.fields} — without manual placement. Signers receive a magic link, sign in their browser, and the signed PDF returns to you with a SHA-256 audit certificate.`)} }
-          },
-          {
-            "@type": "Question",
-            "name": ${JSON.stringify(`Is this legally binding for ${vert.name}?`)},
-            "acceptedAnswer": { "@type": "Answer", "text": "Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign." }
-          },
-          {
-            "@type": "Question",
-            "name": "Do the signers need an account?",
-            "acceptedAnswer": { "@type": "Answer", "text": "No. Signers click a unique magic link and sign in the browser. No signup, no password, no app to install." }
-          },
-          {
-            "@type": "Question",
-            "name": "What does this cost?",
-            "acceptedAnswer": { "@type": "Answer", "text": "Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain." }
-          }
-        ]
+        "mainEntity": ${JSON.stringify(faqs.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })))}
       }
     ]
   }
@@ -221,6 +219,23 @@ function renderPage(doc, vert) {
         <div class="hero__actions" style="margin-top: var(--s-5);">
           <a class="btn btn--primary btn--lg" href="../../../preview/">Start free →</a>
           <a class="btn btn--ghost btn--lg" href="../../../#pricing">See plans →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Questions.</p>
+            <h2 class="h-section section__title" id="faq-title">Common questions.</h2>
+          </div>
+        </header>
+        <div class="faq">
+${faqs.map(f => `          <details class="faq__item">
+            <summary class="faq__q">${esc(f.q)}</summary>
+            <div class="faq__a"><p>${esc(f.a)}</p></div>
+          </details>`).join('\n')}
         </div>
       </div>
     </section>

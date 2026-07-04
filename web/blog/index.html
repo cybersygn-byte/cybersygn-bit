@@ -50,9 +50,9 @@
 
         <div class="blog-controls">
           <input id="blog-search" class="blog-search" type="search" placeholder="Search the archive." aria-label="Search the archive" />
-          <div class="blog-cats" role="tablist" aria-label="Categories">
-            <button class="blog-cat is-active" data-cat="all" type="button">All 8</button>
-            <button class="blog-cat" data-cat="compliance" type="button">compliance</button><button class="blog-cat" data-cat="fundamentals" type="button">fundamentals</button>
+          <div class="blog-cats" role="group" aria-label="Categories">
+            <button class="blog-cat is-active" data-cat="all" type="button" aria-pressed="true">All 8</button>
+            <button class="blog-cat" data-cat="compliance" type="button" aria-pressed="false">compliance</button><button class="blog-cat" data-cat="fundamentals" type="button" aria-pressed="false">fundamentals</button>
           </div>
         </div>
 
@@ -209,8 +209,9 @@
       });
       cats.forEach(function (b) {
         b.addEventListener('click', function () {
-          cats.forEach(function (x) { x.classList.remove('is-active'); });
+          cats.forEach(function (x) { x.classList.remove('is-active'); x.setAttribute('aria-pressed', 'false'); });
           b.classList.add('is-active');
+          b.setAttribute('aria-pressed', 'true');
           state.cat = b.dataset.cat;
           refresh();
         });

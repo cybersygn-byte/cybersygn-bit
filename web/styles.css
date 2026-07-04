@@ -193,10 +193,19 @@
   --accent-line:  rgba(0, 203, 246, 0.36);
   --accent-text:  #6EDEFA;
   --accent-glow:  rgba(0, 203, 246, 0.42);
+  --accent-2:     #C36BFF;
+  --accent-2-soft: rgba(195, 107, 255, 0.14);
   --ok:           #46D097;
   --ok-soft:      rgba(70, 208, 151, 0.14);
   --warn:         #F4B850;
   --warn-soft:    rgba(244, 184, 80, 0.14);
+  --danger:       #FF5D6D;
+  --danger-soft:  rgba(255, 93, 109, 0.14);
+  --shadow-card:  0 1px 2px rgba(0,0,0,0.36), 0 8px 24px -12px rgba(0,0,0,0.54);
+  --shadow-pop:   0 1px 2px rgba(0,0,0,0.44), 0 24px 48px -16px rgba(0,0,0,0.64);
+  --shadow-doc:   0 1px 2px rgba(0,0,0,0.40), 0 20px 50px -24px rgba(0,0,0,0.64);
+  --shadow-glow:  0 0 0 1px var(--accent-line),
+                  0 4px 32px -4px var(--accent-glow);
 }
 /* Forced light: explicitly restore the default variables in case the OS
    preference is dark and a Studio embedder wants light to win. We re-
@@ -204,11 +213,13 @@
 :root[data-theme="light"] {
   --bg:           #F7F8FB;
   --bg-2:         #EFF1F6;
+  --bg-3:         #E4E7EE;
   --surface:      #FFFFFF;
+  --surface-2:    #F7F8FB;
   --text:         #011434;
   --text-2:       #3A4258;
   --text-3:       #4F5874;
-  --text-on-dark: #FFFFFF;
+  --text-on-dark: #F7F8FB;
   --line:         rgba(1, 20, 52, 0.08);
   --line-2:       rgba(1, 20, 52, 0.14);
   --line-strong:  rgba(1, 20, 52, 0.28);
@@ -216,10 +227,22 @@
   --accent-line:  rgba(0, 203, 246, 0.32);
   --accent-text:  #007496;
   --accent-glow:  rgba(0, 203, 246, 0.36);
+  --accent-2:     #B644E6;
+  --accent-2-soft: rgba(182, 68, 230, 0.10);
   --ok:           #1E8A5F;
   --ok-soft:      rgba(30, 138, 95, 0.10);
   --warn:         #C9831D;
   --warn-soft:    rgba(201, 131, 29, 0.12);
+  --danger:       #D63B47;
+  --danger-soft:  rgba(214, 59, 71, 0.12);
+  --shadow-card:  0 1px 2px rgba(10, 14, 26, 0.04),
+                  0 8px 24px -12px rgba(10, 14, 26, 0.10);
+  --shadow-pop:   0 1px 2px rgba(10, 14, 26, 0.06),
+                  0 24px 48px -16px rgba(10, 14, 26, 0.18);
+  --shadow-doc:   0 1px 2px rgba(10, 14, 26, 0.04),
+                  0 20px 50px -24px rgba(10, 14, 26, 0.22);
+  --shadow-glow:  0 0 0 1px var(--accent-line),
+                  0 4px 24px -4px var(--accent-glow);
 }
 
 /* ========================================================================
@@ -422,14 +445,19 @@ button { font: inherit; cursor: pointer; }
 
 .btn--primary {
   background: var(--accent);
-  color: #fff;
+  /* Navy ink on the cyan fill. White-on-cyan was ~1.9:1, far below
+     WCAG AA; dark ink reads in both themes since the cyan is shared. */
+  color: #011434;
   border-color: var(--accent);
 }
 .btn--primary:hover { background: var(--accent-text); border-color: var(--accent-text); color: #fff; }
 @media (prefers-color-scheme: dark) {
-  :root .btn--primary,
+  /* Dark-mode hover surface (--accent-text) is light cyan, keep dark ink. */
   :root .btn--primary:hover { color: #0A0E1A; }
 }
+/* Forced-theme mirrors (slice 95 embeds set data-theme on <html>). */
+:root[data-theme="dark"] .btn--primary:hover { color: #0A0E1A; }
+:root[data-theme="light"] .btn--primary:hover { color: #fff; }
 
 .btn--ink {
   background: var(--text);
@@ -486,6 +514,15 @@ button { font: inherit; cursor: pointer; }
   :root .wordmark__img {
     content: url("./brand/lockup-white@2x.png");
   }
+}
+/* Forced-theme mirrors: embeds set data-theme on <html>, which the
+   media query above never sees. Without these a forced-dark page on a
+   light OS keeps the navy lockup on a navy masthead. */
+:root[data-theme="dark"] .wordmark__img {
+  content: url("./brand/lockup-white@2x.png");
+}
+:root[data-theme="light"] .wordmark__img {
+  content: url("./brand/lockup-navy@2x.png");
 }
 
 .wordmark:hover .wordmark__img {
@@ -853,7 +890,8 @@ button { font: inherit; cursor: pointer; }
   height: 56px;
   border-radius: 50%;
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.9:1). */
+  color: #011434;
   border: 0;
   cursor: pointer;
   display: grid;
@@ -1157,38 +1195,9 @@ button { font: inherit; cursor: pointer; }
 .faq-pre__item a { color: var(--accent-text); }
 
 /* ── Blog ─────────────────────────────────────────────────── */
-.blog-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--s-5);
-}
-.blog-card {
-  padding: var(--s-5);
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
-}
-.blog-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -16px rgba(1,20,52,0.30);
-}
-.blog-card h2 {
-  margin: var(--s-2) 0 var(--s-3);
-  letter-spacing: -0.015em;
-}
-.blog-card h2 a {
-  color: var(--text);
-  text-decoration: none;
-}
-.blog-card h2 a:hover { color: var(--accent-text); }
-.blog-card p {
-  margin: 0;
-  color: var(--text-2);
-  font-size: var(--t-sm);
-  line-height: 1.55;
-}
-
+/* The first-generation .blog-list / .blog-card rules that lived here
+   were dead (index uses .blog-grid + .blog-card__* below) and their
+   h2/p descendants out-specified the canonical BEM block. Removed. */
 .blog-post {
   max-width: 760px;
   padding: var(--s-7) 0 var(--s-8);
@@ -1387,7 +1396,8 @@ button { font: inherit; cursor: pointer; }
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.9:1). */
+  color: #011434;
   font-family: var(--mono);
   font-size: 10px;
   font-weight: 600;
@@ -1946,6 +1956,9 @@ button { font: inherit; cursor: pointer; }
 @media (prefers-color-scheme: dark) {
   :root .demo-field__tag { color: #0A0E1A; }
 }
+/* Forced-theme mirrors (embeds set data-theme on <html>). */
+:root[data-theme="dark"] .demo-field__tag { color: #0A0E1A; }
+:root[data-theme="light"] .demo-field__tag { color: #fff; }
 
 .demo-field--date .demo-field__hl  { border-color: var(--field-date); background: var(--ok-soft); }
 .demo-field--date .demo-field__tag { background: var(--field-date); }
@@ -2268,6 +2281,9 @@ button { font: inherit; cursor: pointer; }
 @media (prefers-color-scheme: dark) {
   :root .tier--featured { background: var(--accent); color: #0A0E1A; border-color: var(--accent); }
 }
+/* Forced-theme mirrors (embeds set data-theme on <html>). */
+:root[data-theme="dark"] .tier--featured { background: var(--accent); color: #0A0E1A; border-color: var(--accent); }
+:root[data-theme="light"] .tier--featured { background: var(--text); color: var(--text-on-dark); border-color: var(--text); }
 
 .tier--featured .tier__name,
 .tier--featured .tier__price-num { color: inherit; }
@@ -2278,7 +2294,8 @@ button { font: inherit; cursor: pointer; }
   left: 50%;
   transform: translateX(-50%);
   background: var(--accent);
-  color: #fff;
+  /* Navy ink on cyan: 9px white-on-cyan was ~1.9:1, unreadable. */
+  color: #011434;
   font-family: var(--mono);
   font-size: 9px;
   font-weight: 500;
@@ -2384,7 +2401,7 @@ button { font: inherit; cursor: pointer; }
 .tier--featured .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--ink, var(--text));
+  color: #011434;
 }
 .tier--featured .btn--primary:hover {
   background: var(--bg);
@@ -2392,8 +2409,41 @@ button { font: inherit; cursor: pointer; }
   color: var(--text);
 }
 @media (prefers-color-scheme: dark) {
+  /* In dark mode the featured card itself turns cyan, so a cyan button
+     would vanish. Invert: navy button on the cyan card. */
+  :root .tier--featured .btn--primary {
+    background: var(--bg);
+    border-color: var(--bg);
+    color: var(--text);
+  }
+  :root .tier--featured .btn--primary:hover {
+    background: var(--bg-2);
+    border-color: var(--bg-2);
+    color: var(--text);
+  }
   :root .tier--featured .tier__list li { color: rgba(20, 20, 26, 0.82); }
   :root .tier--featured .tier__list li::before { color: rgba(20, 20, 26, 0.62); }
+}
+/* Forced-theme mirrors for the featured-tier button inversion. */
+:root[data-theme="dark"] .tier--featured .btn--primary {
+  background: var(--bg);
+  border-color: var(--bg);
+  color: var(--text);
+}
+:root[data-theme="dark"] .tier--featured .btn--primary:hover {
+  background: var(--bg-2);
+  border-color: var(--bg-2);
+  color: var(--text);
+}
+:root[data-theme="light"] .tier--featured .btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #011434;
+}
+:root[data-theme="light"] .tier--featured .btn--primary:hover {
+  background: var(--bg);
+  border-color: var(--bg);
+  color: var(--text);
 }
 
 /* ========================================================================
@@ -2993,7 +3043,8 @@ button { font: inherit; cursor: pointer; }
 .roadmap__vote:disabled { opacity: 0.6; cursor: not-allowed; }
 .roadmap__vote.is-voted {
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.9:1). */
+  color: #011434;
   border-color: var(--accent);
 }
 .roadmap__vote-arrow { font-size: 10px; line-height: 1; }
@@ -3145,7 +3196,9 @@ button { font: inherit; cursor: pointer; }
 .tmpl-card__preview {
   position: relative;
   aspect-ratio: 8.5 / 11;
-  background: var(--surface, #fff);
+  /* Always paper-white, like .sigpad__canvas: the skeleton lines are
+     hardcoded navy and vanished on the dark-mode --surface navy. */
+  background: #ffffff;
   border-radius: 6px;
   padding: 18px 22px;
   margin-bottom: var(--s-3);
@@ -3237,7 +3290,8 @@ button { font: inherit; cursor: pointer; }
   right: 12px;
   padding: 2px 10px;
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.8:1). */
+  color: #011434;
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -3316,7 +3370,8 @@ button { font: inherit; cursor: pointer; }
 .blog-cat:hover { border-color: var(--accent); color: var(--accent-text); }
 .blog-cat.is-active {
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.8:1). */
+  color: #011434;
   border-color: var(--accent);
 }
 @media (max-width: 640px) {
@@ -3760,7 +3815,8 @@ button { font: inherit; cursor: pointer; }
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.8:1). */
+  color: #011434;
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
@@ -5286,7 +5342,8 @@ button { font: inherit; cursor: pointer; }
 }
 .add-field-btn[data-active="true"] {
   background: var(--accent);
-  color: var(--bg);
+  /* Navy ink on cyan: var(--bg) went near-white in light mode (~1.8:1). */
+  color: #011434;
   border-color: var(--accent);
 }
 .add-field-group__hint {
@@ -6553,29 +6610,32 @@ details[open] > .field-list__group--toggle::after {
   background:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 18'><path d='M2,14 C8,8 14,2 22,6 C30,10 32,16 40,14 C48,12 50,4 58,8 C66,12 68,16 76,12 C84,8 86,2 94,8 C102,14 106,16 114,10 C122,4 126,8 138,12' fill='none' stroke='%23011434' stroke-width='1.6' stroke-linecap='round'/></svg>")
     no-repeat left center / 100% 100%;
-  animation: live-demo-ink 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) 4.6s forwards,
-             live-demo-ink-loop 12s infinite linear;
+  /* One 12s timeline per element. The old intro + "loop reset" pair
+     stacked two animations on the same property; the loop one ran from
+     t=0 and, being last in the list, won the cascade, so the intro
+     never showed. Phases mapped to percentages of the 12s cycle:
+     draw 4.6s to 7.2s = 38.33% to 60%, hold, reset at 90%. */
+  animation: live-demo-ink 12s infinite linear;
 }
 .live-demo__sig-ink--date {
-  /* For the date field, replace the squiggle with typed-text look. */
+  /* For the date field, replace the squiggle with typed-text look.
+     Types 6.0s to 7.4s = 50% to 61.67% of the cycle. */
   background:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 14'><text x='2' y='11' font-family='monospace' font-size='10' fill='%23011434'>05 / 30 / 2026</text></svg>")
     no-repeat left center / 100% 100%;
-  animation: live-demo-ink 1.4s ease-out 6.0s forwards,
-             live-demo-ink-loop 12s infinite linear;
+  animation: live-demo-ink-date 12s infinite linear;
 }
 @keyframes live-demo-ink {
-  from { width: 0; }
-  to   { width: 100%; }
+  0%, 38.33% { width: 0; animation-timing-function: cubic-bezier(0.45, 0.05, 0.55, 0.95); }
+  60%        { width: 100%; }
+  88%        { width: 100%; }
+  90%, 100%  { width: 0; }
 }
-@keyframes live-demo-ink-loop {
-  /* Reset to 0 at the start of each loop. Setting width:0 on the
-     0% keyframe and letting the per-phase animation re-fill is what
-     produces the loop. */
-  0%   { width: 100%; }
-  88%  { width: 100%; }
-  90%  { width: 0; }
-  100% { width: 0; }
+@keyframes live-demo-ink-date {
+  0%, 50%    { width: 0; animation-timing-function: ease-out; }
+  61.67%     { width: 100%; }
+  88%        { width: 100%; }
+  90%, 100%  { width: 0; }
 }
 
 /* Field-box overlays now nest INSIDE their line / signature-base so
@@ -6597,23 +6657,23 @@ details[open] > .field-list__group--toggle::after {
   border-radius: 3px;
   opacity: 0;
   pointer-events: none;
-  animation: live-demo-field-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) var(--ld-delay, 2s) forwards,
-             live-demo-field-loop 12s infinite linear;
+  /* One 12s timeline: pop in at the 2s mark (16.67%), hold, fade near
+     the cycle end. The per-field stagger comes from shifting the whole
+     timeline by (--ld-delay - 2s) via animation-delay, so each field
+     keeps its own pop-in moment every cycle. */
+  animation: live-demo-field 12s infinite linear;
+  animation-delay: calc(var(--ld-delay, 2s) - 2s);
 }
 .live-demo__field[data-type="text"]      { border-color: var(--accent); background: var(--accent-soft); }
 .live-demo__field[data-type="signature"] { border-color: var(--accent); background: var(--accent-soft); }
 .live-demo__field[data-type="date"]      { border-color: var(--ok);     background: var(--ok-soft); }
 .live-demo__field[data-type="initial"]   { border-color: var(--warn);   background: var(--warn-soft); }
 
-@keyframes live-demo-field-in {
-  from { opacity: 0; transform: scale(0.6); }
-  to   { opacity: 1; transform: scale(1); }
-}
-@keyframes live-demo-field-loop {
-  0%    { opacity: 1; }
-  84%   { opacity: 1; }
-  87%   { opacity: 0; }
-  100%  { opacity: 0; }
+@keyframes live-demo-field {
+  0%, 16.67% { opacity: 0; transform: scale(0.6); animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  19.5%      { opacity: 1; transform: scale(1); }
+  84%        { opacity: 1; transform: scale(1); }
+  87%, 100%  { opacity: 0; transform: scale(0.6); }
 }
 
 /* Inline initial marker (small box mid-paragraph) */
@@ -6635,8 +6695,19 @@ details[open] > .field-list__group--toggle::after {
   background: rgba(1, 20, 52, 0.02);
 }
 
-/* Scan line. Sweeps top-to-bottom during phase 2. */
+/* Scan line. Sweeps top-to-bottom during phase 2 (1.6s to 4.0s of the
+   12s cycle = 13.33% to 33.33%). The element is a full-height overlay
+   translated by its own height so the ::before line travels the paper
+   on the compositor (transform) instead of re-laying-out `top`. */
 .live-demo__scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  animation: live-demo-scan 12s infinite linear;
+}
+.live-demo__scan::before {
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -6650,19 +6721,13 @@ details[open] > .field-list__group--toggle::after {
   box-shadow:
     0 0 6px 0 var(--accent),
     0 0 20px 4px color-mix(in srgb, var(--accent) 40%, transparent);
-  opacity: 0;
-  animation: live-demo-scan 2.4s cubic-bezier(0.4, 0, 0.6, 1) 1.6s forwards,
-             live-demo-scan-loop 12s infinite linear;
 }
 @keyframes live-demo-scan {
-  0%   { opacity: 0; top: 0; }
-  10%  { opacity: 0.95; }
-  90%  { opacity: 0.95; }
-  100% { opacity: 0; top: 100%; }
-}
-@keyframes live-demo-scan-loop {
-  0%   { top: 0; opacity: 0; }
-  100% { top: 0; opacity: 0; }
+  0%, 13.33%   { opacity: 0; transform: translateY(0); animation-timing-function: cubic-bezier(0.4, 0, 0.6, 1); }
+  15.33%       { opacity: 0.95; }
+  31.33%       { opacity: 0.95; }
+  33.33%       { opacity: 0; transform: translateY(100%); }
+  33.34%, 100% { opacity: 0; transform: translateY(0); }
 }
 
 /* Final completion check, appears in phase 4 */
@@ -6674,9 +6739,9 @@ details[open] > .field-list__group--toggle::after {
   justify-content: center;
   background: color-mix(in srgb, var(--ok) 12%, transparent);
   opacity: 0;
-  animation: live-demo-done-in 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) 8.4s forwards,
-             live-demo-done-out 0.5s ease-in 10.8s forwards,
-             live-demo-done-loop 12s infinite linear;
+  /* Fades in 8.4s to 8.9s (70% to 74.17%), out 10.8s to 11.3s
+     (90% to 94.17%) of the 12s cycle. */
+  animation: live-demo-done 12s infinite linear;
   border-radius: 4px;
 }
 .live-demo__done svg {
@@ -6685,14 +6750,22 @@ details[open] > .field-list__group--toggle::after {
   color: var(--ok);
   transform: scale(0.4);
   opacity: 0;
-  animation: live-demo-check 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 8.6s forwards,
-             live-demo-check-loop 12s infinite linear;
+  /* Pops 8.6s to 9.2s (71.67% to 76.67%); the parent overlay's fade
+     handles the exit, then the check resets before the next cycle. */
+  animation: live-demo-check 12s infinite linear;
 }
-@keyframes live-demo-done-in   { from { opacity: 0; } to { opacity: 1; } }
-@keyframes live-demo-done-out  { from { opacity: 1; } to { opacity: 0; } }
-@keyframes live-demo-done-loop { 0%, 100% { opacity: 0; } }
-@keyframes live-demo-check     { to { transform: scale(1); opacity: 1; } }
-@keyframes live-demo-check-loop { 0%, 100% { transform: scale(0.4); opacity: 0; } }
+@keyframes live-demo-done {
+  0%, 70%      { opacity: 0; animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
+  74.17%       { opacity: 1; }
+  90%          { opacity: 1; animation-timing-function: ease-in; }
+  94.17%, 100% { opacity: 0; }
+}
+@keyframes live-demo-check {
+  0%, 71.67% { transform: scale(0.4); opacity: 0; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  76.67%     { transform: scale(1); opacity: 1; }
+  93%        { transform: scale(1); opacity: 1; }
+  94%, 100%  { transform: scale(0.4); opacity: 0; }
+}
 
 /* Phase indicator dots */
 .live-demo__dots {
@@ -6904,18 +6977,10 @@ details[open] > .field-list__group--toggle::after {
   .doc-toolbar__btn { width: 40px; height: 40px; }
   .doc-toolbar__toggle { padding: 6px 10px; }
   .doc-toolbar__sep { margin: 0 2px; }
-
-  /* Sidebar action zone shrinks on phones — smaller padding so the
-     primary CTA stays one tap above the fold instead of pushed below. */
-  .sidebar__action { padding: var(--s-3) var(--s-4); }
-  .sidebar__head { padding: var(--s-4); }
-  .sidebar__legend,
-  .sidebar__tools-summary { padding-left: var(--s-4); padding-right: var(--s-4); }
-  .sidebar__tools-body { padding-left: var(--s-4); padding-right: var(--s-4); }
-
-  /* Doc card shrinks: smaller icon, tighter type. */
-  .doc-card__icon { flex: 0 0 32px; width: 32px; height: 32px; }
-  .doc-card__title { font-size: 15px; }
+  /* Sidebar / doc-card phone compaction moved below the base component
+     rules (see "Mobile signing compaction" further down): here it lost
+     to later equal-specificity base rules and to the .layout--apple
+     layer, so none of it ever applied. */
 }
 
 /* ── Very small phones (iPhone SE width = 375) ───────── */
@@ -7041,29 +7106,14 @@ details[open] > .field-list__group--toggle::after {
     min-height: 44px;
     font-size: 16px;
   }
-  /* The primary CTA stays visible even when sheet is collapsed. */
-  .sidebar__action {
-    padding-block: 8px;
-  }
-  /* Field type tags larger on mobile so signers can read which is
-     which from the thumb position. */
-  .field-box__tag {
-    font-size: 12px;
-    padding: 3px 7px;
-  }
   /* Doc toolbar at the top sits a bit smaller on phones. */
   .doc-toolbar {
     top: 64px;
     padding: 4px 6px;
   }
-}
-
-/* Focus zoom: when a field is focused on mobile, briefly scale the
-   surrounding page into view. CSS hint; JS toggles the data attribute. */
-@media (max-width: 768px) {
-  .field-box.is-focused {
-    box-shadow: 0 0 0 4px var(--accent), 0 0 0 8px var(--accent-line);
-  }
+  /* CTA padding, field-tag sizing, and the focus zoom moved below the
+     base component rules (see "Mobile signing compaction" further
+     down): here they lost the cascade and never applied. */
 }
 .sidebar__head {
   padding: var(--s-5) var(--s-5) var(--s-4);
@@ -7569,17 +7619,20 @@ details[open] > .field-list__group--toggle::after {
   pointer-events: auto;
   line-height: 1;
   z-index: 3;
-  transition: opacity 160ms var(--ease);
+  transition: opacity 160ms var(--ease), visibility 160ms var(--ease);
 }
 /* Single-signer mode: there's nobody to assign TO, so the dots are
    pure noise. Hide them unless the user is in edit mode or the field
-   itself is hovered/focused — the latter exposes the chip on demand
-   for the rare case where a user wants to add a second signer. */
-.is-single-signer .field-box__chip { opacity: 0; pointer-events: none; }
+   itself is hovered/focused; the latter exposes the chip on demand
+   for the rare case where a user wants to add a second signer.
+   visibility: hidden (not just opacity) takes the invisible button
+   out of the keyboard tab order too. */
+.is-single-signer .field-box__chip { opacity: 0; visibility: hidden; pointer-events: none; }
 .is-single-signer.is-edit-mode .field-box__chip,
 .is-single-signer .field-box:hover .field-box__chip,
 .is-single-signer .field-box.is-focused .field-box__chip {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
@@ -7691,6 +7744,45 @@ details[open] > .field-list__group--toggle::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .field-box--nav-pulse { animation: none; }
+}
+
+/* ── Mobile signing compaction (slice 79) ────────────────
+   These rules used to live above the base component definitions and
+   lost to them (equal specificity, later source order) and to the
+   .layout--apple layer (higher specificity). They sit below the base
+   rules now, prefixed with .layout so they out-rank or out-order both:
+   .layout .sidebar__head (0,2,0) ties .layout--apple .sidebar__head
+   and wins on source order; it beats the single-class base rules on
+   specificity. */
+@media (max-width: 640px) {
+  /* Sidebar action zone shrinks on phones: smaller padding so the
+     primary CTA stays one tap above the fold instead of pushed below. */
+  .layout .sidebar__action { padding: var(--s-3) var(--s-4); }
+  .layout .sidebar__head { padding: var(--s-4); }
+  .layout .sidebar__legend,
+  .layout .sidebar__tools-summary { padding-left: var(--s-4); padding-right: var(--s-4); }
+  .layout .sidebar__tools-body { padding-left: var(--s-4); padding-right: var(--s-4); }
+
+  /* Doc card shrinks: smaller icon, tighter type. */
+  .layout .doc-card__icon { flex: 0 0 32px; width: 32px; height: 32px; }
+  .layout .doc-card__title { font-size: 15px; }
+}
+@media (max-width: 768px) {
+  /* The primary CTA stays visible even when the sheet is collapsed. */
+  .layout .sidebar__action {
+    padding-block: 8px;
+  }
+  /* Field type tags larger on mobile so signers can read which is
+     which from the thumb position. */
+  .layout .field-box__tag {
+    font-size: 12px;
+    padding: 3px 7px;
+  }
+  /* Focus zoom: when a field is focused on mobile, briefly scale the
+     surrounding page into view. CSS hint; JS toggles the class. */
+  .layout .field-box.is-focused {
+    box-shadow: 0 0 0 4px var(--accent), 0 0 0 8px var(--accent-line);
+  }
 }
 
 .field-box__fill {
@@ -7810,7 +7902,11 @@ details[open] > .field-list__group--toggle::after {
   justify-content: center;
   transition: opacity 120ms var(--ease), background 120ms var(--ease);
 }
-.field-box:hover .field-box__edit { opacity: 1; }
+/* Reveal on keyboard focus too: the edit control is a real <button>,
+   so a tab stop must never land on an invisible element. */
+.field-box:hover .field-box__edit,
+.field-box__edit:focus-visible,
+.field-box:focus-within .field-box__edit { opacity: 1; }
 .field-box__edit:hover { background: var(--surface); color: var(--text); }
 
 .field-menu {
@@ -8250,7 +8346,7 @@ body[data-free-gated="true"] .dropzone-card__hints {
 body[data-free-gated="true"] .free-gate {
   margin-top: var(--s-4);
   padding: var(--s-5);
-  background: var(--bg-1);
+  background: var(--bg);
   border: 1px solid var(--accent-line);
   border-radius: var(--r);
 }

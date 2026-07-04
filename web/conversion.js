@@ -30,7 +30,7 @@
       opts.forEach(o => {
         const on = o.dataset.cycle === cycle;
         o.classList.toggle('is-active', on);
-        o.setAttribute('aria-checked', on ? 'true' : 'false');
+        o.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
       // Update each tier card.
       document.querySelectorAll('.tier[data-monthly]').forEach(tier => {
@@ -274,6 +274,7 @@
       if (e.target && e.target.dataset && 'close' in e.target.dataset) closeModal();
     });
     document.addEventListener('keydown', escClose);
+    document.addEventListener('keydown', trapTab);
 
     // Submit handler — splits the email into first/last placeholder and
     // calls /api/free/signup. On success, redirect to /preview/.
@@ -315,20 +316,50 @@
     });
   }
   function escClose(e) { if (e.key === 'Escape') closeModal(); }
+  // Keep Tab focus cycling inside the open dialog (aria-modal contract).
+  function trapTab(e) {
+    if (e.key !== 'Tab' || !modal) return;
+    const focusables = modal.querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])');
+    if (!focusables.length) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+  let lastFocused = null;
   function closeModal() {
     if (!modal) return;
     try { localStorage.setItem(EI_SEEN_KEY, String(Date.now())); } catch (e) {}
     document.removeEventListener('keydown', escClose);
+    document.removeEventListener('keydown', trapTab);
     modal.classList.add('is-closing');
     setTimeout(() => { if (modal && modal.parentNode) modal.parentNode.removeChild(modal); modal = null; }, 280);
+    if (lastFocused && typeof lastFocused.focus === 'function' && document.contains(lastFocused)) {
+      lastFocused.focus();
+    }
+    lastFocused = null;
   }
 
   function trigger() {
     if (modal) return;
     if (seenRecently) return;
     seenRecently = true;
+    lastFocused = document.activeElement;
     buildModal();
-    requestAnimationFrame(() => modal && modal.classList.add('is-open'));
+    requestAnimationFrame(() => {
+      if (!modal) return;
+      modal.classList.add('is-open');
+      // Move keyboard/screen-reader focus into the dialog.
+      const card = modal.querySelector('.exit-intent__card');
+      if (card) card.setAttribute('tabindex', '-1');
+      const target = modal.querySelector('input[type=email]') || modal.querySelector('[data-close]') || card;
+      if (target) target.focus();
+    });
     if (typeof window.cybersygn !== 'undefined' && window.cybersygn.track) {
       try { window.cybersygn.track('exit_intent_shown'); } catch (e) {}
     }

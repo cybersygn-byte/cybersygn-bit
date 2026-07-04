@@ -521,9 +521,10 @@ async function main() {
   ok(verifyHdr.json && verifyHdr.json.ok === true, 'verify returns ok:true');
   ok(verifyHdr.json && verifyHdr.json.owner && verifyHdr.json.owner.unmetered === true, 'verify returns unmetered owner');
 
-  // 39. Verify endpoint accepts the token via query param
+  // 39. Query-param tokens are REJECTED by design: tokens in URLs leak via
+  // logs, history, and Referer. Header is the only accepted transport.
   const verifyQp = await call('GET', `/api/owner/verify?owner=${ownerToken}`);
-  ok(verifyQp.status === 200, `verify via query param returns 200 (got ${verifyQp.status})`);
+  ok(verifyQp.status === 401, `verify via query param is rejected with 401 (got ${verifyQp.status})`);
 
   // 40. No token returns 401 ok:false
   const verifyEmpty = await call('GET', '/api/owner/verify');

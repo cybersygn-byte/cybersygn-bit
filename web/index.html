@@ -237,6 +237,8 @@
     </div>
   </header>
 
+  <main>
+
   <!-- ====================== CHECKOUT TOAST ====================== -->
   <div class="toast" id="checkout-toast" hidden role="status" aria-live="polite">
     <div class="container toast__inner">
@@ -702,11 +704,11 @@
       </p>
 
       <!-- Billing-cycle toggle. Annual saves ~2 months/year per tier, monthly default. -->
-      <div class="billing-toggle" role="radiogroup" aria-label="Billing cycle" data-cycle="monthly">
-        <button class="billing-toggle__opt is-active" type="button" data-cycle="monthly" role="radio" aria-checked="true">
+      <div class="billing-toggle" role="group" aria-label="Billing cycle" data-cycle="monthly">
+        <button class="billing-toggle__opt is-active" type="button" data-cycle="monthly" aria-pressed="true">
           Monthly
         </button>
-        <button class="billing-toggle__opt" type="button" data-cycle="annual" role="radio" aria-checked="false">
+        <button class="billing-toggle__opt" type="button" data-cycle="annual" aria-pressed="false">
           Annual <span class="billing-toggle__badge">Save ~2 months</span>
         </button>
       </div>
@@ -1082,6 +1084,8 @@
     </div>
   </aside>
 
+  </main>
+
   <!-- ====================== FOOTER ====================== -->
   <footer class="colophon">
     <div class="container colophon__grid">
@@ -1095,7 +1099,7 @@
       </div>
       <div class="colophon__col">
         <p class="colophon__head">Product</p>
-        <a href="./preview/">Try detection</a>
+        <a href="./preview/">Try It Out</a>
         <a href="#how">How it works</a>
         <a href="#pricing">Pricing</a>
         <a href="#compare">Compared</a>

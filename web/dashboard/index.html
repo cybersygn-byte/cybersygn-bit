@@ -455,12 +455,12 @@
           </div>
           <div class="dash-stats__card">
             <span class="dash-stats__num"><span id="dash-stat-free-used">0</span><span class="dash-stats__num-mini">/3</span></span>
-            <span class="dash-stats__label">Free tier this month</span>
-            <span class="dash-stats__hint">Resets on the first of the month</span>
+            <span class="dash-stats__label">Free documents (lifetime)</span>
+            <span class="dash-stats__hint">Never resets</span>
           </div>
           <div class="dash-stats__card">
             <span class="dash-stats__num" id="dash-stat-founding">—</span>
-            <span class="dash-stats__label">Founding spots open</span>
+            <span class="dash-stats__label">Origin spots open</span>
             <span class="dash-stats__hint"><a href="../#pricing">Lock $9/mo for life</a></span>
           </div>
           <div class="dash-stats__card">
@@ -515,7 +515,7 @@
         <div class="dash-util">
           <a class="dash-util__item" href="../#pricing">
             <span class="dash-util__kicker">Pricing</span>
-            <span class="dash-util__title">$9 founding, $12 Solo, $29 Team.</span>
+            <span class="dash-util__title">$9 Origin, $12 Solo, $29 Studio.</span>
           </a>
           <a class="dash-util__item" href="../preview/">
             <span class="dash-util__kicker">Preview</span>
@@ -656,8 +656,8 @@
         const cap = u.cap || 3;
         const remaining = Math.max(0, cap - used);
         detailEl.textContent = remaining === 0
-          ? `You have used all ${cap} free documents this month. Upgrade to keep signing.`
-          : `${used} of ${cap} free documents used this month. ${remaining} remaining.`;
+          ? `You have used all ${cap} free documents. Upgrade to keep signing.`
+          : `${used} of ${cap} free documents used. ${remaining} remaining.`;
       } else if (tier === 'founding' && data.foundingNumber) {
         detailEl.textContent = `Origin member #${data.foundingNumber} of 100. $9 / mo locked for the life of your account.`;
       } else if (tier === 'lifetime') {
