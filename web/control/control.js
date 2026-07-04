@@ -275,5 +275,112 @@ if (windowSel) windowSel.addEventListener('change', loadAnalytics);
 const kpiRefreshBtn = $('ctrl-kpi-refresh');
 if (kpiRefreshBtn) kpiRefreshBtn.addEventListener('click', loadKpis);
 
+// ---- API keys (public API /api/v1) ---------------------------------------
+const keyForm = $('apikey-form');
+const keyListBtn = $('apikey-list-btn');
+const keyFresh = $('apikey-fresh');
+const keyList = $('apikey-list');
+
+async function listApiKeys() {
+  const sid = ($('apikey-sender').value || '').trim();
+  if (!sid) { keyList.textContent = 'Enter a senderId to list its keys.'; return; }
+  try {
+    const res = await fetch('/api/owner/apikeys?senderId=' + encodeURIComponent(sid), { headers: { 'X-CyberSygn-Owner': readToken() } });
+    const data = await res.json();
+    const keys = (data && data.keys) || [];
+    if (!keys.length) { keyList.textContent = 'No keys for ' + sid + '.'; return; }
+    keyList.innerHTML = keys.map(k =>
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);">' +
+        '<span style="font-family:var(--mono);font-size:var(--t-xs);">' + k.id + ' · …' + (k.last4 || '') + ' · ' + (k.label || '') + (k.revoked ? ' · REVOKED' : '') + '</span>' +
+        (k.revoked ? '' : '<button class="btn btn--ghost btn--sm" data-revoke="' + k.id + '" type="button">Revoke</button>') +
+      '</div>').join('');
+    keyList.querySelectorAll('[data-revoke]').forEach(b => b.addEventListener('click', () => revokeKey(sid, b.getAttribute('data-revoke'))));
+  } catch (e) { keyList.textContent = 'Could not load keys.'; }
+}
+
+async function revokeKey(sid, keyId) {
+  try {
+    await fetch('/api/owner/apikeys', { method: 'DELETE', headers: { 'X-CyberSygn-Owner': readToken(), 'content-type': 'application/json' }, body: JSON.stringify({ senderId: sid, keyId }) });
+    listApiKeys();
+  } catch (e) { /* ignore */ }
+}
+
+if (keyForm) {
+  keyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const sid = ($('apikey-sender').value || '').trim();
+    const label = ($('apikey-label').value || '').trim() || 'default';
+    if (!sid) return;
+    keyFresh.hidden = true;
+    try {
+      const body = {
+        senderId: sid, label,
+        partnerId: (($('apikey-partner') && $('apikey-partner').value) || '').trim() || null,
+        unmetered: !!($('apikey-unmetered') && $('apikey-unmetered').checked),
+        canProvision: !!($('apikey-provision') && $('apikey-provision').checked),
+      };
+      const res = await fetch('/api/owner/apikeys', { method: 'POST', headers: { 'X-CyberSygn-Owner': readToken(), 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      keyFresh.hidden = false;
+      keyFresh.textContent = (res.ok && data.key) ? ('Copy now, shown once: ' + data.key) : ('Mint failed: ' + (data.message || res.status));
+      if (res.ok && data.key) listApiKeys();
+    } catch (e2) { keyFresh.hidden = false; keyFresh.textContent = 'Mint failed.'; }
+  });
+}
+if (keyListBtn) keyListBtn.addEventListener('click', listApiKeys);
+
+// ---- Password reset (email-gated) ----------------------------------------
+const forgotLink = $('control-forgot');
+const resetReqForm = $('control-reset-request');
+const resetConfirmForm = $('control-reset-confirm');
+const loginFormEl = $('control-login-form');
+
+if (forgotLink && resetReqForm) {
+  forgotLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    resetReqForm.hidden = !resetReqForm.hidden;
+  });
+  resetReqForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (($('control-reset-email') && $('control-reset-email').value) || '').trim();
+    const status = $('control-reset-status');
+    status.hidden = false; status.textContent = 'Sending…';
+    try {
+      const res = await fetch('/api/owner/reset/request', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email }) });
+      const data = await res.json().catch(() => ({}));
+      status.textContent = data.message || 'If that address is on file, a reset link is on its way.';
+    } catch (err) { status.textContent = 'Could not send. Try again in a moment.'; }
+  });
+}
+
+// Opened from the emailed reset link (?reset=token): show the set-new-password view.
+(function initResetConfirm() {
+  const token = new URLSearchParams(location.search).get('reset');
+  if (!token || !resetConfirmForm) return;
+  const loginSection = $('control-login');
+  if (loginSection) loginSection.hidden = false;
+  if (loginFormEl) loginFormEl.hidden = true;
+  if (resetReqForm) resetReqForm.hidden = true;
+  if (forgotLink && forgotLink.parentElement) forgotLink.parentElement.hidden = true;
+  resetConfirmForm.hidden = false;
+  resetConfirmForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = (($('control-reset-user') && $('control-reset-user').value) || '').trim();
+    const password = ($('control-reset-pass') && $('control-reset-pass').value) || '';
+    const status = $('control-reset-confirm-status');
+    status.hidden = false; status.textContent = 'Saving…';
+    try {
+      const res = await fetch('/api/owner/reset/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token, username, password }) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        status.textContent = 'Password updated. Loading sign-in…';
+        setTimeout(() => { location.href = location.pathname; }, 1200);
+      } else {
+        status.textContent = data.message || 'Reset failed. Request a new link.';
+      }
+    } catch (err) { status.textContent = 'Reset failed. Try again.'; }
+  });
+})();
+
 // Initial paint
 paint();

@@ -20,6 +20,13 @@
  * GET /api/status
  *   returns: { ok: true, service: "cybersygn-detect", version }
  *
+ * GET /api/metrics
+ *   auth: Authorization: Bearer <VYAN_METRICS_KEY> (house key); 401 if unset/mismatch
+ *   returns: { product, period: { from, to }, activeOperators,
+ *              usage: { docsSent, docsCompleted }, revenueCents, health: { ok } }
+ *   Standardized so Vyan Control polls CyberSygn like every other product
+ *   (spine CONTRACT section 6).
+ *
  * Per Section 1.9, every external read has a timeout, every JSON.parse is
  * guarded, and every error path returns a useful error response.
  */
@@ -28,7 +35,7 @@ import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder, deliver as deliverEmail } from './email.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
-import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials } from './owner.js';
+import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
@@ -47,6 +54,8 @@ import { reportToSentry } from './sentry.js';
 import { runDailyKvBackup, shouldRunKvBackup } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS } from './webhooks.js';
+import { routeApiV1 } from './api-v1.js';
+import { createApiKey, listApiKeys, revokeApiKey } from './apikeys.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
 import { getRoadmap, castVote } from './roadmap.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
@@ -69,6 +78,23 @@ import {
 } from './stripe.js';
 
 const VERSION = '0.2.0';
+
+// Monthly recurring revenue, in integer cents, per paid tier. Used by the
+// Vyan Control metrics endpoint to attribute MRR. Annual plans are normalized
+// to their monthly-equivalent cents; lifetime is one-time so it contributes 0
+// to recurring MRR. Free contributes 0. Keep in step with stripe.js TIERS and
+// the public pricing page. (solo $12, founding/Origin $9, team/Studio $29.)
+const TIER_MRR_CENTS = {
+  solo: 1200,
+  solo_annual: 1000, // $120/yr ≈ $10/mo
+  founding: 900,
+  founding_annual: 750, // $90/yr ≈ $7.50/mo
+  team: 2900,
+  team_annual: 2417, // $290/yr ≈ $24.17/mo
+  lifetime: 0, // one-time, not recurring
+  free: 0,
+};
+
 const MAX_PDF_BYTES = 25 * 1024 * 1024; // 25 MB ceiling for Phase 1
 const DETECTION_TIMEOUT_MS = 15000;
 const MAX_JSON_BYTES = 256 * 1024; // larger now: doc creation payload includes signers + assignments
@@ -78,6 +104,32 @@ export default {
   async fetch(request, env, ctx) {
    try {
     const url = new URL(request.url);
+
+    // control.cybersygn.io is a dedicated host for the owner panel: its root
+    // and ./control.js map into the /control/ asset subtree. Everything else
+    // the panel loads (/styles.css, /brand/*, /preview/owner.js, /api/owner/*)
+    // uses absolute root paths and resolves normally on this host, so only the
+    // two control-specific paths need remapping.
+    if (url.hostname === 'control.cybersygn.io' || url.hostname === 'www.control.cybersygn.io') {
+      let mapped = null;
+      if (url.pathname === '/' || url.pathname === '') mapped = '/control/';
+      else if (url.pathname === '/control.js') mapped = '/control/control.js';
+      if (mapped && env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = mapped;
+        let resp = await env.ASSETS.fetch(new Request(assetUrl.toString(), { method: 'GET', headers: request.headers }));
+        // ASSETS may 30x-normalize (e.g. /control/index.html -> /control/). Follow once
+        // and return the final body so the visible URL on control.cybersygn.io stays clean.
+        if (resp.status >= 300 && resp.status < 400) {
+          const loc = resp.headers.get('location');
+          if (loc) {
+            const next = new URL(loc, assetUrl);
+            resp = await env.ASSETS.fetch(new Request(next.toString(), { method: 'GET', headers: request.headers }));
+          }
+        }
+        return resp;
+      }
+    }
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
       const storage = getStorage(env);
@@ -168,6 +220,14 @@ export default {
     if (request.method === 'POST' && url.pathname === '/api/owner/login') {
       return handleOwnerLogin(request, env);
     }
+    // Email-gated owner password reset. request -> emails a one-time link ONLY
+    // to the configured OWNER_EMAIL; confirm -> sets a new KV-stored credential.
+    if (request.method === 'POST' && url.pathname === '/api/owner/reset/request') {
+      return handleOwnerResetRequest(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/reset/confirm') {
+      return handleOwnerResetConfirm(request, env);
+    }
     if (request.method === 'POST' && url.pathname === '/api/owner/test-email') {
       return handleOwnerTestEmail(request, env, url);
     }
@@ -219,6 +279,52 @@ export default {
 
     if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
       return handleMetricsDashboard(request, env, url);
+    }
+
+    // ---- Vyan Control metrics (spine CONTRACT §6) ----------------------
+    // Standardized, house-key-authenticated read so Vyan Control can poll
+    // CyberSygn the same way it polls every other product in the portfolio.
+    // 401 when no key is configured or the bearer token does not match.
+    if (request.method === 'GET' && url.pathname === '/api/metrics') {
+      if (!metricsAuthorized(request, env)) {
+        return jsonResponse(401, { error: 'unauthorized', message: 'House key required (Authorization: Bearer <VYAN_METRICS_KEY>).' });
+      }
+      return handleMetrics(env, url);
+    }
+
+    // ---- Public-API keys (owner-only): mint / list / revoke -------------
+    //   POST   /api/owner/apikeys   { senderId, label } -> { id, key (once), last4 }
+    //   GET    /api/owner/apikeys?senderId=...           -> { keys: [...] }
+    //   DELETE /api/owner/apikeys   { senderId, keyId }  -> { revoked }
+    // The key acts AS `senderId`, inheriting that account's plan + webhooks.
+    if (url.pathname === '/api/owner/apikeys') {
+      const ownerCtx = await getOwnerForRequest(request, env, url);
+      if (!ownerCtx) return jsonResponse(401, { error: 'unauthorized', message: 'Owner auth required.' });
+      if (request.method === 'POST') {
+        const b = await readJsonBody(request);
+        if (b.error) return jsonResponse(400, b.error);
+        const sid = String((b.value && b.value.senderId) || '').trim();
+        if (!sid) return jsonResponse(400, { error: 'missing_senderId', message: 'senderId is required (the account the key acts as).' });
+        const made = await createApiKey(env, sid, {
+          label: (b.value && b.value.label) || 'default',
+          mode: (b.value && b.value.mode) || 'live',
+          unmetered: !!(b.value && b.value.unmetered),
+          canProvision: !!(b.value && b.value.canProvision),
+          partnerId: (b.value && b.value.partnerId) || null,
+        });
+        if (!made) return jsonResponse(500, { error: 'mint_failed', message: 'Could not mint key.' });
+        return jsonResponse(201, { ok: true, ...made, warning: 'Store this key now — it is shown only once.' });
+      }
+      if (request.method === 'GET') {
+        return jsonResponse(200, { keys: await listApiKeys(env, url.searchParams.get('senderId') || '') });
+      }
+      if (request.method === 'DELETE') {
+        const b = await readJsonBody(request);
+        if (b.error) return jsonResponse(400, b.error);
+        const ok = await revokeApiKey(env, (b.value && b.value.senderId) || '', (b.value && b.value.keyId) || '');
+        return jsonResponse(ok ? 200 : 404, { revoked: ok });
+      }
+      return jsonResponse(405, { error: 'method_not_allowed', message: 'Use GET, POST, or DELETE.' });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/analytics/summary') {
@@ -455,6 +561,14 @@ export default {
     // In local dev without `env.ASSETS` (e.g. node-based test harness),
     // we still need to return *something* for API misses, so we 404 only
     // for /api/* paths and surface a clear message for everything else.
+    // Public API v1 — API-key authenticated, server-to-server. Handled before
+    // the /api/ 404 fallthrough; routeApiV1 returns null for non-v1 paths so
+    // nothing else is affected.
+    if (url.pathname.startsWith('/api/v1')) {
+      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit });
+      if (v1) return v1;
+    }
+
     if (url.pathname.startsWith('/api/')) {
       return jsonResponse(404, {
         error: 'not_found',
@@ -759,6 +873,55 @@ async function handleOwnerLogin(request, env) {
     return jsonResponse(401, { error: result.error });
   }
   return jsonResponse(200, { ok: true, token: result.token, issuedAt: result.issuedAt });
+}
+
+// Step 1 of reset: email a one-time link. The link is sent ONLY to the
+// configured OWNER_EMAIL (never to the requester's address), and the response
+// is identical whether or not the email matched, so this can't be used to probe
+// the owner email or to redirect a reset to an attacker.
+async function handleOwnerResetRequest(request, env, url) {
+  const rl = await checkRateLimit(env, `owner-reset:${ipKey(request)}`, [{ windowSec: 900, max: 5 }]);
+  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/owner/reset/request' });
+  const body = await readJsonBody(request);
+  const email = String((body.value && body.value.email) || '').trim().toLowerCase();
+  const configured = ownerEmail(env);
+  const generic = jsonResponse(200, { ok: true, message: 'If that address is on file, a reset link is on its way. Check your inbox (and spam).' });
+  if (!configured || !email || email !== String(configured).trim().toLowerCase()) return generic;
+  const token = await createResetToken(env);
+  if (!token) return generic; // KV unavailable (e.g. daily write quota) — fail closed, no leak
+  const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
+  const link = `${appUrl}/control/?reset=${token}`;
+  try {
+    await deliverEmail(env, {
+      to: configured,
+      subject: 'Reset your CyberSygn owner password',
+      text: `Someone asked to reset the CyberSygn owner password.\n\nReset it here (expires in 30 minutes, one use):\n${link}\n\nIf this wasn't you, ignore this email — nothing changes.`,
+      html: `<p>Someone asked to reset the CyberSygn owner password.</p>\n<p><a href="${link}">Reset your password</a> — expires in 30 minutes, single use.</p>\n<p>If this wasn't you, ignore this email. Nothing changes.</p>`,
+    });
+  } catch (e) {
+    report(e, 'owner-reset-email');
+  }
+  return generic;
+}
+
+// Step 2 of reset: consume the one-time token and write the new credential to KV.
+async function handleOwnerResetConfirm(request, env) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const token = String((body.value && body.value.token) || '').trim();
+  const username = String((body.value && body.value.username) || '').trim();
+  const password = String((body.value && body.value.password) || '');
+  const ok = await consumeResetToken(env, token);
+  if (!ok) return jsonResponse(400, { error: 'invalid_token', message: 'That reset link is invalid or has expired. Request a new one.' });
+  const res = await setOwnerCredential(env, username, password);
+  if (!res.ok) {
+    const msg = res.error === 'weak_password' ? 'Password must be at least 8 characters.'
+      : res.error === 'invalid_username' ? 'Enter a username.'
+      : res.error === 'write_failed' ? 'Could not save — the daily storage write limit may be exhausted. Try again after 00:00 UTC, or upgrade the Cloudflare Workers plan.'
+      : 'Could not set the new password.';
+    return jsonResponse(res.error === 'write_failed' ? 503 : 400, { error: res.error, message: msg });
+  }
+  return jsonResponse(200, { ok: true, message: 'Password updated. You can sign in now.' });
 }
 
 // ---- Billing handlers ------------------------------------------------------
@@ -2482,6 +2645,141 @@ async function handleMetricsDashboard(request, env, url) {
   return jsonResponse(200, out);
 }
 
+// ---- /api/metrics (Vyan Control, spine CONTRACT §6) ------------------------
+
+/**
+ * House-key gate for the standardized metrics endpoint. The key comes from
+ * env (VYAN_METRICS_KEY, falling back to VYAN_HOUSE_KEY), never from code.
+ * Fails closed: if no key is configured, the endpoint is never open. Auth is
+ * `Authorization: Bearer <key>`, the same convention every Vyan product uses.
+ */
+function metricsKey(env) {
+  return (env && (env.VYAN_METRICS_KEY || env.VYAN_HOUSE_KEY)) || '';
+}
+
+function metricsAuthorized(request, env) {
+  const key = metricsKey(env);
+  if (!key) return false; // no key configured → no access (never open)
+  const presented = (request.headers.get('authorization') || '').replace(/^bearer\s+/i, '').trim();
+  if (!presented || presented.length !== key.length) return false;
+  // Constant-time compare so the key can't be recovered by response timing.
+  let diff = 0;
+  for (let i = 0; i < key.length; i++) diff |= presented.charCodeAt(i) ^ key.charCodeAt(i);
+  return diff === 0;
+}
+
+/**
+ * Standardized metrics document for Vyan Control (spine CONTRACT §6). Vyan
+ * Control polls this across every product to render one founder dashboard.
+ *
+ * Shape:
+ *   {
+ *     product: "cybersygn",
+ *     period: { from, to },              // epoch ms, override with ?from=&to=
+ *     activeOperators: <number>,         // paid, active subscriptions
+ *     usage: { docsSent, docsCompleted },// docs created / completed in period
+ *     revenueCents: <number>,            // MRR attributable to CyberSygn
+ *     health: { ok: true }
+ *   }
+ *
+ * Counters are derived by scanning KV (sub:* and doc:*). All scans are
+ * bounded and every read is guarded, so a partial KV failure degrades to a
+ * lower count rather than throwing (Section 1.9). Annual plans are normalized
+ * to monthly-equivalent cents; lifetime is one-time and excluded from MRR.
+ */
+async function handleMetrics(env, url) {
+  const now = Date.now();
+  const from = parseEpochParam(url.searchParams.get('from'), now - 30 * 24 * 60 * 60 * 1000);
+  const to = parseEpochParam(url.searchParams.get('to'), now);
+
+  let activeOperators = 0;
+  let revenueCents = 0;
+  let docsSent = 0;
+  let docsCompleted = 0;
+
+  const kv = env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.list === 'function'
+    ? env.CYBERSYGN_DOCS
+    : null;
+
+  if (kv) {
+    // ---- Active operators + MRR: scan sub:* records --------------------
+    try {
+      let cursor;
+      let pages = 0;
+      while (true) {
+        const r = await kv.list({ prefix: 'sub:', limit: 1000, cursor });
+        for (const k of r.keys) {
+          let rec;
+          try { rec = await kv.get(k.name, 'json'); } catch (e) { continue; }
+          if (!rec || typeof rec !== 'object') continue;
+          // Active = a non-free tier in an active/trialing state. Lifetime
+          // counts as an active operator but adds 0 to recurring MRR.
+          const tier = typeof rec.tier === 'string' ? rec.tier : 'free';
+          const status = typeof rec.status === 'string' ? rec.status : '';
+          const isActive = tier !== 'free' && (status === 'active' || status === 'trialing');
+          if (isActive) {
+            activeOperators += 1;
+            revenueCents += (TIER_MRR_CENTS[tier] || 0);
+          }
+        }
+        pages += 1;
+        if (r.list_complete || !r.cursor || pages > 20) break; // hard cap
+        cursor = r.cursor;
+      }
+    } catch (e) { /* degrade: report what we counted */ }
+
+    // ---- Docs sent / completed in period: scan doc:* records -----------
+    try {
+      let cursor;
+      let pages = 0;
+      while (true) {
+        const r = await kv.list({ prefix: 'doc:', limit: 1000, cursor });
+        for (const k of r.keys) {
+          let d;
+          try { d = await kv.get(k.name, 'json'); } catch (e) { continue; }
+          if (!d || typeof d !== 'object') continue;
+          const created = toEpochMs(d.createdAt);
+          if (created != null && created >= from && created <= to) docsSent += 1;
+          const completed = toEpochMs(d.completedAt);
+          if (completed != null && completed >= from && completed <= to) docsCompleted += 1;
+        }
+        pages += 1;
+        if (r.list_complete || !r.cursor || pages > 50) break; // hard cap
+        cursor = r.cursor;
+      }
+    } catch (e) { /* degrade: report what we counted */ }
+  }
+
+  return jsonResponse(200, {
+    product: 'cybersygn',
+    period: { from, to },
+    activeOperators,
+    usage: { docsSent, docsCompleted },
+    revenueCents,
+    health: { ok: true },
+  });
+}
+
+// Parse an epoch-ms query param. Accepts ms or ISO; falls back to `fallback`.
+function parseEpochParam(raw, fallback) {
+  if (raw == null || raw === '') return fallback;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n > 0) return Math.round(n);
+  const iso = Date.parse(raw);
+  return Number.isFinite(iso) ? iso : fallback;
+}
+
+// Normalize a stored timestamp (ISO string or epoch ms) to epoch ms, or null.
+function toEpochMs(v) {
+  if (v == null) return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  if (typeof v === 'string') {
+    const t = Date.parse(v);
+    return Number.isFinite(t) ? t : null;
+  }
+  return null;
+}
+
 async function handleAnalyticsSummary(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) {
@@ -2651,7 +2949,7 @@ async function handleBulkSend(request, env, url) {
   return jsonResponse(200, { ok: true, sent, failed, results });
 }
 
-async function handleCreateDoc(request, env, url, ctx) {
+async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
   const payload = body.value;
@@ -2673,7 +2971,10 @@ async function handleCreateDoc(request, env, url, ctx) {
   // team with status=active) bypass. Free tier is capped at TIERS.free.docs
   // documents per UTC calendar month per senderId. We check before we
   // do any expensive work (PDF decode, KV writes, email dispatch).
-  if (!owner) {
+  // opts.unmetered is set ONLY by the authenticated v1 path for keys flagged
+  // unmetered (partner-issued tenant keys). The public /api/docs route never
+  // passes it, so this is not forgeable from outside.
+  if (!owner && !opts.unmetered) {
     const gate = await checkFreeTierAllowance(env, senderId);
     if (!gate.allowed) {
       return jsonResponse(402, {
@@ -2973,6 +3274,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   const storage = getStorage(env);
   const doc = await storage.docs.get(`doc:${docId}`, { json: true });
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
+  if (doc.voidedAt) return jsonResponse(410, { error: 'voided', message: 'This document was voided and can no longer be signed.' });
 
   const signerIdx = doc.signers.findIndex(s => ctEqHex(s.token, token));
   if (signerIdx < 0) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });

@@ -467,7 +467,7 @@ button { font: inherit; cursor: pointer; }
   gap: 0;
   text-decoration: none;
   line-height: 0;       /* image is the only visual; no font baseline */
-  height: 32px;         /* baseline target size; overridden on larger contexts */
+  height: 40px;         /* lockup at a confident, properly-sized scale (was 32px) */
   flex-shrink: 0;
 }
 

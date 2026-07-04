@@ -22,6 +22,7 @@
  */
 
 import workerModule from '../worker/src/index.js';
+import { createApiKey, revokeApiKey } from '../worker/src/apikeys.js';
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -789,6 +790,116 @@ async function main() {
   } finally {
     if (savedAssets === undefined) delete env.ASSETS;
     else env.ASSETS = savedAssets;
+  }
+
+  // ---- Public API v1 (API-key authed) — full lifecycle -----------------
+  console.log('\n33. /api/v1 public API + API keys');
+  {
+    const apiPdf = (await readFile(resolve(ROOT, 'test-pdfs', '01-simple-signature.pdf'))).toString('base64');
+    const A = 'Bearer ';
+
+    const minted = await createApiKey(env, 'vyan-acct', { label: 'vyan' });
+    ok(minted && /^cs_live_[A-Za-z0-9_-]{20,}$/.test(minted.key), 'mints a cs_live_ key');
+    ok(minted && minted.key.length > 40, 'key is long/random');
+    const key = minted.key;
+
+    const noAuth = await call('POST', '/api/v1/documents', { pdf_base64: apiPdf, signers: [{ name: 'A', email: 'a@x.com' }] });
+    ok(noAuth.status === 401, 'create without a key -> 401');
+    const badAuth = await call('POST', '/api/v1/documents', { pdf_base64: apiPdf, signers: [{ name: 'A', email: 'a@x.com' }] }, { authorization: A + 'cs_live_bogusbogusbogusbogusbogus00' });
+    ok(badAuth.status === 401, 'create with an unknown key -> 401');
+
+    const me = await call('GET', '/api/v1/me', undefined, { authorization: A + key });
+    ok(me.status === 200 && me.json && me.json.account === 'vyan-acct', '/me returns the bound account');
+
+    const vCreate = await call('POST', '/api/v1/documents', {
+      title: 'Vyan deal',
+      pdf_base64: apiPdf,
+      fields: [{ id: 'sig', type: 'signature', page: 1, x: 80, y: 80, width: 200, height: 24, confidence: 0.95, label: 'Sign' }],
+      signers: [{ name: 'Dana Deal', email: 'dana@buyer.com' }],
+    }, { authorization: A + key });
+    ok(vCreate.status === 201, `v1 create -> 201 (got ${vCreate.status}: ${vCreate.text.slice(0, 160)})`);
+    ok(vCreate.json && typeof vCreate.json.id === 'string', 'v1 create returns an id');
+    ok(vCreate.json && Array.isArray(vCreate.json.signers) && vCreate.json.signers[0] &&
+       typeof vCreate.json.signers[0].signing_url === 'string' &&
+       vCreate.json.signers[0].signing_url.includes(vCreate.json.id),
+       'v1 create returns a signing_url containing the doc id');
+    const vDocId = vCreate.json.id;
+
+    const vStatus = await call('GET', '/api/v1/documents/' + vDocId, undefined, { authorization: A + key });
+    ok(vStatus.status === 200 && vStatus.json.status === 'sent', 'v1 status -> sent');
+    ok(vStatus.json.signers && vStatus.json.signers[0].status === 'pending', 'v1 signer starts pending');
+
+    // Tenant isolation: a different account's key cannot read this doc.
+    const other = await createApiKey(env, 'other-acct', { label: 'other' });
+    const cross = await call('GET', '/api/v1/documents/' + vDocId, undefined, { authorization: A + other.key });
+    ok(cross.status === 403, 'cross-account document access -> 403');
+
+    const det = await call('POST', '/api/v1/detect', { pdf_base64: apiPdf }, { authorization: A + key });
+    ok(det.status === 200 && Array.isArray(det.json.fields), 'v1 detect returns a fields array');
+
+    const tmpl = await call('GET', '/api/v1/templates', undefined, { authorization: A + key });
+    ok(tmpl.status === 200 && Array.isArray(tmpl.json.templates), 'v1 templates returns a list');
+
+    const voided = await call('POST', '/api/v1/documents/' + vDocId + '/void', {}, { authorization: A + key });
+    ok(voided.status === 200 && voided.json.status === 'voided', 'v1 void -> voided');
+
+    // Voiding is effective: the signer can no longer submit fills.
+    const tok = new URL(vCreate.json.signers[0].signing_url).searchParams.get('t');
+    const signVoided = await call('POST', `/api/docs/${vDocId}/signer/${tok}/fills`, { fills: { sig: { type: 'signature', value: 'x' } } });
+    ok(signVoided.status === 410, 'signing a voided document -> 410');
+
+    // Revoke kills the key.
+    const rev = await revokeApiKey(env, 'vyan-acct', minted.id);
+    ok(rev === true, 'revoke returns true');
+    const afterRevoke = await call('GET', '/api/v1/me', undefined, { authorization: A + key });
+    ok(afterRevoke.status === 401, 'a revoked key -> 401');
+  }
+
+  // ---- Partner provisioning + unmetered keys ---------------------------
+  console.log('\n34. /api/v1 partner provisioning + unmetered keys');
+  {
+    const apiPdf = (await readFile(resolve(ROOT, 'test-pdfs', '01-simple-signature.pdf'))).toString('base64');
+    const A = 'Bearer ';
+    const mkBody = {
+      pdf_base64: apiPdf,
+      fields: [{ id: 'sig', type: 'signature', page: 1, x: 80, y: 80, width: 200, height: 24, confidence: 0.95, label: 'Sign' }],
+      signers: [{ name: 'T', email: 't@x.com' }],
+    };
+
+    // Unmetered key never hits the free-tier cap (5 creates all succeed).
+    const unmeteredKey = (await createApiKey(env, 'unmetered-acct', { label: 'u', unmetered: true })).key;
+    const statuses = [];
+    for (let i = 0; i < 5; i++) {
+      const r = await call('POST', '/api/v1/documents', mkBody, { authorization: A + unmeteredKey });
+      statuses.push(r.status);
+    }
+    ok(statuses.every(s => s === 201), 'unmetered key creates past the free cap (5/5 -> 201)');
+
+    // Partner master mints individualized, unmetered tenant keys.
+    const master = await createApiKey(env, 'vyan-master', { label: 'partner', unmetered: true, canProvision: true, partnerId: 'vyan' });
+    const prov = await call('POST', '/api/v1/keys', { tenant_id: 'cust-1', label: 'cust1' }, { authorization: A + master.key });
+    ok(prov.status === 201 && /^cs_live_/.test(prov.json.key || ''), 'partner master provisions a tenant key');
+    ok(prov.json && prov.json.unmetered === true, 'provisioned tenant key is unmetered');
+    ok(prov.json && prov.json.account === 'p-vyan-cust-1', 'tenant key gets its own isolated account namespace');
+    const tenantKey = prov.json.key;
+
+    // Tenant key works, is unmetered, and CANNOT mint further keys.
+    const tcreate = await call('POST', '/api/v1/documents', mkBody, { authorization: A + tenantKey });
+    ok(tcreate.status === 201, 'tenant key can create documents');
+    const tprov = await call('POST', '/api/v1/keys', { tenant_id: 'x' }, { authorization: A + tenantKey });
+    ok(tprov.status === 403, 'tenant key cannot provision further keys');
+
+    // A plain (non-partner) key cannot provision at all.
+    const noProv = await call('POST', '/api/v1/keys', { tenant_id: 'x' }, { authorization: A + unmeteredKey });
+    ok(noProv.status === 403, 'a non-partner key cannot provision');
+
+    // Master lists + revokes its tenant keys.
+    const listed = await call('GET', '/api/v1/keys', undefined, { authorization: A + master.key });
+    ok(listed.status === 200 && Array.isArray(listed.json.keys) && listed.json.keys.some(k => k.tenantId === 'cust-1'), 'master lists its tenant keys');
+    const rev = await call('DELETE', '/api/v1/keys', { key_id: prov.json.key_id }, { authorization: A + master.key });
+    ok(rev.status === 200 && rev.json.revoked === true, 'master revokes a tenant key');
+    const afterRev = await call('GET', '/api/v1/me', undefined, { authorization: A + tenantKey });
+    ok(afterRev.status === 401, 'revoked tenant key -> 401');
   }
 
   console.log('\n======================================');

@@ -166,6 +166,78 @@ export async function getOwnerForRequest(request, env, url) {
  * If OWNER_USERNAME or OWNER_PASSWORD_HASH is unset, the login
  * endpoint refuses every attempt with 503 'login_not_configured'.
  */
+const OWNER_CRED_KEY = 'owner:cred';
+const RESET_PREFIX = 'owner:reset:';
+const RESET_TTL_SECONDS = 1800; // 30 minutes
+
+function ownerDocs(env) {
+  const b = env && env.CYBERSYGN_DOCS;
+  return (b && typeof b.put === 'function') ? b : null;
+}
+
+/** The configured owner email. Reset links are sent ONLY here, never to a
+ *  requester-supplied address — that is what keeps the reset from being a
+ *  takeover vector. */
+export function ownerEmail(env) {
+  return (env && (env.OWNER_EMAIL || env.CYBERSYGN_OWNER_EMAIL)) || null;
+}
+
+/** Read the KV-stored owner credential (set by a reset), or null. */
+async function getKvCredential(env) {
+  const b = env && env.CYBERSYGN_DOCS;
+  if (!b || typeof b.get !== 'function') return null;
+  try {
+    const raw = await b.get(OWNER_CRED_KEY);
+    if (!raw) return null;
+    const c = JSON.parse(raw);
+    return (c && c.username && c.hash) ? c : null;
+  } catch { return null; }
+}
+
+/** Persist a new owner credential to KV. Returns {ok} or {ok:false,error}. */
+export async function setOwnerCredential(env, username, password) {
+  const b = ownerDocs(env);
+  if (!b) return { ok: false, error: 'no_store' };
+  const u = String(username || '').trim();
+  if (!u || u.length > 64) return { ok: false, error: 'invalid_username' };
+  if (typeof password !== 'string' || password.length < 8 || password.length > 256) {
+    return { ok: false, error: 'weak_password' };
+  }
+  const salt = randomTokenHex();
+  const hash = await sha256Hex(new TextEncoder().encode(u + ':' + password + ':' + salt.slice(0, 64)));
+  try {
+    await b.put(OWNER_CRED_KEY, JSON.stringify({ username: u, hash, salt, updatedAt: new Date().toISOString() }));
+  } catch (e) {
+    return { ok: false, error: 'write_failed', detail: String((e && e.message) || e) };
+  }
+  return { ok: true };
+}
+
+/** Mint a single-use, 30-min reset token. Returns the raw token (to email) or null. */
+export async function createResetToken(env) {
+  const b = ownerDocs(env);
+  if (!b) return null;
+  const token = randomTokenHex() + randomTokenHex();
+  const thash = await sha256Hex(new TextEncoder().encode(token));
+  try {
+    await b.put(RESET_PREFIX + thash, JSON.stringify({ createdAt: new Date().toISOString() }), { expirationTtl: RESET_TTL_SECONDS });
+  } catch { return null; }
+  return token;
+}
+
+/** Validate + consume a reset token (single use). */
+export async function consumeResetToken(env, token) {
+  const b = env && env.CYBERSYGN_DOCS;
+  if (!b || typeof b.get !== 'function') return false;
+  if (typeof token !== 'string' || !/^[a-f0-9]{24,}$/.test(token)) return false;
+  const thash = await sha256Hex(new TextEncoder().encode(token));
+  let raw = null;
+  try { raw = await b.get(RESET_PREFIX + thash); } catch { return false; }
+  if (!raw) return false;
+  try { await b.delete(RESET_PREFIX + thash); } catch { /* best effort */ }
+  return true;
+}
+
 export async function loginWithCredentials(username, password, env) {
   // Trim whitespace on every secret value we read. wrangler secret put,
   // depending on how the value was piped in, may store trailing newlines.
@@ -173,9 +245,16 @@ export async function loginWithCredentials(username, password, env) {
   // whitespace). Passwords are NOT trimmed since legit passwords can
   // contain leading/trailing spaces; instead the client is responsible
   // for sending exactly the characters the user intended.
-  const storedUser = (env && typeof env.OWNER_USERNAME === 'string') ? env.OWNER_USERNAME.trim() : '';
-  const storedHash = (env && typeof env.OWNER_PASSWORD_HASH === 'string') ? env.OWNER_PASSWORD_HASH.trim().toLowerCase() : '';
-  const storedSalt = (env && typeof env.OWNER_PASSWORD_SALT === 'string') ? env.OWNER_PASSWORD_SALT.trim() : '';
+  // A KV-stored credential (set via the email-gated password reset) takes
+  // precedence; the env secrets are the bootstrap/fallback. This is what makes
+  // the owner password resettable from the web, with no wrangler involved.
+  const kvCred = await getKvCredential(env);
+  const storedUser = kvCred ? String(kvCred.username || '').trim()
+    : ((env && typeof env.OWNER_USERNAME === 'string') ? env.OWNER_USERNAME.trim() : '');
+  const storedHash = kvCred ? String(kvCred.hash || '').trim().toLowerCase()
+    : ((env && typeof env.OWNER_PASSWORD_HASH === 'string') ? env.OWNER_PASSWORD_HASH.trim().toLowerCase() : '');
+  const storedSalt = kvCred ? String(kvCred.salt || '').trim()
+    : ((env && typeof env.OWNER_PASSWORD_SALT === 'string') ? env.OWNER_PASSWORD_SALT.trim() : '');
 
   if (!storedUser || !storedHash) {
     return { ok: false, error: 'login_not_configured' };

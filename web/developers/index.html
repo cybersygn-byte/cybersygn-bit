@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>CyberSygn API. The v1 REST reference for developers.</title>
+  <meta name="description" content="The CyberSygn v1 REST API. Create and send documents for signature, auto-detect fields, download signed PDFs and audit certificates, configure webhooks, and embed signing in your own app." />
+  <meta name="keywords" content="e-signature API, signature API, REST API, document signing API, webhooks, embedded signing, field detection API, CyberSygn API" />
+  <meta name="author" content="CyberSygn" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="canonical" href="https://cybersygn.io/developers/" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../brand/favicon-16.png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+
+  <meta property="og:title" content="CyberSygn API. The v1 REST reference for developers." />
+  <meta property="og:description" content="Drive the full signing lifecycle server-to-server. Create documents, auto-detect fields, download signed PDFs and audit certs, fire webhooks, and embed signing." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/developers/" />
+  <meta property="og:site_name" content="CyberSygn" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CyberSygn API. The v1 REST reference for developers." />
+  <meta name="twitter:description" content="Create documents, auto-detect fields, download signed PDFs and audit certs, fire webhooks, and embed signing inside your own app." />
+  <meta name="twitter:image" content="https://cybersygn.io/brand/og-image.png" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+
+  <style>
+    /* Page-scoped layout for the reference. Everything else reuses the
+       shared design system tokens in styles.css. */
+    .dev-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: start; }
+    @media (max-width: 860px) { .dev-layout { grid-template-columns: 1fr; } }
+
+    .dev-toc { position: sticky; top: 88px; font-size: var(--t-sm); }
+    @media (max-width: 860px) { .dev-toc { position: static; top: auto; margin-bottom: var(--s-6); } }
+    .dev-toc__head { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin: 0 0 10px; }
+    .dev-toc a { display: block; color: var(--text-2); text-decoration: none; padding: 5px 0; line-height: 1.35; border-left: 2px solid transparent; padding-left: 12px; margin-left: -12px; }
+    .dev-toc a:hover { color: var(--accent-text); border-left-color: var(--accent-line); }
+
+    .dev-doc { min-width: 0; }
+    .dev-doc h2 { font-size: var(--t-d3); letter-spacing: -0.02em; margin: 0 0 12px; scroll-margin-top: 88px; }
+    .dev-doc h3 { font-size: var(--t-l); margin: 28px 0 8px; scroll-margin-top: 88px; }
+    .dev-doc > section { padding-block: clamp(28px, 4vh, 44px); border-top: 1px solid var(--line); }
+    .dev-doc > section:first-of-type { border-top: 0; padding-top: 0; }
+    .dev-doc p { color: var(--text-2); line-height: 1.6; margin: 0 0 14px; max-width: 68ch; }
+    .dev-doc ul { color: var(--text-2); line-height: 1.6; margin: 0 0 14px; padding-left: 20px; max-width: 68ch; }
+    .dev-doc li { margin-bottom: 6px; }
+    .dev-doc a { color: var(--accent-text); }
+
+    code { font-family: var(--mono); font-size: 0.92em; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 1px 5px; }
+    pre { margin: 14px 0; padding: 14px 16px; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+    pre code { background: none; border: 0; padding: 0; font-size: 13px; line-height: 1.55; color: var(--text); display: block; white-space: pre; }
+
+    .dev-method { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13px; margin: 24px 0 6px; flex-wrap: wrap; }
+    .dev-verb { font-weight: 600; font-size: 11px; letter-spacing: 0.05em; padding: 3px 8px; border-radius: var(--r-sm); color: #fff; }
+    .dev-verb--get { background: var(--ok); }
+    .dev-verb--post { background: var(--accent-text); }
+    .dev-path { color: var(--text); font-weight: 500; }
+    .dev-doc h2 .dev-anchor, .dev-doc h3 .dev-anchor { opacity: 0; text-decoration: none; color: var(--text-3); margin-left: 8px; font-weight: 400; }
+    .dev-doc h2:hover .dev-anchor, .dev-doc h3:hover .dev-anchor { opacity: 1; }
+
+    .dev-tabs { display: flex; gap: 4px; margin-top: 16px; }
+    .dev-tab { font-family: var(--mono); font-size: 12px; padding: 6px 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--r-sm) var(--r-sm) 0 0; background: var(--bg); color: var(--text-3); cursor: pointer; }
+    .dev-tab.is-active { color: var(--text); background: var(--bg-2); border-color: var(--line); }
+    .dev-panel { display: none; }
+    .dev-panel.is-active { display: block; }
+    .dev-panel pre { margin-top: 0; border-top-left-radius: 0; }
+
+    .dev-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: var(--t-sm); }
+    .dev-table th, .dev-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .dev-table th { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+    .dev-table td:first-child { font-family: var(--mono); white-space: nowrap; color: var(--text); }
+    .dev-table code { white-space: nowrap; }
+
+    .dev-note { border-left: 2px solid var(--accent-line); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 var(--r) var(--r) 0; margin: 18px 0; font-size: var(--t-sm); color: var(--text-2); }
+    .dev-note strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">developers</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Developers">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../#pricing">Pricing</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Launch preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">CyberSygn API. v1.</p>
+        <h1 class="h-display hero__title">A REST API for the whole signing lifecycle.</h1>
+        <p class="lede hero__lede">Create a document, let CyberSygn find the signature fields, route it to your signers, and pull back the signed PDF and a tamper-evident audit certificate. One API key, server to server. The same detection and signing engine that runs the app, exposed for your code.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="dev-layout">
+
+          <!-- Table of contents -->
+          <nav class="dev-toc" aria-label="On this page">
+            <p class="dev-toc__head">On this page</p>
+            <a href="#base-url">Base URL</a>
+            <a href="#auth">Authentication</a>
+            <a href="#create">Create a document</a>
+            <a href="#get">Get a document</a>
+            <a href="#download">Download the PDF</a>
+            <a href="#audit">Audit certificate</a>
+            <a href="#void">Void a document</a>
+            <a href="#templates">List templates</a>
+            <a href="#detect">Detect fields</a>
+            <a href="#me">Check the key</a>
+            <a href="#partners">Provision keys (partners)</a>
+            <a href="#webhooks">Webhooks</a>
+            <a href="#embedded">Embedded signing</a>
+            <a href="#errors">Error codes</a>
+          </nav>
+
+          <div class="dev-doc">
+
+            <!-- BASE URL -->
+            <section id="base-url">
+              <h2>Base URL <a class="dev-anchor" href="#base-url" aria-label="Link to this section">#</a></h2>
+              <p>Every endpoint lives under one host. All paths below are relative to it.</p>
+              <pre><code>https://cybersygn.io/api/v1</code></pre>
+              <p>Responses are JSON, except the document download and audit endpoints, which return a PDF. Timestamps are ISO 8601 strings. API access needs a paid plan.</p>
+            </section>
+
+            <!-- AUTH -->
+            <section id="auth">
+              <h2>Authentication <a class="dev-anchor" href="#auth" aria-label="Link to this section">#</a></h2>
+              <p>Authenticate every request with an API key. Keys are account-bound: each key acts as the CyberSygn account that minted it, so your plan limits, branding, and webhook config all apply automatically. Only the account owner can mint keys, from the dashboard.</p>
+              <p>Pass the key as a bearer token (preferred) or in the <code>X-API-Key</code> header.</p>
+              <pre><code>Authorization: Bearer cs_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+              <p>Or:</p>
+              <pre><code>X-API-Key: cs_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+              <p>Live keys are prefixed <code>cs_live_</code>. Test-mode keys are prefixed <code>cs_test_</code>. We never store the raw key, only its hash, so a key is shown to you exactly once at creation. Store it somewhere safe and never commit it. A missing or invalid key returns <code>401 unauthorized</code>. A key may only read and act on documents its own account created; touching another account's document returns <code>403 forbidden</code>.</p>
+            </section>
+
+            <!-- CREATE -->
+            <section id="create">
+              <h2>Create a document <a class="dev-anchor" href="#create" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--post">POST</span><span class="dev-path">/api/v1/documents</span></div>
+              <p>Create a document and send it for signature in one call. Give it a source PDF and a list of signers. CyberSygn detects the signature fields for you when you do not supply them, then emails each signer a magic link and returns one <code>signing_url</code> per signer.</p>
+
+              <h3>Body</h3>
+              <ul>
+                <li><code>pdf_base64</code> — the source PDF as base64 (a <code>data:</code> prefix is stripped for you). Provide this <em>or</em> <code>template</code>.</li>
+                <li><code>template</code> — a template slug from your library (see <a href="#templates">List templates</a>). Provide this <em>or</em> <code>pdf_base64</code>.</li>
+                <li><code>signers</code> — required array of <code>{ name, email, order }</code>. At least one, up to 20. <code>order</code> is optional and defaults to array position.</li>
+                <li><code>fields</code> — optional array of field objects. Omit it and CyberSygn auto-detects every signature, initial, date, and checkbox in the PDF. Pass an explicit array to place them yourself.</li>
+                <li><code>assignments</code> — optional map of <code>fieldId → signerId</code>. Omit it and every field is assigned to the first signer. Pass it for multi-party routing.</li>
+                <li><code>cc</code> — optional array of email addresses to copy on the completed document.</li>
+                <li><code>signing_order</code> — <code>"parallel"</code> (default, everyone can sign at once) or <code>"sequential"</code> (one signer at a time, in order).</li>
+                <li><code>title</code> — optional document title.</li>
+              </ul>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="create-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="create-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="create-curl">
+<pre><code>curl https://cybersygn.io/api/v1/documents \
+  -H "Authorization: Bearer cs_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Mutual NDA",
+    "pdf_base64": "JVBERi0xLjcK...",
+    "signers": [
+      { "name": "Ada Lovelace", "email": "ada@example.com", "order": 0 },
+      { "name": "Alan Turing",  "email": "alan@example.com", "order": 1 }
+    ],
+    "signing_order": "sequential"
+  }'</code></pre>
+              </div>
+              <div class="dev-panel" id="create-js">
+<pre><code>const res = await fetch("https://cybersygn.io/api/v1/documents", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer cs_live_xxx",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    title: "Mutual NDA",
+    pdf_base64: pdfBase64,            // or: template: "non-disclosure-agreement"
+    signers: [
+      { name: "Ada Lovelace", email: "ada@example.com", order: 0 },
+      { name: "Alan Turing",  email: "alan@example.com", order: 1 },
+    ],
+    signing_order: "sequential",
+  }),
+});
+const doc = await res.json();
+console.log(doc.id, doc.signers[0].signing_url);</code></pre>
+              </div>
+
+              <h3>Response <code>201</code></h3>
+<pre><code>{
+  "id": "doc_abc123",
+  "status": "sent",
+  "title": "Mutual NDA",
+  "signing_order": "sequential",
+  "field_count": 4,
+  "detected_fields": true,
+  "signers": [
+    {
+      "id": "s1",
+      "name": "Ada Lovelace",
+      "email": "ada@example.com",
+      "status": "pending",
+      "signing_url": "https://cybersygn.io/x?t=..."
+    }
+  ],
+  "created_at": "2026-06-13T17:04:00.000Z",
+  "status_url": "https://cybersygn.io/api/v1/documents/doc_abc123",
+  "webhook_note": "Subscribe to doc.completed via your account webhook to be notified when all signers finish."
+}</code></pre>
+              <div class="dev-note"><strong>Field detection.</strong> When you omit <code>fields</code>, <code>detected_fields</code> is <code>true</code> in the response. If the PDF has no detectable signature fields you get <code>422 no_fields_detected</code> — pass an explicit <code>fields</code> array to place them yourself.</div>
+            </section>
+
+            <!-- GET -->
+            <section id="get">
+              <h2>Get a document <a class="dev-anchor" href="#get" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/documents/:id</span></div>
+              <p>Fetch a document's current status and per-signer state. This is the simplest way to track progress: poll it until <code>status</code> is <code>completed</code> (see <a href="#webhooks">Webhooks</a> for the push-based alternative).</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="get-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="get-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="get-curl">
+<pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123 \
+  -H "Authorization: Bearer cs_live_xxx"</code></pre>
+              </div>
+              <div class="dev-panel" id="get-js">
+<pre><code>const res = await fetch(
+  "https://cybersygn.io/api/v1/documents/doc_abc123",
+  { headers: { "Authorization": "Bearer cs_live_xxx" } }
+);
+const doc = await res.json();
+if (doc.status === "completed") {
+  console.log("Ready:", doc.download_url);
+}</code></pre>
+              </div>
+
+              <h3>Response <code>200</code></h3>
+<pre><code>{
+  "id": "doc_abc123",
+  "status": "partially_signed",
+  "title": "Mutual NDA",
+  "created_at": "2026-06-13T17:04:00.000Z",
+  "completed_at": null,
+  "voided_at": null,
+  "signers": [
+    { "id": "s1", "name": "Ada Lovelace", "email": "ada@example.com",
+      "status": "signed",  "signed_at": "2026-06-13T17:10:00.000Z", "order": 0 },
+    { "id": "s2", "name": "Alan Turing",  "email": "alan@example.com",
+      "status": "pending", "signed_at": null, "order": 1 }
+  ],
+  "download_url": null,
+  "audit_url": null
+}</code></pre>
+              <p>Document <code>status</code> is one of <code>sent</code>, <code>partially_signed</code>, <code>completed</code>, or <code>voided</code>. Signer <code>status</code> is one of <code>pending</code>, <code>signed</code>, or <code>declined</code>. <code>download_url</code> and <code>audit_url</code> are populated only once the document is <code>completed</code>.</p>
+            </section>
+
+            <!-- DOWNLOAD -->
+            <section id="download">
+              <h2>Download the signed PDF <a class="dev-anchor" href="#download" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/documents/:id/download</span></div>
+              <p>Returns the flattened, signed PDF bytes — the same document a signer receives. Only available once the document is <code>completed</code>; before that you get <code>409 not_completed</code>.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="dl-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="dl-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="dl-curl">
+<pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123/download \
+  -H "Authorization: Bearer cs_live_xxx" \
+  -o signed.pdf</code></pre>
+              </div>
+              <div class="dev-panel" id="dl-js">
+<pre><code>const res = await fetch(
+  "https://cybersygn.io/api/v1/documents/doc_abc123/download",
+  { headers: { "Authorization": "Bearer cs_live_xxx" } }
+);
+if (res.ok) {
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  // write bytes to disk / storage
+}</code></pre>
+              </div>
+            </section>
+
+            <!-- AUDIT -->
+            <section id="audit">
+              <h2>Audit certificate <a class="dev-anchor" href="#audit" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/documents/:id/audit</span></div>
+              <p>Returns the tamper-evident audit certificate for a completed document: who signed, when, from where, and the document fingerprint. Like the download, it is available only once the document is <code>completed</code> and returns <code>409 not_completed</code> otherwise.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="audit-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="audit-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="audit-curl">
+<pre><code>curl https://cybersygn.io/api/v1/documents/doc_abc123/audit \
+  -H "Authorization: Bearer cs_live_xxx" \
+  -o audit.pdf</code></pre>
+              </div>
+              <div class="dev-panel" id="audit-js">
+<pre><code>const res = await fetch(
+  "https://cybersygn.io/api/v1/documents/doc_abc123/audit",
+  { headers: { "Authorization": "Bearer cs_live_xxx" } }
+);
+const auditBytes = new Uint8Array(await res.arrayBuffer());</code></pre>
+              </div>
+            </section>
+
+            <!-- VOID -->
+            <section id="void">
+              <h2>Void a document <a class="dev-anchor" href="#void" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--post">POST</span><span class="dev-path">/api/v1/documents/:id/void</span></div>
+              <p>Cancel an in-flight document so it can no longer be signed. A document that is already <code>completed</code> cannot be voided and returns <code>409 already_completed</code>. Voiding an already-voided document is idempotent and returns its current state.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="void-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="void-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="void-curl">
+<pre><code>curl -X POST https://cybersygn.io/api/v1/documents/doc_abc123/void \
+  -H "Authorization: Bearer cs_live_xxx"</code></pre>
+              </div>
+              <div class="dev-panel" id="void-js">
+<pre><code>const res = await fetch(
+  "https://cybersygn.io/api/v1/documents/doc_abc123/void",
+  { method: "POST", headers: { "Authorization": "Bearer cs_live_xxx" } }
+);
+const doc = await res.json(); // doc.status === "voided"</code></pre>
+              </div>
+              <p>A subsequent attempt to act on a voided document returns <code>410 voided</code>.</p>
+            </section>
+
+            <!-- TEMPLATES -->
+            <section id="templates">
+              <h2>List templates <a class="dev-anchor" href="#templates" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/templates</span></div>
+              <p>List the templates available to your account. Use a returned <code>slug</code> as the <code>template</code> field when you <a href="#create">create a document</a>, instead of uploading a PDF every time.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="tmpl-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="tmpl-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="tmpl-curl">
+<pre><code>curl https://cybersygn.io/api/v1/templates \
+  -H "Authorization: Bearer cs_live_xxx"</code></pre>
+              </div>
+              <div class="dev-panel" id="tmpl-js">
+<pre><code>const res = await fetch("https://cybersygn.io/api/v1/templates", {
+  headers: { "Authorization": "Bearer cs_live_xxx" },
+});
+const { count, templates } = await res.json();</code></pre>
+              </div>
+
+              <h3>Response <code>200</code></h3>
+<pre><code>{
+  "count": 2,
+  "templates": [
+    { "slug": "non-disclosure-agreement", "title": "Non-Disclosure Agreement", "group": "Confidentiality &amp; IP" },
+    { "slug": "master-services-agreement", "title": "Master Services Agreement", "group": "Business" }
+  ]
+}</code></pre>
+            </section>
+
+            <!-- DETECT -->
+            <section id="detect">
+              <h2>Detect fields <a class="dev-anchor" href="#detect" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--post">POST</span><span class="dev-path">/api/v1/detect</span></div>
+              <p>Run field detection on a PDF without creating or sending anything. Useful to preview what CyberSygn would place, or to seed your own <code>fields</code> array. Pass <code>pdf_base64</code> in the body.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="detect-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="detect-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="detect-curl">
+<pre><code>curl https://cybersygn.io/api/v1/detect \
+  -H "Authorization: Bearer cs_live_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{ "pdf_base64": "JVBERi0xLjcK..." }'</code></pre>
+              </div>
+              <div class="dev-panel" id="detect-js">
+<pre><code>const res = await fetch("https://cybersygn.io/api/v1/detect", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer cs_live_xxx",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ pdf_base64: pdfBase64 }),
+});
+const { count, fields } = await res.json();</code></pre>
+              </div>
+
+              <h3>Response <code>200</code></h3>
+<pre><code>{
+  "count": 1,
+  "fields": [
+    { "id": "f1", "type": "signature", "page": 1,
+      "x": 120, "y": 640, "width": 200, "height": 36,
+      "confidence": 0.94, "label": "Signature" }
+  ]
+}</code></pre>
+            </section>
+
+            <!-- ME -->
+            <section id="me">
+              <h2>Check the key <a class="dev-anchor" href="#me" aria-label="Link to this section">#</a></h2>
+              <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/me</span></div>
+              <p>Sanity-check a key. Returns the account it resolves to, the key id, and the mode. Handy as a first call when wiring up an integration.</p>
+
+              <div class="dev-tabs" role="tablist">
+                <button class="dev-tab is-active" data-tab="me-curl" type="button" role="tab">curl</button>
+                <button class="dev-tab" data-tab="me-js" type="button" role="tab">JavaScript</button>
+              </div>
+              <div class="dev-panel is-active" id="me-curl">
+<pre><code>curl https://cybersygn.io/api/v1/me \
+  -H "Authorization: Bearer cs_live_xxx"</code></pre>
+              </div>
+              <div class="dev-panel" id="me-js">
+<pre><code>const res = await fetch("https://cybersygn.io/api/v1/me", {
+  headers: { "Authorization": "Bearer cs_live_xxx" },
+});
+const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
+              </div>
+
+              <h3>Response <code>200</code></h3>
+<pre><code>{ "ok": true, "account": "acct_123", "key_id": "key_abc", "mode": "live" }</code></pre>
+            </section>
+
+            <!-- WEBHOOKS -->
+            <section id="partners">
+              <h2>Provision keys for your users (partners) <a class="dev-anchor" href="#partners" aria-label="Link to this section">#</a></h2>
+              <p>There are two ways to access the API. <strong>Standalone customers</strong> who buy CyberSygn directly get a <strong>metered</strong> key, gated by their plan. A <strong>partner</strong> that builds CyberSygn into its own product gets one server-side <strong>partner master key</strong> (capability <code>canProvision</code>) and uses it to mint an <strong>individualized, unmetered key for each of its own users</strong>. Every tenant key is its own credential: isolated to its own account namespace, attributable, and revocable on its own. Keep the master key on your server and never expose it to end users. Partner master keys are minted from the owner console.</p>
+              <h3>Mint a tenant key</h3>
+              <pre><code>curl -X POST https://cybersygn.io/api/v1/keys \
+  -H "Authorization: Bearer $CYBERSYGN_PARTNER_KEY" \
+  -H "content-type: application/json" \
+  -d '{"tenant_id": "your-customer-123", "label": "acme"}'</code></pre>
+              <h3>Response <code>201</code></h3>
+              <pre><code>{
+  "key": "cs_live_...",
+  "key_id": "key_...",
+  "tenant_id": "your-customer-123",
+  "account": "p-yourname-your-customer-123",
+  "unmetered": true
+}</code></pre>
+              <p>The tenant key is shown once — store it against your user and use it as that user's bearer token. List your tenant keys with <code>GET /api/v1/keys</code>; revoke one with <code>DELETE /api/v1/keys</code> and body <code>{"key_id":"key_..."}</code>. A tenant key cannot mint further keys.</p>
+            </section>
+
+            <section id="webhooks">
+              <h2>Webhooks <a class="dev-anchor" href="#webhooks" aria-label="Link to this section">#</a></h2>
+              <p>Rather than poll, configure a webhook URL on your account and CyberSygn will POST a JSON payload to it as the document moves through its lifecycle. Because keys are account-bound, your existing account webhook config applies to API-created documents automatically.</p>
+              <h3>Events</h3>
+              <table class="dev-table">
+                <thead><tr><th>Event</th><th>Fires when</th></tr></thead>
+                <tbody>
+                  <tr><td>doc.created</td><td>A document is created and sent for signature.</td></tr>
+                  <tr><td>signer.completed</td><td>An individual signer finishes their part.</td></tr>
+                  <tr><td>doc.completed</td><td>Every signer has finished and the document is final.</td></tr>
+                </tbody>
+              </table>
+              <h3>Payload</h3>
+<pre><code>{
+  "event": "doc.completed",
+  "document": {
+    "id": "doc_abc123",
+    "status": "completed",
+    "title": "Mutual NDA",
+    "completed_at": "2026-06-13T17:20:00.000Z"
+  }
+}</code></pre>
+              <p>On <code>doc.completed</code>, call <a href="#download">GET /:id/download</a> and <a href="#audit">GET /:id/audit</a> to retrieve the signed PDF and certificate.</p>
+              <div class="dev-note"><strong>No webhook? Just poll.</strong> The simplest integration skips webhooks entirely: after you create a document, poll <a href="#get">GET /api/v1/documents/:id</a> on an interval until <code>status</code> is <code>completed</code>, then download. Webhooks are the efficient option, not a requirement.</div>
+            </section>
+
+            <!-- EMBEDDED -->
+            <section id="embedded">
+              <h2>Embedded signing <a class="dev-anchor" href="#embedded" aria-label="Link to this section">#</a></h2>
+              <p>Keep signing inside your own app. Every signer in the create response carries a <code>signing_url</code> — drop it into an iframe and the full CyberSygn signing flow renders in place. No redirect to a third-party site.</p>
+<pre><code>&lt;iframe
+  src="https://cybersygn.io/x?t=..."   &lt;!-- the signer's signing_url --&gt;
+  style="width:100%;height:90vh;border:0"
+  allow="clipboard-read; clipboard-write; camera"
+  title="Sign with CyberSygn"&gt;
+&lt;/iframe&gt;</code></pre>
+              <p>The signing surface posts a <code>cybersygn:complete</code> message to the parent window when signing finishes, so you can update your own UI:</p>
+<pre><code>window.addEventListener("message", (e) =&gt; {
+  if (e.origin !== "https://cybersygn.io") return;
+  if (e.data &amp;&amp; e.data.type === "cybersygn:complete") {
+    // close the modal, refresh status, etc.
+  }
+});</code></pre>
+              <p>If you would rather not build the modal yourself, the hosted embed widget does it for you. Drop one script tag and any element with a <code>data-cybersygn-sign</code> attribute becomes a launcher that opens signing in a managed iframe modal, complete with backdrop, close handling, and the same completion message.</p>
+<pre><code>&lt;script src="https://cybersygn.io/embed.js"&gt;&lt;/script&gt;
+
+&lt;button data-cybersygn-sign="https://your-site.com/contract.pdf"
+        data-cybersygn-source="your-app"&gt;
+  Sign this document
+&lt;/button&gt;</code></pre>
+              <p>See the <a href="/embed/">embed widget docs</a> for theming, programmatic <code>CyberSygn.open()</code> control, and prefill options.</p>
+            </section>
+
+            <!-- ERRORS -->
+            <section id="errors">
+              <h2>Error codes <a class="dev-anchor" href="#errors" aria-label="Link to this section">#</a></h2>
+              <p>Errors come back as JSON with a stable <code>error</code> code and a human <code>message</code>. Switch on the code, show the message.</p>
+<pre><code>{ "error": "not_completed", "message": "The document is not fully signed yet." }</code></pre>
+              <table class="dev-table">
+                <thead><tr><th>HTTP</th><th>Code</th><th>Meaning</th></tr></thead>
+                <tbody>
+                  <tr><td>401</td><td><code>unauthorized</code></td><td>Missing or invalid API key.</td></tr>
+                  <tr><td>403</td><td><code>forbidden</code></td><td>The document belongs to a different account.</td></tr>
+                  <tr><td>404</td><td><code>not_found</code></td><td>No document, template, or route matches.</td></tr>
+                  <tr><td>409</td><td><code>not_completed</code></td><td>Download or audit requested before the document is fully signed.</td></tr>
+                  <tr><td>409</td><td><code>already_completed</code></td><td>A completed document cannot be voided.</td></tr>
+                  <tr><td>410</td><td><code>voided</code></td><td>The document was voided and can no longer be acted on.</td></tr>
+                  <tr><td>413</td><td><code>payload_too_large</code></td><td>The PDF exceeds the 25 MB limit.</td></tr>
+                  <tr><td>422</td><td><code>detection_failed</code></td><td>The PDF could not be read for field detection.</td></tr>
+                  <tr><td>422</td><td><code>no_fields_detected</code></td><td>No signature fields were found. Pass an explicit <code>fields</code> array.</td></tr>
+                </tbody>
+              </table>
+              <div class="dev-note"><strong>API access needs a paid plan.</strong> Keys are minted from the dashboard by the account owner on a paid subscription. <a href="../#pricing">See pricing</a> or <a href="mailto:hello@cybersygn.io">get in touch</a>.</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/templates/">Templates</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    // Code-sample tabs (curl / JavaScript). Each .dev-tabs block toggles the
+    // sibling .dev-panel whose id matches data-tab. Pure DOM, no deps.
+    document.querySelectorAll('.dev-tabs').forEach(function (tabs) {
+      var group = tabs.parentNode;
+      tabs.addEventListener('click', function (e) {
+        var btn = e.target.closest('.dev-tab');
+        if (!btn) return;
+        var id = btn.getAttribute('data-tab');
+        tabs.querySelectorAll('.dev-tab').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+        group.querySelectorAll('.dev-panel').forEach(function (p) { p.classList.toggle('is-active', p.id === id); });
+      });
+    });
+
+    // Smooth-scroll the TOC links and offset for the sticky masthead.
+    document.querySelectorAll('.dev-toc a').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        var target = document.querySelector(a.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', a.getAttribute('href'));
+      });
+    });
+  </script>
+
+</body>
+</html>

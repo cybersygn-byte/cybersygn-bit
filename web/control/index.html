@@ -57,6 +57,36 @@
           </button>
           <p id="control-login-error" class="control-login__error" hidden></p>
         </form>
+
+        <p style="margin-top:14px; text-align:center;">
+          <a href="#" id="control-forgot" class="caption" style="color:var(--accent-text);">Forgot password?</a>
+        </p>
+
+        <!-- Step 1: request a reset link (emailed only to the configured OWNER_EMAIL). -->
+        <form id="control-reset-request" class="control-login__form" hidden style="margin-top:10px;">
+          <p class="caption" style="margin-bottom:8px;">Enter your owner email. We send a one-time reset link, good for 30 minutes.</p>
+          <div class="field">
+            <input class="field__input" id="control-reset-email" name="email" placeholder=" " type="email" autocomplete="email" required />
+            <label class="field__label" for="control-reset-email">Owner email</label>
+          </div>
+          <button class="btn btn--ghost btn--block" type="submit">Send reset link</button>
+          <p id="control-reset-status" class="caption" style="margin-top:8px;" hidden></p>
+        </form>
+
+        <!-- Step 2: set a new credential (shown when the page is opened via ?reset=token). -->
+        <form id="control-reset-confirm" class="control-login__form" hidden style="margin-top:10px;">
+          <p class="caption" style="margin-bottom:8px;">Set a new owner username and password.</p>
+          <div class="field">
+            <input class="field__input" id="control-reset-user" name="username" placeholder=" " type="text" autocomplete="username" required />
+            <label class="field__label" for="control-reset-user">New username</label>
+          </div>
+          <div class="field">
+            <input class="field__input" id="control-reset-pass" name="password" placeholder=" " type="password" autocomplete="new-password" minlength="8" required />
+            <label class="field__label" for="control-reset-pass">New password (8+ characters)</label>
+          </div>
+          <button class="btn btn--primary btn--block" type="submit">Set new password</button>
+          <p id="control-reset-confirm-status" class="caption" style="margin-top:8px;" hidden></p>
+        </form>
       </div>
     </section>
 
@@ -214,6 +244,31 @@
             <p class="control-link__title">Subsystem check</p>
             <p class="control-link__detail">KV / Resend / Stripe / AE / owner / vision.</p>
           </a>
+        </div>
+      </section>
+
+      <section class="control-tile control-tile--apikeys">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Tile 5</p>
+            <h2 class="h-card">API keys</h2>
+          </div>
+        </header>
+        <div class="control-tile__body">
+          <p class="caption" style="margin-bottom:12px;">Mint a key for the public API (<code>/api/v1</code>). The key acts as the account you bind it to and inherits that account's plan and webhooks. It is shown once. Bind an integration like Vyan to a paid account so its API usage is unmetered.</p>
+          <form id="apikey-form" autocomplete="off" style="display:flex; flex-direction:column; gap:10px; max-width:480px;">
+            <input class="field__input" id="apikey-sender" placeholder="senderId (account the key acts as)" type="text" required />
+            <input class="field__input" id="apikey-label" placeholder="label (e.g. vyan)" type="text" />
+            <input class="field__input" id="apikey-partner" placeholder="partnerId (optional, e.g. vyan)" type="text" />
+            <label style="display:flex; gap:8px; align-items:center; font-size:var(--t-sm); color:var(--text-2);"><input type="checkbox" id="apikey-unmetered" /> Unmetered — no free-tier cap (for partner / your own integrations)</label>
+            <label style="display:flex; gap:8px; align-items:center; font-size:var(--t-sm); color:var(--text-2);"><input type="checkbox" id="apikey-provision" /> Partner master — can mint individualized tenant keys (give to Vyan only)</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn--primary btn--sm" type="submit">Mint key</button>
+              <button class="btn btn--ghost btn--sm" type="button" id="apikey-list-btn">List keys</button>
+            </div>
+          </form>
+          <p id="apikey-fresh" hidden style="margin-top:12px; padding:10px 12px; background:var(--surface-2); border:1px solid var(--accent-line); border-radius:var(--r-sm); font-family:var(--mono); font-size:var(--t-sm); word-break:break-all;"></p>
+          <div id="apikey-list" aria-live="polite" style="margin-top:12px;"></div>
         </div>
       </section>
 

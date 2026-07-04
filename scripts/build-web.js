@@ -318,6 +318,16 @@ async function main() {
     console.log('  wrote dist/compliance/index.html');
   }
 
+  // /developers/: public v1 REST API reference. Single static HTML page
+  // documenting /api/v1/* (worker/src/api-v1.js + apikeys.js).
+  const devSrc = join(SRC, 'developers');
+  if (await exists(devSrc)) {
+    const devOut = join(OUT, 'developers');
+    await mkdir(devOut, { recursive: true });
+    await copyFile(join(devSrc, 'index.html'), join(devOut, 'index.html'));
+    console.log('  wrote dist/developers/index.html');
+  }
+
   // /templates/: contract templates library (slice 105).
   const tmplSrc = join(SRC, 'templates');
   if (await exists(tmplSrc)) {

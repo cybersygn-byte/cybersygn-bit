@@ -38,3 +38,9 @@ Thumbs.db
 # Local-only owner credentials (never commit)
 .owner-password.txt
 .secrets/
+
+# Session scratch / intermediate artifacts (regenerable, not product)
+_responsive-fix-plan.json
+template-detection-results.json
+scripts/_blog-qc-failures.json
+blog-rewrites/
