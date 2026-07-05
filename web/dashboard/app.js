@@ -74,8 +74,22 @@ let currentFilter = 'all';
 
 stateErrorRetry.addEventListener('click', () => load());
 
+// Reveal a panel that lives inside the collapsed "Account and settings"
+// group: a closed <details> hides its children even when their own hidden
+// attribute is cleared, so an action that unhides a panel must also open
+// the group, close any open overflow menu, and scroll the panel into view.
+function revealSettingsPanel(panelEl) {
+  if (!panelEl) return;
+  const group = panelEl.closest('details.settings-group');
+  if (group) group.open = true;
+  document.querySelectorAll('.cmd-more__menu').forEach(m => { m.hidden = true; });
+  document.querySelectorAll('.cmd-more__btn[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+  try { panelEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { panelEl.scrollIntoView(); }
+}
+
 identityToggle.addEventListener('click', () => {
   identityPanel.hidden = false;
+  revealSettingsPanel(identityPanel);
   identityInput.value = getSenderId();
   identitySave.hidden = true;
   identityInput.removeAttribute('readonly');
@@ -141,6 +155,15 @@ window.addEventListener('keydown', e => { if (e.key === 'Escape' && !wsModal.hid
 populateWorkspaceSwitcher();
 maybeShowJoinFlash();
 
+// The subscription banner module (index.html) sets window.__cybersygnSub
+// and fires this event once the tier is known. Re-run the tier-gated
+// panels so paid users see them without a reload.
+window.addEventListener('cybersygn:sub', e => {
+  if (e && e.detail) window.__cybersygnSub = e.detail;
+  ensureWebhookPanel();
+  ensureBrandPanel();
+});
+
 load();
 
 // ---- Data load --------------------------------------------------------------
@@ -153,13 +176,13 @@ async function load() {
   const titleEl = document.getElementById('dashboard-title');
   const ledeEl = document.getElementById('dashboard-lede');
   if (activeWs) {
-    if (titleEl) titleEl.textContent = `Every contract sent through ${activeWs.name}.`;
+    if (titleEl) titleEl.textContent = `${activeWs.name} documents`;
     if (ledeEl) ledeEl.textContent =
-      'Documents from every member of this workspace, newest first. Switch to "Personal" to see only documents you sent.';
+      'Documents from every member of this workspace, newest first. Switch to Personal to see only the ones you sent.';
   } else {
-    if (titleEl) titleEl.textContent = 'Every contract you have routed through CyberSygn.';
+    if (titleEl) titleEl.textContent = 'Your documents';
     if (ledeEl) ledeEl.textContent =
-      'Active documents are waiting on at least one signer. Completed documents include the audit certificate and the signed PDF, ready to download.';
+      'Active documents are waiting on a signer. Completed ones include the signed PDF and the audit trail, ready to download.';
   }
 
   const res = activeWs
@@ -167,7 +190,7 @@ async function load() {
     : await fetchSenderDocs(getSenderId());
 
   if (!res.ok) {
-    stateErrorMsg.textContent = res.error || 'Unknown error.';
+    stateErrorMsg.textContent = friendlyLoadError(res.error);
     showState('error');
     return;
   }
@@ -193,6 +216,20 @@ async function load() {
   }
   showState('list');
   renderList();
+}
+
+/**
+ * Turn a raw fetch/HTTP error into copy a person can act on. Never
+ * shows a bare "HTTP NNN" alone.
+ */
+function friendlyLoadError(raw) {
+  const msg = String(raw || '').trim();
+  if (!msg) return 'Something went wrong loading your documents. Try again.';
+  if (/fetch|network|load failed/i.test(msg)) return 'We could not reach the server. Check your connection and try again.';
+  if (/^HTTP 5/.test(msg)) return 'Our server had a hiccup. Try again in a moment.';
+  if (/^HTTP 4/.test(msg)) return 'Something went wrong loading your documents. Try again.';
+  if (/^HTTP \d+/.test(msg)) return 'Something went wrong loading your documents. Try again. (' + msg + ')';
+  return msg;
 }
 
 /**
@@ -353,12 +390,13 @@ async function ensureBrandPanel() {
   const senderId = getSenderId();
   if (!senderId) return;
 
-  // Tier gate. Read the cached subscription banner state — if it says
-  // 'free', we hide. Otherwise reveal the panel and fetch current brand.
-  let isPaid = true;
+  // Tier gate. Stay hidden until the subscription banner reports a paid
+  // tier; free users must never see a form the worker will 402. The
+  // 'cybersygn:sub' listener re-runs this once the tier is known.
+  let isPaid = false;
   try {
     const sub = window.__cybersygnSub;
-    if (sub && sub.tier === 'free') isPaid = false;
+    if (sub && sub.tier && sub.tier !== 'free') isPaid = true;
   } catch (e) {}
   if (!isPaid) {
     panel.hidden = true;
@@ -397,6 +435,12 @@ async function ensureBrandPanel() {
     const name = (nameInput && nameInput.value || '').trim();
     if (previewLogo) {
       previewLogo.innerHTML = url ? `<img src="${escapeHtml(url)}" alt="" />` : '';
+      const img = previewLogo.querySelector('img');
+      if (img) {
+        // A bad URL would paint a broken-image glyph; fall back to the
+        // same empty state the preview shows when no logo is set.
+        img.addEventListener('error', () => { previewLogo.innerHTML = ''; });
+      }
     }
     if (previewName) previewName.textContent = name || 'CyberSygn';
     if (swatch) swatch.style.background = color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : 'var(--accent)';
@@ -406,9 +450,18 @@ async function ensureBrandPanel() {
       previewCta.style.background = '';  // reset to var(--accent)
     }
   }
-  if (logoInput) logoInput.addEventListener('input', paintBrandPreview);
-  if (colorInput) colorInput.addEventListener('input', paintBrandPreview);
-  if (nameInput) nameInput.addEventListener('input', paintBrandPreview);
+  if (logoInput && !logoInput.__wired) {
+    logoInput.__wired = true;
+    logoInput.addEventListener('input', paintBrandPreview);
+  }
+  if (colorInput && !colorInput.__wired) {
+    colorInput.__wired = true;
+    colorInput.addEventListener('input', paintBrandPreview);
+  }
+  if (nameInput && !nameInput.__wired) {
+    nameInput.__wired = true;
+    nameInput.addEventListener('input', paintBrandPreview);
+  }
 
   if (form && !form.__wired) {
     form.__wired = true;
@@ -534,11 +587,17 @@ function paintAffiliatePanel(record) {
     });
   }
 
-  // Tweet intent.
+  // Tweet intent. Stays hidden until we have a real referral code, so
+  // the link never ships pointing at "#".
   const tweet = document.getElementById('aff-share-tweet');
   if (tweet) {
-    const text = encodeURIComponent("I've been using CyberSygn for contracts. Drop a PDF and it finds every signature field automatically. Worth a look:");
-    tweet.href = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
+    if (record.code) {
+      const text = encodeURIComponent("I've been using CyberSygn for contracts. Drop a PDF and it finds every signature field automatically. Worth a look:");
+      tweet.href = `https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareUrl)}`;
+      tweet.hidden = false;
+    } else {
+      tweet.hidden = true;
+    }
   }
 }
 
@@ -550,6 +609,9 @@ function paintAffiliatePanel(record) {
 function paintFounderHome(docs) {
   const home = document.getElementById('founder-home');
   if (!home) return;
+  // No documents yet: the empty-state welcome carries the first-run story, so
+  // the KPI strip (and its blank sparkline) would only add noise. Hide it.
+  if (!Array.isArray(docs) || docs.length === 0) { home.hidden = true; return; }
   home.hidden = false;
 
   const now = new Date();
@@ -750,7 +812,8 @@ async function loadDetail(doc, container) {
   const senderToken = doc.senderToken || getDocToken(doc.docId);
   const res = await fetchProgress(doc.docId, senderToken);
   if (!res.ok) {
-    container.innerHTML = `<p class="doc-row__loading">Could not load signer details: ${res.error}</p>`;
+    const raw = res.error ? ` title="${escapeHtml(res.error)}"` : '';
+    container.innerHTML = `<p class="doc-row__loading"${raw}>We could not load signer details for this document. Refresh and try again.</p>`;
     return;
   }
   const detail = res.data;

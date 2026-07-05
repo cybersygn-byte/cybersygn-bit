@@ -3,7 +3,7 @@
  *
  * Three stores collaborate to model a multi-party signing:
  *
- *   signers      | the named parties (you, the counterparty, witnesses)
+ *   signers      | the named parties (you and everyone else who signs)
  *   assignments  | which signer owns which detected field
  *   signingAs    | whose perspective the current user is signing from
  *
@@ -15,16 +15,16 @@
 
 // Distinct from the field-type palette so signer identity and field
 // type stay separately readable. Order matches typical signing order:
-// sender first, counterparty second, witnesses after.
+// sender first, everyone else after.
 // Up to twelve signers per document, matching the "up to 20" product promise
 // far more closely than the old four-color prototype and clearing the
 // ten-signer minimum. Each colour is visually distinct for at-a-glance field
-// ownership. The first four keep their role names; the rest are numbered.
+// ownership. Default names are plain placeholders the sender overwrites.
 export const SIGNER_PALETTE = [
-  { id: 'p1',  hex: '#B83227', name: 'Sender'       },
-  { id: 'p2',  hex: '#2F4D7A', name: 'Counterparty' },
-  { id: 'p3',  hex: '#B47A1F', name: 'Witness'      },
-  { id: 'p4',  hex: '#2F6D6A', name: 'Co-signer'    },
+  { id: 'p1',  hex: '#B83227', name: 'Sender'        },
+  { id: 'p2',  hex: '#2F4D7A', name: 'Second signer' },
+  { id: 'p3',  hex: '#B47A1F', name: 'Third signer'  },
+  { id: 'p4',  hex: '#2F6D6A', name: 'Fourth signer' },
   { id: 'p5',  hex: '#7A2F6D', name: 'Signer 5'     },
   { id: 'p6',  hex: '#3B6A2F', name: 'Signer 6'     },
   { id: 'p7',  hex: '#A84A1F', name: 'Signer 7'     },
@@ -69,7 +69,7 @@ export function createSignersStore() {
 
   /**
    * Add a signer, returning the created record. If name is empty, a
-   * sensible default (Sender / Counterparty / Witness) is assigned.
+   * plain default (Sender / Second signer / Third signer) is assigned.
    */
   function add({ name, email } = {}) {
     if (signers.length >= SIGNER_PALETTE.length) {

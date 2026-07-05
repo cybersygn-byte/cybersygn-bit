@@ -8951,3 +8951,180 @@ body[data-owner-active="true"] .free-pill {
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
 }
+
+/* ============================================================================
+   CRISP LAYER (2026-07-05). The product-tool UX system: Apple-clean in
+   CyberSygn navy/cyan, executed the Violet "quiet authority" way. Governs the
+   dashboard command center + preview tool. See docs/CRISP-DIRECTIVE.md.
+   One job per screen; calm surfaces; type discipline; progressive disclosure.
+   ============================================================================ */
+
+/* Section header: sentence-case sans with real weight + a hairline rule, not a
+   shouty tracked-out mono kicker. This is how the tool reads as one crafted
+   instrument rather than an engineering console. */
+.crisp-sub {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--text);
+  margin: var(--s-6) 0 var(--s-3);
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+.crisp-sub__hint {
+  display: block;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-3);
+  letter-spacing: 0;
+  margin-top: 3px;
+}
+
+/* Account & settings group: one calm region holding every set-once config
+   surface. Collapsed by default so the documents list stays the focus. */
+.settings-group {
+  margin-top: var(--s-7);
+  border-top: 1px solid var(--line);
+  padding-top: var(--s-5);
+}
+.settings-group > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  padding: 2px 0;
+  transition: color var(--t, 180ms) ease;
+}
+.settings-group > summary::-webkit-details-marker { display: none; }
+.settings-group > summary:hover { color: var(--accent-text); }
+.settings-group > summary .settings-group__hint {
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.settings-group > summary .settings-group__chev {
+  margin-left: auto;
+  color: var(--text-3);
+  transition: transform var(--t, 180ms) ease;
+}
+.settings-group[open] > summary .settings-group__chev { transform: rotate(90deg); }
+.settings-group__body { margin-top: var(--s-4); display: grid; gap: var(--s-3); }
+
+/* Each config surface inside the group presents as one calm hairline card with
+   a plain-language title + one line of what the user gets. No mono kickers,
+   no triple borders, no decorative brackets. */
+.settings-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: var(--s-5);
+}
+.settings-panel__title {
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.005em;
+  margin: 0 0 3px;
+}
+.settings-panel__note {
+  font-size: 13px;
+  color: var(--text-3);
+  margin: 0 0 var(--s-4);
+  max-width: 60ch;
+  line-height: 1.55;
+}
+/* Neutralize the legacy mono-kicker chrome when a panel lives in the group:
+   demote any leftover .kicker to a quiet sans line. */
+.settings-panel .kicker {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+}
+.settings-panel .kicker::before { display: none; }
+
+/* Command-center header: page title + exactly one primary action. Secondary
+   actions collapse into a quiet overflow menu. */
+.cmd-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-5);
+  flex-wrap: wrap;
+}
+.cmd-head__title {
+  font-family: var(--serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin: 0;
+}
+.cmd-head__lede {
+  font-size: 14px;
+  color: var(--text-3);
+  margin: var(--s-2) 0 0;
+  max-width: 54ch;
+  line-height: 1.55;
+}
+.cmd-head__actions { display: flex; align-items: center; gap: var(--s-3); flex-shrink: 0; }
+
+/* Quiet overflow menu ("More") for secondary header actions. */
+.cmd-more { position: relative; }
+.cmd-more__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cmd-more__menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 220px;
+  /* Never exceed the viewport: with right:0 anchoring the right edge to the
+     button, capping the width keeps the left edge on-screen on narrow phones. */
+  max-width: min(300px, calc(100vw - 24px));
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  padding: var(--s-2);
+  display: grid;
+  gap: 2px;
+  z-index: 40;
+}
+/* The workspace switcher lives inside the menu; let it shrink to fit a phone
+   instead of forcing the menu wider than the screen. */
+.cmd-more__menu .ws-switcher { display: flex; align-items: center; gap: var(--s-2); min-width: 0; padding: 6px 10px; }
+.cmd-more__menu .ws-switcher__select { flex: 1 1 auto; min-width: 0; }
+.cmd-more__menu[hidden] { display: none; }
+.cmd-more__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  color: var(--text-2);
+  padding: 8px 10px;
+  border-radius: var(--r);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--t, 180ms) ease, color var(--t, 180ms) ease;
+}
+.cmd-more__item:hover { background: var(--bg-2); color: var(--text); }
+
+/* KPI strip trim: hide the marketing-math tiles so only real numbers show. */
+.fh-tile--soft { display: none !important; }

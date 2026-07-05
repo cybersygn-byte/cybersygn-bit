@@ -39,7 +39,15 @@
   }
 
   // ---- Coachmark for first detection ------------------------------------
-  function showFirstDetectionCoachmark() {
+  function showFirstDetectionCoachmark(retriesLeft) {
+    // Never talk over an open modal (signup gate, send flow, paywall).
+    // Retry a few times so the coachmark still appears once the modal
+    // closes; the first-run flag is only consumed when we actually show.
+    if (document.querySelector('.modal-overlay')) {
+      const left = typeof retriesLeft === 'number' ? retriesLeft : 3;
+      if (left > 0) setTimeout(() => showFirstDetectionCoachmark(left - 1), 4000);
+      return;
+    }
     if (!setFlag('first_detection')) return;
     // Anchor: the field-type legend in the sidebar.
     const anchor = document.querySelector('.sidebar__legend');
@@ -57,7 +65,7 @@
       'left:' + Math.max(12, Math.round(rect.left - 12)) + 'px;';
     mark.innerHTML =
       '<p style="margin:0 0 8px;font-family:JetBrains Mono,monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#6EDEFA">First time here?</p>' +
-      '<p style="margin:0 0 10px"><strong>That just happened in 3 seconds.</strong> Every signature line, date, initial, and checkbox in your PDF — automatically placed. Color codes show what kind of field each one is.</p>' +
+      '<p style="margin:0 0 10px"><strong>That just happened in 3 seconds.</strong> Every signature line, date, initial, and checkbox in your PDF, placed automatically. Color codes show what kind of field each one is.</p>' +
       '<button type="button" style="appearance:none;border:0;background:#00CBF6;color:#011434;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;">Got it</button>';
     document.body.appendChild(mark);
     const dismiss = () => { try { mark.remove(); } catch (e) {} };
@@ -108,7 +116,7 @@
           showMilestone('First field filled.', 'You\'re doing it. Keep going.');
         }
         if ((event === 'preview_downloaded_direct' || event === 'preview_send_clicked') && setFlag('first_send')) {
-          showMilestone('First signed document!', 'Saved hours of DocuSign drudgery. Send another?');
+          showMilestone('First signed document!', 'That is hours of manual work you just skipped. Send another?');
         }
       } catch (err) {}
     };

@@ -69,12 +69,12 @@
 
   <header class="masthead">
     <div class="container masthead__inner">
-      <a class="wordmark" href="../../" aria-label="CyberSygn home">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
         <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">dashboard</span>
       </a>
       <nav class="masthead__nav" aria-label="Dashboard">
         <a class="masthead__link" href="../">Send a document</a>
-        <a class="masthead__link" href="../../">Home</a>
+        <a class="masthead__link" href="../">Home</a>
         <!-- Persistent free-tier remaining count, mirrors /preview/ so
              the user sees the same number on every CyberSygn page. -->
         <span id="free-pill" class="free-pill" aria-live="polite">
@@ -100,8 +100,415 @@
         </div>
       </div>
 
+      <!-- Command header. One primary action; everything else lives in a
+           quiet overflow menu so the documents list stays the focus. -->
+      <header class="cmd-head">
+        <div>
+          <h1 class="cmd-head__title" id="dashboard-title">Your documents</h1>
+          <p class="cmd-head__lede" id="dashboard-lede">
+            Active documents are waiting on at least one signer. Completed documents
+            include the audit certificate and the signed PDF, ready to download.
+          </p>
+        </div>
+        <div class="cmd-head__actions">
+          <a class="btn btn--primary" href="../preview/">
+            Send a document
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
+          <div class="cmd-more">
+            <button type="button" class="btn btn--ghost btn--sm cmd-more__btn" aria-haspopup="true" aria-expanded="false">
+              More
+              <span aria-hidden="true">▾</span>
+            </button>
+            <div class="cmd-more__menu" hidden>
+              <a class="cmd-more__item" href="./bulk-send.html">Bulk send</a>
+              <button id="billing-portal" class="cmd-more__item" type="button" hidden>Manage billing</button>
+              <button id="identity-toggle" class="cmd-more__item" type="button">Backup identity</button>
+              <!--
+                Workspace switcher. Defaults to "Personal" (the per-sender
+                index, no workspace). Members of one or more workspaces see
+                them listed; selecting a workspace flips the doc list to
+                that workspace's aggregated view.
+              -->
+              <div class="ws-switcher" id="workspace-switcher">
+                <label class="ws-switcher__label">Viewing</label>
+                <select id="workspace-select" class="ws-switcher__select" aria-label="Active workspace">
+                  <option value="">Personal</option>
+                </select>
+                <button id="ws-manage" class="btn btn--ghost btn--sm" type="button">Manage</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!--
+        Subscription banner. Hidden until we know the sender's tier.
+        Shows current plan, monthly usage for free tier, founding number
+        for founding members, and a one-click upgrade for free senders.
+      -->
+      <aside class="sub-banner" id="sub-banner" hidden aria-live="polite">
+        <div class="sub-banner__left">
+          <span class="sub-banner__tier" id="sub-banner-tier"></span>
+          <span class="sub-banner__detail" id="sub-banner-detail"></span>
+        </div>
+        <div class="sub-banner__right" id="sub-banner-actions"></div>
+      </aside>
+
+      <!-- Founder's home — the at-a-glance KPI strip. Always visible
+           once docs have loaded. Derived from /api/sender/:id/docs
+           data the dashboard already fetches. -->
+      <section id="founder-home" class="founder-home" hidden aria-live="polite">
+        <div class="founder-home__grid">
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-total">—</p>
+            <p class="founder-home__label">Total sends</p>
+            <p class="founder-home__hint" id="fh-total-hint">this month</p>
+          </div>
+          <div class="founder-home__card">
+            <p class="founder-home__num" id="fh-pending">—</p>
+            <p class="founder-home__label">Pending signers</p>
+            <p class="founder-home__hint">awaiting signature</p>
+          </div>
+          <div class="founder-home__card fh-tile--soft">
+            <p class="founder-home__num" id="fh-saved-mins">—</p>
+            <p class="founder-home__label">Minutes saved YTD</p>
+            <p class="founder-home__hint" id="fh-saved-dollars">≈ $0 at $60/hr</p>
+          </div>
+          <div class="founder-home__card fh-tile--soft">
+            <p class="founder-home__num" id="fh-templates">—</p>
+            <p class="founder-home__label">Templates saved</p>
+            <p class="founder-home__hint">auto-apply on re-upload</p>
+          </div>
+        </div>
+        <div class="founder-home__sparkline" id="fh-sparkline" aria-hidden="true"></div>
+      </section>
+
+      <!-- States: loading, error, empty, list. We render exactly one at a time. -->
+      <section id="state-loading" class="state-card">
+        <p class="state-card__kicker">Loading.</p>
+        <p class="state-card__body">Fetching your documents.</p>
+      </section>
+
+      <section id="state-error" class="state-card state-card--error" hidden>
+        <p class="state-card__kicker">Could not load</p>
+        <p class="state-card__body" id="state-error-message">Something went wrong.</p>
+        <button id="state-error-retry" class="btn btn--ghost btn--sm" type="button">Try again</button>
+      </section>
+
+      <section id="state-empty" class="dash-empty" hidden>
+        <!-- Stats strip: always meaningful even at zero docs. -->
+        <div class="dash-stats">
+          <div class="dash-stats__card">
+            <span class="dash-stats__num" id="dash-stat-docs">0</span>
+            <span class="dash-stats__label">Documents sent</span>
+            <span class="dash-stats__hint">Increments on every send</span>
+          </div>
+          <div class="dash-stats__card">
+            <span class="dash-stats__num"><span id="dash-stat-free-used">0</span><span class="dash-stats__num-mini">/3</span></span>
+            <span class="dash-stats__label">Free documents (lifetime)</span>
+            <span class="dash-stats__hint">Never resets</span>
+          </div>
+          <div class="dash-stats__card">
+            <span class="dash-stats__num" id="dash-stat-founding">—</span>
+            <span class="dash-stats__label">Origin spots open</span>
+            <span class="dash-stats__hint"><a href="../#pricing">Lock $9/mo for life</a></span>
+          </div>
+        </div>
+
+        <!-- Welcome hero with three concrete next-steps. -->
+        <div class="dash-welcome">
+          <div class="dash-welcome__copy">
+            <p class="kicker">First-document checklist.</p>
+            <h2 class="h-section">Three steps to your first signed contract.</h2>
+            <p class="lede">
+              You have not sent anything yet, so this list is empty. Walk through the
+              three steps below and the next time you visit, your sent documents
+              will be right here with per-signer status and download buttons.
+            </p>
+            <div class="dash-welcome__actions">
+              <a class="btn btn--primary btn--lg" href="../">Send your first document <span class="btn-arrow">→</span></a>
+              <a class="btn btn--ghost btn--lg" href="../preview/">Try detection first</a>
+            </div>
+          </div>
+
+          <ol class="dash-steps">
+            <li class="dash-step">
+              <span class="dash-step__num">01</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Drop a PDF or scan a paper copy.</h3>
+                <p class="dash-step__detail">Click <a href="../preview/">Send a new document</a> above. Detection runs in your browser. The file never leaves your device.</p>
+              </div>
+            </li>
+            <li class="dash-step">
+              <span class="dash-step__num">02</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Confirm the detected fields, add signers.</h3>
+                <p class="dash-step__detail">CyberSygn finds every signature, initial, date, and checkbox automatically. Type a name and email for each remote signer. Up to three on the free tier.</p>
+              </div>
+            </li>
+            <li class="dash-step">
+              <span class="dash-step__num">03</span>
+              <div class="dash-step__body">
+                <h3 class="dash-step__title">Send. The document lands here.</h3>
+                <p class="dash-step__detail">Magic links go out. Signers complete on any device. You get the signed PDF and an audit certificate in your inbox and on this dashboard.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <!-- Quick-reference utility row. -->
+        <div class="dash-util">
+          <a class="dash-util__item" href="../#pricing">
+            <span class="dash-util__kicker">Pricing</span>
+            <span class="dash-util__title">$9 Origin, $12 Solo, $29 Studio.</span>
+          </a>
+          <a class="dash-util__item" href="../preview/">
+            <span class="dash-util__kicker">Preview</span>
+            <span class="dash-util__title">Drop a PDF, see detection live.</span>
+          </a>
+          <a class="dash-util__item" href="/privacy/">
+            <span class="dash-util__kicker">Privacy</span>
+            <span class="dash-util__title">What we store. What we never do.</span>
+          </a>
+          <a class="dash-util__item" href="mailto:hello@cybersygn.io">
+            <span class="dash-util__kicker">Contact</span>
+            <span class="dash-util__title">hello@cybersygn.io. We answer.</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="state-list" hidden>
+        <div class="dashboard__filters">
+          <button class="filter-chip filter-chip--active" data-filter="all"     type="button">All <span class="filter-chip__count" id="count-all">0</span></button>
+          <button class="filter-chip"                    data-filter="active"  type="button">Active <span class="filter-chip__count" id="count-active">0</span></button>
+          <button class="filter-chip"                    data-filter="complete" type="button">Signed <span class="filter-chip__count" id="count-complete">0</span></button>
+        </div>
+        <ol id="docs-list" class="docs-list" aria-label="Documents"></ol>
+      </section>
+
+      <!-- Account and settings. One calm collapsed region holding every
+           set-once config surface, so the documents list stays the focus.
+           Each panel keeps its id + hidden attribute for the JS to reveal. -->
+      <details class="settings-group">
+        <summary>
+          Account and settings
+          <span class="settings-group__hint">Branding, identity, referrals, integrations</span>
+          <span class="settings-group__chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+          </span>
+        </summary>
+        <div class="settings-group__body">
+
+          <!--
+            Sender backup panel. The senderId lives in localStorage; if a
+            sender wants to access their dashboard from another browser, they
+            copy this value and paste it on the new device. Mirrors the "set
+            a recovery code" pattern used by other self-hosted-identity apps.
+          -->
+          <section id="identity-panel" class="identity-panel settings-panel" hidden>
+            <div class="identity-panel__head">
+              <div>
+                <p class="settings-panel__title">Move your account to another browser</p>
+                <p class="settings-panel__note">
+                  Copy your account key, or paste one in to pick up where you left off.
+                  This is how you sign in on a new device.
+                </p>
+              </div>
+              <button id="identity-close" class="identity-panel__close" type="button" aria-label="Close">×</button>
+            </div>
+            <label class="identity-panel__field">
+              <span class="identity-panel__label">Sender token</span>
+              <input id="identity-input" class="identity-panel__input" type="text" readonly />
+            </label>
+            <div class="identity-panel__buttons">
+              <button id="identity-copy" class="btn btn--ghost btn--sm" type="button">Copy</button>
+              <button id="identity-paste" class="btn btn--ghost btn--sm" type="button">Paste from clipboard</button>
+              <button id="identity-save" class="btn btn--ink btn--sm" type="button" hidden>Use this token</button>
+            </div>
+          </section>
+
+          <!-- Custom branding panel (slice 90). Hidden by default; revealed
+               when the sender is on a paid tier. Lets them brand outbound
+               magic-link emails + signing pages with their logo + accent. -->
+          <section id="brand-panel" class="brand-panel settings-panel" hidden aria-live="polite">
+            <div class="brand-panel__head">
+              <div>
+                <p class="settings-panel__title">Put your logo on every signing page</p>
+                <p class="settings-panel__note">
+                  Solo, Origin, and Studio members show their own logo and color.
+                  Free senders see CyberSygn defaults.
+                </p>
+              </div>
+              <span class="brand-panel__tier-badge" id="brand-panel-tier">Paid</span>
+            </div>
+            <form id="brand-form" class="brand-form" autocomplete="off">
+              <div class="brand-form__row">
+                <label class="brand-form__field">
+                  <span class="brand-form__label">Logo URL (https, png/jpg/svg/webp)</span>
+                  <input id="brand-logo-url" type="url" placeholder="https://your-site.com/logo.png" />
+                </label>
+                <label class="brand-form__field brand-form__field--narrow">
+                  <span class="brand-form__label">Accent color</span>
+                  <div class="brand-form__color-row">
+                    <input id="brand-accent-color" type="text" placeholder="#00CBF6" maxlength="7" />
+                    <span id="brand-accent-swatch" class="brand-form__swatch" aria-hidden="true"></span>
+                  </div>
+                </label>
+              </div>
+              <label class="brand-form__field">
+                <span class="brand-form__label">Display name (shown in email previews)</span>
+                <input id="brand-display-name" type="text" placeholder="Your Firm Name" maxlength="80" />
+              </label>
+              <div class="brand-form__actions">
+                <button id="brand-save" class="btn btn--ink btn--sm" type="submit">Save brand</button>
+                <span id="brand-status" class="brand-form__status"></span>
+              </div>
+            </form>
+            <div class="brand-preview">
+              <p class="kicker kicker--muted">Preview</p>
+              <div class="brand-preview__card">
+                <div class="brand-preview__logo" id="brand-preview-logo"></div>
+                <h4 class="brand-preview__name" id="brand-preview-name">CyberSygn</h4>
+                <p class="brand-preview__body">A signer would see your logo here above the magic-link email.</p>
+                <span id="brand-preview-cta" class="brand-preview__cta">Review and sign →</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Affiliate panel (slice 84). Every paying customer has a
+               referral code; here's the proof + their stats + share
+               controls. Stays visible at all times once dashboard mounts. -->
+          <section id="affiliate-panel" class="affiliate-panel settings-panel" hidden aria-live="polite">
+            <div class="affiliate-panel__head">
+              <div>
+                <p class="settings-panel__title">Invite others, earn 20 dollars each</p>
+                <p class="affiliate-panel__body">
+                  Share your link. When someone signs up and converts, you earn $20
+                  per first paid month. Your account already has a code; copy and share.
+                </p>
+              </div>
+              <div class="affiliate-panel__earned">
+                <span class="affiliate-panel__earned-num" id="aff-earned">$0</span>
+                <span class="affiliate-panel__earned-label">earned</span>
+              </div>
+            </div>
+            <div class="affiliate-panel__share">
+              <input id="aff-share-input" class="affiliate-panel__share-input" type="text" readonly value="" aria-label="Your referral URL" />
+              <button id="aff-share-copy" class="btn btn--ink btn--sm" type="button">Copy</button>
+              <a id="aff-share-tweet" class="btn btn--ghost btn--sm" target="_blank" rel="noopener" href="#">Share on X</a>
+            </div>
+            <div class="affiliate-panel__stats">
+              <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-clicks">0</span><span class="affiliate-stat__label">Clicks</span></div>
+              <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-signups">0</span><span class="affiliate-stat__label">Signups</span></div>
+              <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-conv">0</span><span class="affiliate-stat__label">Conversions</span></div>
+              <div class="affiliate-stat"><span class="affiliate-stat__num"><code id="aff-code" style="font-family:var(--mono);font-size:18px">...</code></span><span class="affiliate-stat__label">Your code</span></div>
+            </div>
+          </section>
+
+          <!-- Webhooks panel (slice 93). Studio-tier only. Hidden by default;
+               revealed when subscription tier === 'team' or 'team_annual'. -->
+          <section id="webhook-panel" class="webhook-panel settings-panel" hidden aria-live="polite">
+            <div class="webhook-panel__head">
+              <div>
+                <p class="settings-panel__title">Notify your other tools when documents move</p>
+                <p class="settings-panel__note">
+                  Send an alert to your own systems when a document is created, signed,
+                  or completed. Studio plan.
+                </p>
+              </div>
+              <span class="webhook-panel__badge">Studio</span>
+            </div>
+
+            <!-- Empty state: no webhook configured yet. -->
+            <div id="webhook-empty" class="webhook-panel__form" hidden>
+              <form id="webhook-form" autocomplete="off">
+                <label class="webhook-form__field">
+                  <span class="webhook-form__label">Endpoint URL (https only)</span>
+                  <input id="webhook-url" type="url" placeholder="https://your-app.com/webhooks/cybersygn" required />
+                </label>
+                <fieldset class="webhook-form__events">
+                  <legend>Events to receive</legend>
+                  <label><input type="checkbox" value="doc.created" checked /> <code>doc.created</code>: a new document is created and signers are notified</label>
+                  <label><input type="checkbox" value="signer.completed" checked /> <code>signer.completed</code>: a signer finished their part</label>
+                  <label><input type="checkbox" value="doc.completed" checked /> <code>doc.completed</code>: everyone has signed and the PDF is ready</label>
+                </fieldset>
+                <button id="webhook-create" type="submit" class="btn btn--ink btn--sm">Create webhook</button>
+                <span id="webhook-status" class="webhook-form__status"></span>
+              </form>
+            </div>
+
+            <!-- Configured state: shows URL, events, log. Secret shown ONCE
+                 after creation in a banner that auto-dismisses. -->
+            <div id="webhook-config" class="webhook-config" hidden>
+              <div class="webhook-config__row">
+                <span class="kicker kicker--muted">Endpoint</span>
+                <code id="webhook-config-url" class="webhook-config__url">https://…</code>
+              </div>
+              <div class="webhook-config__row">
+                <span class="kicker kicker--muted">Subscribed events</span>
+                <span id="webhook-config-events"></span>
+              </div>
+              <div class="webhook-config__row">
+                <span class="kicker kicker--muted">Signing secret</span>
+                <span class="webhook-config__secret-state">Stored. Rotate by deleting and re-creating.</span>
+              </div>
+              <div id="webhook-secret-banner" class="webhook-secret-banner" hidden>
+                <p class="webhook-secret-banner__head"><strong>Save your signing secret now.</strong> This is the only time we will show it.</p>
+                <pre id="webhook-secret-value" class="webhook-secret-banner__code"></pre>
+                <button id="webhook-secret-copy" type="button" class="btn btn--ghost btn--sm">Copy</button>
+                <button id="webhook-secret-dismiss" type="button" class="btn btn--ghost btn--sm">Got it</button>
+              </div>
+              <div class="webhook-config__actions">
+                <button id="webhook-delete" type="button" class="btn btn--ghost btn--sm">Delete webhook</button>
+              </div>
+              <div class="webhook-log">
+                <p class="kicker kicker--muted">Recent deliveries (last 100)</p>
+                <ol id="webhook-log-list" class="webhook-log__list"></ol>
+                <p id="webhook-log-empty" class="webhook-log__empty">No deliveries yet.</p>
+              </div>
+            </div>
+          </section>
+
+          <!--
+            Origin wall card. Shown only to Origin members. Lets them set
+            the display name + city that appears on the public wall at
+            /origin/. The "appears as" preview reflects what the wall card
+            will look like. Save fires POST /api/origin/profile.
+          -->
+          <section id="origin-panel" class="origin-panel settings-panel" hidden aria-live="polite">
+            <div class="origin-panel__head">
+              <div>
+                <p class="settings-panel__title">Your Origin wall card</p>
+                <p class="origin-panel__body">
+                  You are Origin member <strong>#<span id="origin-panel-num">...</span></strong>.
+                  Set how your card appears on the public <a href="/origin/" target="_blank" rel="noopener">Origin wall</a>.
+                  Leave either field empty to keep it minimal.
+                </p>
+              </div>
+            </div>
+            <div class="origin-panel__form">
+              <label class="origin-panel__field">
+                <span class="origin-panel__label">Display name (optional)</span>
+                <input id="origin-name-input" class="origin-panel__input" type="text" maxlength="40" placeholder="Jane Doe" autocomplete="name" />
+              </label>
+              <label class="origin-panel__field">
+                <span class="origin-panel__label">City (optional)</span>
+                <input id="origin-city-input" class="origin-panel__input" type="text" maxlength="60" placeholder="Denver, CO" autocomplete="address-level2" />
+              </label>
+            </div>
+            <div class="origin-panel__buttons">
+              <button id="origin-save" class="btn btn--ink btn--sm" type="button">Save to wall</button>
+              <span id="origin-save-status" class="origin-panel__status" aria-live="polite"></span>
+            </div>
+          </section>
+
+        </div>
+      </details>
+
       <!-- Owner-only analytics panel. Rendered by owner-panel.js when an
-           owner token is present in localStorage; hidden otherwise. -->
+           owner token is present in localStorage; hidden otherwise. Lives
+           dead last: owner-only and never in the customer's way. -->
       <section id="owner-panel" class="owner-panel" hidden aria-labelledby="owner-panel-title">
         <header class="owner-panel__head">
           <div>
@@ -153,394 +560,6 @@
         </details>
       </section>
 
-      <header class="dashboard__head">
-        <div>
-          <p class="kicker">Documents you have sent.</p>
-          <h1 class="h-section" id="dashboard-title">Every contract you have routed through CyberSygn.</h1>
-          <p class="lede" id="dashboard-lede">
-            Active documents are waiting on at least one signer. Completed documents
-            include the audit certificate and the signed PDF, ready to download.
-          </p>
-        </div>
-        <div class="dashboard__actions">
-          <!--
-            Workspace switcher. Defaults to "Personal" (the per-sender
-            index, no workspace). Members of one or more workspaces see
-            them listed; selecting a workspace flips the doc list to
-            that workspace's aggregated view.
-          -->
-          <div class="ws-switcher" id="workspace-switcher">
-            <label class="ws-switcher__label">Viewing</label>
-            <select id="workspace-select" class="ws-switcher__select" aria-label="Active workspace">
-              <option value="">Personal</option>
-            </select>
-            <button id="ws-manage" class="btn btn--ghost btn--sm" type="button">Manage</button>
-          </div>
-          <a class="btn btn--primary" href="../">
-            Send a new document
-            <span class="btn-arrow" aria-hidden="true">→</span>
-          </a>
-          <a class="btn btn--ghost" href="./bulk-send.html">Bulk send</a>
-          <button id="billing-portal" class="btn btn--ghost btn--sm" type="button" hidden>Manage billing</button>
-          <button id="identity-toggle" class="btn btn--ghost btn--sm" type="button">Backup identity</button>
-        </div>
-      </header>
-
-      <!--
-        Subscription banner. Hidden until we know the sender's tier.
-        Shows current plan, monthly usage for free tier, founding number
-        for founding members, and a one-click upgrade for free senders.
-      -->
-      <aside class="sub-banner" id="sub-banner" hidden aria-live="polite">
-        <div class="sub-banner__left">
-          <span class="sub-banner__tier" id="sub-banner-tier"></span>
-          <span class="sub-banner__detail" id="sub-banner-detail"></span>
-        </div>
-        <div class="sub-banner__right" id="sub-banner-actions"></div>
-      </aside>
-
-      <!--
-        Origin wall card. Shown only to Origin members. Lets them set
-        the display name + city that appears on the public wall at
-        /origin/. The "appears as" preview reflects what the wall card
-        will look like. Save fires POST /api/origin/profile.
-      -->
-      <section id="origin-panel" class="origin-panel" hidden aria-live="polite">
-        <div class="origin-panel__head">
-          <div>
-            <p class="kicker kicker--ink">Your Origin wall card.</p>
-            <p class="origin-panel__body">
-              You are Origin member <strong>#<span id="origin-panel-num">—</span></strong>.
-              Set how your card appears on the public <a href="/origin/" target="_blank" rel="noopener">Origin wall</a>.
-              Leave either field empty to keep it minimal.
-            </p>
-          </div>
-        </div>
-        <div class="origin-panel__form">
-          <label class="origin-panel__field">
-            <span class="origin-panel__label">Display name (optional)</span>
-            <input id="origin-name-input" class="origin-panel__input" type="text" maxlength="40" placeholder="Jane Doe" autocomplete="name" />
-          </label>
-          <label class="origin-panel__field">
-            <span class="origin-panel__label">City (optional)</span>
-            <input id="origin-city-input" class="origin-panel__input" type="text" maxlength="60" placeholder="Denver, CO" autocomplete="address-level2" />
-          </label>
-        </div>
-        <div class="origin-panel__buttons">
-          <button id="origin-save" class="btn btn--ink btn--sm" type="button">Save to wall</button>
-          <span id="origin-save-status" class="origin-panel__status" aria-live="polite"></span>
-        </div>
-      </section>
-
-      <!--
-        Sender backup panel. The senderId lives in localStorage; if a
-        sender wants to access their dashboard from another browser, they
-        copy this value and paste it on the new device. Mirrors the "set
-        a recovery code" pattern used by other self-hosted-identity apps.
-      -->
-      <section id="identity-panel" class="identity-panel" hidden>
-        <div class="identity-panel__head">
-          <div>
-            <p class="kicker kicker--ink">Your sender identity.</p>
-            <p class="identity-panel__body">
-              CyberSygn uses this token to find your documents. Copy it
-              and store it somewhere safe. To access this dashboard from
-              another browser, paste the token below on that device.
-            </p>
-          </div>
-          <button id="identity-close" class="identity-panel__close" type="button" aria-label="Close">×</button>
-        </div>
-        <label class="identity-panel__field">
-          <span class="identity-panel__label">Sender token</span>
-          <input id="identity-input" class="identity-panel__input" type="text" readonly />
-        </label>
-        <div class="identity-panel__buttons">
-          <button id="identity-copy" class="btn btn--ghost btn--sm" type="button">Copy</button>
-          <button id="identity-paste" class="btn btn--ghost btn--sm" type="button">Paste from clipboard</button>
-          <button id="identity-save" class="btn btn--ink btn--sm" type="button" hidden>Use this token</button>
-        </div>
-      </section>
-
-      <!-- Affiliate panel (slice 84). Every paying customer has a
-           referral code; here's the proof + their stats + share
-           controls. Stays visible at all times once dashboard mounts. -->
-      <!-- Webhooks panel (slice 93). Studio-tier only. Hidden by default;
-           revealed when subscription tier === 'team' or 'team_annual'. -->
-      <section id="webhook-panel" class="webhook-panel" hidden aria-live="polite">
-        <div class="webhook-panel__head">
-          <div>
-            <p class="kicker kicker--ink">Outbound webhooks.</p>
-            <p class="webhook-panel__body">
-              Studio members can wire CyberSygn into their stack. We POST signed JSON to your URL
-              when documents are created, signers complete, or the whole doc is done. HMAC-SHA256
-              signature so you can verify the payload.
-            </p>
-          </div>
-          <span class="webhook-panel__badge">Studio</span>
-        </div>
-
-        <!-- Empty state: no webhook configured yet. -->
-        <div id="webhook-empty" class="webhook-panel__form" hidden>
-          <form id="webhook-form" autocomplete="off">
-            <label class="webhook-form__field">
-              <span class="webhook-form__label">Endpoint URL (https only)</span>
-              <input id="webhook-url" type="url" placeholder="https://your-app.com/webhooks/cybersygn" required />
-            </label>
-            <fieldset class="webhook-form__events">
-              <legend>Events to receive</legend>
-              <label><input type="checkbox" value="doc.created" checked /> <code>doc.created</code> — new doc minted, signers notified</label>
-              <label><input type="checkbox" value="signer.completed" checked /> <code>signer.completed</code> — a signer submitted their fills</label>
-              <label><input type="checkbox" value="doc.completed" checked /> <code>doc.completed</code> — every signer is done, signed PDF available</label>
-            </fieldset>
-            <button id="webhook-create" type="submit" class="btn btn--ink btn--sm">Create webhook</button>
-            <span id="webhook-status" class="webhook-form__status"></span>
-          </form>
-        </div>
-
-        <!-- Configured state: shows URL, events, log. Secret shown ONCE
-             after creation in a banner that auto-dismisses. -->
-        <div id="webhook-config" class="webhook-config" hidden>
-          <div class="webhook-config__row">
-            <span class="kicker kicker--muted">Endpoint</span>
-            <code id="webhook-config-url" class="webhook-config__url">https://…</code>
-          </div>
-          <div class="webhook-config__row">
-            <span class="kicker kicker--muted">Subscribed events</span>
-            <span id="webhook-config-events"></span>
-          </div>
-          <div class="webhook-config__row">
-            <span class="kicker kicker--muted">Signing secret</span>
-            <span class="webhook-config__secret-state">Stored. Rotate by deleting and re-creating.</span>
-          </div>
-          <div id="webhook-secret-banner" class="webhook-secret-banner" hidden>
-            <p class="webhook-secret-banner__head"><strong>Save your signing secret now.</strong> This is the only time we will show it.</p>
-            <pre id="webhook-secret-value" class="webhook-secret-banner__code"></pre>
-            <button id="webhook-secret-copy" type="button" class="btn btn--ghost btn--sm">Copy</button>
-            <button id="webhook-secret-dismiss" type="button" class="btn btn--ghost btn--sm">Got it</button>
-          </div>
-          <div class="webhook-config__actions">
-            <button id="webhook-delete" type="button" class="btn btn--ghost btn--sm">Delete webhook</button>
-          </div>
-          <div class="webhook-log">
-            <p class="kicker kicker--muted">Recent deliveries (last 100)</p>
-            <ol id="webhook-log-list" class="webhook-log__list"></ol>
-            <p id="webhook-log-empty" class="webhook-log__empty">No deliveries yet.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Custom branding panel (slice 90). Hidden by default; revealed
-           when the sender is on a paid tier. Lets them brand outbound
-           magic-link emails + signing pages with their logo + accent. -->
-      <section id="brand-panel" class="brand-panel" hidden aria-live="polite">
-        <div class="brand-panel__head">
-          <div>
-            <p class="kicker kicker--ink">Brand your signing experience.</p>
-            <p class="brand-panel__body">
-              Solo, Origin, and Studio members can put their logo and accent color on every
-              magic-link email and signing page. Free senders see CyberSygn defaults.
-            </p>
-          </div>
-          <span class="brand-panel__tier-badge" id="brand-panel-tier">Paid</span>
-        </div>
-        <form id="brand-form" class="brand-form" autocomplete="off">
-          <div class="brand-form__row">
-            <label class="brand-form__field">
-              <span class="brand-form__label">Logo URL (https, png/jpg/svg/webp)</span>
-              <input id="brand-logo-url" type="url" placeholder="https://your-site.com/logo.png" />
-            </label>
-            <label class="brand-form__field brand-form__field--narrow">
-              <span class="brand-form__label">Accent color</span>
-              <div class="brand-form__color-row">
-                <input id="brand-accent-color" type="text" placeholder="#00CBF6" maxlength="7" />
-                <span id="brand-accent-swatch" class="brand-form__swatch" aria-hidden="true"></span>
-              </div>
-            </label>
-          </div>
-          <label class="brand-form__field">
-            <span class="brand-form__label">Display name (shown in email previews)</span>
-            <input id="brand-display-name" type="text" placeholder="Your Firm Name" maxlength="80" />
-          </label>
-          <div class="brand-form__actions">
-            <button id="brand-save" class="btn btn--ink btn--sm" type="submit">Save brand</button>
-            <span id="brand-status" class="brand-form__status"></span>
-          </div>
-        </form>
-        <div class="brand-preview">
-          <p class="kicker kicker--muted">Preview</p>
-          <div class="brand-preview__card">
-            <div class="brand-preview__logo" id="brand-preview-logo"></div>
-            <h4 class="brand-preview__name" id="brand-preview-name">CyberSygn</h4>
-            <p class="brand-preview__body">A signer would see your logo here above the magic-link email.</p>
-            <span id="brand-preview-cta" class="brand-preview__cta">Review and sign →</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="affiliate-panel" class="affiliate-panel" hidden aria-live="polite">
-        <div class="affiliate-panel__head">
-          <div>
-            <p class="kicker kicker--ink">Refer customers, earn $20 each.</p>
-            <p class="affiliate-panel__body">
-              Share your link. When someone signs up and converts, you earn $20
-              per first paid month. Your account already has a code; copy and share.
-            </p>
-          </div>
-          <div class="affiliate-panel__earned">
-            <span class="affiliate-panel__earned-num" id="aff-earned">$0</span>
-            <span class="affiliate-panel__earned-label">earned</span>
-          </div>
-        </div>
-        <div class="affiliate-panel__share">
-          <input id="aff-share-input" class="affiliate-panel__share-input" type="text" readonly value="" aria-label="Your referral URL" />
-          <button id="aff-share-copy" class="btn btn--ink btn--sm" type="button">Copy</button>
-          <a id="aff-share-tweet" class="btn btn--ghost btn--sm" target="_blank" rel="noopener" href="#">Share on X</a>
-        </div>
-        <div class="affiliate-panel__stats">
-          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-clicks">0</span><span class="affiliate-stat__label">Clicks</span></div>
-          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-signups">0</span><span class="affiliate-stat__label">Signups</span></div>
-          <div class="affiliate-stat"><span class="affiliate-stat__num" id="aff-conv">0</span><span class="affiliate-stat__label">Conversions</span></div>
-          <div class="affiliate-stat"><span class="affiliate-stat__num"><code id="aff-code" style="font-family:var(--mono);font-size:18px">—</code></span><span class="affiliate-stat__label">Your code</span></div>
-        </div>
-      </section>
-
-      <!-- Founder's home — the at-a-glance KPI strip. Always visible
-           once docs have loaded. Derived from /api/sender/:id/docs
-           data the dashboard already fetches. -->
-      <section id="founder-home" class="founder-home" hidden aria-live="polite">
-        <div class="founder-home__grid">
-          <div class="founder-home__card">
-            <p class="founder-home__num" id="fh-total">—</p>
-            <p class="founder-home__label">Total sends</p>
-            <p class="founder-home__hint" id="fh-total-hint">this month</p>
-          </div>
-          <div class="founder-home__card">
-            <p class="founder-home__num" id="fh-pending">—</p>
-            <p class="founder-home__label">Pending signers</p>
-            <p class="founder-home__hint">awaiting signature</p>
-          </div>
-          <div class="founder-home__card">
-            <p class="founder-home__num" id="fh-saved-mins">—</p>
-            <p class="founder-home__label">Minutes saved YTD</p>
-            <p class="founder-home__hint" id="fh-saved-dollars">≈ $0 at $60/hr</p>
-          </div>
-          <div class="founder-home__card">
-            <p class="founder-home__num" id="fh-templates">—</p>
-            <p class="founder-home__label">Templates saved</p>
-            <p class="founder-home__hint">auto-apply on re-upload</p>
-          </div>
-        </div>
-        <div class="founder-home__sparkline" id="fh-sparkline" aria-hidden="true"></div>
-      </section>
-
-      <!-- States: loading, error, empty, list. We render exactly one at a time. -->
-      <section id="state-loading" class="state-card">
-        <p class="state-card__kicker">Loading.</p>
-        <p class="state-card__body">Fetching your documents.</p>
-      </section>
-
-      <section id="state-error" class="state-card state-card--error" hidden>
-        <p class="state-card__kicker">Could not load.</p>
-        <p class="state-card__body" id="state-error-message">Something went wrong.</p>
-        <button id="state-error-retry" class="btn btn--ghost btn--sm" type="button">Try again</button>
-      </section>
-
-      <section id="state-empty" class="dash-empty" hidden>
-        <!-- Stats strip: always meaningful even at zero docs. -->
-        <div class="dash-stats">
-          <div class="dash-stats__card">
-            <span class="dash-stats__num" id="dash-stat-docs">0</span>
-            <span class="dash-stats__label">Documents sent</span>
-            <span class="dash-stats__hint">Increments on every send</span>
-          </div>
-          <div class="dash-stats__card">
-            <span class="dash-stats__num"><span id="dash-stat-free-used">0</span><span class="dash-stats__num-mini">/3</span></span>
-            <span class="dash-stats__label">Free documents (lifetime)</span>
-            <span class="dash-stats__hint">Never resets</span>
-          </div>
-          <div class="dash-stats__card">
-            <span class="dash-stats__num" id="dash-stat-founding">—</span>
-            <span class="dash-stats__label">Origin spots open</span>
-            <span class="dash-stats__hint"><a href="../#pricing">Lock $9/mo for life</a></span>
-          </div>
-          <div class="dash-stats__card">
-            <span class="dash-stats__num">37<span class="dash-stats__num-mini">/37</span></span>
-            <span class="dash-stats__label">Real-world contracts</span>
-            <span class="dash-stats__hint">Current detection regression</span>
-          </div>
-        </div>
-
-        <!-- Welcome hero with three concrete next-steps. -->
-        <div class="dash-welcome">
-          <div class="dash-welcome__copy">
-            <p class="kicker">First-document checklist.</p>
-            <h2 class="h-section">Three steps to your first signed contract.</h2>
-            <p class="lede">
-              You have not sent anything yet, so this list is empty. Walk through the
-              three steps below and the next time you visit, your sent documents
-              will be right here with per-signer status and download buttons.
-            </p>
-            <div class="dash-welcome__actions">
-              <a class="btn btn--primary btn--lg" href="../">Send your first document <span class="btn-arrow">→</span></a>
-              <a class="btn btn--ghost btn--lg" href="../preview/">Try detection first</a>
-            </div>
-          </div>
-
-          <ol class="dash-steps">
-            <li class="dash-step">
-              <span class="dash-step__num">01</span>
-              <div class="dash-step__body">
-                <h3 class="dash-step__title">Drop a PDF or scan a paper copy.</h3>
-                <p class="dash-step__detail">Click <a href="../">Send a new document</a> above. Detection runs in your browser. The file never leaves your device.</p>
-              </div>
-            </li>
-            <li class="dash-step">
-              <span class="dash-step__num">02</span>
-              <div class="dash-step__body">
-                <h3 class="dash-step__title">Confirm the detected fields, add signers.</h3>
-                <p class="dash-step__detail">CyberSygn finds every signature, initial, date, and checkbox automatically. Type a name and email for each remote signer. Up to three on the free tier.</p>
-              </div>
-            </li>
-            <li class="dash-step">
-              <span class="dash-step__num">03</span>
-              <div class="dash-step__body">
-                <h3 class="dash-step__title">Send. The document lands here.</h3>
-                <p class="dash-step__detail">Magic links go out. Signers complete on any device. You get the signed PDF and an audit certificate in your inbox and on this dashboard.</p>
-              </div>
-            </li>
-          </ol>
-        </div>
-
-        <!-- Quick-reference utility row. -->
-        <div class="dash-util">
-          <a class="dash-util__item" href="../#pricing">
-            <span class="dash-util__kicker">Pricing</span>
-            <span class="dash-util__title">$9 Origin, $12 Solo, $29 Studio.</span>
-          </a>
-          <a class="dash-util__item" href="../preview/">
-            <span class="dash-util__kicker">Preview</span>
-            <span class="dash-util__title">Drop a PDF, see detection live.</span>
-          </a>
-          <a class="dash-util__item" href="/privacy/">
-            <span class="dash-util__kicker">Privacy</span>
-            <span class="dash-util__title">What we store. What we never do.</span>
-          </a>
-          <a class="dash-util__item" href="mailto:hello@cybersygn.io">
-            <span class="dash-util__kicker">Contact</span>
-            <span class="dash-util__title">hello@cybersygn.io. We answer.</span>
-          </a>
-        </div>
-      </section>
-
-      <section id="state-list" hidden>
-        <div class="dashboard__filters">
-          <button class="filter-chip filter-chip--active" data-filter="all"     type="button">All <span class="filter-chip__count" id="count-all">0</span></button>
-          <button class="filter-chip"                    data-filter="active"  type="button">Active <span class="filter-chip__count" id="count-active">0</span></button>
-          <button class="filter-chip"                    data-filter="complete" type="button">Signed <span class="filter-chip__count" id="count-complete">0</span></button>
-        </div>
-        <ol id="docs-list" class="docs-list" aria-label="Documents"></ol>
-      </section>
-
       <!-- Workspace management modal. Hidden by default; opened from
            the "Manage" button or the "Create workspace" prompt. -->
       <div id="ws-modal" class="modal-overlay" hidden>
@@ -589,13 +608,8 @@
           if (el && typeof d.remaining === 'number') el.textContent = String(d.remaining);
         }
       } catch (e) {}
-      // Free-tier usage: try the owner-only summary if available, else show 0.
-      // The real per-sender usage is computed at /api/checkout endpoints but
-      // there is no public read endpoint for it; show 0 for new accounts.
-      try {
-        const el = document.getElementById('dash-stat-free-used');
-        if (el) el.textContent = '0';
-      } catch (e) {}
+      // Free-tier usage is set by the subscription module below, which reads
+      // the real per-sender count from /api/billing/subscription.
     })();
   </script>
   <script type="module" src="../checkout.js"></script>
@@ -632,6 +646,22 @@
         data = await res.json();
       } catch { return; }
       if (!data) return;
+
+      // Publish the subscription payload so other surfaces (empty-state
+      // stats, future widgets) can react without a second fetch.
+      try {
+        window.__cybersygnSub = data;
+        window.dispatchEvent(new CustomEvent('cybersygn:sub', { detail: data }));
+      } catch (e) {}
+      // Real free-tier usage lives on this payload (data.usage.used); feed
+      // the empty-state stat so it is not frozen at 0.
+      try {
+        const usedCount = data.usage && typeof data.usage.used === 'number' ? data.usage.used : null;
+        if (usedCount !== null) {
+          const usedEl = document.getElementById('dash-stat-free-used');
+          if (usedEl) usedEl.textContent = String(usedCount);
+        }
+      } catch (e) {}
 
       const tier = data.tier;
       const tierLabels = {
@@ -799,6 +829,26 @@
       history.replaceState(null, '', clean);
     })();
   </script>
-  
+  <script>
+    // Command-header overflow menu. Toggle on button click; close on
+    // outside-click. Vanilla, no dependencies.
+    (function () {
+      var btn = document.querySelector('.cmd-more__btn');
+      var menu = document.querySelector('.cmd-more__menu');
+      if (!btn || !menu) return;
+      function open() { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); }
+      function close() { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (menu.hidden) open(); else close();
+      });
+      document.addEventListener('click', function (e) {
+        if (menu.hidden) return;
+        if (menu.contains(e.target) || btn.contains(e.target)) return;
+        close();
+      });
+    })();
+  </script>
+
 </body>
 </html>

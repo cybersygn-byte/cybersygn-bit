@@ -38,6 +38,7 @@
       <h1 class="h-section">Bulk send.</h1>
       <p class="lede">One PDF, up to 200 recipients, personalized magic links. Ideal for HR
       onboarding, real estate intake, contractor agreements, recruiting offer letters.</p>
+      <p class="caption" style="margin-top: var(--s-2);">Bulk send is a Studio feature. On the free plan each row uses one of your three free documents.</p>
     </header>
 
     <!-- Step 1: PDF + fields -->
@@ -45,9 +46,14 @@
       <p class="state-card__kicker">Step 1</p>
       <h2 class="state-card__body" style="font-weight: 600;">Pick the PDF.</h2>
       <p class="state-card__body">Upload your PDF once. CyberSygn detects every field. The same field set goes to every recipient.</p>
-      <div style="display: flex; flex-wrap: wrap; gap: var(--s-3); align-items: center; margin-top: var(--s-3);">
-        <input type="file" id="bulk-pdf" accept="application/pdf" />
-        <span id="bulk-pdf-status" class="caption" style="min-width: 0; overflow-wrap: anywhere;">No file selected.</span>
+      <!-- Same drop-zone pattern as the recipients step below. The
+           hidden #bulk-pdf input keeps its id and change handler; the
+           drop zone and pick button just feed it. -->
+      <div id="bulk-pdf-dropzone" class="bulk-csv-drop">
+        <input type="file" id="bulk-pdf" accept="application/pdf" hidden />
+        <p class="bulk-csv-drop__title">Drop your PDF here.</p>
+        <p class="bulk-csv-drop__sub">Or <button type="button" id="bulk-pdf-pick" class="bulk-csv-drop__link">pick a file</button>.</p>
+        <p id="bulk-pdf-status" class="bulk-csv-drop__status" style="min-width: 0; overflow-wrap: anywhere;">No file selected.</p>
       </div>
     </section>
 
@@ -127,8 +133,7 @@
     let pdfFields = null;
     let pdfTitle = null;
 
-    pdfInput.addEventListener('change', async () => {
-      const f = pdfInput.files && pdfInput.files[0];
+    async function handlePdfFile(f) {
       if (!f) { pdfStatus.textContent = 'No file selected.'; refresh(); return; }
       pdfStatus.textContent = 'Loading + detecting fields.';
       try {
@@ -146,7 +151,37 @@
         pdfFields = null;
         refresh();
       }
+    }
+
+    pdfInput.addEventListener('change', () => {
+      handlePdfFile(pdfInput.files && pdfInput.files[0]);
     });
+
+    // PDF drop zone mirrors the CSV one below: pick button opens the
+    // native picker, drag-and-drop feeds the same handler.
+    const pdfDrop = $('bulk-pdf-dropzone');
+    const pdfPick = $('bulk-pdf-pick');
+    if (pdfPick) pdfPick.addEventListener('click', () => pdfInput.click());
+    if (pdfDrop) {
+      pdfDrop.addEventListener('dragover', e => {
+        e.preventDefault();
+        pdfDrop.dataset.dragging = 'true';
+      });
+      pdfDrop.addEventListener('dragleave', () => {
+        delete pdfDrop.dataset.dragging;
+      });
+      pdfDrop.addEventListener('drop', e => {
+        e.preventDefault();
+        delete pdfDrop.dataset.dragging;
+        const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+        if (!f) return;
+        if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') {
+          pdfStatus.textContent = 'Only PDF files accepted.';
+          return;
+        }
+        handlePdfFile(f);
+      });
+    }
 
     csvArea.addEventListener('input', () => { repaintCsvPreview(); refresh(); });
 
@@ -302,7 +337,10 @@
         });
         const data = await res.json();
         if (!res.ok) {
-          resultsList.innerHTML = '<p class="caption" style="color:var(--err)">Send failed: ' + (data.error || res.status) + '. ' + (data.message || '') + '</p>';
+          const rawCode = String(data.error || ('HTTP ' + res.status));
+          const friendly = friendlyFailure(rawCode, 'Could not send this batch. Try again.');
+          resultsList.innerHTML = '<p class="caption" style="color:var(--err)" title="' + escape(rawCode) + '">' +
+            escape(friendly) + (data.message ? ' ' + escape(data.message) : '') + '</p>';
           sendBtn.disabled = false;
           sendBtn.textContent = 'Try again';
           return;
@@ -316,7 +354,10 @@
             row.innerHTML =
               '<span style="color:' + (r.ok ? 'var(--ok)' : 'var(--warn)') + '">' + (r.ok ? '✓' : '×') + '</span>' +
               '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escape(r.recipient) + '</span>' +
-              '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-3)">' + (r.ok ? (r.docId || '').slice(0, 8) : escape(r.error || '')) + '</span>';
+              '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-3)"' +
+                (r.ok ? '' : ' title="' + escape(r.error || '') + '"') + '>' +
+                (r.ok ? (r.docId || '').slice(0, 8) : escape(friendlyFailure(r.error, 'Could not send to this recipient'))) +
+              '</span>';
             resultsList.appendChild(row);
           }
         }
@@ -340,6 +381,16 @@
 
     function escape(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Turn raw failure codes from the Worker into plain English. The raw
+    // code stays available in the row's title attribute.
+    function friendlyFailure(code, fallback) {
+      const c = String(code || '');
+      if (/free_signup_required/i.test(c)) return 'Create a free account first';
+      if (/free_cap_reached|free_tier_limit/i.test(c)) return 'Free limit reached. Upgrade to keep sending.';
+      if (/429|rate/i.test(c)) return 'Slow down a moment and retry';
+      return fallback;
     }
   </script>
 

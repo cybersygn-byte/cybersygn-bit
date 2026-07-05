@@ -88,7 +88,7 @@
       $('state-loading').hidden = true;
       if (!res.ok) {
         $('state-invalid').hidden = false;
-        $('invalid-message').textContent = res.error || 'This invitation cannot be opened.';
+        $('invalid-message').textContent = 'This invitation link is invalid or has expired. Ask the sender for a fresh one.';
         return;
       }
       const invite = res.data;
@@ -115,7 +115,7 @@
         $('join-btn').disabled = false;
         $('join-btn').textContent = 'Try again';
         $('join-error').hidden = false;
-        $('join-error').textContent = res.error || 'Could not accept the invitation.';
+        $('join-error').textContent = 'This invitation link is invalid or has expired. Ask the sender for a fresh one.';
         return;
       }
       saveWorkspace({

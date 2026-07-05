@@ -25,8 +25,8 @@
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
 
-  <!-- WebPage schema. Tells search engines what this page is — a free
-       tool for field detection on PDFs — so the snippet renders with
+  <!-- WebPage schema. Tells search engines what this page is, a free
+       tool for field detection on PDFs, so the snippet renders with
        the right context and breadcrumb. -->
   <script type="application/ld+json">
   {
@@ -150,9 +150,7 @@
             <span class="dropzone-card__or">or drag onto this page</span>
           </div>
           <ul class="dropzone-card__hints">
-            <li>PDFs work best. Camera scans become PDFs in your browser.</li>
-            <li>Max 25 MB per file. Multiple photos compose into one document.</li>
-            <li>Detection runs locally. Your file never reaches a server.</li>
+            <li>Works with any PDF, up to 25 MB. Camera photos become a PDF automatically.</li>
           </ul>
           <!-- Free-tier signup gate. Hard wall in front of upload for
                first-time visitors. Three documents lifetime per email.
@@ -162,14 +160,7 @@
                signed PDF download (a copy is mailed to the address on file).
             -->
           <form class="free-gate" id="free-gate" autocomplete="on">
-            <p class="free-gate__kicker">Three free uploads.</p>
-            <h3 class="free-gate__title">Drop your first PDF in seconds.</h3>
-            <p class="free-gate__lede">
-              First, last, email — that's it. Detection runs locally in your
-              browser. You get three full uploads on the house, and every
-              signed PDF you download lands in your inbox too so you have a
-              copy you can search later.
-            </p>
+            <h3 class="free-gate__title">Get 3 free documents</h3>
             <div class="free-gate__row">
               <div class="field">
                 <input class="field__input" id="free-first" name="firstName" placeholder=" " type="text" autocomplete="given-name" required />
@@ -188,11 +179,8 @@
             <label class="consent-row consent-row--locked" for="free-consent">
               <input type="checkbox" id="free-consent" checked disabled />
               <span class="consent-row__text">
-                <strong>Free tier includes dataset use.</strong> Your three
-                free PDFs join our improvement dataset so detection gets
-                better for everyone. Field positions only, no document
-                content. Required for the free tier. Choose Solo or Origin
-                to opt out.
+                Free documents include anonymous field-position data to
+                improve detection. No document content is ever used.
               </span>
             </label>
 
@@ -346,9 +334,9 @@
               </svg>
             </button>
             <span class="doc-toolbar__pos" aria-live="polite">
-              <span id="field-pos" class="doc-toolbar__pos-current">—</span>
+              <span id="field-pos" class="doc-toolbar__pos-current">0</span>
               <span class="doc-toolbar__pos-sep" aria-hidden="true">/</span>
-              <span id="field-total" class="doc-toolbar__pos-total">—</span>
+              <span id="field-total" class="doc-toolbar__pos-total">0</span>
               <span class="doc-toolbar__pos-label">fields</span>
             </span>
             <button class="doc-toolbar__btn" id="next-field" type="button"
@@ -477,7 +465,7 @@
         -->
         <section id="signers-panel" class="signers-panel" aria-label="Signers">
           <div class="signers-panel__head">
-            <h3 class="signers-panel__title">Signers.</h3>
+            <h3 class="signers-panel__title">Signers</h3>
             <button id="add-signer" class="btn btn--ghost btn--sm" type="button">+ Add</button>
           </div>
           <ol id="signers-list" class="signers-list"></ol>
@@ -487,7 +475,7 @@
           </p>
         </section>
 
-        <ol id="field-list" class="field-list" aria-label="Detected fields"></ol>
+        <ol id="field-list" class="field-list" aria-label="Detected fields" style="max-height: 40vh; overflow-y: auto;"></ol>
       </aside>
     </section>
 

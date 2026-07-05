@@ -145,7 +145,7 @@
             <!-- AUTH -->
             <section id="auth">
               <h2>Authentication <a class="dev-anchor" href="#auth" aria-label="Link to this section">#</a></h2>
-              <p>Authenticate every request with an API key. Keys are account-bound: each key acts as the CyberSygn account that minted it, so your plan limits, branding, and webhook config all apply automatically. Only the account owner can mint keys, from the dashboard.</p>
+              <p>Authenticate every request with an API key. Keys are account-bound: each key acts as the CyberSygn account it was issued for, so your plan limits, branding, and webhook config all apply automatically. Keys are issued by hand today: email <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> from your account email and we will issue your key.</p>
               <p>Pass the key as a bearer token (preferred) or in the <code>X-API-Key</code> header.</p>
               <pre><code>Authorization: Bearer cs_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
               <p>Or:</p>
@@ -542,7 +542,7 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
                   <tr><td>422</td><td><code>no_fields_detected</code></td><td>No signature fields were found. Pass an explicit <code>fields</code> array.</td></tr>
                 </tbody>
               </table>
-              <div class="dev-note"><strong>API access needs a paid plan.</strong> Keys are minted from the dashboard by the account owner on a paid subscription. <a href="../#pricing">See pricing</a> or <a href="mailto:hello@cybersygn.io">get in touch</a>.</div>
+              <div class="dev-note"><strong>API access needs a paid plan.</strong> Keys are issued by hand today: email <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> from your account email and we will issue your key. <a href="../#pricing">See pricing</a>.</div>
             </section>
 
           </div>

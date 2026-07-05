@@ -430,8 +430,8 @@ function paintFreeStatus() {
   if (pillEl) {
     pillEl.classList.toggle('free-pill--depleted', remaining === 0);
     pillEl.title = remaining === 0
-      ? 'No free sends remaining. Upgrade for unlimited.'
-      : `${remaining} free send${remaining === 1 ? '' : 's'} left. Lifetime, never resets.`;
+      ? 'No free documents remaining. Upgrade for unlimited.'
+      : `${remaining} free document${remaining === 1 ? '' : 's'} left. Lifetime, never resets.`;
   }
 
   // Loss-aversion banner: fires once when the user crosses into the
@@ -454,12 +454,12 @@ function paintLossAversionBanner(remaining) {
 
   if (remaining === 1) {
     showToast(
-      'Last free send. Lock $9 for life with Origin — 100 spots, going fast.',
-      { action: { href: '/#founding', label: 'See Origin →' } },
+      'Last free document. Upgrade to Solo for unlimited sending.',
+      { action: { href: '/#pricing', label: 'See plans →' } },
     );
   } else {
     showToast(
-      'You used all 3 free sends. Origin is $9/mo locked for life; Solo is $12 with no cap.',
+      'You used all 3 free documents. Solo is $12/mo with no cap.',
       { action: { href: '/#pricing', label: 'Pick a plan →' } },
     );
   }
@@ -468,7 +468,7 @@ function paintLossAversionBanner(remaining) {
 const freeGateForm = $('free-gate');
 
 // Signer-microsite arrivals: ?ref=signer&email=...&name=... prefills the
-// free-tier signup so a one-click "Claim my 3 free signs" actually feels
+// free-tier signup so a one-click "Claim my 3 free documents" actually feels
 // like one click. Email + first name pre-populated. Tracked separately so
 // signer-conversion attribution is clean.
 (function preFillFromSignerReferral() {
@@ -542,6 +542,10 @@ const templateStateEl = $('template-state');
  */
 function setTemplateState(kind, detail) {
   if (!templateStateEl) return;
+  // In signer mode this element carries the signer's orientation line
+  // ("<sender> sent you this document..."); template notices are
+  // sender-only and must not overwrite it.
+  if (signButton && signButton.dataset.signerMode) return;
   if (!kind || kind === 'hidden') {
     templateStateEl.hidden = true;
     templateStateEl.removeAttribute('data-state');
@@ -557,7 +561,7 @@ function setTemplateState(kind, detail) {
     'applied-public':  `Public template · ${detail || 0} fields`,
     'applied-private': `Saved template · ${detail || 0} fields`,
     'restored-edits':  `${detail || 0} edits restored`,
-    'none':            `Heuristic detection · review before sending`,
+    'none':            `Fields detected automatically. Review before sending.`,
   };
   const tooltips = {
     'applied-public':  `Anyone uploading this PDF gets these labels. ${detail || 0} fields, human-verified.`,
@@ -1502,7 +1506,7 @@ async function handleFiles(files) {
     if (pdfs.length === 1) {
       file = pdfs[0];
     } else if (pdfs.length > 1) {
-      setStatus('busy', 'Merging PDFs.');
+      setStatus('busy', 'Combining pages.');
       file = await mergePdfsIntoFile(pdfs);
     } else if (docxs.length === 1) {
       setStatus('busy', 'Converting Word document.');
@@ -2256,7 +2260,7 @@ function drawFieldBox(overlay, field, viewport, pageNum, revealIndex = 0, stepMs
 
   box.title = `${field.type} on page ${pageNum}` +
     (field.label ? `: ${field.label}` : '') +
-    ` (confidence ${Math.round(field.confidence * 100)}%). Drag to move, corners to resize, click to fill.`;
+    `. Drag to move, corners to resize, click to fill.`;
 
   // Click-to-fill is replaced by the drag-aware interaction helper, which
   // distinguishes click (movement under 3 px) from drag/resize. Click
@@ -2579,7 +2583,7 @@ function populateSidebar(detection, filename) {
   } else {
     const note = document.createElement('li');
     note.className = 'field-list__empty';
-    note.textContent = 'No signature block detected. Body fields are shown below.';
+    note.textContent = 'No signature block detected. Other fields are shown below.';
     fieldList.appendChild(note);
   }
 
@@ -2601,9 +2605,9 @@ function populateSidebar(detection, filename) {
     const summary = document.createElement('summary');
     summary.className = 'field-list__group field-list__group--toggle';
     const summaryLabel = document.createElement('span');
-    summaryLabel.textContent = 'Body fields';
+    summaryLabel.textContent = 'Other fields';
     const summaryCount = document.createElement('span');
-    summaryCount.textContent = `${secondary.length} found, ${groups.size} unique`;
+    summaryCount.textContent = `${secondary.length}`;
     summary.appendChild(summaryLabel);
     summary.appendChild(summaryCount);
     details.appendChild(summary);
@@ -2652,13 +2656,8 @@ function buildFieldRow(field, count) {
   body.appendChild(typeEl);
   body.appendChild(labelEl);
 
-  const conf = document.createElement('span');
-  conf.className = 'field-row__conf';
-  conf.textContent = `${Math.round(field.confidence * 100)}%`;
-
   row.appendChild(dot);
   row.appendChild(body);
-  row.appendChild(conf);
 
   row.addEventListener('click', () => focusField(row.dataset.fieldId));
   return row;
@@ -2922,8 +2921,9 @@ function showFreeSignupGate(message) {
       <h2 class="modal-card__title">${escapeHtmlLite(message || 'Sign up to download.')}</h2>
     </div>
     <div class="modal-card__body">
-      <p class="modal-card__lede">Three free signs, no credit card. Your email binds the count
-        so it survives a cookie clear. Upgrade anytime — the same email keeps your history.</p>
+      <p class="modal-card__lede">Three free documents, no credit card. Your count is tied to
+        your email, so it survives a cookie clear. Upgrade anytime with the same email and
+        your history comes with you.</p>
       <form id="gate-form" class="exit-intent__form" autocomplete="on">
         <div class="exit-intent__row">
           <input class="exit-intent__input" id="gate-first" type="text" name="firstName" placeholder="First name" autocomplete="given-name" required />
@@ -2934,7 +2934,7 @@ function showFreeSignupGate(message) {
         <div class="exit-intent__row">
           <input class="exit-intent__input" id="gate-email" type="email" name="email" placeholder="you@email.com" autocomplete="email" required />
           <button class="btn btn--primary" type="submit">
-            Send Me the Freebies
+            Create my free account
             <span class="btn-arrow" aria-hidden="true">→</span>
           </button>
         </div>
@@ -2984,7 +2984,7 @@ function showFreeSignupGate(message) {
 }
 
 /**
- * Paywall modal (slice 104). User has used all 3 free signs. Show
+ * Paywall modal (slice 104). User has used all 3 free documents. Show
  * Solo + Studio pricing in-context with one-click checkout.
  */
 function showPaywallModal() {
@@ -2994,12 +2994,12 @@ function showPaywallModal() {
   card.className = 'modal-card modal-card--wide';
   card.innerHTML = `
     <div class="modal-card__head">
-      <span class="modal-card__kicker">You've used all 3 free signs.</span>
+      <span class="modal-card__kicker">You've used all 3 free documents.</span>
       <h2 class="modal-card__title">Pick a plan to keep going.</h2>
       <button type="button" class="modal-card__close" aria-label="Close">×</button>
     </div>
     <div class="modal-card__body">
-      <p class="modal-card__lede">Unlimited documents from here forward. Cancel anytime in one click — the next month does not bill.</p>
+      <p class="modal-card__lede">Unlimited documents from here forward. Cancel anytime in one click. The next month does not bill.</p>
       <div class="paywall-grid">
         <div class="paywall-tier">
           <p class="kicker">Solo</p>
@@ -3088,7 +3088,7 @@ async function onSignClick() {
   const freeToken = readFreeToken();
   if (!freeToken) {
     // No token = never signed up. Surface the gate.
-    showFreeSignupGate('Sign up first to download. Three free signs, no card needed.');
+    showFreeSignupGate('Sign up first to download. Three free documents, no card needed.');
     return;
   }
   if (freeToken.indexOf('paid:') !== 0) {
@@ -3239,7 +3239,7 @@ async function onSaveDraftClick() {
   const prior = saveDraftButton.textContent;
   try {
     saveDraftButton.disabled = true;
-    saveDraftButton.textContent = 'Bundling draft…';
+    saveDraftButton.textContent = 'Saving your draft…';
 
     const pdfBase64 = bytesToBase64(new Uint8Array(freshCopy(docState.originalBytes)));
     const draft = {
@@ -3512,7 +3512,7 @@ function openEmailCopyModal() {
       return;
     }
     sendBtn.disabled = true;
-    sendBtn.textContent = 'Flattening + sending…';
+    sendBtn.textContent = 'Preparing and sending…';
     try {
       // Flatten the PDF in browser. flattenAndDownload normally triggers
       // a download — we want the bytes, so use the underlying flatten()
@@ -3748,7 +3748,7 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
       '<h3 class="h-card">You signed a document in seconds, with no account.</h3>' +
       '<p>The sender used CyberSygn to find every signature line, initial, and date automatically. ' +
       'No manual field placement. No account creation for signers. The signed PDF arrives in your inbox with a SHA-256 audit certificate.</p>' +
-      '<p><strong>Want to send your own document for free?</strong> You already have an email on file — one click and you have three free signs of your own.</p>' +
+      '<p><strong>Want to send your own document for free?</strong> You already have an email on file. One click and you have three free documents of your own.</p>' +
     '</div>';
   body.appendChild(conv);
 
@@ -3774,7 +3774,7 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
   claim.href = '/preview/?ref=signer&email=' + encodeURIComponent(signerEmail || '') + '&name=' + encodeURIComponent(signerName || '');
   claim.target = '_top';
   claim.rel = 'noopener';
-  claim.innerHTML = 'Claim my 3 free signs <span class="btn-arrow" aria-hidden="true">→</span>';
+  claim.innerHTML = 'Claim my 3 free documents <span class="btn-arrow" aria-hidden="true">→</span>';
   claim.addEventListener('click', () => {
     track('signer_microsite_convert_click', { hasEmail: !!signerEmail });
   });
@@ -4280,7 +4280,7 @@ function openSendModal() {
   head.className = 'modal-card__head';
   head.innerHTML =
     '<span class="modal-card__kicker">Send for signature.</span>' +
-    '<h2 class="modal-card__title">Route this document to every signer.</h2>';
+    '<h2 class="modal-card__title">Send this document to every signer.</h2>';
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'modal-card__close';
@@ -4299,14 +4299,13 @@ function openSendModal() {
   const list = signers.list();
   if (list.length === 1) {
     lede.textContent =
-      'This document has one signer (you). Click Download below to flatten ' +
-      'every filled field into the original PDF.';
+      'This document has one signer (you). Click Download below to get the ' +
+      'PDF with every filled field locked in place.';
   } else {
-    lede.innerHTML =
-      'In production, CyberSygn emails each signer a magic link that lets them ' +
-      'sign only their assigned fields. The prototype simulates this by letting ' +
-      'you switch perspectives in the sidebar. Each signer below shows their ' +
-      'completion status.';
+    lede.textContent =
+      'CyberSygn emails each signer their own private signing link. ' +
+      'You can also copy the links yourself after sending. ' +
+      'Each signer below shows their completion status.';
   }
   body.appendChild(lede);
 
@@ -4382,12 +4381,12 @@ function openSendModal() {
   paintCcPreview('', ccPreview);
   body.appendChild(ccSection);
 
-  // Production-flow preview (the magic-link copy).
+  // How-signing-works note (the signing-link copy).
   if (list.length > 1) {
     const note = document.createElement('div');
     note.className = 'send-note';
     note.innerHTML =
-      '<p class="send-note__kicker">What ships in production.</p>' +
+      '<p class="send-note__kicker">What happens next.</p>' +
       '<p class="send-note__body">' +
       'CyberSygn sends each signer a unique link by email. They open it on any device, ' +
       'see only their assigned fields, sign, and submit. The moment the last signer ' +
@@ -4494,7 +4493,7 @@ function openSendModal() {
         report(err, 'createDoc');
         sendBtn.disabled = false;
         sendBtn.textContent = 'Try sending again';
-        showToast(`Could not route the document: ${err.message}`);
+        showToast(`Could not send the document: ${err.message}`);
       }
     });
     right.appendChild(sendBtn);
@@ -4511,7 +4510,7 @@ function openSendModal() {
   if (!allComplete) downloadBtn.classList.add('btn--warn');
   downloadBtn.addEventListener('click', async () => {
     downloadBtn.disabled = true;
-    downloadBtn.textContent = 'Flattening PDF.';
+    downloadBtn.textContent = 'Preparing your PDF.';
     try {
       await flattenAndDownload({
         originalBytes: docState.originalBytes,
@@ -4525,13 +4524,13 @@ function openSendModal() {
         allComplete
           ? `Downloaded. Every signer has signed their fields.`
           : `Downloaded a partial. ${fillStore.size()} of ${docState.fields.length} fields filled.`,
-        { action: { href: '../#founding', label: 'Join Origin members' } },
+        { action: { href: '../#pricing', label: 'See plans →' } },
       );
     } catch (err) {
       report(err, 'flatten');
       downloadBtn.disabled = false;
       downloadBtn.textContent = 'Try again';
-      showToast('We could not flatten the PDF.');
+      showToast('We could not prepare the PDF.');
     }
   });
   right.appendChild(downloadBtn);
@@ -4564,7 +4563,7 @@ function openLinksModal(payload) {
   const head = document.createElement('header');
   head.className = 'modal-card__head';
   head.innerHTML =
-    '<span class="modal-card__kicker">Routed.</span>' +
+    '<span class="modal-card__kicker">Sent.</span>' +
     '<h2 class="modal-card__title">Document sent to ' + payload.signerLinks.length + ' signer' +
       (payload.signerLinks.length === 1 ? '' : 's') + '.</h2>';
   const closeBtn = document.createElement('button');
@@ -4583,8 +4582,11 @@ function openLinksModal(payload) {
   note.className = 'modal-card__lede';
   if (payload.email === 'resend') {
     note.textContent = 'Each signer has been emailed their signing link. The links below are a copy in case you need to resend manually.';
-  } else {
+  } else if (ownerMod.isOwner()) {
+    // Owner-only ops guidance. Normal users get the plain message below.
     note.innerHTML = 'Email is in <strong>dev mode</strong>. The Worker logged each message to its console; copy the links below to send them manually, or set <code>RESEND_API_KEY</code> in your Worker to deliver them automatically.';
+  } else {
+    note.textContent = 'Email sending is not set up on this deployment. Copy each signer\'s link and share it directly.';
   }
   body.appendChild(note);
 
@@ -4637,6 +4639,17 @@ function openLinksModal(payload) {
       ? `Send a reminder email to ${link.email}.`
       : 'No email on file. Add one before reminding.';
     if (!link.email) remindBtn.disabled = true;
+    // Double-email guard: the invite email just went out, so a reminder
+    // in the same minute would land as a duplicate. Hold Remind for 60s.
+    if (link.email && payload.email === 'resend') {
+      const restingTitle = remindBtn.title;
+      remindBtn.disabled = true;
+      remindBtn.title = 'Invites were just emailed';
+      setTimeout(() => {
+        remindBtn.disabled = false;
+        remindBtn.title = restingTitle;
+      }, 60000);
+    }
     remindBtn.addEventListener('click', async () => {
       remindBtn.disabled = true;
       remindBtn.textContent = 'Sending.';
@@ -4714,6 +4727,19 @@ async function boot() {
   const pdfUrl = params.get('pdf');
   if (docId && token && status.ok) {
     await enterSignerMode(docId, token);
+  } else if (docId && token) {
+    // Signer link, but the Worker probe failed (offline, blocked,
+    // slow network). Never drop a signer onto the upload screen;
+    // tell them what happened and give them a way to try again.
+    setStatus('error', 'Connection problem.');
+    showError('We could not open your signing link. Check your connection and try again.');
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'btn btn--ghost btn--sm';
+    retry.textContent = 'Retry';
+    retry.style.marginLeft = '10px';
+    retry.addEventListener('click', () => window.location.reload());
+    errorBanner.appendChild(retry);
   } else if (pdfUrl) {
     // Embed-mode handling (slice 78 / 83 / 95): /preview/?pdf=<url>&embed=<source>
     // Optional ?theme=light|dark|auto and ?accent=#hex from slice 95.
@@ -4866,6 +4892,22 @@ async function enterSignerMode(docId, token) {
     const fillsObject = Object.fromEntries(fillStore.entries());
     await submitFills(docId, token, fillsObject);
   });
+
+  // Persistent orientation line in the sidebar head (aria-live). The
+  // welcome toast fades after a few seconds; this stays for the whole
+  // session so the signer always knows whose document this is and how
+  // many fields are theirs. Written directly (not via setTemplateState,
+  // which is guarded off in signer mode).
+  if (templateStateEl) {
+    const fieldCount = docState.fields.length;
+    const senderName = session.senderName || 'Someone';
+    templateStateEl.textContent =
+      `${senderName} sent you this document. ` +
+      `${fieldCount} field${fieldCount === 1 ? '' : 's'} need${fieldCount === 1 ? 's' : ''} you.`;
+    templateStateEl.title = `Fill the highlighted fields, then click Submit.`;
+    templateStateEl.dataset.state = 'signer';
+    templateStateEl.hidden = false;
+  }
 
   setStatus('done', `Signing as ${session.signer.name}.`);
   showToast(
