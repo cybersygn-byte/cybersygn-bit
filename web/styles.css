@@ -4006,7 +4006,7 @@ button { font: inherit; cursor: pointer; }
   grid-template-columns: 1fr 200px;
   gap: var(--s-3);
 }
-.brand-form__field { display: flex; flex-direction: column; gap: 6px; }
+.brand-form__field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .brand-form__label {
   font-family: var(--mono);
   font-size: 11px;
@@ -4023,10 +4023,15 @@ button { font: inherit; cursor: pointer; }
   color: var(--text);
   font-family: var(--mono);
   font-size: 13px;
+  /* Fill the grid cell and allow shrinking. Without min-width:0 the text
+     input keeps its intrinsic min-width, so the accent-color input + swatch
+     overflow the narrow 200px column and the swatch spills past the panel. */
+  width: 100%;
+  min-width: 0;
 }
 .brand-form__color-row {
   display: grid;
-  grid-template-columns: 1fr 36px;
+  grid-template-columns: minmax(0, 1fr) 36px;
   gap: var(--s-2);
   align-items: center;
 }
