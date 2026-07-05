@@ -63,13 +63,21 @@ export async function runSecurityCheck(env, opts = {}) {
   add('kv_reachable', kvOk, 'CYBERSYGN_DOCS did not answer', 'high');
 
   // ---- 3. live auth behavior (self-probe) -----------------------------------
+  // Dispatch in-process when a handler is supplied (opts.dispatch). A Worker
+  // cannot fetch its own public hostname from a scheduled() or request
+  // context: the self-subrequest re-enters the same zone and Cloudflare
+  // times it out (HTTP 522), which used to fail every probe at once. The
+  // in-process dispatcher runs the identical routing + auth + headers with
+  // no network hop. Network fetch remains the fallback for callers (tests,
+  // external monitors) that pass no dispatcher.
   const base = (opts.origin || (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io').replace(/\/$/, '');
-  await probe(add, 'v1_requires_key', `${base}/api/v1/me`, { expect: [401] });
-  await probe(add, 'v1_create_requires_key', `${base}/api/v1/documents`, { method: 'POST', body: '{}', expect: [401] });
-  await probe(add, 'owner_apikeys_requires_auth', `${base}/api/owner/apikeys`, { method: 'POST', body: '{}', expect: [401, 403] });
-  await probe(add, 'owner_metrics_requires_auth', `${base}/api/owner/metrics/dashboard`, { expect: [401, 403] });
-  await probe(add, 'health_responds', `${base}/api/health`, { belowServerError: true });
-  await probeHeaders(add, `${base}/`);
+  const send = typeof opts.dispatch === 'function' ? opts.dispatch : (req) => fetch(req);
+  await probe(add, send, 'v1_requires_key', `${base}/api/v1/me`, { expect: [401] });
+  await probe(add, send, 'v1_create_requires_key', `${base}/api/v1/documents`, { method: 'POST', body: '{}', expect: [401] });
+  await probe(add, send, 'owner_apikeys_requires_auth', `${base}/api/owner/apikeys`, { method: 'POST', body: '{}', expect: [401, 403] });
+  await probe(add, send, 'owner_metrics_requires_auth', `${base}/api/owner/metrics/dashboard`, { expect: [401, 403] });
+  await probe(add, send, 'health_responds', `${base}/api/health`, { belowServerError: true });
+  await probeHeaders(add, send, `${base}/`);
 
   const failures = checks.filter((c) => !c.pass);
   const result = {
@@ -118,14 +126,15 @@ export async function getLatestSecurityCheck(env) {
 
 // ---- helpers ---------------------------------------------------------------
 
-async function probe(add, name, url, opts = {}) {
+async function probe(add, send, name, url, opts = {}) {
   try {
-    const res = await fetch(url, {
+    const req = new Request(url, {
       method: opts.method || 'GET',
       headers: opts.body ? { 'content-type': 'application/json' } : undefined,
       body: opts.body,
       redirect: 'manual',
     });
+    const res = await send(req);
     if (opts.belowServerError) {
       add(name, res.status < 500, `HTTP ${res.status}`, 'medium');
       return;
@@ -136,9 +145,9 @@ async function probe(add, name, url, opts = {}) {
   }
 }
 
-async function probeHeaders(add, url) {
+async function probeHeaders(add, send, url) {
   try {
-    const res = await fetch(url, { redirect: 'manual' });
+    const res = await send(new Request(url, { redirect: 'manual' }));
     const h = res.headers;
     add('header_nosniff', (h.get('x-content-type-options') || '').toLowerCase() === 'nosniff',
       'X-Content-Type-Options: nosniff missing', 'medium');

@@ -1184,6 +1184,45 @@ async function main() {
     }
   }
 
+  // ---- Security self-check dispatches in-process (no self-fetch 522) --------
+  console.log('\n39. Security self-check in-process dispatch');
+  {
+    const { runSecurityCheck } = await import('../worker/src/security-check.js');
+    // The incident: every live probe returned HTTP 522 because the Worker
+    // fetched its own hostname from cron and the self-subrequest timed out.
+    // The fix dispatches probes straight to worker.fetch. Stub the two
+    // bindings the health + header probes touch (KV binding so health is
+    // 200; ASSETS so "/" is a real hardened HTML response) WITHOUT setting
+    // Stripe/Resend keys, so no external API calls fire during the test.
+    const kvMap = new Map();
+    const kvStub = {
+      async get(k) { return kvMap.has(k) ? kvMap.get(k) : null; },
+      async put(k, v) { kvMap.set(k, v); },
+      async delete(k) { kvMap.delete(k); },
+    };
+    const probeEnv = {
+      ...env,
+      CYBERSYGN_DOCS: kvStub, // makes handleHealth's KV probe pass -> HTTP 200
+      ASSETS: { fetch: async () => new Response('<!doctype html><title>home</title>', { headers: { 'content-type': 'text/html; charset=utf-8' } }) },
+    };
+    const dispatch = (req) => workerModule.fetch(req, probeEnv, { waitUntil() {}, passThroughOnException() {} });
+    const result = await runSecurityCheck(probeEnv, { trigger: 'test', dispatch, origin: 'http://localhost' });
+    const by = Object.fromEntries(result.checks.map(c => [c.name, c]));
+
+    // The exact six checks that came back HTTP 522 in the incident must now
+    // reach the handler in-process and pass.
+    ok(by.v1_requires_key && by.v1_requires_key.pass, `v1_requires_key passes in-process (${by.v1_requires_key && by.v1_requires_key.detail})`);
+    ok(by.v1_create_requires_key && by.v1_create_requires_key.pass, 'v1_create_requires_key passes in-process');
+    ok(by.owner_apikeys_requires_auth && by.owner_apikeys_requires_auth.pass, 'owner_apikeys_requires_auth passes in-process');
+    ok(by.owner_metrics_requires_auth && by.owner_metrics_requires_auth.pass, `owner_metrics_requires_auth passes in-process (${by.owner_metrics_requires_auth && by.owner_metrics_requires_auth.detail})`);
+    ok(by.health_responds && by.health_responds.pass, `health_responds passes in-process (${by.health_responds && by.health_responds.detail})`);
+    ok(by.header_nosniff && by.header_nosniff.pass, 'header_nosniff passes in-process (hardened ASSETS response)');
+    // No probe reports a network-level failure (the 522 signature was a
+    // "probe failed"/5xx on every one).
+    const liveNames = ['v1_requires_key','v1_create_requires_key','owner_apikeys_requires_auth','owner_metrics_requires_auth','health_responds','header_nosniff'];
+    ok(liveNames.every(n => by[n] && by[n].pass), 'all six previously-522 live probes pass in-process');
+  }
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

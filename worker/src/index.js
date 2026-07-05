@@ -108,7 +108,7 @@ const MAX_JSON_BYTES = 256 * 1024; // default for small JSON endpoints
 const MAX_DOC_JSON_BYTES = 36 * 1024 * 1024;
 const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
-export default {
+const worker = {
   async fetch(request, env, ctx) {
    try {
     const url = new URL(request.url);
@@ -207,7 +207,7 @@ export default {
       return handleOwnerReportPreview(request, env, url);
     }
     if (url.pathname === '/api/owner/security-check') {
-      return handleOwnerSecurityCheck(request, env, url);
+      return handleOwnerSecurityCheck(request, env, url, ctx);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/drip/run') {
       return handleOwnerDripRun(request, env, url);
@@ -655,7 +655,7 @@ export default {
     // (06:00 / 18:00 America/Denver during MDT). Emails the owner only on
     // failure; a passing run is silent. Wrapped so it can never break the cron.
     if (shouldRunSecurityCheck(event)) {
-      ctx.waitUntil(runSecurityCheck(env, { trigger: 'cron' }).catch(() => {}));
+      ctx.waitUntil(runSecurityCheck(env, { trigger: 'cron', dispatch: selfDispatch(env, ctx) }).catch(() => {}));
     }
     // Uptime self-probe (slice 99). Synchronous KV check is enough — if
     // the binding is up the worker can respond; if it isn't, we record
@@ -675,6 +675,18 @@ export default {
   },
 };
 
+export default worker;
+
+// In-process request dispatcher for the security self-check. A Worker
+// cannot fetch its OWN public hostname from the scheduled() context: the
+// self-subrequest re-enters the same zone and Cloudflare times it out
+// (HTTP 522). Dispatching synthetic Requests straight to worker.fetch
+// exercises the identical routing + auth + headers with no network hop.
+function selfDispatch(env, ctx) {
+  const safeCtx = ctx && typeof ctx.waitUntil === 'function' ? ctx : { waitUntil() {}, passThroughOnException() {} };
+  return (request) => worker.fetch(request, env, safeCtx);
+}
+
 function shouldRunMonthlyReport(event) {
   try {
     const now = event && event.scheduledTime ? new Date(event.scheduledTime) : new Date();
@@ -693,11 +705,13 @@ function shouldRunSecurityCheck(event) {
 
 // GET  /api/owner/security-check            -> last stored result (owner only)
 // POST /api/owner/security-check            -> run a fresh check now (owner only)
-async function handleOwnerSecurityCheck(request, env, url) {
+async function handleOwnerSecurityCheck(request, env, url, ctx) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
   if (request.method === 'POST') {
-    const result = await runSecurityCheck(env, { trigger: 'manual', origin: url.origin });
+    // Dispatch probes in-process (see selfDispatch): even from a live
+    // request the Worker cannot reliably fetch its own hostname.
+    const result = await runSecurityCheck(env, { trigger: 'manual', origin: url.origin, dispatch: selfDispatch(env, ctx) });
     return jsonResponse(200, result);
   }
   const latest = await getLatestSecurityCheck(env);

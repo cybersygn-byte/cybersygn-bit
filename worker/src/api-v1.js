@@ -34,7 +34,17 @@ const MAX_PDF_BYTES = 25 * 1024 * 1024;
 function json(status, obj, extraHeaders) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...(extraHeaders || {}) },
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      // Same baseline security headers as the main jsonResponse: this is a
+      // public JSON API surface, never framed, never sniffed.
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+      'x-frame-options': 'DENY',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+      ...(extraHeaders || {}),
+    },
   });
 }
 function err(status, code, message) {
