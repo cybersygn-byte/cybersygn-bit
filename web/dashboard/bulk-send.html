@@ -279,9 +279,17 @@
 
       try {
         const pdfBase64 = bytesToBase64(pdfBytes);
+        // Free-tier senders must present their signup token; the Worker
+        // enforces the lifetime cap per sub-send. Paid senders pass on
+        // their subscription record and the 'paid:' marker is not sent.
+        const bulkHeaders = { 'content-type': 'application/json' };
+        try {
+          const ft = localStorage.getItem('cybersygn.freeToken');
+          if (ft && ft.indexOf('paid:') !== 0) bulkHeaders['X-CyberSygn-Free'] = ft;
+        } catch (e) {}
         const res = await fetch('/api/docs/bulk', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: bulkHeaders,
           body: JSON.stringify({
             title: pdfTitle,
             pdfBase64,

@@ -42,6 +42,8 @@ import { saveTemplate, lookupTemplate } from './templates.js';
 import {
   freeSignup,
   freeConsume,
+  freePeek,
+  freeRefund,
   writeFreeTokenPointer,
   getDatasetCount,
   ownerDripList,
@@ -61,6 +63,7 @@ import { getRoadmap, castVote } from './roadmap.js';
 import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import { runSecurityCheck, getLatestSecurityCheck } from './security-check.js';
+import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill, ensureDailyBackfill } from './metrics-counters.js';
 import {
   TIERS,
   getSubscription,
@@ -383,11 +386,26 @@ export default {
       }
     }
 
-    // GDPR data subject export. Slice 100.
+    // GDPR data subject export. Slice 100; email-confirmation auth added
+    // in the hardening follow-up. Two-step: request a code to the email
+    // bound to the sender, then confirm the code to receive the export.
     {
-      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/gdpr-export$/);
-      if (m && request.method === 'GET') {
-        return handleGdprExport(request, env, m[1]);
+      const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/gdpr-export(\/request|\/confirm)?$/);
+      if (m) {
+        if (request.method === 'POST' && m[2] === '/request') {
+          return handleGdprExportRequest(request, env, m[1]);
+        }
+        if (request.method === 'POST' && m[2] === '/confirm') {
+          return handleGdprExportConfirm(request, env, m[1]);
+        }
+        if (request.method === 'GET' && !m[2]) {
+          // The old single-GET export is gone: it authenticated with the
+          // senderId alone. Point callers at the confirmed flow.
+          return jsonResponse(410, {
+            error: 'flow_upgraded',
+            message: 'Data export now requires email confirmation. POST /api/sender/:id/gdpr-export/request with {"email"} (the email you signed up or subscribed with), then POST .../gdpr-export/confirm with the emailed {"code"}.',
+          });
+        }
       }
     }
     if (request.method === 'GET' && url.pathname === '/api/origin/wall') {
@@ -1288,67 +1306,208 @@ async function handleTemplateDownload(request, env, url, slug) {
   });
 }
 
-async function handleGdprExport(request, env, senderId) {
-  // Unauthenticated by design (senderId is a client-held random capability),
-  // but the doc list-scan below costs up to ~1000 KV reads per call, so the
-  // endpoint is tightly IP-limited: a legitimate data-export request happens
-  // once, not in a loop. (Real sender-token auth is a tracked follow-up.)
-  const rl = await checkRateLimit(env, `gdpr:${ipKey(request)}`, [
+/**
+ * GDPR export, step 1: prove control of an email associated with this
+ * sender. The claimed email (hashed, never compared in cleartext) must
+ * match the sender-email binding written at free-tier doc creation, or
+ * the email on the Stripe subscription record. On match, a one-time
+ * confirmation code is emailed to THAT address (never to a caller-chosen
+ * one) with a 15-minute expiry.
+ */
+async function handleGdprExportRequest(request, env, senderId) {
+  const rl = await checkRateLimit(env, `gdpr-req:${ipKey(request)}`, [
     { windowSec: 3600, max: 3 },
     { windowSec: 86400, max: 6 },
   ]);
-  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/sender/gdpr-export' });
+  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/sender/gdpr-export/request' });
+
   const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
-  if (!env || !env.CYBERSYGN_DOCS) return jsonResponse(503, { error: 'kv_unavailable' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const email = String((body.value && body.value.email) || '').trim().toLowerCase();
+  if (!isValidEmail(email)) return jsonResponse(400, { error: 'invalid_email', message: 'Provide the email you signed up or subscribed with.' });
 
+  const claimedHash = await sha256Hex(new TextEncoder().encode(email));
+  const storage = getStorage(env);
+
+  // Does the claimed email belong to this sender?
+  let bound = false;
+  try {
+    const binding = await storage.docs.get(`sender-email:${safeId}`);
+    if (binding && ctEqHex(binding, claimedHash)) bound = true;
+  } catch (e) {}
+  if (!bound) {
+    try {
+      const sub = await getSubscription(env, safeId);
+      if (sub && typeof sub.email === 'string' && sub.email) {
+        const subHash = await sha256Hex(new TextEncoder().encode(sub.email.trim().toLowerCase()));
+        if (ctEqHex(subHash, claimedHash)) bound = true;
+      }
+    } catch (e) {}
+  }
+  // Mint + email the code ONLY on a match, but always return the same 200.
+  // A differing status (200 vs 403) would let anyone holding a senderId
+  // capability probe candidate emails and confirm the exact bound address;
+  // the uniform response closes that oracle. The code only ever reaches the
+  // real inbox, so a mismatch simply results in no email.
+  if (bound) {
+    const code = await createGdprConfirm(env, safeId, claimedHash);
+    await deliverEmail(env, {
+      to: email,
+      subject: 'Your CyberSygn data export code',
+      text: `Someone (hopefully you) requested an export of the CyberSygn data linked to this email.\n\nConfirmation code: ${code}\n\nThe code works once and expires in 15 minutes. If you did not request this, ignore this email; nothing is shared without the code.`,
+    }).catch(() => {});
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    message: 'If that email is associated with this account, a one-time confirmation code has been sent to it. POST the code to /api/sender/:id/gdpr-export/confirm as {"code"}. If your account pre-dates email binding, request your export from hello@cybersygn.io.',
+  });
+}
+
+// Mint + store the one-time confirmation record. Exported for the test
+// harness (email delivery is console-only there, so tests mint directly).
+export async function createGdprConfirm(env, senderId, emailHash) {
+  const code = randomId(16);
+  const rec = {
+    codeHash: await sha256Hex(new TextEncoder().encode(code)),
+    emailHash,
+    expiresAt: Date.now() + 15 * 60 * 1000,
+    attempts: 0,
+  };
+  await getStorage(env).docs.put(`gdpr-confirm:${senderId}`, JSON.stringify(rec), { expirationTtl: 900 });
+  return code;
+}
+
+/**
+ * GDPR export, step 2: exchange the emailed code for the export. The
+ * code is single-use, hash-compared in constant time, expires after 15
+ * minutes, and dies after 5 wrong attempts.
+ */
+async function handleGdprExportConfirm(request, env, senderId) {
+  const rl = await checkRateLimit(env, `gdpr-conf:${ipKey(request)}`, [{ windowSec: 3600, max: 10 }]);
+  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/sender/gdpr-export/confirm' });
+
+  const safeId = String(senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const code = String((body.value && body.value.code) || '');
+
+  const storage = getStorage(env);
+  const key = `gdpr-confirm:${safeId}`;
+  let rec = null;
+  try { rec = await storage.docs.get(key, { json: true }); } catch (e) {}
+  if (!rec || !rec.codeHash) {
+    return jsonResponse(410, { error: 'no_pending_request', message: 'No pending export request. Start over at /api/sender/:id/gdpr-export/request.' });
+  }
+  if (Date.now() > rec.expiresAt) {
+    await storage.docs.delete(key).catch(() => {});
+    return jsonResponse(410, { error: 'code_expired', message: 'The code expired. Request a new one.' });
+  }
+  const presentedHash = await sha256Hex(new TextEncoder().encode(code));
+  if (!ctEqHex(presentedHash, rec.codeHash)) {
+    rec.attempts = (rec.attempts || 0) + 1;
+    if (rec.attempts >= 5) {
+      await storage.docs.delete(key).catch(() => {});
+      return jsonResponse(410, { error: 'too_many_attempts', message: 'Too many wrong codes. Request a new one.' });
+    }
+    await storage.docs.put(key, JSON.stringify(rec), { expirationTtl: 900 }).catch(() => {});
+    return jsonResponse(403, { error: 'wrong_code' });
+  }
+
+  // Verified. Single-use: burn the code before building the export.
+  await storage.docs.delete(key).catch(() => {});
+  return buildGdprExport(env, safeId, rec.emailHash);
+}
+
+/**
+ * Assemble the export for a VERIFIED sender. Docs come from the
+ * sender:<id>:docs index (one read per doc the sender actually owns)
+ * instead of the old full doc: list-scan.
+ */
+async function buildGdprExport(env, senderId, emailHash) {
+  const storage = getStorage(env);
   const records = [];
   async function add(label, key) {
     try {
-      const raw = await env.CYBERSYGN_DOCS.get(key);
+      const raw = await storage.docs.get(key);
       if (raw) records.push({ label, key, data: tryParse(raw) });
     } catch (e) {}
   }
-  await add('subscription', `sub:${safeId}`);
-  await add('brand', `brand:${safeId}`);
-  await add('webhook_config', `webhook:${safeId}`);
-  await add('origin_profile', `sub:${safeId}`);
+  await add('subscription', `sub:${senderId}`);
+  await add('brand', `brand:${senderId}`);
+  await add('webhook_config', `webhook:${senderId}`);
 
-  // Docs created by this sender — list-scan.
+  // Docs created by this sender. The sender index is the fast primary
+  // source, but it caps at the 200 newest, so for a GDPR subject-access
+  // response (which must be complete) we ALSO scan doc:* on real KV and
+  // union in anything the truncated index missed. This scan is acceptable
+  // here precisely because it is the rare, email-confirmed, rate-limited
+  // path, not the old unauthenticated hot path this endpoint used to be.
+  const seenDocIds = new Set();
+  const pushDoc = (docId, d) => {
+    if (!d || seenDocIds.has(docId)) return;
+    seenDocIds.add(docId);
+    records.push({
+      label: 'doc',
+      key: `doc:${docId}`,
+      data: {
+        id: d.id,
+        createdAt: d.createdAt,
+        title: d.title,
+        signerCount: Array.isArray(d.signers) ? d.signers.length : 0,
+        completedAt: d.completedAt,
+      },
+    });
+  };
   try {
-    const listed = await env.CYBERSYGN_DOCS.list({ prefix: 'doc:', limit: 1000 });
-    for (const e of listed.keys) {
-      const raw = await env.CYBERSYGN_DOCS.get(e.name);
-      if (!raw) continue;
-      let d; try { d = JSON.parse(raw); } catch (e2) { continue; }
-      if (d && d.senderId === safeId) {
-        records.push({
-          label: 'doc',
-          key: e.name,
-          data: {
-            id: d.id,
-            createdAt: d.createdAt,
-            title: d.title,
-            signerCount: Array.isArray(d.signers) ? d.signers.length : 0,
-            completedAt: d.completedAt,
-          },
-        });
+    const index = (await storage.docs.get(`sender:${senderId}:docs`, { json: true })) || { docs: [] };
+    for (const docId of index.docs) {
+      pushDoc(docId, await storage.docs.get(`doc:${docId}`, { json: true }));
+    }
+  } catch (e) {}
+  try {
+    const kv = env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.list === 'function' ? env.CYBERSYGN_DOCS : null;
+    if (kv) {
+      let cursor;
+      let pages = 0;
+      while (true) {
+        const r = await kv.list({ prefix: 'doc:', limit: 1000, cursor });
+        for (const k of r.keys) {
+          const id = k.name.slice(4);
+          if (seenDocIds.has(id)) continue;
+          let d;
+          try { d = await kv.get(k.name, 'json'); } catch (e) { continue; }
+          if (d && d.senderId === senderId) pushDoc(id, d);
+        }
+        pages += 1;
+        if (r.list_complete || !r.cursor || pages > 20) break;
+        cursor = r.cursor;
       }
     }
   } catch (e) {}
 
-  // Templates owned (private scope tied to this sender).
+  // Free-tier records for the verified email (the caller just proved
+  // control of it, so returning their own signup contact is safe).
+  if (emailHash) {
+    await add('free_allowance', `free:${emailHash}`);
+    await add('free_contact', `drip:${emailHash}`);
+  }
+
+  // Templates owned (private scope). Needs KV list(); skipped silently
+  // in memory mode.
   try {
-    const listed = await env.CYBERSYGN_DOCS.list({ prefix: `tpl-priv:${safeId}:`, limit: 1000 });
-    for (const e of listed.keys) records.push({ label: 'template', key: e.name });
+    if (env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.list === 'function') {
+      const listed = await env.CYBERSYGN_DOCS.list({ prefix: `tpl-priv:${senderId}:`, limit: 1000 });
+      for (const e of listed.keys) records.push({ label: 'template', key: e.name });
+    }
   } catch (e) {}
 
-  // Free-tier drip record (hashed email is the key; we can't recover
-  // cleartext from the senderId alone, but we surface any direct
-  // pointers like 'free-tok:<token>' if cached locally).
   return jsonResponse(200, {
     ok: true,
-    sender: safeId,
+    sender: senderId,
     exportedAt: new Date().toISOString(),
     recordCount: records.length,
     records,
@@ -2365,20 +2524,55 @@ async function handleAffiliateStats(request, env, url, code) {
  * is 2 reads/sec per active doc. Even with hundreds of concurrent
  * docs, KV easily absorbs it.
  */
+/**
+ * Overlay per-signer durable state onto a doc record. Each signer's
+ * fills + completion stamp are ALSO written to signer-fills:<docId>:<id>
+ * (single writer: that signer), so a lost read-modify-write on the shared
+ * doc record can never lose ink: every fill-sensitive reader goes through
+ * this overlay, and the subkey always wins per field.
+ */
+async function overlaySignerState(storage, doc, docId) {
+  if (!doc || !Array.isArray(doc.signers)) return doc;
+  await Promise.all(doc.signers.map(async (s) => {
+    try {
+      const sub = await storage.docs.get(`signer-fills:${docId}:${s.id}`, { json: true });
+      if (!sub) return;
+      s.fills = { ...(s.fills || {}), ...(sub.fills || {}) };
+      if (!s.completedAt && sub.completedAt) s.completedAt = sub.completedAt;
+    } catch (e) {}
+  }));
+  return doc;
+}
+
+/** Load a doc record with the per-signer overlay applied. */
+async function loadDocMerged(storage, docId) {
+  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  if (!doc) return null;
+  return overlaySignerState(storage, doc, docId);
+}
+
 async function handleDocLive(request, env, url, docId) {
   const token = url.searchParams.get('t');
   if (!token) return jsonResponse(400, { error: 'missing_token' });
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found' });
   const callingSigner = doc.signers.find(s => ctEqHex(s.token, token));
   if (!callingSigner) return jsonResponse(403, { error: 'invalid_token' });
 
-  // Compute per-signer presence + fill state. Slice 92 adds
-  // currentFieldId and idle-state heuristics so the client can render
-  // "Jane is on page 2 working on field 7" rather than a flat
-  // "page 2" indicator.
-  const presence = (doc.presence || {});
+  // Presence now lives in per-signer short-TTL keys (see
+  // handleDocPresenceUpdate); docs from before the extraction may still
+  // carry an embedded doc.presence, kept as a read-only fallback.
+  const presenceEntries = await Promise.all(doc.signers.map(async (s) => {
+    try {
+      return [s.id, await storage.docs.get(`presence:${docId}:${s.id}`, { json: true })];
+    } catch (e) {
+      return [s.id, null];
+    }
+  }));
+  const legacyPresence = doc.presence || {};
+  const presence = {};
+  for (const [sid, p] of presenceEntries) presence[sid] = p || legacyPresence[sid] || null;
   const nowMs = Date.now();
   const out = doc.signers.map(s => {
     const owned = Object.values(doc.assignments || {}).filter(sid => sid === s.id).length;
@@ -2431,13 +2625,18 @@ async function handleDocPresenceUpdate(request, env, url, docId) {
   const signer = doc.signers.find(s => ctEqHex(s.token, token));
   if (!signer) return jsonResponse(403, { error: 'invalid_token' });
 
-  doc.presence = doc.presence || {};
-  doc.presence[signer.id] = {
-    currentPage,
-    currentFieldId,
-    lastSeenAt: new Date().toISOString(),
-  };
-  try { await storage.docs.put(`doc:${docId}`, JSON.stringify(doc), { expirationTtl: DOC_TTL_SECONDS }); } catch (e) {}
+  // Presence lives in its own short-TTL key with exactly one writer
+  // (this signer). Heartbeats used to rewrite the whole doc record every
+  // couple of seconds, racing handleSubmitFills on the same key and
+  // occasionally clobbering another signer's just-written fills. This
+  // path no longer touches doc:<id> at all.
+  try {
+    await storage.docs.put(`presence:${docId}:${signer.id}`, {
+      currentPage,
+      currentFieldId,
+      lastSeenAt: new Date().toISOString(),
+    }, { expirationTtl: 300 });
+  } catch (e) {}
   return jsonResponse(200, { ok: true });
 }
 
@@ -2783,67 +2982,40 @@ async function handleMetrics(env, url) {
 
   let activeOperators = 0;
   let revenueCents = 0;
-  let docsSent = 0;
-  let docsCompleted = 0;
 
-  const kv = env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.list === 'function'
-    ? env.CYBERSYGN_DOCS
-    : null;
-
-  if (kv) {
-    // ---- Active operators + MRR: scan sub:* records --------------------
-    try {
-      let cursor;
-      let pages = 0;
-      while (true) {
-        const r = await kv.list({ prefix: 'sub:', limit: 1000, cursor });
-        for (const k of r.keys) {
-          let rec;
-          try { rec = await kv.get(k.name, 'json'); } catch (e) { continue; }
-          if (!rec || typeof rec !== 'object') continue;
-          // Active = a non-free tier in an active/trialing state. Lifetime
-          // counts as an active operator but adds 0 to recurring MRR.
-          const tier = typeof rec.tier === 'string' ? rec.tier : 'free';
-          const status = typeof rec.status === 'string' ? rec.status : '';
-          const isActive = tier !== 'free' && (status === 'active' || status === 'trialing');
-          if (isActive) {
-            activeOperators += 1;
-            revenueCents += (TIER_MRR_CENTS[tier] || 0);
-          }
-        }
-        pages += 1;
-        if (r.list_complete || !r.cursor || pages > 20) break; // hard cap
-        cursor = r.cursor;
+  // ---- Active operators + MRR from the rolling subs registry ----------
+  // Maintained at write time next to every sub:<senderId> put (stripe.js
+  // recordSubForMetrics). First call after deploy seeds it with one final
+  // legacy scan; every call after that is a single GET. Lifetime counts
+  // as an active operator but adds 0 to recurring MRR.
+  try {
+    await ensureSubsBackfill(env);
+    const registry = await readSubsRegistry(env);
+    for (const rec of Object.values(registry || {})) {
+      const tier = typeof rec.tier === 'string' ? rec.tier : 'free';
+      const status = typeof rec.status === 'string' ? rec.status : '';
+      if (tier !== 'free' && (status === 'active' || status === 'trialing')) {
+        activeOperators += 1;
+        revenueCents += (TIER_MRR_CENTS[tier] || 0);
       }
-    } catch (e) { /* degrade: report what we counted */ }
+    }
+  } catch (e) { /* degrade: report what we counted */ }
 
-    // ---- Docs sent / completed in period: scan doc:* records -----------
-    try {
-      let cursor;
-      let pages = 0;
-      while (true) {
-        const r = await kv.list({ prefix: 'doc:', limit: 1000, cursor });
-        for (const k of r.keys) {
-          let d;
-          try { d = await kv.get(k.name, 'json'); } catch (e) { continue; }
-          if (!d || typeof d !== 'object') continue;
-          const created = toEpochMs(d.createdAt);
-          if (created != null && created >= from && created <= to) docsSent += 1;
-          const completed = toEpochMs(d.completedAt);
-          if (completed != null && completed >= from && completed <= to) docsCompleted += 1;
-        }
-        pages += 1;
-        if (r.list_complete || !r.cursor || pages > 50) break; // hard cap
-        cursor = r.cursor;
-      }
-    } catch (e) { /* degrade: report what we counted */ }
-  }
+  // ---- Docs sent / completed from daily buckets -------------------------
+  // Bumped on every doc creation / completion; a window read is one GET
+  // per day (max 92), not one GET per doc ever created. The old full
+  // doc:* scan runs exactly once more as a lazy backfill, then never again.
+  let usage = { docsSent: 0, docsCompleted: 0 };
+  try {
+    await ensureDailyBackfill(env);
+    usage = await readDailyMetrics(env, from, to);
+  } catch (e) { /* degrade: zeros beat a 1101 */ }
 
   return jsonResponse(200, {
     product: 'cybersygn',
     period: { from, to },
     activeOperators,
-    usage: { docsSent, docsCompleted },
+    usage,
     revenueCents,
     health: { ok: true },
   });
@@ -2858,16 +3030,6 @@ function parseEpochParam(raw, fallback) {
   return Number.isFinite(iso) ? iso : fallback;
 }
 
-// Normalize a stored timestamp (ISO string or epoch ms) to epoch ms, or null.
-function toEpochMs(v) {
-  if (v == null) return null;
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-  if (typeof v === 'string') {
-    const t = Date.parse(v);
-    return Number.isFinite(t) ? t : null;
-  }
-  return null;
-}
 
 async function handleAnalyticsSummary(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
@@ -3063,15 +3225,51 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   // opts.unmetered is set ONLY by the authenticated v1 path for keys flagged
   // unmetered (partner-issued tenant keys). The public /api/docs route never
   // passes it, so this is not forgeable from outside.
+  let freeGate = null; // set when this create burns a free-tier allowance
   if (!owner && !opts.unmetered) {
     const gate = await checkFreeTierAllowance(env, senderId);
-    if (!gate.allowed) {
-      return jsonResponse(402, {
-        error: 'free_tier_limit',
-        message: `You have used all ${gate.cap} free documents this month. Upgrade to keep signing.`,
-        usage: { used: gate.used, cap: gate.cap, remaining: 0 },
-        upgrade: { tiers: ['solo', 'founding', 'team'] },
-      });
+    // "Never paid" = no subscription record, or one whose tier reverted to
+    // free (a fully canceled account). A sender with a real paid tier in ANY
+    // status (active, trialing, past_due during dunning) is a customer, not
+    // an anonymous free user: they are never told to "create a free account".
+    const neverPaid = !gate.sub || gate.sub.tier === 'free';
+    if (gate.tier === 'free' && neverPaid) {
+      // Free tier. The durable identity is the signed-up EMAIL (hashed),
+      // not the senderId: senderIds live in localStorage and can be
+      // rotated at will, so a per-sender counter alone is a 3-docs-per-
+      // incognito-window cap, not a lifetime cap. Require the free token
+      // minted at signup and enforce the lifetime allowance against its
+      // email-hash record. API-keyed calls (v1) skip the token: keys are
+      // owner/partner-minted identities whose senderId cannot be rotated,
+      // so the monthly per-sender cap below is already binding for them.
+      if (!opts.apiKeyed) {
+        const freeToken = request.headers.get('x-cybersygn-free') || String(payload.freeToken || '');
+        const peek = await freePeek(env, freeToken);
+        if (!peek.ok) {
+          return jsonResponse(402, {
+            error: 'free_signup_required',
+            message: 'Create a free account to send documents (three free, lifetime, no card needed), or upgrade for unlimited.',
+            upgrade: { tiers: ['solo', 'founding', 'team'] },
+          });
+        }
+        if (peek.remaining <= 0) {
+          return jsonResponse(402, {
+            error: 'free_cap_reached',
+            message: 'You have used all three lifetime free documents. Upgrade to keep signing.',
+            usage: { used: peek.used, cap: peek.cap, remaining: 0 },
+            upgrade: { tiers: ['solo', 'founding', 'team'] },
+          });
+        }
+        freeGate = { token: freeToken, emailHash: peek.emailHash };
+      }
+      if (!gate.allowed) {
+        return jsonResponse(402, {
+          error: 'free_tier_limit',
+          message: `You have used all ${gate.cap} free documents this month. Upgrade to keep signing.`,
+          usage: { used: gate.used, cap: gate.cap, remaining: 0 },
+          upgrade: { tiers: ['solo', 'founding', 'team'] },
+        });
+      }
     }
   }
 
@@ -3158,6 +3356,10 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     title: String(payload.title || 'Document').slice(0, 200),
     senderName: String(payload.senderName || 'A CyberSygn sender').slice(0, 80),
     senderId,
+    // Hash of the free-signup email that paid for this doc (free tier
+    // only). Never the cleartext. Lets GDPR export verify doc ownership
+    // by email without a scan.
+    senderEmailHash: freeGate ? freeGate.emailHash : null,
     senderToken,
     workspaceId,
     fields: payload.fields,
@@ -3204,8 +3406,35 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     });
   }
 
-  await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
-  await storage.pdfs.put(`pdf:${docId}`, pdfBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
+  // Burn the lifetime free allowance BEFORE the store, not after. The gate
+  // above only PEEKED (read-only), so a burst of concurrent creates on one
+  // token could all pass the peek; consuming here makes each request pass
+  // through the counter increment first, collapsing that window. KV has no
+  // atomic increment, so a same-instant burst within the seconds-long
+  // cross-PoP consistency window can still slip an extra doc or two; a hard
+  // cap would need a Durable Object and is out of scope. If the store below
+  // then fails, we refund so the user is not charged for a doc that vanished.
+  if (freeGate) {
+    const consumed = await freeConsume(env, freeGate.token);
+    if (!consumed.ok) {
+      return jsonResponse(402, {
+        error: consumed.error === 'free_cap_reached' ? 'free_cap_reached' : 'free_consume_failed',
+        message: consumed.error === 'free_cap_reached'
+          ? 'You have used all three lifetime free documents. Upgrade to keep signing.'
+          : 'Could not verify your free allowance. Please try again.',
+        usage: consumed.used != null ? { used: consumed.used, cap: consumed.cap, remaining: 0 } : undefined,
+        upgrade: { tiers: ['solo', 'founding', 'team'] },
+      });
+    }
+  }
+
+  try {
+    await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
+    await storage.pdfs.put(`pdf:${docId}`, pdfBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
+  } catch (e) {
+    if (freeGate) await freeRefund(env, freeGate.token).catch(() => {});
+    throw e;
+  }
   await addToActiveIndex(storage, docId);
   await addToSenderIndex(storage, senderId, docId);
   if (workspaceId) {
@@ -3220,6 +3449,17 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     if (!(subForMeter.status === 'active' && subForMeter.tier !== 'free')) {
       await incrementUsage(env, senderId);
     }
+  }
+
+  // Bind senderId -> emailHash so the GDPR export flow can verify this
+  // sender by email without a scan. (The allowance was already consumed
+  // above.)
+  if (freeGate) {
+    try {
+      await storage.docs.put(`sender-email:${senderId}`, freeGate.emailHash, {
+        expirationTtl: 60 * 60 * 24 * 365 * 5,
+      });
+    } catch (e) {}
   }
 
   // Build magic links and dispatch invites in parallel.
@@ -3289,6 +3529,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     signerCount: signers.length,
     mode: docRecord.mode,
   }));
+  waitUntil(bumpDailyMetric(env, 'sent'));
 
   return jsonResponse(201, {
     docId,
@@ -3307,7 +3548,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
  */
 async function handleHydrateSigner(request, env, docId, token) {
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
   const signer = doc.signers.find(s => ctEqHex(s.token, token));
@@ -3361,9 +3602,10 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   if (body.error) return jsonResponse(400, body.error);
 
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
   if (doc.voidedAt) return jsonResponse(410, { error: 'voided', message: 'This document was voided and can no longer be signed.' });
+  const eventCountAtLoad = Array.isArray(doc.events) ? doc.events.length : 0;
 
   const signerIdx = doc.signers.findIndex(s => ctEqHex(s.token, token));
   if (signerIdx < 0) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });
@@ -3402,13 +3644,39 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     return jsonResponse(409, { error: 'already_signed', message: 'You have already completed signing this document and cannot change your fields.' });
   }
 
-  signer.fills = { ...signer.fills, ...accepted };
+  const wasSignerComplete = Boolean(signer.completedAt);
+
+  // Merge this submission's accepted fills onto the DURABLE subkey, not
+  // just the in-memory copy. Reading the subkey fresh here means the fill
+  // set is monotonic: a transient overlay-read miss on the initial load
+  // can never cause us to write back a shrunken subkey and lose earlier
+  // ink. The union is the authority for both the subkey write and the
+  // completion decision below.
+  let priorFills = {};
+  try {
+    const prior = await storage.docs.get(`signer-fills:${docId}:${signer.id}`, { json: true });
+    if (prior && prior.fills && typeof prior.fills === 'object') priorFills = prior.fills;
+  } catch (e) {}
+  signer.fills = { ...priorFills, ...signer.fills, ...accepted };
 
   const ownedCount = ownedSet.size;
   const filledCount = Object.keys(signer.fills).length;
-  const wasSignerComplete = Boolean(signer.completedAt);
   if (ownedCount > 0 && filledCount >= ownedCount) {
-    signer.completedAt = new Date().toISOString();
+    signer.completedAt = signer.completedAt || new Date().toISOString();
+  }
+
+  // Durable per-signer record, written BEFORE the shared doc record.
+  // This key has exactly one writer (this signer), so even if a concurrent
+  // writer wins the doc:<id> race below, the ink survives here and every
+  // reader re-overlays it (see overlaySignerState).
+  if (Object.keys(accepted).length > 0 || (signer.completedAt && !wasSignerComplete)) {
+    try {
+      await storage.docs.put(`signer-fills:${docId}:${signer.id}`, {
+        fills: signer.fills,
+        completedAt: signer.completedAt || null,
+        updatedAt: new Date().toISOString(),
+      }, { expirationTtl: DOC_TTL_SECONDS });
+    } catch (e) {}
   }
 
   // Record one 'signed' event per submission so the audit log shows
@@ -3425,20 +3693,9 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     });
   }
 
-  // Check whether every signer is now complete.
-  const allDone = doc.signers.every(s => {
-    const ownedForS = Object.values(doc.assignments).filter(sId => sId === s.id).length;
-    if (ownedForS === 0) return true; // a signer with no fields is trivially complete
-    return Boolean(s.completedAt);
-  });
-  if (allDone && !doc.completedAt) {
-    doc.completedAt = new Date().toISOString();
-    recordEvent(doc, { type: 'completed', request });
-  }
-
   // Webhook fires (slice 91). signer.completed when this submission
-  // crossed the per-signer threshold; doc.completed when all signers
-  // are done.
+  // crossed the per-signer threshold. doc.completed fires further down,
+  // after the write-freshen decides completion on the final state.
   const waitUntil = ctx && typeof ctx.waitUntil === 'function'
     ? (p) => ctx.waitUntil(p.catch(() => {}))
     : (p) => p.catch(() => {});
@@ -3451,27 +3708,21 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
       completedAt: signer.completedAt,
     }));
   }
-  if (allDone && doc.completedAt) {
-    waitUntil(fireWebhook(env, doc.senderId, 'doc.completed', {
-      docId,
-      title: doc.title,
-      completedAt: doc.completedAt,
-      signerCount: doc.signers.length,
-    }));
-  }
 
   // Sequential signing-order routing: when this signer just completed and the
   // document is not yet fully done, invite the next signer in order who has
   // not been notified or completed. This is what makes ordered routing work,
   // one signer at a time. Parallel docs skip this (everyone was emailed up
   // front). Best-effort send; notifiedAt is stamped so we never double-invite.
+  let invitedNextId = null;
   if (doc.signingOrder === 'sequential' && signer.completedAt && !wasSignerComplete && !doc.completedAt) {
     const ordered = [...doc.signers].sort((a, b) => (a.order || 0) - (b.order || 0));
-    const next = ordered.find(s => !s.completedAt && !s.notifiedAt);
+    const next = ordered.find(s => !s.completedAt && !s.notifiedAt && s.id !== signer.id);
     if (next) {
       const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
       const magicLink = `${baseUrl}/preview/?doc=${docId}&t=${next.token}`;
       next.notifiedAt = new Date().toISOString();
+      invitedNextId = next.id;
       recordEvent(doc, { type: 'signer-invited', signerId: next.id, request, meta: { order: next.order } });
       if (isValidEmail(next.email)) {
         const senderBrand = await loadSenderBrand(env, doc.senderId);
@@ -3488,38 +3739,117 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   }
 
   doc.signers[signerIdx] = signer;
-  await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
-  if (allDone) await removeFromActiveIndex(storage, docId);
 
-  // On full completion: generate the audit certificate and persist it
-  // so download requests do not need to re-render. Best-effort; if
-  // rendering fails, the doc is still complete and the certificate can
-  // be regenerated on demand.
-  let auditUrl = null;
+  // Write-freshen: re-read the shared record and graft this request's
+  // changes onto the newest copy, so writers that landed while this
+  // request was processing (another signer's submit, a decline, a
+  // reminder stamp) are not clobbered by our stale read. Our own ink is
+  // already durable in the signer-fills subkey either way.
+  let final = doc;
+  let freshWasAlias = false;
+  try {
+    const fresh = await loadDocMerged(storage, docId);
+    // Concurrent void (or expiry) wins: if the freshest copy is voided or
+    // gone, do NOT write our stale un-voided copy back: that would
+    // resurrect a legally voided document. The subkey ink we wrote is
+    // inert because every reader rejects a voided doc.
+    if (!fresh || fresh.voidedAt) {
+      return jsonResponse(410, { error: 'voided', message: 'This document was voided and can no longer be signed.' });
+    }
+    if (Array.isArray(fresh.signers)) {
+      freshWasAlias = fresh === doc; // memory mode returns live references
+      const fi = fresh.signers.findIndex(s => s.id === signer.id);
+      // Graft only the fields THIS request owns (fills + completion) onto
+      // the fresh signer, preserving concurrent third-party mutations of
+      // the same signer such as a reminder stamp (lastReminderAt/count).
+      if (fi >= 0) {
+        fresh.signers[fi] = { ...fresh.signers[fi], fills: signer.fills, completedAt: signer.completedAt };
+      }
+      if (invitedNextId) {
+        const fn = fresh.signers.find(s => s.id === invitedNextId);
+        if (fn && !fn.notifiedAt) fn.notifiedAt = new Date().toISOString();
+      }
+      // Append our new events. When the read aliased our own object
+      // (memory mode), those events are already present, so appending
+      // again would duplicate them.
+      if (!freshWasAlias) {
+        fresh.events = [...(fresh.events || []), ...(doc.events || []).slice(eventCountAtLoad)];
+      }
+      final = fresh;
+    }
+  } catch (e) {}
+
+  // Decide completion on the FINAL state: the freshen above may have just
+  // absorbed the concurrent submit that was the last missing signature.
+  const allDone = final.signers.every(s => {
+    const ownedForS = Object.values(final.assignments || {}).filter(sId => sId === s.id).length;
+    if (ownedForS === 0) return true; // a signer with no fields is trivially complete
+    return Boolean(s.completedAt);
+  });
+  let docJustCompleted = false;
+  if (allDone && !final.completedAt) {
+    final.completedAt = new Date().toISOString();
+    recordEvent(final, { type: 'completed', request });
+    docJustCompleted = true;
+  }
+
+  await storage.docs.put(`doc:${docId}`, final, { expirationTtl: DOC_TTL_SECONDS });
+
+  // Completion side effects (webhook + emails + audit cert) fire exactly
+  // once, gated by a KV marker so concurrent finishers cannot both blast.
+  // KV has no compare-and-set, but the marker collapses the common races;
+  // the certificate render is idempotent regardless.
+  let fireCompletion = false;
   if (allDone) {
+    await removeFromActiveIndex(storage, docId);
+    if (docJustCompleted) {
+      try {
+        const marker = `meta:doc-complete-fired:${docId}`;
+        const already = await storage.docs.get(marker);
+        if (!already) {
+          await storage.docs.put(marker, new Date().toISOString(), { expirationTtl: DOC_TTL_SECONDS });
+          fireCompletion = true;
+        }
+      } catch (e) { fireCompletion = true; }
+    }
+  }
+  if (fireCompletion) {
+    waitUntil(fireWebhook(env, final.senderId, 'doc.completed', {
+      docId,
+      title: final.title,
+      completedAt: final.completedAt,
+      signerCount: final.signers.length,
+    }));
+    waitUntil(bumpDailyMetric(env, 'completed'));
+  }
+  // On full completion the doc always has an audit URL to report. The
+  // certificate itself is rendered once (by the firing request); a later
+  // racing observer still returns the URL, and the cert is regenerable on
+  // demand if that single render failed. Everything reads the FINAL state.
+  let auditUrl = allDone ? `/api/docs/${docId}/audit?t=${final.signers[0].token}` : null;
+  if (fireCompletion) {
     try {
-      const certBytes = await renderAuditCertificate({ doc, pdfSha256: doc.pdfSha256 });
+      const certBytes = await renderAuditCertificate({ doc: final, pdfSha256: final.pdfSha256 });
       await storage.pdfs.put(`audit:${docId}`, certBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
-      auditUrl = `/api/docs/${docId}/audit?t=${doc.signers[0].token}`;
     } catch (err) {
       console.error('[audit] render failed:', err && err.message);
     }
   }
 
-  // Fire completion emails to every signer when the whole doc is done.
+  // Fire completion emails to every signer, exactly once (fireCompletion).
   // CC recipients (sender-supplied notice-only addresses) get the same
   // completion email so they have the signed PDF link in their inbox.
   let completionEmails = null;
-  if (allDone) {
+  if (fireCompletion) {
     const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
     // Each signer gets a link built on THEIR OWN token. Emailing one signer's
     // magic link to everyone would hand out cross-signer credentials; the
     // token in each mail must authenticate only its recipient.
-    const signerSends = doc.signers.filter(s => isValidEmail(s.email)).map(s =>
+    const signerSends = final.signers.filter(s => isValidEmail(s.email)).map(s =>
       sendCompletion(env, {
         to: s.email,
         name: s.name,
-        docTitle: doc.title,
+        docTitle: final.title,
         downloadUrl: `${baseUrl}/preview/?doc=${docId}&t=${s.token}`,
         auditUrl: auditUrl ? `${baseUrl}/api/docs/${docId}/audit?t=${s.token}` : null,
       }).then(r => ({ to: s.email, role: 'signer', ...r })),
@@ -3527,13 +3857,13 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     // CC recipients are sender-designated notice-only readers with no token of
     // their own; they get the first signer's read link. Post-completion that
     // token cannot mutate anything (fills/decline both reject completed docs).
-    const ccList = Array.isArray(doc.cc) ? doc.cc : [];
-    const ccDownloadUrl = `${baseUrl}/preview/?doc=${docId}&t=${doc.signers[0].token}`;
+    const ccList = Array.isArray(final.cc) ? final.cc : [];
+    const ccDownloadUrl = `${baseUrl}/preview/?doc=${docId}&t=${final.signers[0].token}`;
     const ccSends = ccList.filter(e => isValidEmail(e)).map(email =>
       sendCompletion(env, {
         to: email,
         name: '',
-        docTitle: doc.title,
+        docTitle: final.title,
         downloadUrl: ccDownloadUrl,
         auditUrl: auditUrl ? `${baseUrl}${auditUrl}` : null,
         notice: true,
@@ -3545,7 +3875,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   return jsonResponse(200, {
     accepted: Object.keys(accepted).length,
     signerComplete: Boolean(signer.completedAt),
-    docComplete: Boolean(doc.completedAt),
+    docComplete: Boolean(final.completedAt),
     auditUrl,
     completionEmails,
     // Surfaced for the signer-microsite (slice 75). Returning name +
@@ -3594,7 +3924,7 @@ async function handleGetAudit(request, env, docId, url) {
   if (!token) return jsonResponse(400, { error: 'missing_token', message: 'A signing token is required.' });
 
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
   const signer = doc.signers.find(s => ctEqHex(s.token, token));
@@ -3649,7 +3979,7 @@ async function handleGetAudit(request, env, docId, url) {
  */
 async function handleGetDocProgress(env, docId, url) {
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
   const senderToken = url && url.searchParams.get('s');
@@ -3730,7 +4060,7 @@ async function handleRemind(request, env, docId, signerId, url) {
   const rl = await checkRateLimit(env, `remind:${ipKey(request)}`, [{ windowSec: 3600, max: 20 }]);
   if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs/remind' });
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
   const signer = doc.signers.find(s => s.id === signerId);
@@ -3800,7 +4130,7 @@ async function handleRemind(request, env, docId, signerId, url) {
  */
 async function handleDeclineSign(request, env, docId, token, url) {
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
   const signer = doc.signers.find(s => ctEqHex(s.token, token));
@@ -4039,6 +4369,10 @@ export async function runReminderSweep(env) {
     const stillActive = [];
 
     for (const docId of index.docs) {
+      // Raw read: the sweep walks the whole active index, so a per-signer
+      // overlay here would multiply subrequests past the 1000 limit. A
+      // just-completed doc whose only write was clobbered self-heals on the
+      // next merged writer; worst case is one extra reminder in that window.
       const doc = await storage.docs.get(`doc:${docId}`, { json: true });
       if (!doc) continue; // expired or deleted; drop from index
       if (doc.completedAt) continue; // completed; drop from index
@@ -4215,6 +4549,7 @@ async function handleListWorkspaceDocs(env, workspaceId, url) {
   const rows = [];
   const expired = [];
   for (const docId of index.docs) {
+    // Raw read (dashboard summary; avoids the per-signer subrequest fan-out).
     const doc = await storage.docs.get(`doc:${docId}`, { json: true });
     if (!doc) { expired.push(docId); continue; }
 
@@ -4478,6 +4813,7 @@ async function handleListSenderDocs(env, senderId) {
   const rows = [];
   const expiredDocIds = [];
   for (const docId of index.docs) {
+    // Raw read (dashboard summary; avoids the per-signer subrequest fan-out).
     const doc = await storage.docs.get(`doc:${docId}`, { json: true });
     if (!doc) { expiredDocIds.push(docId); continue; }
 

@@ -19,6 +19,9 @@
  *   meta:founding-count            integer, founding seats taken so far
  */
 
+import { getStorage } from './storage.js';
+import { recordSubForMetrics } from './metrics-counters.js';
+
 const STRIPE_API = 'https://api.stripe.com/v1';
 const FOUNDING_CAP = 100;
 
@@ -394,6 +397,9 @@ async function onCheckoutCompleted(env, session) {
     status: subDetails?.status || 'active',
     stripeCustomerId: customerId,
     stripeSubscriptionId: subId || null,
+    // Checkout email, kept for owner support and GDPR-export verification
+    // (the export flow compares a SHA-256 of it, never the cleartext).
+    email: session.customer_details?.email || session.customer_email || null,
     priceId: subDetails?.items?.data?.[0]?.price?.id || null,
     currentPeriodEnd: subDetails?.current_period_end
       ? new Date(subDetails.current_period_end * 1000).toISOString()
@@ -439,6 +445,7 @@ async function onCheckoutCompleted(env, session) {
   }
 
   await storage.put(`sub:${senderId}`, JSON.stringify(record));
+  await recordSubForMetrics(env, senderId, record).catch(() => {});
   await storage.put(`stripe:customer:${customerId}`, senderId);
 
   // Origin welcome email. Fires exactly once per founding number
@@ -539,6 +546,7 @@ async function onSubscriptionUpserted(env, sub) {
     updatedAt: new Date().toISOString(),
   };
   await storage.put(`sub:${senderId}`, JSON.stringify(next));
+  await recordSubForMetrics(env, senderId, next).catch(() => {});
   return { applied: true, senderId, tier, status: sub.status };
 }
 
@@ -556,6 +564,7 @@ async function onSubscriptionDeleted(env, sub) {
     updatedAt: new Date().toISOString(),
   };
   await storage.put(`sub:${senderId}`, JSON.stringify(next));
+  await recordSubForMetrics(env, senderId, next).catch(() => {});
   return { applied: true, senderId, tier: 'free', status: 'canceled' };
 }
 
@@ -632,23 +641,16 @@ function constantTimeEquals(a, b) {
 }
 
 /**
- * Storage shim. We use raw KV calls here (not the typed storage.js
- * wrapper) because every value we read or write is already a string or
- * a serialized JSON blob. Falls back to an in-memory Map when KV is
- * unbound so local dev and tests run without configuration.
+ * Storage shim over the shared storage abstraction. Everything read or
+ * written here is already a string or serialized JSON blob. Routing
+ * through getStorage keeps memory-mode (local dev, tests) on the SAME
+ * store as the rest of the Worker; a sub record seeded anywhere is
+ * visible everywhere, exactly as it is in production KV.
  */
-const memoryStripe = new Map();
-
 function pickStorage(env) {
-  const ns = env && env.CYBERSYGN_DOCS;
-  if (ns && typeof ns.get === 'function') {
-    return {
-      async get(key) { return ns.get(key); },
-      async put(key, value, opts) { return ns.put(key, value, opts || {}); },
-    };
-  }
+  const docs = getStorage(env).docs;
   return {
-    async get(key) { return memoryStripe.get(key) || null; },
-    async put(key, value) { memoryStripe.set(key, value); },
+    async get(key) { return docs.get(key); },
+    async put(key, value, opts) { return docs.put(key, value, opts || {}); },
   };
 }

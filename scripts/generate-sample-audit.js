@@ -18,6 +18,12 @@ async function call(method, path, body, extraHeaders = {}) {
   return res;
 }
 
+// Free-tier senders present a signup token; mint one for this sample.
+const signup = await (await call('POST', '/api/free/signup', {
+  firstName: 'Sample', lastName: 'Author', email: 'sample-audit@cybersygn.io',
+})).json();
+const freeHeader = signup && signup.freeToken ? { 'x-cybersygn-free': signup.freeToken } : {};
+
 const createRes = await call('POST', '/api/docs', {
   title: 'Painting Services Agreement',
   senderName: 'Nathan Wilson',
@@ -33,7 +39,7 @@ const createRes = await call('POST', '/api/docs', {
     { id: 'p2', name: 'Bob Patron',       email: 'bob.patron@example.com' },
   ],
   assignments: { f1: 'p1', f2: 'p2', f3: 'p2', f4: 'p1' },
-});
+}, freeHeader);
 const created = await createRes.json();
 const { docId, signerLinks } = created;
 const t1 = signerLinks[0].token;

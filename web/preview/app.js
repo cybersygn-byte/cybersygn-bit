@@ -4466,6 +4466,17 @@ function openSendModal() {
           mode: docState.mode || 'send',
         });
         if (!sendResult.ok) {
+          // Free-tier gates come back as 402 with a machine-readable code.
+          if (sendResult.code === 'free_signup_required') {
+            close();
+            showFreeSignupGate('Sign up first to send. Three free documents, lifetime, no card needed.');
+            return;
+          }
+          if (sendResult.code === 'free_cap_reached' || sendResult.code === 'free_tier_limit') {
+            close();
+            showPaywallModal();
+            return;
+          }
           throw new Error(sendResult.error || 'send failed');
         }
         // Persist the per-doc senderToken so the dashboard can fetch

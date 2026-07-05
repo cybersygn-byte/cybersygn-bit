@@ -97,9 +97,15 @@ function publicDoc(doc, origin) {
   };
 }
 
-async function loadOwnedDoc(env, docId, auth) {
+async function loadOwnedDoc(env, docId, auth, deps) {
   const storage = getStorage(env);
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  // Prefer the merged read (deps.loadDocMerged) so the paying API customer
+  // sees signer ink/completion that the shared doc record may have lost to
+  // a concurrent-write race but the per-signer subkey preserved. Falls back
+  // to a raw read if the dependency was not injected.
+  const doc = (deps && typeof deps.loadDocMerged === 'function')
+    ? await deps.loadDocMerged(storage, docId)
+    : await storage.docs.get(`doc:${docId}`, { json: true });
   if (!doc) return { error: err(404, 'not_found', 'Document not found.') };
   if (doc.senderId && auth.senderId && doc.senderId !== auth.senderId) {
     // Tenant isolation: a key may only see documents its own account created.
@@ -201,7 +207,11 @@ async function createDocument(request, env, url, ctx, auth, deps) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(internalPayload),
   });
-  const res = await deps.handleCreateDoc(synthetic, env, new URL(synthetic.url), ctx, { unmetered: !!auth.unmetered });
+  // apiKeyed: the caller authenticated with an owner/partner-minted API key,
+  // so the senderId is bound to the key and cannot be rotated. The free-tier
+  // email-token requirement is a browser-flow control and does not apply;
+  // the per-sender monthly cap still binds sub-less keys.
+  const res = await deps.handleCreateDoc(synthetic, env, new URL(synthetic.url), ctx, { unmetered: !!auth.unmetered, apiKeyed: true });
   let created = null;
   try { created = await res.clone().json(); } catch { created = null; }
   if (res.status >= 400 || !created || !created.docId) {
@@ -231,14 +241,14 @@ async function createDocument(request, env, url, ctx, auth, deps) {
   });
 }
 
-async function getDocument(env, url, docId, auth) {
-  const { doc, error } = await loadOwnedDoc(env, docId, auth);
+async function getDocument(env, url, docId, auth, deps) {
+  const { doc, error } = await loadOwnedDoc(env, docId, auth, deps);
   if (error) return error;
   return json(200, publicDoc(doc, url.origin));
 }
 
 async function downloadDocument(request, env, url, docId, auth, deps, kind) {
-  const { doc, error } = await loadOwnedDoc(env, docId, auth);
+  const { doc, error } = await loadOwnedDoc(env, docId, auth, deps);
   if (error) return error;
   if (!doc.completedAt) {
     return err(409, 'not_completed', 'The document is not fully signed yet.');
@@ -254,8 +264,8 @@ async function downloadDocument(request, env, url, docId, auth, deps, kind) {
     : deps.handleGetPdf(request, env, docId, u);
 }
 
-async function voidDocument(env, url, docId, auth) {
-  const { doc, storage, error } = await loadOwnedDoc(env, docId, auth);
+async function voidDocument(env, url, docId, auth, deps) {
+  const { doc, storage, error } = await loadOwnedDoc(env, docId, auth, deps);
   if (error) return error;
   if (doc.completedAt) return err(409, 'already_completed', 'A completed document cannot be voided.');
   if (doc.voidedAt) return json(200, publicDoc(doc, url.origin));
@@ -389,10 +399,10 @@ export async function routeApiV1(request, env, url, ctx, deps) {
   if (docMatch) {
     const docId = docMatch[1];
     const action = docMatch[3] || null;
-    if (!action && method === 'GET') return getDocument(env, url, docId, auth);
+    if (!action && method === 'GET') return getDocument(env, url, docId, auth, deps);
     if (action === 'download' && method === 'GET') return downloadDocument(request, env, url, docId, auth, deps, 'pdf');
     if (action === 'audit' && method === 'GET') return downloadDocument(request, env, url, docId, auth, deps, 'audit');
-    if (action === 'void' && method === 'POST') return voidDocument(env, url, docId, auth);
+    if (action === 'void' && method === 'POST') return voidDocument(env, url, docId, auth, deps);
     return err(405, 'method_not_allowed', `${method} is not allowed on ${path}.`);
   }
 

@@ -54,8 +54,19 @@ export function checkWorker() {
  */
 export async function createDoc({ title, pdfBytes, fields, fieldEdits, signers, assignments, cc, senderName, senderId, workspaceId, mode }) {
   const pdfBase64 = bytesToBase64(pdfBytes);
+  // Free-tier senders must present their signup token: the Worker
+  // enforces the three-doc lifetime cap against the signed-up email,
+  // so creation without it returns 402 free_signup_required. Paid
+  // senders store a 'paid:' marker which the Worker ignores (their
+  // subscription record authorizes them).
+  const headers = {};
+  try {
+    const ft = localStorage.getItem('cybersygn.freeToken');
+    if (ft && ft.indexOf('paid:') !== 0) headers['X-CyberSygn-Free'] = ft;
+  } catch (e) {}
   return jsonCall('/api/docs', {
     method: 'POST',
+    headers,
     body: JSON.stringify({
       title,
       pdfBase64,
@@ -222,7 +233,14 @@ async function jsonCall(path, init = {}) {
     let data = null;
     try { data = await res.json(); } catch {}
     if (!res.ok) {
-      return { ok: false, status: res.status, error: (data && data.message) || `HTTP ${res.status}` };
+      return {
+        ok: false,
+        status: res.status,
+        // Machine-readable code (e.g. 'free_cap_reached') for branching;
+        // human message for display.
+        code: (data && data.error) || null,
+        error: (data && data.message) || `HTTP ${res.status}`,
+      };
     }
     return { ok: true, status: res.status, data };
   } catch (err) {

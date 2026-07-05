@@ -156,15 +156,32 @@ async function main() {
   }
 
   const senderId = 'sender-gate-test';
-  const d1 = await call('POST', '/api/docs', newDocBody(senderId));
+
+  // A free sender must present the signup-issued token: the three-doc
+  // lifetime cap now binds to the signed-up email, not the rotatable
+  // senderId. Without a token the create is refused up front.
+  const noTok = await call('POST', '/api/docs', newDocBody(senderId));
+  ok(noTok.status === 402 && noTok.json && noTok.json.error === 'free_signup_required',
+     'tokenless free create is refused with free_signup_required');
+
+  // Sign up once, then the SAME token caps at three creates regardless of
+  // the senderId it is used with (the email is the durable identity).
+  const su = await call('POST', '/api/free/signup', {
+    firstName: 'Gate', lastName: 'Test', email: 'gate-test@example.com',
+  });
+  const freeTok = su.json && su.json.freeToken;
+  ok(!!freeTok, 'free signup issued a token');
+  const withTok = { 'x-cybersygn-free': freeTok };
+
+  const d1 = await call('POST', '/api/docs', newDocBody(senderId), withTok);
   ok(d1.status === 201, 'doc 1 of 3 accepted');
-  const d2 = await call('POST', '/api/docs', newDocBody(senderId));
-  ok(d2.status === 201, 'doc 2 of 3 accepted');
-  const d3 = await call('POST', '/api/docs', newDocBody(senderId));
+  const d2 = await call('POST', '/api/docs', newDocBody(senderId + '-rotated'), withTok);
+  ok(d2.status === 201, 'doc 2 of 3 accepted (senderId rotation does not reset the cap)');
+  const d3 = await call('POST', '/api/docs', newDocBody(senderId + '-rotated-again'), withTok);
   ok(d3.status === 201, 'doc 3 of 3 accepted');
-  const d4 = await call('POST', '/api/docs', newDocBody(senderId));
-  ok(d4.status === 402, 'doc 4 hit free-tier limit (402)');
-  ok(d4.json && d4.json.error === 'free_tier_limit', 'error code is free_tier_limit');
+  const d4 = await call('POST', '/api/docs', newDocBody(senderId + '-fresh'), withTok);
+  ok(d4.status === 402, 'doc 4 hit the lifetime cap (402)');
+  ok(d4.json && d4.json.error === 'free_cap_reached', 'error code is free_cap_reached');
 
   // Owner bypasses the gate.
   const d5 = await call(

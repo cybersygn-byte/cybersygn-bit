@@ -46,6 +46,15 @@ async function call(method, path, body, extraHeaders) {
   if (extraHeaders) {
     for (const k of Object.keys(extraHeaders)) headers[k] = extraHeaders[k];
   }
+  // Browser-path doc creation requires a signup-issued free token (the
+  // three-doc lifetime cap binds to the signed-up email). Auto-attach a
+  // dispenser token so the whole suite exercises the real gate. Callers
+  // testing the gate itself pass their own header; '' suppresses it.
+  if (method === 'POST' && path === '/api/docs') {
+    const explicit = Object.keys(headers).find(k => k.toLowerCase() === 'x-cybersygn-free');
+    if (explicit === undefined) headers['x-cybersygn-free'] = await takeFreeUse();
+    else if (headers[explicit] === '') delete headers[explicit];
+  }
   let init = { method, headers };
   if (body !== undefined) {
     init.body = typeof body === 'string' ? body : JSON.stringify(body);
@@ -58,6 +67,32 @@ async function call(method, path, body, extraHeaders) {
   let json = null;
   try { json = JSON.parse(text); } catch {}
   return { status: res.status, json, text, contentType: res.headers.get('content-type') };
+}
+
+// ---- Free-token dispenser ---------------------------------------------------
+// Signs up throwaway harness emails as needed and hands out tokens with
+// lifetime allowance remaining. Conservative accounting: a token is
+// decremented per attach, while the Worker only consumes on successful
+// creation, so the dispenser can never hand out an exhausted token. (The
+// per-signup IP is varied to mirror the real client shape, but note the
+// limiter is a no-op in this harness: checkRateLimit fails open without a
+// CYBERSYGN_DOCS binding, and env is {}, so no 429 path is exercised here.)
+const _freeDispenser = { token: null, left: 0, n: 0 };
+async function takeFreeUse() {
+  if (_freeDispenser.left <= 0) {
+    _freeDispenser.n += 1;
+    const n = _freeDispenser.n;
+    const res = await call('POST', '/api/free/signup', {
+      firstName: 'Test', lastName: 'Harness', email: `harness${n}@test.cybersygn.io`,
+    }, { 'cf-connecting-ip': `10.9.${Math.floor(n / 200)}.${n % 200}` });
+    if (!res.json || !res.json.freeToken) {
+      throw new Error('free-token dispenser: signup failed: ' + res.text);
+    }
+    _freeDispenser.token = res.json.freeToken;
+    _freeDispenser.left = 3;
+  }
+  _freeDispenser.left -= 1;
+  return _freeDispenser.token;
 }
 
 async function main() {
@@ -901,6 +936,252 @@ async function main() {
     ok(rev.status === 200 && rev.json.revoked === true, 'master revokes a tenant key');
     const afterRev = await call('GET', '/api/v1/me', undefined, { authorization: A + tenantKey });
     ok(afterRev.status === 401, 'revoked tenant key -> 401');
+  }
+
+  // ---- Free-tier lifetime cap binds to the email, not the senderId --------
+  console.log('\n35. Free-tier lifetime cap (emailHash, senderId rotation useless)');
+  {
+    const mini = {
+      title: 'Cap test',
+      senderName: 'Capper',
+      pdfBase64,
+      fields: [{ id: 'sig', page: 1, x: 50, y: 50, width: 200, height: 20, type: 'signature', label: 'Sig', confidence: 0.9 }],
+      signers: [{ id: 'p1', name: 'R', email: 'r@example.com' }],
+      assignments: { sig: 'p1' },
+    };
+
+    // No token at all -> the create is refused up front.
+    const noTok = await call('POST', '/api/docs', { ...mini, senderId: 'rotate-0' }, { 'x-cybersygn-free': '' });
+    ok(noTok.status === 402 && noTok.json && noTok.json.error === 'free_signup_required',
+      `tokenless create refused with free_signup_required (got ${noTok.status} ${noTok.json && noTok.json.error})`);
+
+    // A garbage token is refused the same way.
+    const badTok = await call('POST', '/api/docs', { ...mini, senderId: 'rotate-0' }, { 'x-cybersygn-free': 'f'.repeat(48) });
+    ok(badTok.status === 402 && badTok.json && badTok.json.error === 'free_signup_required',
+      'unknown token refused with free_signup_required');
+
+    // Sign up one email, then burn its three lifetime docs across THREE
+    // different senderIds. Rotating the senderId must not reset anything.
+    const su = await call('POST', '/api/free/signup', {
+      firstName: 'Cap', lastName: 'Tester', email: 'cap-tester@test.cybersygn.io',
+    }, { 'cf-connecting-ip': '10.8.0.1' });
+    ok(su.json && su.json.ok && su.json.freeToken && su.json.remaining === 3, 'signup issues a token with 3 remaining');
+    const capTok = su.json.freeToken;
+
+    let creates = [];
+    for (let i = 1; i <= 3; i++) {
+      const r = await call('POST', '/api/docs', { ...mini, senderId: `rotate-${i}` }, { 'x-cybersygn-free': capTok });
+      creates.push(r.status);
+    }
+    ok(creates.every(s => s === 201), `three creates across three senderIds all succeed (got ${creates.join(',')})`);
+
+    const fourth = await call('POST', '/api/docs', { ...mini, senderId: 'rotate-4-fresh' }, { 'x-cybersygn-free': capTok });
+    ok(fourth.status === 402 && fourth.json && fourth.json.error === 'free_cap_reached',
+      `fourth create on a FRESH senderId still refused (got ${fourth.status} ${fourth.json && fourth.json.error})`);
+
+    // Re-signup with the same email returns the same exhausted token.
+    const again = await call('POST', '/api/free/signup', {
+      firstName: 'Cap', lastName: 'Tester', email: 'cap-tester@test.cybersygn.io',
+    }, { 'cf-connecting-ip': '10.8.0.2' });
+    ok(again.json && again.json.isReturning === true && again.json.remaining === 0,
+      `re-signup returns the same account with 0 remaining (got remaining=${again.json && again.json.remaining})`);
+
+    // The senderId -> emailHash binding was written for the GDPR path.
+    const bindRaw = await storage.docs.get('sender-email:rotate-1');
+    ok(typeof bindRaw === 'string' && /^[a-f0-9]{64}$/.test(bindRaw), 'sender-email binding written on free create');
+
+    // Paid senders need no token: seed an active sub and create bare.
+    await storage.docs.put('sub:paid-cap-tester', JSON.stringify({ tier: 'solo', status: 'active' }));
+    const paid = await call('POST', '/api/docs', { ...mini, senderId: 'paid-cap-tester' }, { 'x-cybersygn-free': '' });
+    ok(paid.status === 201, `paid sender creates with no token (got ${paid.status})`);
+  }
+
+  // ---- GDPR export: email-confirmed, index-backed ---------------------------
+  console.log('\n36. GDPR export requires email confirmation');
+  {
+    const { createGdprConfirm } = await import('../worker/src/index.js');
+    const { sha256Hex } = await import('../worker/src/audit.js');
+    const capEmail = 'cap-tester@test.cybersygn.io'; // bound to rotate-1 in section 35
+    const capHash = await sha256Hex(new TextEncoder().encode(capEmail));
+
+    // The old capability-only GET is gone.
+    const oldGet = await call('GET', '/api/sender/rotate-1/gdpr-export');
+    ok(oldGet.status === 410, `legacy GET export returns 410 (got ${oldGet.status})`);
+
+    // Unbound email: uniform 200 (no oracle) AND no pending record minted.
+    const wrongMail = await call('POST', '/api/sender/rotate-1/gdpr-export/request',
+      { email: 'stranger@example.com' }, { 'cf-connecting-ip': '10.7.0.1' });
+    ok(wrongMail.status === 200 && wrongMail.json && wrongMail.json.ok === true,
+      `unbound email gets the same 200 as a match, no oracle (got ${wrongMail.status})`);
+    const noPending = await storage.docs.get('gdpr-confirm:rotate-1', { json: true });
+    ok(!noPending, 'a mismatched email mints NO confirmation code');
+
+    // Bound email -> uniform 200, and the REQUEST path itself writes a
+    // valid pending record (mint + store are exercised here, not just the
+    // harness-minted code used below to obtain cleartext).
+    const goodReq = await call('POST', '/api/sender/rotate-1/gdpr-export/request',
+      { email: capEmail }, { 'cf-connecting-ip': '10.7.0.2' });
+    ok(goodReq.status === 200 && goodReq.json && goodReq.json.ok === true,
+      `bound email accepted (got ${goodReq.status})`);
+    const pending = await storage.docs.get('gdpr-confirm:rotate-1', { json: true });
+    ok(pending && /^[a-f0-9]{64}$/.test(pending.codeHash || '') && pending.emailHash === capHash,
+      'the request endpoint stored a pending record bound to the verified email');
+
+    // Wrong code -> 403 and attempts counted; right code -> full export.
+    // (Mint directly to hold the cleartext, which a SHA-256 record hides;
+    // the request path's own mint/store was just asserted above.)
+    const code = await createGdprConfirm({}, 'rotate-1', capHash);
+    const bad = await call('POST', '/api/sender/rotate-1/gdpr-export/confirm',
+      { code: 'f'.repeat(32) }, { 'cf-connecting-ip': '10.7.0.3' });
+    ok(bad.status === 403 && bad.json && bad.json.error === 'wrong_code', `wrong code refused (got ${bad.status})`);
+
+    const good = await call('POST', '/api/sender/rotate-1/gdpr-export/confirm',
+      { code }, { 'cf-connecting-ip': '10.7.0.4' });
+    ok(good.status === 200 && good.json && good.json.ok === true, `right code returns the export (got ${good.status})`);
+    const docRecords = (good.json && good.json.records || []).filter(r => r.label === 'doc');
+    ok(docRecords.length === 1, `export lists exactly the sender's 1 indexed doc (got ${docRecords.length})`);
+    ok((good.json.records || []).some(r => r.label === 'free_contact'), 'export includes the verified email contact record');
+
+    // Single use: the same code again -> 410.
+    const replay = await call('POST', '/api/sender/rotate-1/gdpr-export/confirm',
+      { code }, { 'cf-connecting-ip': '10.7.0.5' });
+    ok(replay.status === 410, `code is single-use (got ${replay.status})`);
+
+    // Paid binding path: sub record email verifies too.
+    await storage.docs.put('sub:gdpr-paid', JSON.stringify({ tier: 'solo', status: 'active', email: 'buyer@example.com' }));
+    const paidReq = await call('POST', '/api/sender/gdpr-paid/gdpr-export/request',
+      { email: 'buyer@example.com' }, { 'cf-connecting-ip': '10.7.0.6' });
+    ok(paidReq.status === 200 && paidReq.json && paidReq.json.ok === true,
+      `subscription email verifies a paid sender (got ${paidReq.status})`);
+  }
+
+  // ---- Lost-signature race: presence off the doc record, ink survives ------
+  console.log('\n37. Co-signing race safety');
+  {
+    const race = await call('POST', '/api/docs', {
+      title: 'Race doc',
+      senderName: 'Racer',
+      pdfBase64,
+      fields: [
+        { id: 'ra', page: 1, x: 50, y: 90, width: 200, height: 20, type: 'signature', label: 'A', confidence: 0.9 },
+        { id: 'rb', page: 1, x: 50, y: 60, width: 200, height: 20, type: 'signature', label: 'B', confidence: 0.9 },
+      ],
+      signers: [
+        { id: 'p1', name: 'Racer A', email: 'ra@example.com' },
+        { id: 'p2', name: 'Racer B', email: 'rb@example.com' },
+      ],
+      assignments: { ra: 'p1', rb: 'p2' },
+    });
+    ok(race.status === 201, `race doc created (got ${race.status})`);
+    const rDocId = race.json.docId;
+    const rA = race.json.signerLinks.find(l => l.signerId === 'p1');
+    const rB = race.json.signerLinks.find(l => l.signerId === 'p2');
+
+    // Presence heartbeat must not rewrite the doc record at all.
+    // (Memory mode hands out live references, so compare deep snapshots.)
+    const docBefore = JSON.stringify(await storage.docs.get(`doc:${rDocId}`, { json: true }));
+    const hb = await call('POST', `/api/docs/${rDocId}/live?t=${rA.token}`, { currentPage: 2 });
+    ok(hb.status === 200, `heartbeat accepted (got ${hb.status})`);
+    const docAfter = JSON.stringify(await storage.docs.get(`doc:${rDocId}`, { json: true }));
+    ok(docBefore === docAfter, 'heartbeat leaves doc:<id> byte-identical (no more read-modify-write)');
+    const presKey = await storage.docs.get(`presence:${rDocId}:p1`, { json: true });
+    ok(presKey && presKey.currentPage === 2, 'presence lives in its own per-signer key');
+    const live = await call('GET', `/api/docs/${rDocId}/live?t=${rB.token}`);
+    ok(live.status === 200 && live.json.signers.find(s => s.id === 'p1').currentPage === 2,
+      'live poll reads presence from the subkey');
+
+    // THE RACE: a stale writer overwrites the doc record right after
+    // signer A submits (this is what the old presence heartbeat did).
+    // Deep-copy: memory mode returns live references, and a reference
+    // would silently pick up A's mutations and defeat the simulation.
+    const staleCopy = JSON.parse(JSON.stringify(await storage.docs.get(`doc:${rDocId}`, { json: true })));
+    const subA = await call('POST', `/api/docs/${rDocId}/signer/${rA.token}/fills`, {
+      fills: { ra: { kind: 'signature', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' } },
+    });
+    ok(subA.status === 200 && subA.json.signerComplete === true, `signer A submits and completes (got ${subA.status})`);
+    await storage.docs.put(`doc:${rDocId}`, staleCopy); // lost-update simulation: A's doc write clobbered
+
+    // A's ink must still be there for every reader.
+    const hydA = await call('GET', `/api/docs/${rDocId}/signer/${rA.token}`);
+    ok(hydA.status === 200 && hydA.json.fills && hydA.json.fills.ra,
+      'signer A ink survives a clobbered doc write (healed from the subkey)');
+    const prog = await call('GET', `/api/docs/${rDocId}`);
+    const pA = prog.json.progress.find(p => p.signerId === 'p1');
+    ok(pA && pA.complete === true && pA.filled === 1, 'sender progress shows A complete despite the clobber');
+
+    // B finishes; completion is decided on the merged state, so the doc
+    // completes even though A's own doc write was thrown away.
+    const subB = await call('POST', `/api/docs/${rDocId}/signer/${rB.token}/fills`, {
+      fills: { rb: { kind: 'signature', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' } },
+    });
+    ok(subB.status === 200 && subB.json.docComplete === true,
+      `doc completes on B's submit from merged state (got docComplete=${subB.json && subB.json.docComplete})`);
+    const progDone = await call('GET', `/api/docs/${rDocId}`);
+    ok(progDone.json && progDone.json.completedAt, 'persisted doc record carries completedAt');
+
+    // NOTE: this section proves fills + per-signer completion survive a lost
+    // doc write (they heal from the signer-fills subkey). doc.events live only
+    // in doc:<id> and are NOT healed by the overlay, so a raw clobber still
+    // drops the clobbered writer's appended events; the write-freshen re-read
+    // narrows that window in production but does not fully close it.
+
+    // Void integrity: a voided document must reject new signatures and must
+    // never be silently un-voided by a subsequent submit.
+    const vdoc = await call('POST', '/api/docs', {
+      title: 'Void test', senderName: 'V', pdfBase64,
+      fields: [{ id: 'vs', page: 1, x: 50, y: 50, width: 200, height: 20, type: 'signature', label: 'S', confidence: 0.9 }],
+      signers: [{ id: 'p1', name: 'V One', email: 'v1@example.com' }, { id: 'p2', name: 'V Two', email: 'v2@example.com' }],
+      assignments: { vs: 'p1' },
+    });
+    const vId = vdoc.json.docId;
+    const vTok = vdoc.json.signerLinks.find(l => l.signerId === 'p1').token;
+    const rec = await storage.docs.get(`doc:${vId}`, { json: true });
+    rec.voidedAt = new Date().toISOString();
+    await storage.docs.put(`doc:${vId}`, rec);
+    const voidSubmit = await call('POST', `/api/docs/${vId}/signer/${vTok}/fills`, {
+      fills: { vs: { kind: 'signature', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' } },
+    });
+    ok(voidSubmit.status === 410, `submit to a voided doc is refused (got ${voidSubmit.status})`);
+    const afterVoid = await storage.docs.get(`doc:${vId}`, { json: true });
+    ok(afterVoid.voidedAt && !afterVoid.completedAt,
+      'voided doc stays voided and uncompleted after a rejected submit (no resurrection)');
+  }
+
+  // ---- /api/metrics rides rolling counters, not key scans ------------------
+  console.log('\n38. Metrics rolling counters');
+  {
+    const { recordSubForMetrics } = await import('../worker/src/metrics-counters.js');
+    env.VYAN_METRICS_KEY = 'metrics-test-key';
+    try {
+      const noAuth = await call('GET', '/api/metrics');
+      ok(noAuth.status === 401, `metrics without key -> 401 (got ${noAuth.status})`);
+
+      // Registry mirrors subscription writes: one active, one canceled.
+      await recordSubForMetrics(env, 'op-active', { tier: 'solo', status: 'active' });
+      await recordSubForMetrics(env, 'op-gone', { tier: 'solo', status: 'canceled' });
+
+      const m = await call('GET', '/api/metrics', undefined, { authorization: 'Bearer metrics-test-key' });
+      ok(m.status === 200, `metrics with key -> 200 (got ${m.status})`);
+      // Registry-derived: paid-cap-tester (active solo, seeded in section 35
+      // via direct KV write) is NOT in the registry, which is exactly the
+      // point: only real subscription writes register. op-active is the one.
+      ok(m.json && m.json.activeOperators === 1, `activeOperators from registry (got ${m.json && m.json.activeOperators})`);
+      ok(m.json && m.json.revenueCents === 1200, `MRR sums registry tiers (got ${m.json && m.json.revenueCents})`);
+
+      // Day buckets counted every create/complete this suite performed.
+      ok(m.json && m.json.usage && m.json.usage.docsSent >= 5,
+        `docsSent from day buckets (got ${m.json && m.json.usage && m.json.usage.docsSent})`);
+      ok(m.json && m.json.usage && m.json.usage.docsCompleted >= 1,
+        `docsCompleted from day buckets (got ${m.json && m.json.usage && m.json.usage.docsCompleted})`);
+
+      // The bucket itself exists and matches what the endpoint reported.
+      const today = new Date().toISOString().slice(0, 10);
+      const bucket = await storage.docs.get(`metrics:day:${today}`, { json: true });
+      ok(bucket && bucket.sent === m.json.usage.docsSent && bucket.completed === m.json.usage.docsCompleted,
+        `today's bucket backs the endpoint (sent=${bucket && bucket.sent}, completed=${bucket && bucket.completed})`);
+    } finally {
+      delete env.VYAN_METRICS_KEY;
+    }
   }
 
   console.log('\n======================================');

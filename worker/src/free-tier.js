@@ -42,6 +42,12 @@
  */
 
 import { sha256Hex } from './audit.js';
+import { getStorage } from './storage.js';
+
+// Shared storage abstraction (KV in production, in-memory in local dev
+// and the test harness) so every path here is exercisable without
+// bindings. ownerDripList still requires real KV because it needs list().
+function store(env) { return getStorage(env).docs; }
 
 const FREE_LIFETIME_LIMIT = 3;
 const TOKEN_BYTES = 24;
@@ -85,9 +91,6 @@ async function hashEmail(email) {
  * up the same email twice returns the same token + current counter.
  */
 export async function freeSignup(env, opts) {
-  if (!env || !env.CYBERSYGN_DOCS) {
-    return { ok: false, error: 'kv_unavailable' };
-  }
   const firstName = sanitizeName(opts && opts.firstName);
   const lastName  = sanitizeName(opts && opts.lastName);
   const email     = String((opts && opts.email) || '').trim().toLowerCase();
@@ -100,11 +103,16 @@ export async function freeSignup(env, opts) {
 
   let record = null;
   try {
-    const raw = await env.CYBERSYGN_DOCS.get(userKey);
+    const raw = await store(env).get(userKey);
     if (raw) record = JSON.parse(raw);
   } catch (e) {}
 
   if (record && record.token) {
+    // Refresh the token->emailHash pointer on every signup, not just the
+    // first. A one-time pointer-write failure would otherwise permanently
+    // break doc creation for this email (freePeek -> unknown_token -> 402)
+    // with no self-serve recovery; signing up again now repairs it.
+    await writeFreeTokenPointer(env, record.token, emailHash);
     return {
       ok: true,
       freeToken: record.token,
@@ -129,12 +137,12 @@ export async function freeSignup(env, opts) {
   };
 
   try {
-    await env.CYBERSYGN_DOCS.put(userKey, JSON.stringify(record), {
+    await store(env).put(userKey, JSON.stringify(record), {
       expirationTtl: TOKEN_TTL_SECONDS,
     });
     // Drip-marketing record: cleartext email + name in a separate key so
     // we never co-locate it with the doc counter. Owner-only export.
-    await env.CYBERSYGN_DOCS.put(
+    await store(env).put(
       KV_PREFIX_DRIP + emailHash,
       JSON.stringify({ email, firstName, lastName, createdAt: now }),
       { expirationTtl: TOKEN_TTL_SECONDS },
@@ -142,6 +150,10 @@ export async function freeSignup(env, opts) {
   } catch (e) {
     return { ok: false, error: 'kv_put_failed: ' + (e && e.message ? e.message : 'unknown') };
   }
+  // token->emailHash pointer so the doc-creation gate can resolve the
+  // lifetime record from the token alone (no scan). Written here so every
+  // signup path establishes it exactly once.
+  await writeFreeTokenPointer(env, token, emailHash);
   return {
     ok: true,
     freeToken: token,
@@ -157,34 +169,10 @@ export async function freeSignup(env, opts) {
 // -----------------------------------------------------------------------------
 
 export async function freeConsume(env, token) {
-  if (!env || !env.CYBERSYGN_DOCS) return { ok: false, error: 'kv_unavailable' };
-  if (typeof token !== 'string' || token.length !== TOKEN_BYTES * 2) {
-    return { ok: false, error: 'invalid_token' };
-  }
-  if (!/^[a-f0-9]+$/.test(token)) return { ok: false, error: 'invalid_token' };
-
-  // Lookup: we don't have the email at this point, so we scan by the
-  // token. To avoid scanning, we ALSO store a token->emailHash pointer.
-  // Cheap, single GET.
-  const pointerKey = `free-tok:${token}`;
-  let emailHash;
-  try {
-    emailHash = await env.CYBERSYGN_DOCS.get(pointerKey);
-  } catch (e) {}
-
-  // If pointer missing, this is the first consume for the token; build it.
-  // We can also lazily rebuild by scanning user records (skipped for cost).
-  if (!emailHash) {
-    return { ok: false, error: 'unknown_token' };
-  }
-
+  const resolved = await resolveFreeToken(env, token);
+  if (!resolved.ok) return resolved;
+  const { emailHash, record } = resolved;
   const userKey = KV_PREFIX_USER + emailHash;
-  let record;
-  try {
-    const raw = await env.CYBERSYGN_DOCS.get(userKey);
-    if (raw) record = JSON.parse(raw);
-  } catch (e) {}
-  if (!record) return { ok: false, error: 'record_missing' };
 
   if ((record.used || 0) >= FREE_LIFETIME_LIMIT) {
     return {
@@ -192,13 +180,14 @@ export async function freeConsume(env, token) {
       error: 'free_cap_reached',
       used: record.used,
       cap: FREE_LIFETIME_LIMIT,
+      emailHash,
     };
   }
 
   record.used = (record.used || 0) + 1;
   record.lastConsumedAt = new Date().toISOString();
   try {
-    await env.CYBERSYGN_DOCS.put(userKey, JSON.stringify(record), {
+    await store(env).put(userKey, JSON.stringify(record), {
       expirationTtl: TOKEN_TTL_SECONDS,
     });
   } catch (e) {
@@ -214,14 +203,75 @@ export async function freeConsume(env, token) {
     used: record.used,
     cap: FREE_LIFETIME_LIMIT,
     remaining: FREE_LIFETIME_LIMIT - record.used,
+    emailHash,
+  };
+}
+
+/**
+ * Resolve a free token to its emailHash + lifetime record without
+ * mutating anything. Shared by freeConsume and freePeek.
+ */
+export async function resolveFreeToken(env, token) {
+  if (typeof token !== 'string' || token.length !== TOKEN_BYTES * 2) {
+    return { ok: false, error: 'invalid_token' };
+  }
+  if (!/^[a-f0-9]+$/.test(token)) return { ok: false, error: 'invalid_token' };
+
+  // token -> emailHash pointer (written at signup). Single GET, no scan.
+  let emailHash;
+  try {
+    emailHash = await store(env).get(`free-tok:${token}`);
+  } catch (e) {}
+  if (!emailHash) return { ok: false, error: 'unknown_token' };
+
+  let record;
+  try {
+    const raw = await store(env).get(KV_PREFIX_USER + emailHash);
+    if (raw) record = JSON.parse(raw);
+  } catch (e) {}
+  if (!record) return { ok: false, error: 'record_missing' };
+  return { ok: true, emailHash, record };
+}
+
+/**
+ * Give back one consumed allowance. Called when a doc-creation flow
+ * consumed up front but then failed to persist the document, so the
+ * user is not charged for a doc that never existed. Best-effort.
+ */
+export async function freeRefund(env, token) {
+  const resolved = await resolveFreeToken(env, token);
+  if (!resolved.ok) return;
+  const { emailHash, record } = resolved;
+  if ((record.used || 0) <= 0) return;
+  record.used = record.used - 1;
+  record.lastRefundedAt = new Date().toISOString();
+  try {
+    await store(env).put(KV_PREFIX_USER + emailHash, JSON.stringify(record), { expirationTtl: TOKEN_TTL_SECONDS });
+  } catch (e) {}
+}
+
+/**
+ * Read-only cap check for the doc-creation gate: is there room left on
+ * this email's lifetime allowance? Never increments; the doc-creation
+ * flow consumes only after the document actually stores.
+ */
+export async function freePeek(env, token) {
+  const resolved = await resolveFreeToken(env, token);
+  if (!resolved.ok) return resolved;
+  const used = resolved.record.used || 0;
+  return {
+    ok: true,
+    used,
+    cap: FREE_LIFETIME_LIMIT,
+    remaining: Math.max(0, FREE_LIFETIME_LIMIT - used),
+    emailHash: resolved.emailHash,
   };
 }
 
 // On signup, write the token->emailHash pointer so consume can resolve.
 export async function writeFreeTokenPointer(env, token, emailHash) {
-  if (!env || !env.CYBERSYGN_DOCS) return;
   try {
-    await env.CYBERSYGN_DOCS.put(`free-tok:${token}`, emailHash, {
+    await store(env).put(`free-tok:${token}`, emailHash, {
       expirationTtl: TOKEN_TTL_SECONDS,
     });
   } catch (e) {}
@@ -233,34 +283,30 @@ export async function writeFreeTokenPointer(env, token, emailHash) {
 // -----------------------------------------------------------------------------
 
 async function incrementDatasetCounter(env, isNewContributor) {
-  if (!env || !env.CYBERSYGN_DOCS) return;
   try {
-    const rawTotal = await env.CYBERSYGN_DOCS.get(KV_KEY_TOTAL);
+    const rawTotal = await store(env).get(KV_KEY_TOTAL);
     const total = (Number.isFinite(parseInt(rawTotal, 10)) ? parseInt(rawTotal, 10) : 0) + 1;
-    await env.CYBERSYGN_DOCS.put(KV_KEY_TOTAL, String(total));
+    await store(env).put(KV_KEY_TOTAL, String(total));
 
     if (isNewContributor) {
-      const rawContrib = await env.CYBERSYGN_DOCS.get(KV_KEY_CONTRIB);
+      const rawContrib = await store(env).get(KV_KEY_CONTRIB);
       const contrib = (Number.isFinite(parseInt(rawContrib, 10)) ? parseInt(rawContrib, 10) : 0) + 1;
-      await env.CYBERSYGN_DOCS.put(KV_KEY_CONTRIB, String(contrib));
+      await store(env).put(KV_KEY_CONTRIB, String(contrib));
     }
   } catch (e) {}
 }
 
 export async function getDatasetCount(env) {
-  if (!env || !env.CYBERSYGN_DOCS) {
-    return { ok: true, total: 0, contributors: 0, source: 'memory' };
-  }
   try {
     const [rawTotal, rawContrib] = await Promise.all([
-      env.CYBERSYGN_DOCS.get(KV_KEY_TOTAL),
-      env.CYBERSYGN_DOCS.get(KV_KEY_CONTRIB),
+      store(env).get(KV_KEY_TOTAL),
+      store(env).get(KV_KEY_CONTRIB),
     ]);
     return {
       ok: true,
       total: parseInt(rawTotal, 10) || 0,
       contributors: parseInt(rawContrib, 10) || 0,
-      source: 'kv',
+      source: getStorage(env).mode,
     };
   } catch (e) {
     return { ok: false, error: 'kv_read_failed', total: 0, contributors: 0 };
