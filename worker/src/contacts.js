@@ -116,6 +116,70 @@ export async function upsertContact(env, senderId, { name, email, role } = {}) {
 }
 
 /**
+ * Batch upsert of many contacts in ONE read-modify-write. Used by the
+ * doc-create auto-save so an N-signer document costs a single KV read + write
+ * instead of 2N sequential ops (which would exhaust the Worker subrequest
+ * budget on a large signer array). Dedupes by lowercased email, skips
+ * invalid emails, and only takes the first `MAX_BATCH` unique addresses.
+ * Best-effort: never throws to the caller.
+ *
+ * @param {Array<{name?,email?,role?}>} entries
+ */
+export async function upsertContacts(env, senderId, entries) {
+  const safeId = sanitizeSenderId(senderId);
+  if (!safeId || !Array.isArray(entries) || entries.length === 0) return { ok: false };
+
+  const MAX_BATCH = 25; // one document rarely has more real counterparties
+  const now = new Date().toISOString();
+
+  // Dedupe + clean the incoming entries first (in memory, no KV).
+  const incoming = new Map(); // key: lowercased email -> { name, email, role }
+  for (const e of entries) {
+    const cleanEmail = String((e && e.email) || '').trim().slice(0, MAX_EMAIL_CHARS);
+    if (!isValidContactEmail(cleanEmail)) continue;
+    const key = cleanEmail.toLowerCase();
+    if (incoming.has(key)) continue;
+    incoming.set(key, {
+      name: String((e && e.name) || '').trim().slice(0, MAX_NAME_CHARS),
+      email: cleanEmail,
+      role: String((e && e.role) || '').trim().slice(0, MAX_ROLE_CHARS),
+    });
+    if (incoming.size >= MAX_BATCH) break;
+  }
+  if (incoming.size === 0) return { ok: false };
+
+  try {
+    const storage = getStorage(env);
+    const contacts = await readList(storage, safeId);
+    const byKey = new Map(contacts.map(c => [String(c.email || '').trim().toLowerCase(), c]));
+
+    for (const [key, val] of incoming) {
+      const existing = byKey.get(key);
+      const entry = existing ? {
+        id: existing.id || newId(),
+        name: val.name || existing.name || '',
+        email: existing.email || val.email,
+        role: val.role || existing.role || '',
+        lastUsedAt: now,
+        useCount: (Number.isFinite(existing.useCount) ? existing.useCount : 0) + 1,
+      } : {
+        id: newId(), name: val.name, email: val.email, role: val.role, lastUsedAt: now, useCount: 1,
+      };
+      if (existing) {
+        const i = contacts.indexOf(existing);
+        if (i >= 0) contacts.splice(i, 1);
+      }
+      contacts.unshift(entry);
+      byKey.set(key, entry);
+    }
+    await writeList(storage, safeId, contacts.slice(0, CONTACTS_CAP));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false };
+  }
+}
+
+/**
  * Remove a contact by its id.
  * @returns {Promise<{ ok:boolean, reason?:string, contacts?:Array }>}
  */

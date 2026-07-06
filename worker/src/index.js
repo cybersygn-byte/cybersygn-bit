@@ -41,7 +41,7 @@ import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js
 import { generateDraft } from './ai-draft.js';
 import { generateSummary, mergeSignerFills } from './ai-summary.js';
 import { writeVerifyRecord, getVerifyRecord, isValidFingerprint } from './verify.js';
-import { listContacts, upsertContact, removeContact, sanitizeSenderId, isValidContactEmail } from './contacts.js';
+import { listContacts, upsertContact, upsertContacts, removeContact, sanitizeSenderId, isValidContactEmail } from './contacts.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
 import {
   freeSignup,
@@ -3454,6 +3454,12 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   if (!Array.isArray(payload.signers) || payload.signers.length === 0) {
     return jsonResponse(400, { error: 'missing_signers', message: 'At least one signer is required.' });
   }
+  // Hard cap: no downstream loop (invite emails, assignments, contact
+  // auto-save) should be driven by an unbounded signer array. Bulk send is
+  // the path for reaching many recipients, one document each.
+  if (payload.signers.length > 50) {
+    return jsonResponse(400, { error: 'too_many_signers', message: 'A single document supports up to 50 signers. Use bulk send for larger lists.' });
+  }
   if (!payload.assignments || typeof payload.assignments !== 'object') {
     return jsonResponse(400, { error: 'missing_assignments', message: 'assignments map is required.' });
   }
@@ -3612,15 +3618,13 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     await addToWorkspaceIndex(storage, workspaceId, docId);
   }
 
-  // F5: auto-save each signer as a saved contact for this sender so the next
-  // send is a one-tap quick-pick. Best-effort: a failed upsert never blocks
-  // document creation. Empty names/emails are skipped by the validator.
-  for (const s of signers) {
-    if (!isValidContactEmail(s.email)) continue;
-    try {
-      await upsertContact(env, senderId, { name: s.name, email: s.email });
-    } catch (e) {}
-  }
+  // F5: auto-save the signers as saved contacts for this sender so the next
+  // send is a one-tap quick-pick. ONE batched read-modify-write (not a KV
+  // write per signer) so a large signer array cannot exhaust the subrequest
+  // budget. Best-effort: never blocks document creation.
+  try {
+    await upsertContacts(env, senderId, signers.map(s => ({ name: s.name, email: s.email })));
+  } catch (e) {}
 
   // Meter free-tier docs against this month's counter. Owner-created docs
   // and docs from paid senders are never metered. Best-effort: a missed
