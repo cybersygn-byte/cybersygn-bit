@@ -70,6 +70,11 @@ export function createSignersStore() {
   /**
    * Add a signer, returning the created record. If name is empty, a
    * plain default (Sender / Second signer / Third signer) is assigned.
+   *
+   * F5 habit layer: when the page URL carries a valid ?to=<email>
+   * (and optional &name=), the FIRST recipient added without an
+   * explicit name/email is prefilled from those params, once. The
+   * sender (index 0) is never prefilled: ?to= names the counterparty.
    */
   function add({ name, email } = {}) {
     if (signers.length >= SIGNER_PALETTE.length) {
@@ -77,8 +82,14 @@ export function createSignersStore() {
     }
     const index = signers.length;
     const slot = paletteFor(index);
-    const cleanName = (name && name.trim()) || defaultName(index);
-    const cleanEmail = (email || '').trim();
+    let prefill = null;
+    if (index >= 1 && pendingRecipientPrefill &&
+        !(name && String(name).trim()) && !(email && String(email).trim())) {
+      prefill = pendingRecipientPrefill;
+      pendingRecipientPrefill = null; // consume exactly once
+    }
+    const cleanName = (prefill && prefill.name) || (name && name.trim()) || defaultName(index);
+    const cleanEmail = (prefill ? prefill.email : (email || '')).trim();
     const signer = {
       id: slot.id,
       name: cleanName,
@@ -94,6 +105,21 @@ export function createSignersStore() {
     };
     signers.push(signer);
     notify();
+    // A pending ?to= recipient plus a freshly-seeded sender means the
+    // user arrived via "Send another to <name>": add the recipient for
+    // them right away (deferred a tick so the app finishes wiring the
+    // sender first). Guarded so it never fires in signer/magic-link mode
+    // (readRecipientPrefill returns null there) and never fires twice.
+    if (index === 0 && pendingRecipientPrefill && HAS_DOM) {
+      setTimeout(() => {
+        try {
+          if (pendingRecipientPrefill && signers.length === 1 &&
+              signers[0] && signers[0].id === signer.id) {
+            add({});
+          }
+        } catch (e) { /* graceful no-op */ }
+      }, 0);
+    }
     return signer;
   }
 
@@ -280,6 +306,166 @@ export function initialsFor(name) {
   if (parts.length === 0) return '—';
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// ---------------------------------------------------------------------------
+// F5 habit layer: recipient prefill (?to=&name=) + saved-contact quick-pick
+// ---------------------------------------------------------------------------
+//
+// Both features live here because this module owns signer state and is the
+// one place every signer row's inputs flow through. Everything below is
+// browser-only and fails soft: no DOM, no senderId, no worker, empty
+// contacts, or a fetch error all degrade to the exact behavior the add-
+// signer flow had before.
+
+const HAS_DOM = typeof document !== 'undefined' && typeof window !== 'undefined';
+
+/**
+ * Parse a one-shot recipient prefill from the page URL. Only honored when
+ * ?to= is a valid email; &name= is optional and sanitized (control chars
+ * stripped, length capped). Never active on signer magic links (?doc=&t=),
+ * where the signer list is hydrated from the server, not the sender.
+ */
+function readRecipientPrefill() {
+  if (!HAS_DOM) return null;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('doc') && p.get('t')) return null;
+    const to = (p.get('to') || '').trim();
+    if (!to || to.length > 254 || !EMAIL_RE.test(to)) return null;
+    const name = (p.get('name') || '')
+      .replace(/[\u0000-\u001F\u007F]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 80);
+    return { email: to, name };
+  } catch (e) {
+    return null;
+  }
+}
+
+let pendingRecipientPrefill = readRecipientPrefill();
+
+/**
+ * Saved-contact quick-pick. Wires a native <datalist> onto every signer
+ * email input (.signer-row__email) via delegated listeners, so it works
+ * for rows built now or later without touching the row-building code.
+ * Contacts come from GET /api/sender/:id/contacts (Wave 1), fetched once
+ * per page, only after the user first focuses a signer email input.
+ * Picking a suggestion fills the email natively; a matching contact name
+ * is then written into the sibling name input (only when that input still
+ * holds an empty or default placeholder name) and an 'input' event is
+ * dispatched so the store update path runs exactly as if the user typed.
+ */
+const CONTACTS_DATALIST_ID = 'cybersygn-contacts-datalist';
+let contactsPromise = null;
+
+function fetchSavedContacts() {
+  if (contactsPromise) return contactsPromise;
+  contactsPromise = (async () => {
+    try {
+      // Read the sender identity without minting one: suggestions are a
+      // convenience and must never create an identity as a side effect.
+      let senderId = '';
+      try { senderId = localStorage.getItem('cybersygn.senderId') || ''; } catch (e) {}
+      senderId = senderId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+      if (!senderId) return [];
+      const base = (window.CYBERSYGN_API_BASE)
+        ? String(window.CYBERSYGN_API_BASE).replace(/\/$/, '')
+        : '';
+      const opts = { headers: { accept: 'application/json' } };
+      try { if (AbortSignal && AbortSignal.timeout) opts.signal = AbortSignal.timeout(4000); } catch (e) {}
+      const res = await fetch(base + '/api/sender/' + encodeURIComponent(senderId) + '/contacts', opts);
+      if (!res.ok) return [];
+      const data = await res.json();
+      const raw = (data && Array.isArray(data.contacts)) ? data.contacts : [];
+      return raw
+        .filter(c => c && typeof c.email === 'string' && EMAIL_RE.test(c.email.trim()))
+        .map(c => ({
+          name: String(c.name || '').trim().slice(0, 80),
+          email: c.email.trim(),
+        }))
+        .slice(0, 200);
+    } catch (e) {
+      return []; // offline / worker missing / bad JSON: graceful no-op
+    }
+  })();
+  return contactsPromise;
+}
+
+function ensureContactsDatalist(contacts) {
+  let dl = document.getElementById(CONTACTS_DATALIST_ID);
+  if (!dl) {
+    dl = document.createElement('datalist');
+    dl.id = CONTACTS_DATALIST_ID;
+    document.body.appendChild(dl);
+  }
+  if (dl.childElementCount === 0 && contacts.length > 0) {
+    for (const c of contacts) {
+      // Property assignment only: user text never passes through HTML.
+      const opt = document.createElement('option');
+      opt.value = c.email;
+      if (c.name) opt.label = c.name;
+      dl.appendChild(opt);
+    }
+  }
+  return dl;
+}
+
+function wireContactQuickPick() {
+  let contacts = null; // null until first load resolves
+
+  const DEFAULT_NAMES = new Set(SIGNER_PALETTE.map(s => s.name.toLowerCase()));
+  function isDefaultName(v) {
+    const t = String(v || '').trim().toLowerCase();
+    return t === '' || DEFAULT_NAMES.has(t) || /^signer \d+$/.test(t);
+  }
+
+  function isSignerEmailInput(el) {
+    return !!(el && el.classList && el.classList.contains('signer-row__email'));
+  }
+
+  // Lazy-load on first focus of any signer email input, then attach the
+  // datalist to whichever input the user is in.
+  document.addEventListener('focusin', async (e) => {
+    const input = e.target;
+    if (!isSignerEmailInput(input)) return;
+    try {
+      if (contacts === null) contacts = await fetchSavedContacts();
+      if (!contacts || contacts.length === 0) return; // empty: change nothing
+      ensureContactsDatalist(contacts);
+      if (!input.getAttribute('list')) input.setAttribute('list', CONTACTS_DATALIST_ID);
+    } catch (err) { /* graceful no-op */ }
+  });
+
+  // When the email exactly matches a saved contact (a datalist pick or a
+  // full retype), carry the contact's name into the row's name input if
+  // that input still shows a default. Dispatching 'input' runs the same
+  // store-update listener a keystroke would.
+  function maybeFillName(input) {
+    if (!contacts || contacts.length === 0) return;
+    const v = String(input.value || '').trim().toLowerCase();
+    if (!v) return;
+    const match = contacts.find(c => c.email.toLowerCase() === v);
+    if (!match || !match.name) return;
+    const body = input.closest('.signer-row__body');
+    const nameInput = body && body.querySelector('.signer-row__name');
+    if (!nameInput || !isDefaultName(nameInput.value)) return;
+    if (nameInput.value === match.name) return;
+    nameInput.value = match.name;
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const onEmailEdit = (e) => {
+    if (!isSignerEmailInput(e.target)) return;
+    try { maybeFillName(e.target); } catch (err) { /* graceful no-op */ }
+  };
+  document.addEventListener('input', onEmailEdit);
+  document.addEventListener('change', onEmailEdit);
+}
+
+if (HAS_DOM) {
+  try { wireContactQuickPick(); } catch (e) { /* never break the send flow */ }
 }
 
 /**

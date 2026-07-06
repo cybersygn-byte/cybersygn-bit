@@ -7,8 +7,11 @@
  *   2. We POST that to /api/draft/generate and show a calm status.
  *   3. On { ok: true } we render draft.body in a readable preview with the
  *      "starting draft, not legal advice" disclaimer prominent, plus a
- *      "Copy text" action and an honest "Send it for signature" handoff to
- *      /preview/.
+ *      "Copy text" action and a real "Send it for signature" handoff:
+ *      the draft is rendered to a clean US Letter PDF entirely client-side
+ *      (vendored pdf-lib, no network), downloaded, stashed in a
+ *      sessionStorage bridge for the sender flow, and the user is guided
+ *      into /preview/ where auto field detection takes over.
  *   4. On { ok: false, reason: "unconfigured" } we show a graceful early-
  *      access state: email capture (posts to /api/free/signup, mailto
  *      fallback) plus a strong secondary path to the 500+ template library.
@@ -51,6 +54,20 @@ const KIND_LABELS = {
 };
 
 const DISCLAIMER = 'Starting draft, not legal advice. Review with a licensed attorney in your jurisdiction before signing.';
+
+// The footer line baked into every page of the generated PDF itself.
+const PDF_FOOTER = 'Starting draft generated with CyberSygn AI. Not legal advice. Review before signing.';
+
+// sessionStorage bridge for the sender flow. /preview/ does not read this
+// key today (its only programmatic loaders are the ?doc&t signer link and
+// the ?pdf=<url> embed fetch, neither of which can carry a local file), so
+// the working handoff is download + guidance. The bridge is written anyway,
+// under a stable versioned key, so the preview app can pick it up the day
+// it grows a loader, with zero changes needed here.
+const PDF_BRIDGE_KEY = 'cybersygn.draft.pdf.v1';
+// Stay far under the ~5MB sessionStorage quota. Generated drafts are tiny
+// (tens of KB), this is just a guard against a pathological body.
+const PDF_BRIDGE_MAX_B64 = 3.5 * 1024 * 1024;
 
 // ---------------------------------------------------------------------------
 // Boot
@@ -203,27 +220,309 @@ function renderDraft(draft, ctx) {
     });
   }
 
-  // Send for signature. We stash the draft locally and open /preview/. This is
-  // an honest handoff: /preview/ is where signing actually happens. We do not
-  // claim the draft is auto-loaded unless it is; we hand off the text plus a
-  // copy so the user is never stuck.
+  // Send for signature: a real handoff. Render the draft to a clean PDF
+  // client-side (vendored pdf-lib, zero network), download it, stash the
+  // sessionStorage bridge, and guide the user into /preview/ where auto
+  // field detection takes over. Honest at every step: we never claim the
+  // preview pre-loads the file, because today it does not.
   const sendBtn = el('draft-send');
   if (sendBtn) {
-    sendBtn.addEventListener('click', async () => {
-      try {
-        localStorage.setItem('cybersygn.draft.pending', JSON.stringify({
-          kind: ctx.kind,
-          title,
-          body: draft.body,
-          savedAt: Date.now(),
-        }));
-      } catch (e) {}
-      // Copy the text too, so if the preview does not pre-fill, the user can
-      // paste immediately. Then open the preview.
-      await copyText(draft.body);
-      window.location.href = '../preview/?from=draft';
+    sendBtn.addEventListener('click', () => startSendHandoff(sendBtn, draft, ctx, title));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Send-for-signature handoff: client-side PDF + download + guided /preview/.
+// ---------------------------------------------------------------------------
+
+async function startSendHandoff(sendBtn, draft, ctx, title) {
+  const priorHtml = sendBtn.innerHTML;
+  sendBtn.disabled = true;
+  sendBtn.setAttribute('aria-busy', 'true');
+  sendBtn.innerHTML = 'Preparing your PDF<span class="draft-dots" aria-hidden="true"></span>';
+
+  // Stash the plain-text draft locally either way, so nothing is ever lost.
+  try {
+    localStorage.setItem('cybersygn.draft.pending', JSON.stringify({
+      kind: ctx.kind,
+      title,
+      body: draft.body,
+      savedAt: Date.now(),
+    }));
+  } catch (e) {}
+
+  let pdfBytes;
+  try {
+    pdfBytes = await generateDraftPdf(title, draft.body);
+  } catch (err) {
+    // PDF generation failed (old browser, blocked module, corrupt vendor
+    // file). Fall back to the previous honest handoff: copy the text and
+    // open the preview, where the user can paste or upload their own file.
+    sendBtn.disabled = false;
+    sendBtn.removeAttribute('aria-busy');
+    sendBtn.innerHTML = priorHtml;
+    await copyText(draft.body);
+    window.location.href = '../preview/?from=draft';
+    return;
+  }
+
+  const filename = pdfFilename(title);
+
+  // sessionStorage bridge for a future preview-side loader. Best-effort.
+  try {
+    const b64 = bytesToBase64(pdfBytes);
+    if (b64.length <= PDF_BRIDGE_MAX_B64) {
+      sessionStorage.setItem(PDF_BRIDGE_KEY, JSON.stringify({
+        v: 1,
+        kind: ctx.kind,
+        title,
+        filename,
+        savedAt: Date.now(),
+        pdfBase64: b64,
+      }));
+    }
+  } catch (e) {}
+
+  // Trigger the download, then show the guided handoff card.
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  triggerDownload(url, filename);
+
+  sendBtn.disabled = false;
+  sendBtn.removeAttribute('aria-busy');
+  sendBtn.innerHTML = priorHtml;
+
+  renderSendoff({ url, filename, sizeKb: Math.max(1, Math.round(pdfBytes.length / 1024)), draft, ctx, title });
+}
+
+function triggerDownload(url, filename) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function pdfFilename(title) {
+  const slug = String(title || 'contract-draft')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'contract-draft';
+  return slug + '-draft.pdf';
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
+/**
+ * The post-generation handoff screen. Mobile-first: every action is a
+ * full-width comfortable tap target, guidance is plain English, and the
+ * user can always get back to the draft text.
+ */
+function renderSendoff(state) {
+  output.innerHTML =
+    '<div class="draft-sendoff">' +
+      '<p class="kicker kicker--muted">Ready to send</p>' +
+      '<h2 class="draft-sendoff__title">Your draft PDF downloaded.</h2>' +
+      '<div class="draft-sendoff__card">' +
+        '<div class="draft-sendoff__file">' +
+          '<span class="draft-sendoff__file-name" id="draft-pdf-name">' + esc(state.filename) + '</span>' +
+          '<span class="draft-sendoff__file-meta">PDF, ' + esc(String(state.sizeKb)) + ' KB, US Letter</span>' +
+        '</div>' +
+        '<button type="button" class="btn btn--ghost draft-sendoff__again" id="draft-download-again">Download again</button>' +
+      '</div>' +
+      '<a class="btn btn--primary btn--lg btn--block" id="draft-open-sender" href="../preview/?from=draft">Open the sender <span class="btn-arrow" aria-hidden="true">&rarr;</span></a>' +
+      '<p class="draft-sendoff__guide">Drop the downloaded PDF into the sender. It auto-detects signature fields, then you add signers and send.</p>' +
+      '<p class="draft-result__disclaimer" role="note">' + esc(DISCLAIMER) + '</p>' +
+      '<button type="button" class="btn btn--ghost btn--block" id="draft-back">Back to the draft text</button>' +
+    '</div>';
+
+  const again = el('draft-download-again');
+  if (again) {
+    again.addEventListener('click', () => {
+      triggerDownload(state.url, state.filename);
+      again.textContent = 'Downloaded';
+      setTimeout(() => { again.textContent = 'Download again'; }, 2200);
     });
   }
+
+  const back = el('draft-back');
+  if (back) {
+    back.addEventListener('click', () => {
+      try { URL.revokeObjectURL(state.url); } catch (e) {}
+      renderDraft(state.draft, state.ctx);
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Client-side PDF rendering (vendored pdf-lib, imported on demand).
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the draft text into a simple professional US Letter PDF:
+ * a title, a thin rule, wrapped body text with page breaks, and the
+ * AI-draft disclaimer footer on every page. Standard fonts only, so
+ * nothing is fetched over the network.
+ */
+async function generateDraftPdf(title, body) {
+  // ../vendor/pdf-lib.mjs resolves in both layouts: web/draft/ next to
+  // web/vendor/ in dev, dist/draft/ next to dist/vendor/ after build.
+  const { PDFDocument, StandardFonts, rgb } = await import('../vendor/pdf-lib.mjs');
+
+  const doc = await PDFDocument.create();
+  doc.setTitle(winAnsiSafe(title));
+  doc.setCreator('CyberSygn AI draft');
+  doc.setProducer('CyberSygn');
+
+  const bodyFont = await doc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const PAGE_W = 612;               // US Letter, points
+  const PAGE_H = 792;
+  const MARGIN = 72;                // 1 inch
+  const FOOTER_ZONE = 44;           // reserved for the disclaimer footer
+  const CONTENT_W = PAGE_W - MARGIN * 2;
+  const BODY_SIZE = 10.5;
+  const BODY_LEAD = 15.5;
+  const TITLE_SIZE = 16;
+  const TITLE_LEAD = 21;
+
+  const ink = rgb(0.08, 0.12, 0.2);
+  const faint = rgb(0.45, 0.49, 0.56);
+
+  let page = doc.addPage([PAGE_W, PAGE_H]);
+  let y = PAGE_H - MARGIN;
+
+  function ensureRoom(lead) {
+    if (y - lead < MARGIN + FOOTER_ZONE) {
+      page = doc.addPage([PAGE_W, PAGE_H]);
+      y = PAGE_H - MARGIN;
+    }
+  }
+
+  // Title, wrapped, then a thin rule under it.
+  const titleLines = wrapText(winAnsiSafe(title), boldFont, TITLE_SIZE, CONTENT_W);
+  for (const line of titleLines) {
+    ensureRoom(TITLE_LEAD);
+    y -= TITLE_LEAD;
+    page.drawText(line, { x: MARGIN, y, size: TITLE_SIZE, font: boldFont, color: ink });
+  }
+  y -= 10;
+  ensureRoom(2);
+  page.drawLine({
+    start: { x: MARGIN, y },
+    end: { x: PAGE_W - MARGIN, y },
+    thickness: 0.75,
+    color: faint,
+  });
+  y -= 14;
+
+  // Body: paragraph by paragraph, wrapped, blank lines preserved.
+  const paragraphs = winAnsiSafe(body).split('\n');
+  for (const para of paragraphs) {
+    if (para.trim() === '') { y -= BODY_LEAD * 0.6; continue; }
+    const lines = wrapText(para, bodyFont, BODY_SIZE, CONTENT_W);
+    for (const line of lines) {
+      ensureRoom(BODY_LEAD);
+      y -= BODY_LEAD;
+      page.drawText(line, { x: MARGIN, y, size: BODY_SIZE, font: bodyFont, color: ink });
+    }
+  }
+
+  // Footer on every page: the AI-draft disclaimer plus a page number.
+  const pages = doc.getPages();
+  const FOOT_SIZE = 7.5;
+  for (let i = 0; i < pages.length; i++) {
+    const p = pages[i];
+    const footW = bodyFont.widthOfTextAtSize(PDF_FOOTER, FOOT_SIZE);
+    p.drawText(PDF_FOOTER, {
+      x: Math.max(MARGIN, (PAGE_W - footW) / 2),
+      y: 34,
+      size: FOOT_SIZE,
+      font: bodyFont,
+      color: faint,
+    });
+    const pageLabel = 'Page ' + (i + 1) + ' of ' + pages.length;
+    const plW = bodyFont.widthOfTextAtSize(pageLabel, FOOT_SIZE);
+    p.drawText(pageLabel, {
+      x: (PAGE_W - plW) / 2,
+      y: 22,
+      size: FOOT_SIZE,
+      font: bodyFont,
+      color: faint,
+    });
+  }
+
+  return doc.save();
+}
+
+/**
+ * pdf-lib's standard fonts encode WinAnsi only; anything outside throws.
+ * Map the common typographic characters to safe equivalents and strip the
+ * rest, so a stray glyph never kills the whole handoff.
+ */
+function winAnsiSafe(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u2018\u2019\u201A\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/\u2026/g, '...')
+    .replace(/[\u2022\u25CF\u25AA\u25E6]/g, '-')
+    .replace(/[\u00A0\u2000-\u200B\u202F\u3000]/g, ' ')
+    .replace(/\t/g, '    ')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[^\n\x20-\x7E\xA1-\xFF]/g, '');
+}
+
+/**
+ * Greedy word wrap using real font metrics. Words wider than the column
+ * are hard-broken by characters so nothing can overflow the margin.
+ */
+function wrapText(text, font, size, maxWidth) {
+  const words = String(text).split(' ');
+  const lines = [];
+  let cur = '';
+
+  const width = (t) => font.widthOfTextAtSize(t, size);
+
+  const pushWord = (word) => {
+    if (width(word) <= maxWidth) {
+      const test = cur ? cur + ' ' + word : word;
+      if (width(test) <= maxWidth) { cur = test; return; }
+      if (cur) lines.push(cur);
+      cur = word;
+      return;
+    }
+    // A single over-wide token (a long URL, say): break it by characters.
+    if (cur) { lines.push(cur); cur = ''; }
+    let piece = '';
+    for (const ch of word) {
+      if (width(piece + ch) > maxWidth && piece) {
+        lines.push(piece);
+        piece = ch;
+      } else {
+        piece += ch;
+      }
+    }
+    cur = piece;
+  };
+
+  for (const w of words) {
+    if (w === '') continue;
+    pushWord(w);
+  }
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [''];
 }
 
 function selectBody() {

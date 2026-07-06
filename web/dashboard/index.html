@@ -23,6 +23,7 @@
 
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./habit.css" />
   
   <script src="/telemetry.js"></script>
   <script src="/polish.js" defer></script>
@@ -279,12 +280,21 @@
       </section>
 
       <section id="state-list" hidden>
+        <!-- F5 habit layer: quiet view toggle. "All documents" keeps the
+             existing flat list + status filters; "By person" groups the
+             same docs by signer so a returning sender finds a person,
+             not a pile. Rendering lives in app.js; styles in habit.css. -->
+        <div class="view-toggle" role="group" aria-label="Document view">
+          <button id="view-docs"   class="view-chip view-chip--active" data-view="docs"   type="button" aria-pressed="true">All documents</button>
+          <button id="view-people" class="view-chip"                   data-view="people" type="button" aria-pressed="false">By person</button>
+        </div>
         <div class="dashboard__filters">
           <button class="filter-chip filter-chip--active" data-filter="all"     type="button">All <span class="filter-chip__count" id="count-all">0</span></button>
           <button class="filter-chip"                    data-filter="active"  type="button">Active <span class="filter-chip__count" id="count-active">0</span></button>
           <button class="filter-chip"                    data-filter="complete" type="button">Signed <span class="filter-chip__count" id="count-complete">0</span></button>
         </div>
         <ol id="docs-list" class="docs-list" aria-label="Documents"></ol>
+        <ol id="people-list" class="people-list" aria-label="Documents by person" hidden></ol>
       </section>
 
       <!-- Account and settings. One calm collapsed region holding every

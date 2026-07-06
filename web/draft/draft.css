@@ -171,6 +171,57 @@
 }
 .draft-result__handoff { margin: 0; }
 
+/* ── Output: send-for-signature handoff ───────────────── */
+.draft-sendoff { display: grid; gap: var(--s-4); }
+.draft-sendoff__title {
+  font-family: var(--serif);
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.2;
+  margin: 0;
+  color: var(--text);
+}
+.draft-sendoff__card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  min-width: 0;
+}
+.draft-sendoff__file {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+.draft-sendoff__file-name {
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+.draft-sendoff__file-meta {
+  font-size: var(--t-xs);
+  color: var(--text-3);
+}
+.draft-sendoff__again { flex: 0 0 auto; }
+.draft-sendoff__guide { margin: 0; color: var(--text-2); font-size: var(--t-sm); line-height: 1.5; }
+
+/* Phones: the whole handoff is stacked, full-width tap targets. The
+   global (pointer: coarse) rule already guarantees 44px button height. */
+@media (max-width: 519px) {
+  .draft-sendoff__card { flex-direction: column; align-items: stretch; }
+  /* In a column the flex-basis would become height; keep it natural. */
+  .draft-sendoff__file { flex: 0 0 auto; }
+  .draft-sendoff__again { width: 100%; }
+}
+
 /* ── Output: early-access state ───────────────────────── */
 .draft-early { display: grid; gap: var(--s-3); }
 .draft-early__title {

@@ -43,6 +43,8 @@ const stateErrorRetry = $('state-error-retry');
 const stateEmpty = $('state-empty');
 const stateList = $('state-list');
 const docsList = $('docs-list');
+const peopleList = $('people-list');
+const viewChips = document.querySelectorAll('.view-chip');
 
 const identityToggle = $('identity-toggle');
 const identityPanel = $('identity-panel');
@@ -69,6 +71,7 @@ const wsModalClose = $('ws-modal-close');
 
 let docs = []; // last fetched list
 let currentFilter = 'all';
+let currentView = 'docs'; // 'docs' (flat list) | 'people' (grouped by signer)
 
 // ---- Boot -------------------------------------------------------------------
 
@@ -140,6 +143,34 @@ filterButtons.forEach(btn => {
     renderList();
   });
 });
+
+// F5 habit layer: "All documents | By person" view toggle. The by-person
+// view groups the same fetched docs by signer email (fetched lazily from
+// each doc's progress endpoint, since the list payload carries counts only).
+viewChips.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.view === 'people' ? 'people' : 'docs';
+    if (view === currentView) return;
+    currentView = view;
+    viewChips.forEach(b => {
+      const active = b === btn;
+      b.classList.toggle('view-chip--active', active);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    applyView();
+  });
+});
+
+function applyView() {
+  const isPeople = currentView === 'people';
+  // The status filters describe the flat list; hide them in people mode so
+  // the grouped view stays one calm idea. Nothing else about them changes.
+  const filtersRow = stateList ? stateList.querySelector('.dashboard__filters') : null;
+  if (filtersRow) filtersRow.hidden = isPeople;
+  if (docsList) docsList.hidden = isPeople;
+  if (peopleList) peopleList.hidden = !isPeople;
+  if (isPeople) renderPeopleView();
+}
 
 workspaceSelect.addEventListener('change', () => {
   const id = workspaceSelect.value || null;
@@ -727,6 +758,211 @@ function renderList() {
   for (const doc of filtered) {
     docsList.appendChild(renderDocRow(doc));
   }
+
+  // If the sender is looking at the by-person view, refresh it too so a
+  // reload (workspace switch, identity change) never leaves it stale.
+  if (currentView === 'people') {
+    applyView();
+  }
+}
+
+// ---- People view (F5 habit layer) ------------------------------------------
+//
+// The docs LIST payload carries only counts (doc.signers is a number), so
+// grouping by person needs each doc's progress detail, which returns the
+// real signer names + emails. We fetch those lazily (small concurrent
+// batches), cache per doc + lastEventAt, and group by signer email
+// (falling back to name when a signer has no email). Docs whose signer
+// details cannot be loaded land in an honest "unmatched" bucket rather
+// than a guessed group.
+
+const PEOPLE_DOC_CAP = 120;   // most-recent docs considered for grouping
+const PEOPLE_BATCH = 6;       // concurrent progress fetches
+const peopleProgressCache = new Map(); // "docId:lastEventAt" -> progress[] | null
+let peopleRenderSeq = 0;      // guards against overlapping async renders
+
+function peopleCacheKey(doc) {
+  return doc.docId + ':' + (doc.lastEventAt || doc.createdAt || '');
+}
+
+async function renderPeopleView() {
+  if (!peopleList) return;
+  const seq = ++peopleRenderSeq;
+  const source = docs.slice(0, PEOPLE_DOC_CAP);
+
+  peopleList.innerHTML = '';
+  if (source.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'people-list__empty';
+    empty.textContent = 'No documents yet, so no people yet. Send a document and your counterparties appear here.';
+    peopleList.appendChild(empty);
+    return;
+  }
+
+  const loading = document.createElement('li');
+  loading.className = 'people-list__loading';
+  loading.textContent = 'Matching documents to people.';
+  peopleList.appendChild(loading);
+
+  // Fetch signer details for any doc not already cached, a few at a time.
+  const missing = source.filter(d => !peopleProgressCache.has(peopleCacheKey(d)));
+  for (let i = 0; i < missing.length; i += PEOPLE_BATCH) {
+    if (seq !== peopleRenderSeq) return; // superseded by a newer render
+    const batch = missing.slice(i, i + PEOPLE_BATCH);
+    await Promise.all(batch.map(async d => {
+      try {
+        const token = d.senderToken || getDocToken(d.docId);
+        const res = await fetchProgress(d.docId, token);
+        const progress = res.ok && res.data && Array.isArray(res.data.progress)
+          ? res.data.progress
+          : null;
+        peopleProgressCache.set(peopleCacheKey(d), progress);
+      } catch (e) {
+        peopleProgressCache.set(peopleCacheKey(d), null);
+      }
+    }));
+    loading.textContent = `Matching documents to people. ${Math.min(i + PEOPLE_BATCH, missing.length)} of ${missing.length}.`;
+  }
+  if (seq !== peopleRenderSeq) return;
+
+  // Group. A multi-signer doc appears under each of its signers; that is
+  // the truthful answer to "which documents involve this person".
+  const groups = new Map();
+  const unmatched = [];
+  for (const d of source) {
+    const progress = peopleProgressCache.get(peopleCacheKey(d));
+    if (!progress || progress.length === 0) { unmatched.push(d); continue; }
+    let matchedAny = false;
+    for (const s of progress) {
+      const email = String(s.email || '').trim();
+      const name = String(s.name || '').trim();
+      const key = email ? 'e:' + email.toLowerCase() : (name ? 'n:' + name.toLowerCase() : '');
+      if (!key) continue;
+      matchedAny = true;
+      let g = groups.get(key);
+      if (!g) {
+        g = { name, email, docs: [], lastAt: 0 };
+        groups.set(key, g);
+      }
+      if (!g.name && name) g.name = name;
+      if (!g.docs.some(x => x.docId === d.docId)) g.docs.push(d);
+      const t = Date.parse(d.lastEventAt || d.createdAt);
+      if (Number.isFinite(t) && t > g.lastAt) g.lastAt = t;
+    }
+    if (!matchedAny) unmatched.push(d);
+  }
+
+  peopleList.innerHTML = '';
+
+  const sorted = Array.from(groups.values()).sort((a, b) => b.lastAt - a.lastAt);
+  for (const g of sorted) {
+    peopleList.appendChild(renderPersonGroup(g));
+  }
+
+  if (unmatched.length > 0) {
+    peopleList.appendChild(renderPersonGroup({
+      name: 'Signer details unavailable',
+      email: '',
+      docs: unmatched,
+      lastAt: 0,
+      unmatched: true,
+    }));
+  }
+
+  if (sorted.length === 0 && unmatched.length === 0) {
+    const empty = document.createElement('li');
+    empty.className = 'people-list__empty';
+    empty.textContent = 'We could not group these documents by person. Switch back to "All documents" to see the full list.';
+    peopleList.appendChild(empty);
+  }
+
+  if (docs.length > PEOPLE_DOC_CAP) {
+    const note = document.createElement('li');
+    note.className = 'people-list__note';
+    note.textContent = `Grouping covers your ${PEOPLE_DOC_CAP} most recent documents. Older ones stay in the "All documents" view.`;
+    peopleList.appendChild(note);
+  }
+}
+
+function renderPersonGroup(g) {
+  const li = document.createElement('li');
+  li.className = 'person-group';
+  if (g.unmatched) li.classList.add('person-group--unmatched');
+
+  const details = document.createElement('details');
+  details.className = 'person-group__details';
+
+  const summary = document.createElement('summary');
+
+  const displayName = g.name || g.email || 'Unnamed signer';
+  const initials = displayName.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || '?';
+  const swatch = document.createElement('span');
+  swatch.className = 'person-group__swatch';
+  swatch.setAttribute('aria-hidden', 'true');
+  swatch.textContent = g.unmatched ? '?' : initials;
+
+  const who = document.createElement('span');
+  who.className = 'person-group__who';
+  const nameEl = document.createElement('p');
+  nameEl.className = 'person-group__name';
+  nameEl.textContent = displayName;
+  who.appendChild(nameEl);
+  if (g.email && g.email.toLowerCase() !== displayName.toLowerCase()) {
+    const emailEl = document.createElement('p');
+    emailEl.className = 'person-group__email';
+    emailEl.textContent = g.email;
+    who.appendChild(emailEl);
+  } else if (g.unmatched) {
+    const hintEl = document.createElement('p');
+    hintEl.className = 'person-group__email';
+    hintEl.textContent = 'We could not load signer details for these documents.';
+    who.appendChild(hintEl);
+  }
+
+  const count = document.createElement('span');
+  count.className = 'person-group__count';
+  count.textContent = g.docs.length === 1 ? '1 document' : `${g.docs.length} documents`;
+
+  const caret = document.createElement('span');
+  caret.className = 'person-group__caret';
+  caret.setAttribute('aria-hidden', 'true');
+  caret.textContent = '▾';
+
+  summary.appendChild(swatch);
+  summary.appendChild(who);
+  summary.appendChild(count);
+  summary.appendChild(caret);
+  details.appendChild(summary);
+
+  const body = document.createElement('div');
+  body.className = 'person-group__body';
+
+  const docsOl = document.createElement('ol');
+  docsOl.className = 'docs-list';
+  const sortedDocs = g.docs.slice().sort((a, b) =>
+    (Date.parse(b.lastEventAt || b.createdAt) || 0) - (Date.parse(a.lastEventAt || a.createdAt) || 0));
+  for (const d of sortedDocs) {
+    docsOl.appendChild(renderDocRow(d));
+  }
+  body.appendChild(docsOl);
+
+  // One-tap repeat send. Only offered when we have a real email; the
+  // preview page reads ?to= and &name= and prefills the recipient.
+  if (!g.unmatched && g.email) {
+    const actions = document.createElement('div');
+    actions.className = 'person-group__actions';
+    const send = document.createElement('a');
+    send.className = 'btn btn--primary btn--sm person-group__send';
+    send.href = '../preview/?to=' + encodeURIComponent(g.email) +
+      (g.name ? '&name=' + encodeURIComponent(g.name) : '');
+    send.textContent = 'Send another to ' + (g.name || g.email);
+    actions.appendChild(send);
+    body.appendChild(actions);
+  }
+
+  details.appendChild(body);
+  li.appendChild(details);
+  return li;
 }
 
 function renderDocRow(doc) {

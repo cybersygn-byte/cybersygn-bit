@@ -83,6 +83,26 @@
 
     .dev-note { border-left: 2px solid var(--accent-line); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 var(--r) var(--r) 0; margin: 18px 0; font-size: var(--t-sm); color: var(--text-2); }
     .dev-note strong { color: var(--text); }
+
+    /* "Add signing in five lines" (F2). Mobile-first: one column, the
+       grid only splits on wide screens. */
+    .fl { border-top: 1px solid var(--line); scroll-margin-top: 72px; }
+    .fl h2 { font-size: var(--t-d3); letter-spacing: -0.02em; margin: 0 0 10px; scroll-margin-top: 88px; }
+    .fl__lede { color: var(--text-2); line-height: 1.6; margin: 0 0 22px; max-width: 68ch; }
+    .fl__grid { display: grid; grid-template-columns: 1fr; gap: clamp(20px, 3vw, 36px); align-items: start; }
+    @media (min-width: 900px) { .fl__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); } }
+    .fl__snippet { position: relative; min-width: 0; }
+    .fl__snippet pre { margin: 0; }
+    .fl__copy { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 12px; padding: 8px 14px; min-height: 36px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--bg); color: var(--text-2); cursor: pointer; }
+    .fl__copy:hover { color: var(--text); border-color: var(--accent-line); }
+    @media (pointer: coarse) { .fl__copy { min-height: 44px; min-width: 44px; } }
+    .fl__steps { margin: 0 0 4px; padding-left: 22px; color: var(--text-2); line-height: 1.6; }
+    .fl__steps li { margin-bottom: 12px; }
+    .fl__steps strong { color: var(--text); }
+    .fl-demo { margin-top: 18px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg-2); padding: 18px; }
+    .fl-demo__label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin: 0 0 12px; }
+    .fl-demo__log { font-family: var(--mono); font-size: 12px; color: var(--text-3); margin: 12px 0 0; overflow-wrap: anywhere; }
+    .fl-demo__log.is-live { color: var(--accent-text); }
   </style>
 </head>
 <body>
@@ -109,6 +129,54 @@
       </div>
     </section>
 
+    <!-- F2: Add signing in five lines -->
+    <section class="section fl" id="five-lines">
+      <div class="container">
+        <p class="kicker">Embed</p>
+        <h2>Add signing in five lines.</h2>
+        <p class="fl__lede">One script tag, one attribute. Any element with <code>data-cybersygn-sign</code> opens the full CyberSygn signing flow in an iframe modal on your own page. Point it at a PDF URL, or at a <code>signing_url</code> from the <a href="#create">create endpoint</a> to have an API-created document signed in place. No SDK, no build step, no dependencies.</p>
+
+        <div class="fl__grid">
+          <div class="fl__snippet">
+            <button class="fl__copy" id="fl-copy" type="button" aria-label="Copy the snippet">Copy</button>
+<pre><code id="fl-code">&lt;script src="https://cybersygn.io/embed.js"&gt;&lt;/script&gt;
+&lt;button data-cybersygn-sign="https://your-site.com/contract.pdf"
+        data-cybersygn-source="your-app"&gt;
+  Sign this document
+&lt;/button&gt;</code></pre>
+
+            <div class="fl-demo">
+              <p class="fl-demo__label">Live demo, running on this page</p>
+              <button class="btn btn--primary"
+                      id="fl-demo-btn"
+                      data-cybersygn-sign="/templates-pdf/non-disclosure-agreement.pdf"
+                      data-cybersygn-source="developers-docs">
+                Sign this document
+              </button>
+              <p class="fl-demo__log" id="fl-demo-log">Open it, and this line updates when a cybersygn:complete event arrives.</p>
+            </div>
+          </div>
+
+          <div>
+            <ol class="fl__steps">
+              <li><strong>Get a key.</strong> Keys are issued by hand today: email <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> from your account email. The widget itself loads without one; the key is for <a href="#create">POST /api/v1/documents</a>, which returns the <code>signing_url</code> you hand to the button.</li>
+              <li><strong>Paste the snippet.</strong> Set <code>data-cybersygn-sign</code> to a signer's <code>signing_url</code> (signs that document in place) or to any PDF URL (opens the send flow with the document preloaded).</li>
+              <li><strong>Listen for completion.</strong> When the signer finishes, the widget fires a DOM event on <code>window</code> with the same payload the signing page posts:</li>
+            </ol>
+<pre><code>window.addEventListener("cybersygn:complete", (e) =&gt; {
+  // e.detail = {
+  //   type: "cybersygn:complete",
+  //   docComplete: true,          // every signer done?
+  //   docId: "doc_abc123",
+  //   signerEmail: "ada@example.com"
+  // }
+});</code></pre>
+            <p class="fl__lede">Optional attributes: <code>data-cybersygn-email</code> and <code>data-cybersygn-name</code> pre-fill the signer, <code>data-cybersygn-theme</code> (<code>light</code>, <code>dark</code>, <code>auto</code>) and <code>data-cybersygn-accent</code> (a hex color) match the modal to your brand. Full details on the <a href="/embed/">embed widget page</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section">
       <div class="container">
         <div class="dev-layout">
@@ -116,6 +184,7 @@
           <!-- Table of contents -->
           <nav class="dev-toc" aria-label="On this page">
             <p class="dev-toc__head">On this page</p>
+            <a href="#five-lines">Five-line embed</a>
             <a href="#base-url">Base URL</a>
             <a href="#auth">Authentication</a>
             <a href="#create">Create a document</a>
@@ -161,14 +230,14 @@
 
               <h3>Body</h3>
               <ul>
-                <li><code>pdf_base64</code> — the source PDF as base64 (a <code>data:</code> prefix is stripped for you). Provide this <em>or</em> <code>template</code>.</li>
-                <li><code>template</code> — a template slug from your library (see <a href="#templates">List templates</a>). Provide this <em>or</em> <code>pdf_base64</code>.</li>
-                <li><code>signers</code> — required array of <code>{ name, email, order }</code>. At least one, up to 20. <code>order</code> is optional and defaults to array position.</li>
-                <li><code>fields</code> — optional array of field objects. Omit it and CyberSygn auto-detects every signature, initial, date, and checkbox in the PDF. Pass an explicit array to place them yourself.</li>
-                <li><code>assignments</code> — optional map of <code>fieldId → signerId</code>. Omit it and every field is assigned to the first signer. Pass it for multi-party routing.</li>
-                <li><code>cc</code> — optional array of email addresses to copy on the completed document.</li>
-                <li><code>signing_order</code> — <code>"parallel"</code> (default, everyone can sign at once) or <code>"sequential"</code> (one signer at a time, in order).</li>
-                <li><code>title</code> — optional document title.</li>
+                <li><code>pdf_base64</code>: the source PDF as base64 (a <code>data:</code> prefix is stripped for you). Provide this <em>or</em> <code>template</code>.</li>
+                <li><code>template</code>: a template slug from your library (see <a href="#templates">List templates</a>). Provide this <em>or</em> <code>pdf_base64</code>.</li>
+                <li><code>signers</code>: required array of <code>{ name, email, order }</code>. At least one, up to 20. <code>order</code> is optional and defaults to array position.</li>
+                <li><code>fields</code>: optional array of field objects. Omit it and CyberSygn auto-detects the signature, initial, date, and checkbox fields it finds in the PDF. Pass an explicit array to place them yourself.</li>
+                <li><code>assignments</code>: optional map of <code>fieldId → signerId</code>. Omit it and every field is assigned to the first signer. Pass it for multi-party routing.</li>
+                <li><code>cc</code>: optional array of email addresses to copy on the completed document.</li>
+                <li><code>signing_order</code>: <code>"parallel"</code> (default, everyone can sign at once) or <code>"sequential"</code> (one signer at a time, in order).</li>
+                <li><code>title</code>: optional document title.</li>
               </ul>
 
               <div class="dev-tabs" role="tablist">
@@ -224,14 +293,14 @@ console.log(doc.id, doc.signers[0].signing_url);</code></pre>
       "name": "Ada Lovelace",
       "email": "ada@example.com",
       "status": "pending",
-      "signing_url": "https://cybersygn.io/x?t=..."
+      "signing_url": "https://cybersygn.io/preview/?doc=doc_abc123&amp;t=..."
     }
   ],
   "created_at": "2026-06-13T17:04:00.000Z",
   "status_url": "https://cybersygn.io/api/v1/documents/doc_abc123",
   "webhook_note": "Subscribe to doc.completed via your account webhook to be notified when all signers finish."
 }</code></pre>
-              <div class="dev-note"><strong>Field detection.</strong> When you omit <code>fields</code>, <code>detected_fields</code> is <code>true</code> in the response. If the PDF has no detectable signature fields you get <code>422 no_fields_detected</code> — pass an explicit <code>fields</code> array to place them yourself.</div>
+              <div class="dev-note"><strong>Field detection.</strong> When you omit <code>fields</code>, <code>detected_fields</code> is <code>true</code> in the response. If the PDF has no detectable signature fields you get <code>422 no_fields_detected</code>: pass an explicit <code>fields</code> array to place them yourself.</div>
             </section>
 
             <!-- GET -->
@@ -283,7 +352,7 @@ if (doc.status === "completed") {
             <section id="download">
               <h2>Download the signed PDF <a class="dev-anchor" href="#download" aria-label="Link to this section">#</a></h2>
               <div class="dev-method"><span class="dev-verb dev-verb--get">GET</span><span class="dev-path">/api/v1/documents/:id/download</span></div>
-              <p>Returns the flattened, signed PDF bytes — the same document a signer receives. Only available once the document is <code>completed</code>; before that you get <code>409 not_completed</code>.</p>
+              <p>Returns the flattened, signed PDF bytes, the same document a signer receives. Only available once the document is <code>completed</code>; before that you get <code>409 not_completed</code>.</p>
 
               <div class="dev-tabs" role="tablist">
                 <button class="dev-tab is-active" id="tab-dl-curl" data-tab="dl-curl" type="button" role="tab" aria-selected="true" aria-controls="dl-curl">curl</button>
@@ -466,7 +535,7 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
   "account": "p-yourname-your-customer-123",
   "unmetered": true
 }</code></pre>
-              <p>The tenant key is shown once — store it against your user and use it as that user's bearer token. List your tenant keys with <code>GET /api/v1/keys</code>; revoke one with <code>DELETE /api/v1/keys</code> and body <code>{"key_id":"key_..."}</code>. A tenant key cannot mint further keys.</p>
+              <p>The tenant key is shown once: store it against your user and use it as that user's bearer token. List your tenant keys with <code>GET /api/v1/keys</code>; revoke one with <code>DELETE /api/v1/keys</code> and body <code>{"key_id":"key_..."}</code>. A tenant key cannot mint further keys.</p>
             </section>
 
             <section id="webhooks">
@@ -498,28 +567,28 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
             <!-- EMBEDDED -->
             <section id="embedded">
               <h2>Embedded signing <a class="dev-anchor" href="#embedded" aria-label="Link to this section">#</a></h2>
-              <p>Keep signing inside your own app. Every signer in the create response carries a <code>signing_url</code> — drop it into an iframe and the full CyberSygn signing flow renders in place. No redirect to a third-party site.</p>
+              <p>Keep signing inside your own app. Every signer in the create response carries a <code>signing_url</code>, shaped <code>https://cybersygn.io/preview/?doc=...&amp;t=...</code>. Drop it into an iframe and the full CyberSygn signing flow renders in place. No redirect to a third-party site.</p>
 <pre><code>&lt;!-- src is the signer's signing_url from the create response --&gt;
 &lt;iframe
-  src="https://cybersygn.io/x?t=..."
+  src="https://cybersygn.io/preview/?doc=doc_abc123&amp;t=..."
   style="width:100%;height:90vh;border:0"
   allow="clipboard-read; clipboard-write; camera"
   title="Sign with CyberSygn"&gt;
 &lt;/iframe&gt;</code></pre>
-              <p>The signing surface posts a <code>cybersygn:complete</code> message to the parent window when signing finishes, so you can update your own UI:</p>
+              <p>When the signer submits their part, the signing page posts a message to the parent window so you can update your own UI. The exact payload:</p>
 <pre><code>window.addEventListener("message", (e) =&gt; {
   if (e.origin !== "https://cybersygn.io") return;
   if (e.data &amp;&amp; e.data.type === "cybersygn:complete") {
+    // e.data = {
+    //   type: "cybersygn:complete",
+    //   docComplete: true,          // false while co-signers remain
+    //   docId: "doc_abc123",
+    //   signerEmail: "ada@example.com"
+    // }
     // close the modal, refresh status, etc.
   }
 });</code></pre>
-              <p>If you would rather not build the modal yourself, the hosted embed widget does it for you. Drop one script tag and any element with a <code>data-cybersygn-sign</code> attribute becomes a launcher that opens signing in a managed iframe modal, complete with backdrop, close handling, and the same completion message.</p>
-<pre><code>&lt;script src="https://cybersygn.io/embed.js"&gt;&lt;/script&gt;
-
-&lt;button data-cybersygn-sign="https://your-site.com/contract.pdf"
-        data-cybersygn-source="your-app"&gt;
-  Sign this document
-&lt;/button&gt;</code></pre>
+              <p>If you would rather not build the modal yourself, the hosted embed widget does it for you: the <a href="#five-lines">five-line snippet</a> at the top of this page. It opens signing in a managed full-viewport iframe modal, verifies the message origin, re-dispatches the same payload as a <code>cybersygn:complete</code> DOM CustomEvent on <code>window</code> (in <code>event.detail</code>), and closes itself after completion. <code>data-cybersygn-sign</code> takes either a <code>signing_url</code> or a plain PDF URL.</p>
               <p>See the <a href="/embed/">embed widget docs</a> for theming, programmatic <code>CyberSygn.open()</code> control, and prefill options.</p>
             </section>
 
@@ -591,7 +660,49 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
         history.replaceState(null, '', a.getAttribute('href'));
       });
     });
+
+    // Five-line embed section: copy button + live completion log.
+    (function () {
+      var copyBtn = document.getElementById('fl-copy');
+      var code = document.getElementById('fl-code');
+      if (copyBtn && code) {
+        copyBtn.addEventListener('click', function () {
+          var text = code.textContent;
+          function done(label) {
+            copyBtn.textContent = label;
+            setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () { done('Copied'); },
+              function () { done('Select + copy'); }
+            );
+          } else {
+            // Old-browser fallback: select the code so a manual copy works.
+            var range = document.createRange();
+            range.selectNodeContents(code);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            done('Select + copy');
+          }
+        });
+      }
+
+      // The live demo button above is wired by /embed.js itself (it is the
+      // real widget, not a mock). This listener is the documented
+      // integration point, driving the log line with real event data.
+      window.addEventListener('cybersygn:complete', function (e) {
+        var log = document.getElementById('fl-demo-log');
+        if (!log || !e.detail) return;
+        log.classList.add('is-live');
+        log.textContent = 'cybersygn:complete received. docId=' +
+          String(e.detail.docId || 'unknown') +
+          ' docComplete=' + String(!!e.detail.docComplete);
+      });
+    })();
   </script>
+  <script src="/embed.js" defer></script>
 
 </body>
 </html>

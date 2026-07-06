@@ -249,6 +249,9 @@ async function main() {
   console.log('  wrote dist/dashboard/index.html');
   await copyFile(join(SRC, 'dashboard', 'app.js'), join(OUT, 'dashboard', 'app.js'));
   console.log('  wrote dist/dashboard/app.js');
+  // habit.css: F5 habit layer (view toggle + by-person grouping) styles.
+  await copyFile(join(SRC, 'dashboard', 'habit.css'), join(OUT, 'dashboard', 'habit.css'));
+  console.log('  wrote dist/dashboard/habit.css');
   await copyFile(join(SRC, 'dashboard', 'owner-panel.js'), join(OUT, 'dashboard', 'owner-panel.js'));
   console.log('  wrote dist/dashboard/owner-panel.js');
   await copyFile(join(SRC, 'dashboard', 'join.html'), join(OUT, 'dashboard', 'join.html'));
