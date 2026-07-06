@@ -24,7 +24,10 @@ const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 
 const REQUEST_TIMEOUT_MS = 30_000;   // drafting is longer than field detection
-const MAX_TOKENS = 3000;
+// A starting contract draft is a page or two, not an exhaustive agreement.
+// 1600 tokens is ample and keeps generation comfortably inside the timeout
+// (3000 tokens routinely ran past 30s and failed every request).
+const MAX_TOKENS = 1600;
 const MAX_DESCRIPTION_CHARS = 1200;
 const MAX_PARTY_CHARS = 120;
 const MAX_RESPONSE_BYTES = 128 * 1024;
@@ -146,6 +149,7 @@ function buildSystemPrompt() {
     '- Do NOT add any note claiming the document is legally binding, complete, or a substitute for a lawyer.',
     '- Do NOT invent facts the user did not provide; leave them as placeholders.',
     '- Keep it a starting template the user will review and adapt.',
+    '- Keep it focused and concise: a typical draft is 6 to 12 numbered sections, one page or two. Do not pad with boilerplate the user did not ask for.',
   ].join('\n');
 }
 
