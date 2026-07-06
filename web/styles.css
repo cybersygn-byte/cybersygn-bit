@@ -952,7 +952,7 @@ button { font: inherit; cursor: pointer; }
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
   font-family: var(--sans);
-  font-size: var(--t-sm);
+  font-size: var(--t); /* 16px: below 16, iOS Safari zooms the page on focus */
   color: var(--text);
   resize: vertical;
 }
@@ -2824,7 +2824,7 @@ button { font: inherit; cursor: pointer; }
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  font-size: var(--t-sm);
+  font-size: var(--t); /* 16px: below 16, iOS Safari zooms the page on focus */
   transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
 }
 .origin-panel__input:focus {
@@ -9274,4 +9274,23 @@ body[data-owner-active="true"] .free-pill {
   flex-wrap: wrap;
   gap: var(--s-4);
   margin-top: var(--s-6);
+}
+
+/* ============================================================================
+   TOUCH TARGETS (2026-07 full mobile pass). On coarse-pointer devices only,
+   enforce comfortable minimum tap sizes so nothing is fiddly on a phone.
+   Scoped to (pointer: coarse) so the mouse/desktop layout is untouched.
+   ============================================================================ */
+@media (pointer: coarse) {
+  .btn { min-height: 44px; }
+  .btn--sm { min-height: 40px; }
+  .btn--lg { min-height: 52px; }
+  /* FAQ toggles were ~26px tall; give them a real 48px tap row. */
+  .faq-pre__item summary,
+  .faq__q { min-height: 48px; display: flex; align-items: center; }
+  .billing-toggle__opt { min-height: 42px; }
+  .filter-chip,
+  .add-field-btn,
+  .cmd-more__item,
+  .legend-chip { min-height: 40px; }
 }
