@@ -216,6 +216,10 @@ async function main() {
   await copyFile(join(SRC, 'preview', 'signers.js'), join(OUT, 'preview', 'signers.js'));
   console.log('  wrote dist/preview/signers.js');
 
+  // signer-share.css: F1 signer post-sign viral screen styles.
+  await copyFile(join(SRC, 'preview', 'signer-share.css'), join(OUT, 'preview', 'signer-share.css'));
+  console.log('  wrote dist/preview/signer-share.css');
+
   // api.js: client wrapper over the Worker endpoints.
   await copyFile(join(SRC, 'preview', 'api.js'), join(OUT, 'preview', 'api.js'));
   console.log('  wrote dist/preview/api.js');
