@@ -38,6 +38,7 @@ import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
+import { generateDraft } from './ai-draft.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
 import {
   freeSignup,
@@ -371,6 +372,12 @@ const worker = {
     }
     if (request.method === 'POST' && url.pathname === '/api/testimonial') {
       return handleTestimonialSubmit(request, env, url);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/testimonials') {
+      return handleTestimonialsList(env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/draft/generate') {
+      return handleDraftGenerate(request, env, url);
     }
     // Template library (slice 105).
     if (request.method === 'GET' && url.pathname === '/api/templates/list') {
@@ -1588,6 +1595,127 @@ async function handleTestimonialSubmit(request, env, url) {
     } catch (e) { /* tolerated */ }
   }
   return jsonResponse(200, { ok: true, id: record.id, moderationState: 'pending' });
+}
+
+/**
+ * Public testimonials list (Move 1: honest social proof).
+ *
+ * Surfaces ONLY approved testimonials for the homepage. Integrity rules:
+ *   - Returns records whose moderationState === 'approved' and nothing
+ *     else. Pending and rejected submissions never leak.
+ *   - Strips the email (privacy). Each item is only the fields the
+ *     submitter consented to publish: name, quote, role, location,
+ *     submittedAt.
+ *   - If there is no approved data, returns an empty list so the client
+ *     hides the section rather than showing fabricated proof.
+ *
+ * Bounded and cheap: a single KV list page (limit 100), capped at 24
+ * rendered items, cached at the edge for 5 minutes.
+ */
+async function handleTestimonialsList(env) {
+  const CAP = 24;
+  const items = [];
+  const docsBinding = env && env.CYBERSYGN_DOCS;
+  if (docsBinding && typeof docsBinding.list === 'function') {
+    try {
+      // Single bounded page. Cheap by design; we never paginate here.
+      const result = await docsBinding.list({ prefix: 'testimonial:', limit: 100 });
+      for (const entry of result.keys || []) {
+        if (items.length >= CAP) break;
+        let raw;
+        try { raw = await docsBinding.get(entry.name); } catch (e) { continue; }
+        if (!raw) continue;
+        let rec;
+        try { rec = JSON.parse(raw); } catch (e) { continue; }
+        if (!rec || rec.moderationState !== 'approved') continue;
+        // Strip email; publish only consented fields.
+        items.push({
+          name: typeof rec.name === 'string' ? rec.name.slice(0, 80) : '',
+          quote: typeof rec.quote === 'string' ? rec.quote.slice(0, 600) : '',
+          role: typeof rec.role === 'string' ? rec.role.slice(0, 80) : '',
+          location: typeof rec.location === 'string' ? rec.location.slice(0, 80) : '',
+          submittedAt: typeof rec.submittedAt === 'string' ? rec.submittedAt : null,
+        });
+      }
+    } catch (e) {
+      console.error('[testimonials] list failed:', e && e.message);
+    }
+  }
+
+  const body = JSON.stringify({ testimonials: items });
+  return new Response(body, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'public, max-age=300',
+      'x-content-type-options': 'nosniff',
+      'referrer-policy': 'strict-origin-when-cross-origin',
+      'x-frame-options': 'DENY',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
+    },
+  });
+}
+
+/**
+ * AI contract-drafting wedge (Move 3). Turns a plain-English description
+ * into a professional starting draft with bracketed [PLACEHOLDERS].
+ *
+ * Integrity:
+ *   - Hard IP rate limit (5/hour, 20/day) so the paid API can't be run up.
+ *   - If ANTHROPIC_API_KEY is not configured, returns 200 { ok:false,
+ *     reason:'unconfigured' } so the client shows a graceful fallback,
+ *     NOT a 500.
+ *   - The draft is a starting template, not legal advice; the disclaimer
+ *     rides on every ok response.
+ *   - Provider errors and the API key never reach the client.
+ */
+async function handleDraftGenerate(request, env, url) {
+  const limit = await checkRateLimit(env, `draft:${ipKey(request)}`, [
+    { windowSec: 60 * 60, max: 5 },
+    { windowSec: 60 * 60 * 24, max: 20 },
+  ]);
+  if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/draft/generate' });
+
+  const parsed = await readJsonBody(request);
+  if (parsed.error) return jsonResponse(400, parsed.error);
+  const payload = parsed.value || {};
+
+  const parties = payload.parties && typeof payload.parties === 'object' ? payload.parties : {};
+
+  let result;
+  try {
+    result = await generateDraft(env, {
+      kind: payload.kind,
+      description: payload.description,
+      parties: { you: parties.you, them: parties.them },
+    });
+  } catch (e) {
+    // Belt-and-suspenders: generateDraft already guards its failures, but
+    // any unexpected throw must never surface a raw error or the key.
+    console.error('[draft] unexpected error:', e && e.message);
+    return jsonResponse(200, {
+      ok: false,
+      reason: 'error',
+      message: 'Drafting is temporarily unavailable. Please try again in a moment.',
+    });
+  }
+
+  if (!result || !result.ok) {
+    // Graceful, non-500 for every non-ok path (unconfigured / invalid / error).
+    return jsonResponse(200, {
+      ok: false,
+      reason: (result && result.reason) || 'error',
+      message: (result && result.message) || 'Drafting is temporarily unavailable. Please try again in a moment.',
+    });
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    kind: result.kind,
+    title: result.title,
+    body: result.body,
+    disclaimer: 'This is a starting draft, not legal advice. Review it (ideally with a licensed attorney) before you send.',
+  });
 }
 
 /**

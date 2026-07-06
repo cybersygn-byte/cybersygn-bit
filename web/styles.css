@@ -9128,3 +9128,150 @@ body[data-owner-active="true"] .free-pill {
 
 /* KPI strip trim: hide the marketing-math tiles so only real numbers show. */
 .fh-tile--soft { display: none !important; }
+
+/* ========================================================================
+   HONEST SOCIAL PROOF
+   Trust bar, testimonials, and the "why people move" value strip.
+   All live figures are real-data-or-hidden; the markup renders empty
+   containers and JS fills or reveals them. Crisp hairlines, sentence
+   case, calm surfaces, mono tabular numerals for figures.
+   ======================================================================== */
+
+/* --- Trust bar directly under the hero --- */
+.trustbar {
+  padding-block: var(--s-5);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.trustbar__row {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5) var(--s-7);
+  align-items: baseline;
+}
+.trustbar__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.trustbar__item[hidden] { display: none; }
+.trustbar__fig {
+  font-family: var(--mono);
+  font-size: var(--t-l);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.trustbar__fig--word {
+  font-size: var(--t-m);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--accent-text);
+}
+.trustbar__unit { color: var(--accent); margin-left: 1px; }
+.trustbar__label {
+  font-size: var(--t-s);
+  color: var(--text-2);
+  line-height: 1.35;
+}
+@media (max-width: 720px) {
+  .trustbar__row { gap: var(--s-4) var(--s-5); }
+  .trustbar__item { flex: 1 1 45%; }
+}
+
+/* --- Testimonials --- */
+.testimonials[hidden] { display: none; }
+.testimonials__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--s-5);
+}
+.testimonial {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.testimonial__quote {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--t-l);
+  line-height: 1.5;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.testimonial__name {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--t-s);
+  color: var(--text);
+}
+.testimonial__meta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: var(--t-m);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--text-3);
+}
+
+/* Always-visible submission line under testimonials. */
+.testimonials__ask {
+  padding-block: var(--s-6);
+  border-top: 1px solid var(--line);
+}
+.testimonials__ask-line {
+  margin: 0;
+  font-size: var(--t-s);
+  color: var(--text-3);
+  text-align: center;
+}
+.testimonials__ask-line a { color: var(--accent-text); }
+
+/* --- "Why people move from DocuSign" value strip --- */
+.valuestrip__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-5);
+}
+.valuestrip__item {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  padding: var(--s-5);
+}
+.valuestrip__head {
+  margin: 0 0 var(--s-2);
+  font-weight: 600;
+  font-size: var(--t-l);
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.valuestrip__body {
+  margin: 0;
+  font-size: var(--t-s);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.valuestrip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+}

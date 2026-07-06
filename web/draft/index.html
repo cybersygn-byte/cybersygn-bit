@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Describe the deal. Get a contract ready to sign. CyberSygn.</title>
+  <meta name="description" content="AI contract drafting for freelancers, consultants, and small studios. Describe the work in plain English and get a clean starting draft you can review and send for signature. Starting drafts, not legal advice." />
+  <meta name="keywords" content="AI contract drafting, freelance contract generator, NDA generator, consulting agreement, statement of work, e-signature for freelancers" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/draft/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <meta property="og:title" content="Describe the deal. Get a contract ready to sign." />
+  <meta property="og:description" content="AI contract drafting for freelancers and small studios. Plain English in, a clean starting draft out. Starting drafts, not legal advice." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/draft/" />
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./draft.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">draft</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Draft">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../#pricing">Pricing</a>
+        <a class="masthead__link" href="../templates/">Templates</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Launch preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero draft-hero">
+      <div class="container">
+        <p class="kicker hero__kicker">For freelancers, consultants, and small studios.</p>
+        <h1 class="h-display hero__title">Describe the deal. Get a contract ready to sign.</h1>
+        <p class="lede hero__lede">You do the work, not the paperwork. Tell CyberSygn who is involved, what the job is, and how much it pays. Get back a clean starting draft you can review, adjust with a licensed attorney, and send for signature in the same place. No templates to hunt for, no clause-copying from an old deal.</p>
+      </div>
+    </section>
+
+    <section class="section draft-section">
+      <div class="container draft-layout">
+
+        <!-- The input experience. -->
+        <div class="draft-panel" id="draft-form-panel">
+          <form id="draft-form" class="draft-form" autocomplete="on" novalidate>
+            <fieldset class="draft-fieldset">
+              <legend class="draft-legend">What do you need?</legend>
+
+              <div class="field">
+                <label class="draft-field-label" for="draft-kind">Contract kind</label>
+                <select id="draft-kind" name="kind" class="field__input draft-select">
+                  <option value="freelance">Freelance agreement</option>
+                  <option value="nda">NDA</option>
+                  <option value="consulting">Consulting agreement</option>
+                  <option value="sow">Statement of work</option>
+                  <option value="invoice">Invoice terms</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="draft-field-label" for="draft-description">Describe the deal</label>
+                <textarea id="draft-description" name="description" class="field__textarea draft-textarea" rows="6" placeholder="Describe the work, who is involved, the amount, and any key terms. Example: A three month brand identity project for Acme Co. Fifty percent up front, fifty on delivery. I keep the rights to unused concepts."></textarea>
+                <p class="draft-hint caption" id="draft-hint">The more specific you are, the better the draft. Plain English is fine.</p>
+              </div>
+
+              <div class="draft-row">
+                <div class="field">
+                  <label class="draft-field-label" for="draft-you">Your name <span class="draft-optional">(optional)</span></label>
+                  <input id="draft-you" name="yourName" type="text" class="field__input" placeholder="Your name or studio" autocomplete="name" />
+                </div>
+                <div class="field">
+                  <label class="draft-field-label" for="draft-other">Other party <span class="draft-optional">(optional)</span></label>
+                  <input id="draft-other" name="otherParty" type="text" class="field__input" placeholder="Client or counterparty" />
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn--primary btn--lg btn--block" id="draft-submit">
+                Draft my contract <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+              </button>
+              <p class="draft-disclaimer caption" id="draft-form-disclaimer">Starting drafts, not legal advice. Review with a licensed attorney in your jurisdiction before signing.</p>
+            </fieldset>
+          </form>
+        </div>
+
+        <!-- Output / status region. Lives beside the form on wide screens,
+             below it on mobile. Always in the DOM; content swapped by app.js. -->
+        <div class="draft-panel draft-output" id="draft-output" aria-live="polite" aria-atomic="false">
+          <div class="draft-output__empty" id="draft-output-empty">
+            <p class="draft-output__empty-kicker kicker kicker--muted">Your draft appears here</p>
+            <p class="draft-output__empty-body">Fill in the deal on the left and press draft. You will see the full contract text, a copy button, and a path to send it for signature.</p>
+            <ul class="draft-trust">
+              <li>Your description is used to generate the draft and is not sold or shared.</li>
+              <li>When you send for signature, every signed PDF carries a tamper-evident audit trail.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="section section--alt draft-why">
+      <div class="container container--prose">
+        <h2 class="h-section">Why draft here instead of DocuSign</h2>
+        <p>DocuSign is the incumbent, and it is good at moving a finished PDF through signatures. It does not write the contract for you, and it prices per envelope. CyberSygn starts one step earlier: describe the deal, get a draft, then route it for signature in the same place.</p>
+        <div class="draft-compare" role="table" aria-label="How CyberSygn compares">
+          <div class="draft-compare__row draft-compare__row--head" role="row">
+            <span role="columnheader"></span>
+            <span role="columnheader">CyberSygn</span>
+            <span role="columnheader">Typical e-signature tool</span>
+          </div>
+          <div class="draft-compare__row" role="row">
+            <span role="rowheader">Starts from</span>
+            <span role="cell">A plain-English description</span>
+            <span role="cell">A finished PDF you supply</span>
+          </div>
+          <div class="draft-compare__row" role="row">
+            <span role="rowheader">Field placement</span>
+            <span role="cell">Signature fields detected automatically</span>
+            <span role="cell">Dragged and dropped by hand</span>
+          </div>
+          <div class="draft-compare__row" role="row">
+            <span role="rowheader">Pricing</span>
+            <span role="cell">Flat: Solo $12/mo, Studio $29/mo</span>
+            <span role="cell">Often metered per envelope</span>
+          </div>
+          <div class="draft-compare__row" role="row">
+            <span role="rowheader">Sends</span>
+            <span role="cell">Unlimited on paid plans</span>
+            <span role="cell">Commonly capped and metered</span>
+          </div>
+        </div>
+        <p class="caption draft-compare__note">Comparison is on published facts and may change. Check each vendor's current terms.</p>
+        <p><strong>Important.</strong> AI-drafted contracts are structural starting drafts. They do not constitute legal advice. Replace placeholders, review with a licensed attorney in your jurisdiction, and adjust for your specific situation before signing.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado. Starting drafts, not legal advice.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="../#pricing">Pricing</a>
+        <a href="../templates/">Templates</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+
+</body>
+</html>

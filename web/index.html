@@ -225,6 +225,7 @@
       </a>
       <nav class="masthead__nav" aria-label="Primary">
         <a class="masthead__link" href="#how">How it works</a>
+        <a class="masthead__link" href="./draft/">AI draft</a>
         <a class="masthead__link" href="#pricing">Pricing</a>
         <a class="masthead__link" href="./developers/">Developers</a>
         <a class="masthead__link masthead__link--cta" href="./preview/">Try It Out</a>
@@ -326,15 +327,16 @@
     <div class="container">
       <div class="hero__grid">
         <div>
-          <p class="kicker hero__kicker">Signing software that respects your time.</p>
+          <p class="kicker hero__kicker">Unlimited e-signatures. Radically private.</p>
           <h1 class="h-display hero__title">
-            Drop a PDF<span class="dot">.</span><br>
-            Every field appears<span class="dot">.</span><br>
-            <span class="accent">In under three seconds</span><span class="dot">.</span>
+            Get it signed<span class="dot">.</span><br>
+            Without the <span class="accent">DocuSign bill</span><span class="dot">.</span>
           </h1>
           <p class="lede hero__lede">
-            Auto-placed fields. Quick tap signers. No friction.
-            Built by people who treat signing as a means, not an end.
+            Drop a PDF and CyberSygn finds every signature line for you. Send it, get it
+            signed, keep the tamper-evident audit trail. Unlimited documents for the price of
+            a single seat elsewhere, and your files never leave your browser until you choose
+            to send.
           </p>
           <div class="hero__actions">
             <a class="btn btn--primary btn--lg" href="./preview/">
@@ -411,6 +413,129 @@
             <span class="demo-doc__counter-label">fields<br>found</span>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TRUST BAR ======================
+       A small row of real proofs directly under the hero. Static-but-true
+       facts render always. The two live figures (Origin spots remaining,
+       labeled documents in the dataset) start hidden and are revealed by
+       JS ONLY when a real fetch succeeds. No zeros pretending to be
+       traction: if a fetch fails, that chip stays hidden and the static
+       facts carry the row. -->
+  <section class="trustbar" aria-label="Product facts">
+    <div class="container">
+      <ul class="trustbar__row">
+        <li class="trustbar__item">
+          <span class="trustbar__fig">500<span class="trustbar__unit">+</span></span>
+          <span class="trustbar__label">Contract templates, free to start from</span>
+        </li>
+        <li class="trustbar__item">
+          <span class="trustbar__fig trustbar__fig--word">In-browser</span>
+          <span class="trustbar__label">Field detection runs on your device</span>
+        </li>
+        <li class="trustbar__item">
+          <span class="trustbar__fig trustbar__fig--word">Tamper-evident</span>
+          <span class="trustbar__label">Audit trail on every completed document</span>
+        </li>
+        <!-- Live: labeled documents in the consented dataset. Hidden until a
+             real /api/dataset/count response arrives. -->
+        <li class="trustbar__item trustbar__item--live" id="trustbar-dataset" hidden>
+          <span class="trustbar__fig"><span id="dataset-total">0</span></span>
+          <span class="trustbar__label">Documents labeled by contributors</span>
+        </li>
+        <!-- Live: Origin founding spots remaining. Hidden until a real
+             /api/billing/founding-count response arrives, and stays hidden
+             once the cap is full (no CTA pressure past the cap). -->
+        <li class="trustbar__item trustbar__item--live" id="trustbar-founding" hidden>
+          <span class="trustbar__fig"><span id="trustbar-founding-num">0</span></span>
+          <span class="trustbar__label">Founding spots still open</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ====================== TESTIMONIALS ======================
+       Fetches GET /api/testimonials on load and renders ONLY real approved
+       testimonials. If the response is empty or fails, the whole section
+       stays display:none so there is never an empty or fabricated block.
+       Every field is escaped before it touches innerHTML. -->
+  <section class="section testimonials" id="testimonials" hidden>
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">In their words.</p>
+          <h2 class="h-section section__title">What early users say.</h2>
+        </div>
+      </header>
+      <ul class="testimonials__grid" id="testimonials-grid" aria-live="polite"></ul>
+    </div>
+  </section>
+
+  <!-- Always-visible submission line. Links to a submission page if one
+       exists, else falls back to a plain mailto. -->
+  <div class="testimonials__ask">
+    <div class="container">
+      <p class="testimonials__ask-line">
+        Used CyberSygn?
+        <a href="mailto:hello@cybersygn.io?subject=My%20CyberSygn%20experience">Share your experience</a>.
+      </p>
+    </div>
+  </div>
+
+  <!-- ====================== WHY PEOPLE MOVE ======================
+       Honest, facts-only comparison. Price, unlimited vs metered,
+       auto-detect vs drag-and-drop, privacy. No quotes, no insults.
+       DocuSign is the incumbent, framed on facts. -->
+  <section class="section valuestrip" id="why-move">
+    <div class="container">
+      <header class="section__head">
+        <div>
+          <p class="kicker kicker--muted">A fair comparison.</p>
+          <h2 class="h-section section__title">Why people move from DocuSign.</h2>
+        </div>
+        <p class="lede section__lede">
+          DocuSign built the category. These are the plain differences people weigh when they
+          switch. Facts only, so you can decide for yourself.
+        </p>
+      </header>
+      <ul class="valuestrip__grid">
+        <li class="valuestrip__item">
+          <p class="valuestrip__head">Unlimited, not metered</p>
+          <p class="valuestrip__body">
+            Send as many documents as you need on a flat plan. Incumbent plans commonly cap
+            envelopes per user and charge once you pass the limit.
+          </p>
+        </li>
+        <li class="valuestrip__item">
+          <p class="valuestrip__head">Fields found for you</p>
+          <p class="valuestrip__body">
+            CyberSygn reads the PDF and highlights every signature line, initial, date, and
+            checkbox. The usual flow is dragging each field onto the page by hand.
+          </p>
+        </li>
+        <li class="valuestrip__item">
+          <p class="valuestrip__head">One flat price</p>
+          <p class="valuestrip__body">
+            Solo is a single low monthly price for unlimited documents. Studio adds a shared
+            three-seat workspace. No per-seat math to get to unlimited sending.
+          </p>
+        </li>
+        <li class="valuestrip__item">
+          <p class="valuestrip__head">Files stay in your browser</p>
+          <p class="valuestrip__body">
+            Detection runs on your device. Your document does not leave the page until you
+            choose to send it, a claim a server-side signer cannot make.
+          </p>
+        </li>
+      </ul>
+      <div class="valuestrip__actions">
+        <a class="btn btn--primary btn--lg" href="./preview/">
+          Try It Out
+          <span class="btn-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="btn btn--ghost btn--lg" href="#pricing">See pricing</a>
       </div>
     </div>
   </section>
@@ -1147,6 +1272,16 @@
         const data = await res.json();
         if (typeof data.remaining !== 'number') return;
         const cap = typeof data.cap === 'number' ? data.cap : 100;
+
+        // Reveal the hero trust-bar chip only when there are real spots left.
+        // Once the cap is full we keep it hidden (no CTA pressure past close).
+        const tbFounding = document.getElementById('trustbar-founding');
+        const tbFoundingNum = document.getElementById('trustbar-founding-num');
+        if (tbFounding && tbFoundingNum && data.remaining > 0) {
+          tbFoundingNum.textContent = String(data.remaining);
+          tbFounding.hidden = false;
+        }
+
         const badge = document.getElementById('founding-badge');
         const remainingEl = document.getElementById('founding-remaining');
         const remainingCount = document.getElementById('founding-remaining-count');
@@ -1206,7 +1341,14 @@
           const r = await fetch('/api/dataset/count', { cache: 'no-store' });
           if (!r.ok) return;
           const d = await r.json();
-          if (typeof d.total === 'number' && d.total !== current) tween(d.total);
+          if (typeof d.total !== 'number') return;
+          // Reveal the hero trust-bar chip only for a real, positive count.
+          // A zero or a failed fetch leaves the chip hidden (no fake traction).
+          if (d.total > 0) {
+            const chip = document.getElementById('trustbar-dataset');
+            if (chip) chip.hidden = false;
+          }
+          if (d.total !== current) tween(d.total);
         } catch (e) {}
       }
       refresh();
@@ -1241,6 +1383,57 @@
         clearInterval(loopId);
         if (!document.hidden) { tickCycle(); loopId = setInterval(tickCycle, CYCLE_MS); }
       });
+    })();
+  </script>
+  <script>
+    // Testimonials. Fetch GET /api/testimonials on load and render ONLY
+    // real approved records. If the response is empty, malformed, or the
+    // fetch fails, the whole section stays hidden so there is never an
+    // empty or fabricated testimonial block. Every field is HTML-escaped
+    // before it touches innerHTML (XSS on user-submitted text).
+    (function () {
+      var section = document.getElementById('testimonials');
+      var grid = document.getElementById('testimonials-grid');
+      if (!section || !grid) return;
+
+      function esc(v) {
+        return String(v == null ? '' : v)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function meta(role, location) {
+        var parts = [];
+        if (role) parts.push(esc(role));
+        if (location) parts.push(esc(location));
+        return parts.length ? '<p class="testimonial__meta">' + parts.join(' &middot; ') + '</p>' : '';
+      }
+
+      fetch('/api/testimonials', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var list = data && Array.isArray(data.testimonials) ? data.testimonials
+                   : (Array.isArray(data) ? data : []);
+          // Only render entries that carry a real quote.
+          var clean = list.filter(function (t) {
+            return t && typeof t.quote === 'string' && t.quote.trim().length > 0;
+          });
+          if (clean.length === 0) return;  // stay hidden
+
+          grid.innerHTML = clean.map(function (t) {
+            return '<li class="testimonial">' +
+              '<blockquote class="testimonial__quote">' + esc(t.quote) + '</blockquote>' +
+              (t.name ? '<p class="testimonial__name">' + esc(t.name) + '</p>' : '') +
+              meta(t.role, t.location) +
+            '</li>';
+          }).join('');
+
+          section.hidden = false;
+        })
+        .catch(function () { /* stay hidden */ });
     })();
   </script>
   <script>

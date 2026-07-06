@@ -1,0 +1,247 @@
+/* CyberSygn draft page (/draft/) page-specific styles.
+   Loaded after ../styles.css so it inherits every token: navy/cyan,
+   --s-*, --r-*, --sans/--mono/--serif, light + dark themes. Keep it calm:
+   surfaces, thin lines, one accent. Mobile-first, no horizontal overflow. */
+
+.draft-hero { padding-block: clamp(28px, 6vh, 72px) clamp(20px, 4vh, 40px); }
+
+.draft-section { padding-top: clamp(24px, 5vh, 48px); }
+
+/* Two panels side by side on wide screens, stacked on mobile. */
+.draft-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-5);
+  align-items: start;
+}
+@media (min-width: 860px) {
+  .draft-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+.draft-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: var(--s-5);
+  min-width: 0;
+}
+@media (min-width: 860px) {
+  /* Keep the output in view while the user scrolls the form on tall screens. */
+  .draft-output { position: sticky; top: var(--s-5); }
+}
+
+/* ── Form ─────────────────────────────────────────────── */
+.draft-fieldset { border: 0; margin: 0; padding: 0; }
+.draft-legend {
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  margin-bottom: var(--s-4);
+  padding: 0;
+}
+
+.draft-field-label {
+  display: block;
+  font-family: var(--sans);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--s-2);
+}
+.draft-optional { font-weight: 400; color: var(--text-3); }
+
+.draft-select { appearance: none; -webkit-appearance: none; cursor: pointer; background-image: none; }
+.draft-textarea { min-height: 128px; }
+
+.draft-hint { margin-top: var(--s-2); }
+
+.draft-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-3);
+}
+@media (min-width: 520px) {
+  .draft-row { grid-template-columns: 1fr 1fr; }
+}
+
+.draft-form .btn--block { margin-top: var(--s-2); }
+.draft-disclaimer { margin-top: var(--s-3); }
+
+/* Loading dots + spinner. */
+.draft-dots::after {
+  content: '';
+  animation: draft-dots 1.4s steps(4, end) infinite;
+}
+@keyframes draft-dots {
+  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } 100% { content: ''; }
+}
+.draft-spinner {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  border-top-color: var(--accent);
+  animation: draft-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+@keyframes draft-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .draft-spinner { animation: none; }
+  .draft-dots::after { content: '...'; animation: none; }
+}
+
+/* ── Output: empty state ──────────────────────────────── */
+.draft-output__empty-kicker { margin-bottom: var(--s-3); }
+.draft-output__empty-body { color: var(--text-2); margin-bottom: var(--s-4); }
+.draft-trust {
+  list-style: none;
+  margin: 0; padding: 0;
+  display: grid;
+  gap: var(--s-2);
+}
+.draft-trust li {
+  position: relative;
+  padding-left: var(--s-4);
+  font-size: var(--t-sm);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+.draft-trust li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0.5em;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ── Output: status / note ────────────────────────────── */
+.draft-status { display: flex; align-items: center; gap: var(--s-3); }
+.draft-status__text { color: var(--text-2); margin: 0; }
+
+.draft-note { display: grid; gap: var(--s-3); }
+.draft-note__text { color: var(--text-2); margin: 0; }
+.draft-note--retry .draft-note__text { color: var(--text); }
+
+/* ── Output: the rendered draft ───────────────────────── */
+.draft-result { display: grid; gap: var(--s-4); }
+.draft-result__head { display: grid; gap: var(--s-2); }
+.draft-result__title {
+  font-family: var(--serif);
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.2;
+  margin: 0;
+  color: var(--text);
+}
+
+/* The disclaimer is deliberately prominent: bordered accent strip. */
+.draft-result__disclaimer {
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r);
+  color: var(--accent-text);
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.draft-result__body {
+  margin: 0;
+  padding: var(--s-4);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.draft-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+.draft-result__handoff { margin: 0; }
+
+/* ── Output: early-access state ───────────────────────── */
+.draft-early { display: grid; gap: var(--s-3); }
+.draft-early__title {
+  font-family: var(--serif);
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: 1.2;
+  margin: 0;
+  color: var(--text);
+}
+.draft-early__body { color: var(--text-2); margin: 0; }
+.draft-early__form { display: grid; gap: var(--s-2); margin-top: var(--s-2); }
+.draft-early__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+.draft-early__row .field__input { flex: 1 1 200px; min-width: 0; }
+.draft-early__status { margin: 0; }
+.draft-early__alt {
+  margin-top: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: var(--s-3);
+  justify-items: start;
+}
+.draft-early__alt-lead { margin: 0; color: var(--text-2); font-weight: 600; }
+
+/* ── Compare table (facts only) ───────────────────────── */
+.draft-compare {
+  margin: var(--s-5) 0 var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.draft-compare__row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 1.4fr;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--line);
+  font-size: var(--t-sm);
+  align-items: baseline;
+}
+.draft-compare__row:first-child { border-top: 0; }
+.draft-compare__row--head {
+  background: var(--bg-2);
+  font-family: var(--mono);
+  font-size: var(--t-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.draft-compare__row [role="rowheader"] { font-weight: 600; color: var(--text); }
+.draft-compare__row [role="cell"]:nth-of-type(1) { color: var(--text); }
+.draft-compare__note { margin-top: var(--s-2); }
+
+@media (max-width: 620px) {
+  /* Stack the comparison so it never forces horizontal scroll. Each row
+     becomes a labelled block. */
+  .draft-compare__row { grid-template-columns: 1fr; gap: var(--s-1); }
+  .draft-compare__row--head { display: none; }
+  .draft-compare__row [role="cell"]::before {
+    display: block;
+    font-family: var(--mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-top: var(--s-1);
+  }
+  .draft-compare__row [role="cell"]:nth-of-type(1)::before { content: 'CyberSygn'; }
+  .draft-compare__row [role="cell"]:nth-of-type(2)::before { content: 'Typical e-signature tool'; }
+}
