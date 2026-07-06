@@ -490,9 +490,19 @@ const freeGateForm = $('free-gate');
     }
     // Surface that we recognized them.
     if ($('free-gate-status')) {
-      $('free-gate-status').textContent = 'Welcome back. You already signed one with us — your email is prefilled.';
+      $('free-gate-status').textContent = 'Welcome back. You already signed one with us. Your email is prefilled.';
     }
-    try { window.cybersygn && window.cybersygn.track && window.cybersygn.track('signer_microsite_arrival_prefilled', { hasEmail: !!email, hasName: !!name }); } catch (e) {}
+    // Clean signer-viral attribution: was this arrival driven by the
+    // post-sign "Send your own document, free" CTA (src=signer-viral)?
+    const src = p.get('src') || '';
+    try {
+      window.cybersygn && window.cybersygn.track && window.cybersygn.track('signer_microsite_arrival_prefilled', {
+        hasEmail: !!email,
+        hasName: !!name,
+        src: src || 'direct',
+        signerViral: src === 'signer-viral',
+      });
+    } catch (e) {}
   } catch (e) {}
 })();
 
@@ -3673,25 +3683,31 @@ function currentSignerSession() {
 }
 
 /**
- * Post-submit microsite for signers. Fires after a magic-link signer
- * submits their fills. The signer just experienced the product without
- * needing an account — they're the warmest possible lead. We show a
- * one-screen modal that:
- *   - Confirms what just happened (their submission landed)
- *   - Surfaces the signed-doc-download link (if complete) or the
- *     audit cert link
- *   - Offers a one-click account claim seeded with their email so
- *     they can send their next document free
+ * Post-sign screen for signers (F1 signer-first virality). Fires ONLY
+ * after a magic-link signer submits their fills and their part is
+ * complete (submitSignerFills, gated behind signer mode). Never runs in
+ * sender mode. The signer just had a fast, magical experience without
+ * needing an account, so this is the emotional peak and the warmest
+ * possible moment to invite them to become a sender.
  *
- * This is the single highest-leverage viral mechanic in the product.
- * Conversion rate of 5-10% on this surface — every 1000 signed
- * documents nets 50-100 free accounts that didn't exist before.
+ * The screen is calm and delightful:
+ *   - A clear "You are done. Your signature is recorded." confirmation
+ *   - The download / audit link they already get
+ *   - ONE prominent primary CTA, "Send your own document, free",
+ *     pointing at the sender flow with signer-viral attribution and a
+ *     warm email/name prefill (so the next flow feels like one tap)
+ *
+ * On a phone the screen is the whole viewport, and the CTA is a
+ * full-width tap target. Styling lives in signer-share.css.
  */
 function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, docTitle }) {
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay signer-microsite';
+  overlay.className = 'modal-overlay signer-done';
   const card = document.createElement('div');
-  card.className = 'modal-card modal-card--wide signer-microsite__card';
+  card.className = 'modal-card signer-done__card';
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-modal', 'true');
+  card.setAttribute('aria-labelledby', 'signer-done-title');
   overlay.appendChild(card);
   document.body.appendChild(overlay);
   document.body.style.overflow = 'hidden';
@@ -3704,85 +3720,85 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
   function onKey(e) { if (e.key === 'Escape') close(); }
   window.addEventListener('keydown', onKey);
 
-  // Header
-  const head = document.createElement('header');
-  head.className = 'modal-card__head';
-  head.innerHTML =
-    '<span class="modal-card__kicker">Done.</span>' +
-    `<h2 class="modal-card__title">${docComplete ? 'Document signed. Every party submitted.' : 'Your part is in.'}</h2>` +
-    (signerName ? `<p class="modal-card__lede">Thanks${signerName ? ', ' + signerName : ''}. Your signature is recorded with a SHA-256 audit certificate.</p>` : '');
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
-  closeBtn.className = 'modal-card__close';
+  closeBtn.className = 'signer-done__close';
   closeBtn.setAttribute('aria-label', 'Close');
   closeBtn.textContent = '×';
   closeBtn.addEventListener('click', close);
-  head.appendChild(closeBtn);
-  card.appendChild(head);
+  card.appendChild(closeBtn);
 
-  const body = document.createElement('div');
-  body.className = 'modal-card__body';
+  // A calm confirmation: a soft check mark, the headline, and the plain
+  // recorded-line. No legal overclaim, this is a completed CyberSygn
+  // signing with a tamper-evident audit trail, not a validity ruling.
+  const confirm = document.createElement('div');
+  confirm.className = 'signer-done__confirm';
+  const safeName = signerName ? escapeHtml(String(signerName).trim()) : '';
+  confirm.innerHTML =
+    '<span class="signer-done__check" aria-hidden="true">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+        '<polyline points="20 6 9 17 4 12"/>' +
+      '</svg>' +
+    '</span>' +
+    '<h2 id="signer-done-title" class="signer-done__title">You are done. Your signature is recorded.</h2>' +
+    '<p class="signer-done__sub">' +
+      (safeName ? 'Thanks, ' + safeName + '. ' : '') +
+      (docComplete
+        ? 'Every party has signed. The sender and you both get the signed PDF and a tamper-evident audit trail by email.'
+        : 'Your part is in. When the last signer submits, the signed PDF and its tamper-evident audit trail land in everyone\'s inbox.') +
+    '</p>';
+  card.appendChild(confirm);
 
-  // Status block.
-  const status = document.createElement('div');
-  status.className = 'signer-microsite__status';
-  status.innerHTML = docComplete
-    ? '<p class="caption">The sender has been emailed the signed PDF and the audit certificate. You will receive a copy too.</p>'
-    : '<p class="caption">Every other signer is also being notified. When the last one submits, the signed PDF lands in everyone\'s inbox.</p>';
-  body.appendChild(status);
-
+  // The record they already receive: the audit certificate link, when
+  // the document is fully complete and the Worker returned a URL.
   if (docComplete && auditUrl) {
+    const record = document.createElement('div');
+    record.className = 'signer-done__record';
     const link = document.createElement('a');
-    link.className = 'btn btn--ghost btn--block';
+    link.className = 'btn btn--ghost btn--block signer-done__audit';
     link.href = auditUrl;
+    link.rel = 'noopener';
     link.textContent = 'Download audit certificate';
-    body.appendChild(link);
+    record.appendChild(link);
+    card.appendChild(record);
   }
 
-  // Conversion section.
-  const conv = document.createElement('div');
-  conv.className = 'signer-microsite__convert';
-  conv.innerHTML =
-    '<div class="signer-microsite__wedge">' +
-      '<p class="kicker">What just happened.</p>' +
-      '<h3 class="h-card">You signed a document in seconds, with no account.</h3>' +
-      '<p>The sender used CyberSygn to find every signature line, initial, and date automatically. ' +
-      'No manual field placement. No account creation for signers. The signed PDF arrives in your inbox with a SHA-256 audit certificate.</p>' +
-      '<p><strong>Want to send your own document for free?</strong> You already have an email on file. One click and you have three free documents of your own.</p>' +
-    '</div>';
-  body.appendChild(conv);
+  // The emotional-peak invitation: ONE primary CTA to become a sender.
+  const invite = document.createElement('div');
+  invite.className = 'signer-done__invite';
 
-  card.appendChild(body);
-
-  // Footer — the conversion CTAs.
-  const footer = document.createElement('footer');
-  footer.className = 'modal-card__footer';
-
-  const left = document.createElement('div');
-  left.className = 'modal-card__footer-left';
-  const closeNow = document.createElement('button');
-  closeNow.type = 'button';
-  closeNow.className = 'btn btn--ghost';
-  closeNow.textContent = 'Maybe later';
-  closeNow.addEventListener('click', close);
-  left.appendChild(closeNow);
-
-  const right = document.createElement('div');
-  right.className = 'modal-card__footer-right';
-  const claim = document.createElement('a');
-  claim.className = 'btn btn--primary';
-  claim.href = '/preview/?ref=signer&email=' + encodeURIComponent(signerEmail || '') + '&name=' + encodeURIComponent(signerName || '');
-  claim.target = '_top';
-  claim.rel = 'noopener';
-  claim.innerHTML = 'Claim my 3 free documents <span class="btn-arrow" aria-hidden="true">→</span>';
-  claim.addEventListener('click', () => {
-    track('signer_microsite_convert_click', { hasEmail: !!signerEmail });
+  const cta = document.createElement('a');
+  cta.className = 'btn btn--primary btn--block btn--lg signer-done__cta';
+  // Sender flow, with signer-viral attribution + a warm prefill so the
+  // next step feels like one tap. ../preview/ is the drop-a-PDF flow;
+  // ref=signer drives the free-gate email/name prefill.
+  cta.href = '../preview/?src=signer-viral'
+    + '&ref=signer'
+    + '&email=' + encodeURIComponent(signerEmail || '')
+    + '&name=' + encodeURIComponent(signerName || '');
+  cta.target = '_top';
+  cta.rel = 'noopener';
+  cta.innerHTML = 'Send your own document, free '
+    + '<span class="btn-arrow" aria-hidden="true">→</span>';
+  cta.addEventListener('click', () => {
+    track('signer_viral_cta_click', { hasEmail: !!signerEmail, docComplete });
   });
-  right.appendChild(claim);
+  invite.appendChild(cta);
 
-  footer.appendChild(left);
-  footer.appendChild(right);
-  card.appendChild(footer);
+  const pitch = document.createElement('p');
+  pitch.className = 'signer-done__pitch';
+  pitch.textContent =
+    'Drop a PDF, we find the signature lines, send it in about 30 seconds. No card.';
+  invite.appendChild(pitch);
+
+  const later = document.createElement('button');
+  later.type = 'button';
+  later.className = 'signer-done__later';
+  later.textContent = 'Maybe later';
+  later.addEventListener('click', close);
+  invite.appendChild(later);
+
+  card.appendChild(invite);
 
   track('signer_microsite_shown', { docComplete });
 }

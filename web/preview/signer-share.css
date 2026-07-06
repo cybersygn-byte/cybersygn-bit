@@ -1,0 +1,236 @@
+/* ==========================================================================
+   signer-share.css  (F1 signer-first virality)
+
+   The post-sign screen. Shown ONLY to a magic-link signer the moment
+   their part of a document is complete (showSignerMicrosite in app.js,
+   gated behind signer mode). Never shown in sender mode.
+
+   Design law: mobile-first. On a phone the screen is the whole viewport
+   and the primary CTA is a full-width tap target of at least 44px. It
+   escalates to a calm centered card on wider screens. Colours, spacing,
+   radii, and type come from the shared tokens in styles.css (navy/cyan,
+   --s-*, --r-*, --sans/--mono/--serif). No em-dashes anywhere.
+   ========================================================================== */
+
+/* Full-screen scrim. On coarse pointers the card fills the viewport so
+   the confirmation is the only thing on screen, the emotional peak. */
+.modal-overlay.signer-done {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg);
+  /* Safe-area padding so nothing hides under a notch or home bar. */
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  animation: signer-done-fade 0.28s ease both;
+}
+
+@keyframes signer-done-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Phone: the card IS the viewport. A single readable column, centered
+   vertically, generous breathing room, no horizontal overflow. */
+.signer-done__card {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-6);
+  padding: var(--s-7) var(--s-5);
+  background: var(--surface);
+  color: var(--text);
+  border: none;
+  border-radius: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  text-align: center;
+}
+
+/* Close control. 44px hit area, top-right, out of the reading flow. */
+.signer-done__close {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0) + var(--s-3));
+  right: var(--s-3);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--text-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.signer-done__close:hover,
+.signer-done__close:focus-visible {
+  color: var(--text);
+  background: var(--bg-2);
+}
+
+/* ---- Confirmation block ------------------------------------------------- */
+
+.signer-done__confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+/* Soft cyan check. Calm, not a klaxon. Gentle pop on entrance. */
+.signer-done__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  animation: signer-done-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
+}
+.signer-done__check svg { width: 34px; height: 34px; }
+
+@keyframes signer-done-pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.signer-done__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 6vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: balance;
+}
+
+.signer-done__sub {
+  margin: 0;
+  max-width: 40ch;
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+/* ---- The record they already receive ------------------------------------ */
+
+.signer-done__record {
+  display: flex;
+  justify-content: center;
+}
+
+/* Keep the audit link a comfortable tap target and readable width. */
+.signer-done__audit {
+  min-height: 48px;
+  width: 100%;
+  max-width: 360px;
+  font-family: var(--mono);
+  font-size: 0.9375rem;
+}
+
+/* ---- The invitation (the peak) ------------------------------------------ */
+
+.signer-done__invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Full-width primary CTA. Comfortably above the 44px floor. */
+.signer-done__cta {
+  width: 100%;
+  max-width: 400px;
+  min-height: 52px;
+  font-size: 1.0625rem;
+}
+
+.signer-done__pitch {
+  margin: 0;
+  max-width: 42ch;
+  font-family: var(--sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--text-3);
+  text-wrap: pretty;
+}
+
+/* Quiet secondary "Maybe later". Still a full 44px tap target. */
+.signer-done__later {
+  margin-top: var(--s-2);
+  min-height: 44px;
+  padding: var(--s-2) var(--s-4);
+  font-family: var(--sans);
+  font-size: 0.9375rem;
+  color: var(--text-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+.signer-done__later:hover,
+.signer-done__later:focus-visible {
+  color: var(--text-2);
+  text-decoration: underline;
+}
+
+/* ---- Coarse pointers: honor the 44px tap-target floor everywhere -------- */
+@media (pointer: coarse) {
+  .signer-done__close,
+  .signer-done__later { min-height: 44px; }
+  .signer-done__audit { min-height: 48px; }
+  .signer-done__cta   { min-height: 52px; }
+}
+
+/* ---- Wider screens: settle into a calm centered card -------------------- */
+@media (min-width: 560px) {
+  .modal-overlay.signer-done {
+    padding: var(--s-6);
+    background: rgba(1, 20, 52, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .signer-done__card {
+    min-height: 0;
+    max-width: 520px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-pop);
+    padding: var(--s-8) var(--s-7);
+  }
+  .signer-done__close {
+    top: var(--s-3);
+    right: var(--s-3);
+  }
+}
+
+/* ---- Respect reduced-motion -------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay.signer-done,
+  .signer-done__check {
+    animation: none;
+  }
+}

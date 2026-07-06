@@ -1223,6 +1223,89 @@ async function main() {
     ok(liveNames.every(n => by[n] && by[n].pass), 'all six previously-522 live probes pass in-process');
   }
 
+  // ---- F4 public verify record (PII-free) -----------------------------------
+  console.log('\n40. F4 GET /api/verify/:hash (PII-free proof of a completed doc)');
+  {
+    // The two-signer painting contract (docId) completed back in section 6.
+    // Its completion should have written a verify:<pdfSha256> record.
+    const completedDoc = await storage.docs.get(`doc:${docId}`, { json: true });
+    ok(completedDoc && completedDoc.completedAt, 'painting-contract doc is completed');
+    const fp = completedDoc && completedDoc.pdfSha256;
+    ok(typeof fp === 'string' && /^[0-9a-f]{64}$/.test(fp), `doc carries a 64-hex pdfSha256 (got ${fp && fp.slice(0, 12)}...)`);
+
+    const found = await call('GET', `/api/verify/${fp}`);
+    ok(found.status === 200, `verify returns 200 (got ${found.status})`);
+    ok(found.json && found.json.found === true, 'verify reports found:true for the completed fingerprint');
+    ok(found.json && found.json.fingerprint === fp, 'verify echoes the fingerprint');
+    ok(found.json && found.json.signerCount === 2, `verify reports signerCount 2 (got ${found.json && found.json.signerCount})`);
+    ok(found.json && typeof found.json.completedAt === 'string', 'verify exposes completedAt');
+    ok(found.json && found.json.status === 'completed', 'verify status is completed');
+
+    // ZERO PII: no name, email, title, or content ever leaves this endpoint.
+    const leaked = ['name', 'email', 'title', 'senderName', 'signers', 'fields', 'content', 'senderToken']
+      .filter(k => Object.prototype.hasOwnProperty.call(found.json || {}, k));
+    ok(leaked.length === 0, `verify record carries no PII (leaked keys: ${leaked.join(',') || 'none'})`);
+    const blob = JSON.stringify(found.json || {}).toLowerCase();
+    ok(!blob.includes('alice') && !blob.includes('bob') && !blob.includes('example.com') && !blob.includes('painting'),
+      'verify body contains no signer names, emails, or the doc title');
+
+    // Cacheable for 300s (immutable record).
+    // A random (well-formed but unknown) hash returns found:false.
+    const randomHash = 'f'.repeat(64);
+    const miss = await call('GET', `/api/verify/${randomHash}`);
+    ok(miss.status === 200 && miss.json && miss.json.found === false, 'unknown fingerprint returns found:false');
+
+    // A malformed hash is rejected without touching storage.
+    const bad = await call('GET', '/api/verify/not-a-real-hash');
+    ok(bad.status === 400, `malformed hash returns 400 (got ${bad.status})`);
+  }
+
+  // ---- F5 saved contacts (auto-save + upsert + remove) ----------------------
+  console.log('\n41. F5 /api/sender/:id/contacts (auto-save, add, remove)');
+  {
+    // Create a fresh doc; its signer should be auto-saved as a contact.
+    const cPdf = (await readFile(resolve(ROOT, 'test-pdfs', '01-simple-signature.pdf'))).toString('base64');
+    const senderId = 'contactsender' + Math.random().toString(16).slice(2, 10);
+    const create = await call('POST', '/api/docs', {
+      title: 'Contacts Test Doc',
+      senderName: 'Nathan',
+      senderId,
+      pdfBase64: cPdf,
+      fields: [{ id: 'c1', page: 1, x: 100, y: 100, width: 200, height: 20, type: 'signature', label: 'Sig', confidence: 0.9 }],
+      signers: [{ id: 's1', name: 'Carol Contact', email: 'carol@example.com' }],
+      assignments: { c1: 's1' },
+    });
+    ok(create.status === 201, `create returns 201 (got ${create.status}: ${create.text.slice(0, 160)})`);
+
+    const list1 = await call('GET', `/api/sender/${senderId}/contacts`);
+    ok(list1.status === 200, `list returns 200 (got ${list1.status})`);
+    const saved = (list1.json && list1.json.contacts || []).find(c => c.email === 'carol@example.com');
+    ok(!!saved, 'the doc signer was auto-saved as a contact');
+    ok(saved && saved.name === 'Carol Contact', 'auto-saved contact carries the signer name');
+    ok(saved && saved.useCount >= 1 && saved.id && saved.lastUsedAt, 'auto-saved contact has id, useCount, lastUsedAt');
+
+    // POST adds a new contact.
+    const add = await call('POST', `/api/sender/${senderId}/contacts`, { name: 'Dave New', email: 'dave@example.com', role: 'Client' });
+    ok(add.status === 200, `add returns 200 (got ${add.status})`);
+    const daveInAdd = (add.json && add.json.contacts || []).find(c => c.email === 'dave@example.com');
+    ok(!!daveInAdd, 'POST adds the new contact and returns the list');
+    ok(daveInAdd && daveInAdd.role === 'Client', 'new contact keeps its role');
+    // Newest-first: the just-added contact is at the front.
+    ok(add.json.contacts[0].email === 'dave@example.com', 'newest contact is at the front');
+
+    // POST with a bad email is rejected.
+    const badAdd = await call('POST', `/api/sender/${senderId}/contacts`, { name: 'X', email: 'not-an-email' });
+    ok(badAdd.status === 400, `POST with invalid email returns 400 (got ${badAdd.status})`);
+
+    // DELETE removes by contactId.
+    const del = await call('DELETE', `/api/sender/${senderId}/contacts`, { contactId: daveInAdd.id });
+    ok(del.status === 200, `delete returns 200 (got ${del.status})`);
+    const daveGone = !(del.json && del.json.contacts || []).some(c => c.id === daveInAdd.id);
+    ok(daveGone, 'DELETE removes the contact by id');
+    // Carol survives the delete.
+    ok((del.json.contacts || []).some(c => c.email === 'carol@example.com'), 'other contacts survive the delete');
+  }
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

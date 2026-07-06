@@ -39,6 +39,9 @@ import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest,
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
 import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js';
 import { generateDraft } from './ai-draft.js';
+import { generateSummary, mergeSignerFills } from './ai-summary.js';
+import { writeVerifyRecord, getVerifyRecord, isValidFingerprint } from './verify.js';
+import { listContacts, upsertContact, removeContact, sanitizeSenderId, isValidContactEmail } from './contacts.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
 import {
   freeSignup,
@@ -571,6 +574,29 @@ const worker = {
       return handleListSenderDocs(env, senderListMatch[1]);
     }
 
+    // F5 saved contacts. Same senderId-capability posture as /docs above:
+    // possession of the senderId (a 256-bit localStorage token passed only
+    // as a path segment) is the authorization.
+    // GET / POST / DELETE /api/sender/:senderId/contacts
+    const contactsMatch = url.pathname.match(/^\/api\/sender\/([^/]+)\/contacts$/);
+    if (contactsMatch) {
+      if (request.method === 'GET')    return handleListContacts(env, contactsMatch[1]);
+      if (request.method === 'POST')   return handleUpsertContact(request, env, contactsMatch[1]);
+      if (request.method === 'DELETE') return handleRemoveContact(request, env, contactsMatch[1]);
+    }
+
+    // F4 public verification. GET /api/verify/:hash: PII-free, cache 300s.
+    const verifyMatch = url.pathname.match(/^\/api\/verify\/([^/]+)$/);
+    if (request.method === 'GET' && verifyMatch) {
+      return handleVerify(env, verifyMatch[1]);
+    }
+
+    // F3 AI summary of a completed doc. POST /api/docs/:id/summary?t=<senderToken>
+    const summaryMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/summary$/);
+    if (request.method === 'POST' && summaryMatch) {
+      return handleDocSummary(request, env, summaryMatch[1], url);
+    }
+
     // Sender-triggered reminder for a specific signer.
     // POST /api/docs/:docId/remind/:signerId
     const remindMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/remind\/([^/]+)$/);
@@ -810,19 +836,22 @@ function looksLikePdf(bytes) {
 
 // ---- Helpers ---------------------------------------------------------------
 
-function jsonResponse(status, body) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
-      // API responses are never framed and never sniffed.
-      'x-content-type-options': 'nosniff',
-      'referrer-policy': 'strict-origin-when-cross-origin',
-      'x-frame-options': 'DENY',
-      'strict-transport-security': 'max-age=31536000; includeSubDomains',
-    },
-  });
+function jsonResponse(status, body, extraHeaders) {
+  const headers = {
+    'content-type': 'application/json; charset=utf-8',
+    'cache-control': 'no-store',
+    // API responses are never framed and never sniffed.
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'strict-origin-when-cross-origin',
+    'x-frame-options': 'DENY',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  };
+  // Callers may override caching (e.g. the public /api/verify record is
+  // safe to cache for 300s). Extra headers win over the defaults above.
+  if (extraHeaders && typeof extraHeaders === 'object') {
+    for (const [k, v] of Object.entries(extraHeaders)) headers[k] = v;
+  }
+  return new Response(JSON.stringify(body), { status, headers });
 }
 
 // Baseline security headers for static (ASSETS) responses. The signing surfaces
@@ -3583,6 +3612,16 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     await addToWorkspaceIndex(storage, workspaceId, docId);
   }
 
+  // F5: auto-save each signer as a saved contact for this sender so the next
+  // send is a one-tap quick-pick. Best-effort: a failed upsert never blocks
+  // document creation. Empty names/emails are skipped by the validator.
+  for (const s of signers) {
+    if (!isValidContactEmail(s.email)) continue;
+    try {
+      await upsertContact(env, senderId, { name: s.name, email: s.email });
+    } catch (e) {}
+  }
+
   // Meter free-tier docs against this month's counter. Owner-created docs
   // and docs from paid senders are never metered. Best-effort: a missed
   // increment is preferable to refusing a doc the user already created.
@@ -3975,6 +4014,20 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
       await storage.pdfs.put(`audit:${docId}`, certBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
     } catch (err) {
       console.error('[audit] render failed:', err && err.message);
+    }
+
+    // F4: write the PII-FREE public verify record so a recipient can later
+    // confirm this fingerprint matches a completed CyberSygn signing. Runs
+    // once (inside fireCompletion) and never blocks completion.
+    try {
+      await writeVerifyRecord(env, {
+        pdfSha256: final.pdfSha256,
+        signerCount: Array.isArray(final.signers) ? final.signers.length : 0,
+        createdAt: final.createdAt,
+        completedAt: final.completedAt,
+      });
+    } catch (err) {
+      console.error('[verify] record write failed:', err && err.message);
     }
   }
 
@@ -4946,6 +4999,149 @@ async function addToSenderIndex(storage, senderId, docId) {
  * In production this would be replaced by a real session-bound list;
  * the same endpoint signature works for both.
  */
+/**
+ * F5 contacts handlers. Same senderId-capability posture as the docs list:
+ * possession of the senderId is the authorization. The id is sanitized to
+ * alphanumerics before any storage key is built.
+ */
+async function handleListContacts(env, senderId) {
+  const safeId = sanitizeSenderId(senderId);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender', message: 'senderId must be alphanumeric.' });
+  const contacts = await listContacts(env, safeId);
+  return jsonResponse(200, { senderId: safeId, contacts });
+}
+
+async function handleUpsertContact(request, env, senderId) {
+  const safeId = sanitizeSenderId(senderId);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender', message: 'senderId must be alphanumeric.' });
+  const parsed = await readJsonBody(request);
+  if (parsed.error) return jsonResponse(400, parsed.error);
+  const body = parsed.value || {};
+  if (!isValidContactEmail(String(body.email || '').trim())) {
+    return jsonResponse(400, { error: 'invalid_email', message: 'A valid email is required to save a contact.' });
+  }
+  const result = await upsertContact(env, safeId, {
+    name: body.name,
+    email: body.email,
+    role: body.role,
+  });
+  if (!result.ok) {
+    return jsonResponse(400, { error: result.reason || 'upsert_failed', message: 'Could not save that contact.' });
+  }
+  return jsonResponse(200, { senderId: safeId, contacts: result.contacts });
+}
+
+async function handleRemoveContact(request, env, senderId) {
+  const safeId = sanitizeSenderId(senderId);
+  if (!safeId) return jsonResponse(400, { error: 'invalid_sender', message: 'senderId must be alphanumeric.' });
+  const parsed = await readJsonBody(request);
+  if (parsed.error) return jsonResponse(400, parsed.error);
+  const body = parsed.value || {};
+  const contactId = String(body.contactId || '').trim();
+  if (!contactId) {
+    return jsonResponse(400, { error: 'invalid_contact', message: 'A contactId is required.' });
+  }
+  const result = await removeContact(env, safeId, contactId);
+  if (!result.ok) {
+    return jsonResponse(400, { error: result.reason || 'remove_failed', message: 'Could not remove that contact.' });
+  }
+  return jsonResponse(200, { senderId: safeId, contacts: result.contacts });
+}
+
+/**
+ * F4 public verification. Returns a PII-FREE proof that a fingerprint
+ * matches a completed CyberSygn signing. Cacheable (300s) because the
+ * record is immutable once written. Zero PII in every branch.
+ */
+async function handleVerify(env, hash) {
+  const clean = String(hash || '').trim().toLowerCase();
+  if (!isValidFingerprint(clean)) {
+    return jsonResponse(400, { error: 'invalid_hash', message: 'A verification hash is a 64-character hex SHA-256.' });
+  }
+  const record = await getVerifyRecord(env, clean);
+  const headers = { 'cache-control': 'public, max-age=300' };
+  if (!record) {
+    return jsonResponse(200, { found: false }, headers);
+  }
+  // Only the fingerprint, count, timestamps, and status leave this endpoint.
+  return jsonResponse(200, {
+    found: true,
+    fingerprint: record.fingerprint,
+    signerCount: record.signerCount,
+    completedAt: record.completedAt,
+    createdAt: record.createdAt,
+    status: record.status || 'completed',
+  }, headers);
+}
+
+/**
+ * F3 AI summary of a COMPLETED document. Sender-token authenticated
+ * (?t=<senderToken>), ANTHROPIC-gated (graceful when unset), IP + per-doc
+ * rate-limited, never 500, never leaks the key.
+ */
+async function handleDocSummary(request, env, docId, url) {
+  const token = url.searchParams.get('t') || '';
+
+  const storage = getStorage(env);
+  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
+
+  // Only the sender may summarize their doc, and only once it is complete.
+  if (!doc.senderToken || !ctEqHex(token, doc.senderToken)) {
+    return jsonResponse(403, { error: 'forbidden', message: 'A valid sender token is required.' });
+  }
+  if (!doc.completedAt) {
+    return jsonResponse(403, { error: 'not_completed', message: 'A summary is available once every signer has completed.' });
+  }
+
+  // IP rate limit plus a light per-doc limit so a single doc cannot be
+  // summarized on repeat to burn provider budget.
+  const rl = await checkRateLimit(env, `summary:${ipKey(request)}`, [
+    { windowSec: 60 * 60, max: 20 },
+    { windowSec: 60 * 60 * 24, max: 100 },
+  ]);
+  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs/summary' });
+  const docRl = await checkRateLimit(env, `summary-doc:${docId}`, [
+    { windowSec: 60, max: 3 },
+    { windowSec: 60 * 60, max: 10 },
+  ]);
+  if (!docRl.ok) return rateLimitedResponse(docRl, { endpoint: '/api/docs/summary' });
+
+  const values = mergeSignerFills(doc.signers);
+
+  let result;
+  try {
+    result = await generateSummary(env, {
+      title: doc.title,
+      fields: Array.isArray(doc.fields) ? doc.fields : [],
+      values,
+    });
+  } catch (e) {
+    // generateSummary already guards its failures; any unexpected throw must
+    // still never surface a raw error or the key.
+    console.error('[summary] unexpected error:', e && e.message);
+    return jsonResponse(200, {
+      ok: false,
+      reason: 'error',
+      message: 'Summaries are temporarily unavailable. Please try again in a moment.',
+    });
+  }
+
+  if (!result || !result.ok) {
+    return jsonResponse(200, {
+      ok: false,
+      reason: (result && result.reason) || 'error',
+      message: (result && result.message) || 'Summaries are temporarily unavailable. Please try again in a moment.',
+    });
+  }
+
+  return jsonResponse(200, {
+    ok: true,
+    summary: result.summary,
+    disclaimer: 'This is a plain-English summary for convenience, not legal advice.',
+  });
+}
+
 async function handleListSenderDocs(env, senderId) {
   const storage = getStorage(env);
   const safeId = String(senderId).replace(/[^a-zA-Z0-9_-]/g, '');

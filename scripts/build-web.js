@@ -337,6 +337,19 @@ async function main() {
     console.log('  wrote dist/templates/index.html');
   }
 
+  // /verify/: public "verify a signature" page (F4). Static index.html +
+  // app.js (plain same-origin fetch, no import rewrites) + verify.css. Links
+  // ../styles.css for tokens. Mirror the dashboard copy block.
+  const verifySrc = join(SRC, 'verify');
+  if (await exists(verifySrc)) {
+    const verifyOut = join(OUT, 'verify');
+    await mkdir(verifyOut, { recursive: true });
+    for (const f of ['index.html', 'app.js', 'verify.css']) {
+      await copyFile(join(verifySrc, f), join(verifyOut, f));
+      console.log(`  wrote dist/verify/${f}`);
+    }
+  }
+
   // /draft/: AI contract drafting wedge landing (Solo/Studio funnel). Static
   // index.html + app.js (ES module importing ../preview/identity.js, which the
   // dist tree already ships) + draft.css. Mirror the dashboard copy block.

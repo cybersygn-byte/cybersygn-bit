@@ -51,6 +51,11 @@ export async function sendInvite(env, { to, name, docTitle, magicLink, senderNam
 }
 
 export async function sendCompletion(env, { to, name, docTitle, downloadUrl, auditUrl, notice }) {
+  // F1 signer-first virality: a secondary CTA that turns a signer into the
+  // next sender. Links to the app root tagged for attribution. Kept clearly
+  // below the download link so it never competes with the primary action.
+  const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
+  const selfSendUrl = `${appUrl.replace(/\/+$/, '')}/?src=signer-viral`;
   // `notice: true` means this recipient was CC'd by the sender — they
   // didn't sign anything, they're notice-only. Copy adjusts to make
   // that distinction clear so the CC doesn't think someone forged their
@@ -73,9 +78,12 @@ export async function sendCompletion(env, { to, name, docTitle, downloadUrl, aud
     'event, and the SHA-256 of the document. Keep it with the signed PDF',
     'as proof of who signed what and when.',
     '',
+    'Need to send your own? Prepare a document free in about 30 seconds:',
+    selfSendUrl,
+    '',
     'CyberSygn.',
   ].filter(Boolean).join('\n');
-  const html = renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice });
+  const html = renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice, selfSendUrl });
 
   return deliver(env, { to, subject, text, html });
 }

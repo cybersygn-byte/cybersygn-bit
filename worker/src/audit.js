@@ -309,7 +309,10 @@ export async function renderAuditCertificate({ doc, pdfSha256 }) {
   }
 
   // ---- 5. Document fingerprint footer -----------------------------------
-  newPageIfNeeded(60);
+  // Reserve enough vertical room for the whole block (rule + heading + hash
+  // rows + two explanatory paragraphs including the verify line) so it never
+  // straddles a page break.
+  newPageIfNeeded(160);
   y -= 12;
   page.drawRectangle({ x: MARGIN, y, width: COL_W, height: 0.6, color: RULE });
   y -= 18;
@@ -328,6 +331,12 @@ export async function renderAuditCertificate({ doc, pdfSha256 }) {
   page.drawText(
     'Any modification to the signed PDF after issuance will change this hash. ' +
     'CyberSygn retains an immutable copy of the signed document for the life of your account.',
+    { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
+  );
+  y -= 28;
+  page.drawText(
+    'Verify this document at cybersygn.io/verify (fingerprint above). ' +
+    'Verification confirms this fingerprint matches a completed CyberSygn signing.',
     { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
   );
 

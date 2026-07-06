@@ -207,7 +207,7 @@ export function renderReminderHtml({ name, senderName, docTitle, magicLink, tone
   });
 }
 
-export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice }) {
+export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, notice, selfSendUrl }) {
   const title = notice ? 'A document was signed.' : 'Signed and ready.';
   const opener = notice
     ? `Hello ${esc(name || 'there')}. You were CC'd on this signing for your records. Every signer has completed their part. ${esc(docTitle ? '"' + docTitle + '" is' : 'The document is')} below.`
@@ -228,6 +228,14 @@ export function renderCompletionHtml({ name, docTitle, downloadUrl, auditUrl, no
       </p>
       <p style="margin:0;font-family:${FONT_STACK};font-size:14px;">
         <a href="${esc(auditUrl)}" style="color:${CYAN};text-decoration:underline;">Download audit certificate →</a>
+      </p>` : ''}
+      ${selfSendUrl ? `
+      <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
+      <p class="cs-text" style="margin:0 0 8px 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        Need to send your own? Prepare a document free in about 30 seconds.
+      </p>
+      <p style="margin:0;font-family:${FONT_STACK};font-size:14px;">
+        <a href="${esc(selfSendUrl)}" style="color:${CYAN};text-decoration:underline;">Prepare a document free →</a>
       </p>` : ''}
       <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
       <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">

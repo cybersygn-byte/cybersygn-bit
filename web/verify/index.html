@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verify any CyberSygn signature. CyberSygn.</title>
+  <meta name="description" content="Paste a document fingerprint or open the link from a signed PDF to confirm it was signed on CyberSygn. Verification checks integrity, it is not a legal opinion." />
+  <meta name="keywords" content="verify electronic signature, document fingerprint, tamper-evident audit trail, verify signed PDF, CyberSygn verify" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cybersygn.io/verify/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <meta property="og:title" content="Verify any CyberSygn signature." />
+  <meta property="og:description" content="Paste a document fingerprint or open the link from a signed PDF to confirm it was signed on CyberSygn. Integrity check, not a legal opinion." />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/verify/" />
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./verify.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">verify</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Verify">
+        <a class="masthead__link" href="../">Home</a>
+        <a class="masthead__link" href="../compliance/">Security</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Launch preview</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero verify-hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Public signature check.</p>
+        <h1 class="h-display hero__title">Verify any CyberSygn signature.</h1>
+        <p class="lede hero__lede">Every completed document gets a tamper-evident fingerprint, a 64-character code derived from the signed PDF. Paste the fingerprint below, or open the verify link or QR code printed on a signed document, to confirm it was completed on CyberSygn.</p>
+      </div>
+    </section>
+
+    <section class="section verify-section">
+      <div class="container container--prose">
+
+        <form id="verify-form" class="verify-form" novalidate>
+          <label class="verify-label" for="verify-hash">Document fingerprint</label>
+          <textarea
+            id="verify-hash"
+            class="verify-input"
+            name="hash"
+            rows="2"
+            inputmode="latin"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            enterkeyhint="go"
+            placeholder="Paste the 64-character fingerprint"
+            aria-describedby="verify-help"></textarea>
+          <p id="verify-help" class="verify-help caption">64 hexadecimal characters (0 to 9, a to f). Spaces are ignored.</p>
+          <button id="verify-submit" class="btn btn--primary btn--lg btn--block" type="submit">Verify signature</button>
+        </form>
+
+        <!-- Result region. Politely announced to assistive tech; starts empty. -->
+        <div id="verify-result" class="verify-result" role="status" aria-live="polite" hidden></div>
+
+        <div class="verify-explainer">
+          <h2 class="verify-explainer__title">What this proves</h2>
+          <p>A match confirms the fingerprint corresponds to a document that reached completion on CyberSygn, and that the signed file has not changed since. That is an integrity check, not a legal opinion on the agreement itself.</p>
+          <p>The public record is deliberately minimal. It shows the fingerprint, how many people signed, and when signing finished. It never exposes names, email addresses, document titles, or any of the content.</p>
+          <p><a href="../compliance/">Read how the tamper-evident audit trail works.</a></p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/developers/">Developers</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+
+</body>
+</html>
