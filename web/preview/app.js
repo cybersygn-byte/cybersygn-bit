@@ -522,6 +522,8 @@ if (freeGateForm) {
       const res = await fetch('/api/free/signup', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        // Cross-device binding is established later at verified magic-link
+        // sign-in, not here (an unverified email must not bind a workspace).
         body: JSON.stringify({ firstName, lastName, email }),
       });
       const data = await res.json();
@@ -531,6 +533,12 @@ if (freeGateForm) {
       }
       writeFreeToken(data.freeToken);
       setFreeUsed(data.used || 0, data.remaining || 3);
+      // Remember the email (for the account sheet) and mark this as a known
+      // user so the root becomes their app home next visit.
+      try {
+        localStorage.setItem('cybersygn.email', email);
+        localStorage.setItem('cybersygn.hasUsed', '1');
+      } catch (e) {}
       paintFreeStatus();
       track('free_signup_completed', { isReturning: !!data.isReturning, remaining: data.remaining });
     } catch (err) {

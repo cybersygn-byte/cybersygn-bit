@@ -17,7 +17,16 @@
   <link rel="icon" type="image/x-icon" href="./brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="./brand/favicon-32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="./brand/favicon-16.png" sizes="16x16" />
-  <link rel="apple-touch-icon" href="./brand/favicon-180.png" />
+  <link rel="apple-touch-icon" href="./brand/icon-apple-180.png" />
+
+  <!-- Installable app (PWA): manifest + standalone hints so cybersygn.io can be
+       added to the home screen and run like a native app. -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="application-name" content="CyberSygn" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="CyberSygn" />
 
   <meta property="og:title" content="CyberSygn. The signature tool you'll actually like. Built in Colorado." />
   <meta property="og:description" content="CyberSygn reads your PDF and finds every signature line, initial, date, and checkbox before you place a single field by hand." />
@@ -215,8 +224,13 @@
   <script src="/polish.js" defer></script>
   <script src="/cinematic-hero.js" defer></script>
   <script src="/conversion.js" defer></script>
+  <!-- Standalone app layer: bottom shell + app-first home (marketing DOM stays
+       intact underneath for crawlers and first-time visitors). -->
+  <link rel="stylesheet" href="/shared/app-shell.css" />
+  <script src="/shared/app-shell.js" defer></script>
+  <script src="/app-home.js" defer></script>
 </head>
-<body>
+<body data-app-shell>
 
   <header class="masthead">
     <div class="container masthead__inner">

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Offline. CyberSygn</title>
+  <link rel="icon" type="image/png" href="/brand/icon-192.png" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100dvh; display: grid; place-items: center;
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #F7F8FB; color: #0B1B34; padding: 24px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    @media (prefers-color-scheme: dark) { body { background: #011434; color: #EAF0FA; } }
+    .card { max-width: 360px; text-align: center; }
+    img { width: 64px; height: 64px; border-radius: 16px; margin: 0 0 20px; }
+    h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; }
+    p { margin: 0 0 24px; color: #6B7A92; }
+    @media (prefers-color-scheme: dark) { p { color: #9DB0CC; } }
+    button {
+      appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 600;
+      background: #011434; color: #fff; padding: 14px 28px; border-radius: 12px; min-height: 48px;
+    }
+    @media (prefers-color-scheme: dark) { button { background: #EAF0FA; color: #011434; } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/brand/icon-192.png" alt="CyberSygn" />
+    <h1>You are offline</h1>
+    <p>CyberSygn needs a connection to load documents. Check your network and try again.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

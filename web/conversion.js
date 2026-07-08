@@ -292,6 +292,11 @@
       btn.disabled = true;
       btn.innerHTML = 'Sending.';
       try {
+        var sid = '';
+        try {
+          sid = (window.CyberSygnShell && window.CyberSygnShell.ensureSenderId())
+            || localStorage.getItem('cybersygn.senderId') || '';
+        } catch (e) {}
         const res = await fetch('/api/free/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -299,11 +304,16 @@
             firstName: 'Friend',
             lastName: 'CyberSygn',
             email,
+            senderId: sid,
           }),
         });
         const data = await res.json().catch(() => ({}));
         if (data && data.ok && data.freeToken) {
-          try { localStorage.setItem('cybersygn.freeToken', data.freeToken); } catch (e) {}
+          try {
+            localStorage.setItem('cybersygn.freeToken', data.freeToken);
+            localStorage.setItem('cybersygn.email', email);
+            localStorage.setItem('cybersygn.hasUsed', '1');
+          } catch (e) {}
           location.href = '/preview/?welcome=1';
           return;
         }

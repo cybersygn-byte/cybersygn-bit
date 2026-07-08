@@ -96,6 +96,18 @@ async function main() {
   console.log('  wrote dist/conversion.js');
   await copyFile(join(SRC, 'styles.css'), join(OUT, 'styles.css'));
   console.log('  wrote dist/styles.css');
+
+  // Standalone-app layer: root-level PWA + app-first boot files, and the
+  // shared app shell (bottom nav + account sheet) served from /shared/.
+  for (const f of ['manifest.webmanifest', 'sw.js', 'offline.html', 'app-home.js']) {
+    await copyFile(join(SRC, f), join(OUT, f));
+    console.log(`  wrote dist/${f}`);
+  }
+  await mkdir(join(OUT, 'shared'), { recursive: true });
+  for (const f of ['app-shell.css', 'app-shell.js']) {
+    await copyFile(join(SRC, 'shared', f), join(OUT, 'shared', f));
+    console.log(`  wrote dist/shared/${f}`);
+  }
   // 404.html surfaces when not_found_handling: '404-page' fires in Workers.
   const fourOhFour = join(SRC, '404.html');
   if (await exists(fourOhFour)) {

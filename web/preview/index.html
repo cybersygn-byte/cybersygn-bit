@@ -14,7 +14,11 @@
   <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="../brand/favicon-16.png" sizes="16x16" />
-  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <link rel="apple-touch-icon" href="/brand/icon-apple-180.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="CyberSygn" />
 
   <meta property="og:title" content="CyberSygn preview. Drop a PDF, see the fields." />
   <meta property="og:description" content="Drop a PDF and CyberSygn locates every signature line, initial, date, and checkbox. The detection runs entirely in your browser." />
@@ -65,7 +69,7 @@
   <script src="/telemetry.js"></script>
   <script src="/polish.js" defer></script>
 </head>
-<body>
+<body data-app-shell>
 
   <header class="masthead">
     <div class="container masthead__inner">
@@ -501,6 +505,7 @@
 
   <script type="module" src="./app.js"></script>
   <script src="./onboarding.js" defer></script>
-  
+  <link rel="stylesheet" href="/shared/app-shell.css" />
+  <script src="/shared/app-shell.js" defer></script>
 </body>
 </html>

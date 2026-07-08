@@ -1306,6 +1306,72 @@ async function main() {
     ok((del.json.contacts || []).some(c => c.email === 'carol@example.com'), 'other contacts survive the delete');
   }
 
+  // 55. Cross-device sign-in (enroll-then-recover; bind only at verified confirm).
+  console.log('\n55. Cross-device sign-in (auth)');
+  {
+    const email = 'signin-user@test.cybersygn.io';
+    const sender = 'a1b2c3d4e5f6a7b8c9d0e1f2';      // this device's own senderId
+    const attacker = 'ffffffffffffffffffffffff';     // a foreign senderId
+
+    const store = (await import('../worker/src/storage.js')).getStorage(env).docs;
+    const { sha256Hex } = await import('../worker/src/audit.js');
+    const emailHash = await sha256Hex(new TextEncoder().encode(email));
+
+    // Signup with a senderId must NOT create a login binding (unverified email).
+    const sup = await call('POST', '/api/free/signup', {
+      firstName: 'Sign', lastName: 'In', email, senderId: sender,
+    }, { 'cf-connecting-ip': '10.55.0.1' });
+    ok(sup.status === 200 && sup.json && sup.json.ok, `auth signup ok (got ${sup.status})`);
+    ok(!('boundSenderId' in (sup.json || {})), 'signup no longer returns boundSenderId');
+    const afterSignup = await store.get('login:email:' + emailHash, { json: true });
+    ok(!afterSignup, 'unverified signup does NOT bind email -> senderId (pre-hijack fix)');
+
+    // request-link is enumeration-safe: same ok:true whether or not bound.
+    const r1 = await call('POST', '/api/auth/request-link', { email }, { 'cf-connecting-ip': '10.55.0.2' });
+    ok(r1.status === 200 && r1.json && r1.json.ok === true, 'request-link returns ok for an unbound email');
+    const r2 = await call('POST', '/api/auth/request-link', { email: 'nobody-here@test.cybersygn.io' }, { 'cf-connecting-ip': '10.55.0.3' });
+    ok(r2.status === 200 && r2.json && r2.json.ok === true, 'request-link returns the same ok for another email (no enumeration)');
+    ok(!('senderId' in (r1.json || {})), 'request-link never leaks a senderId in its response');
+
+    // ENROLL: verifying an enroll token binds THIS device's senderId (from the
+    // request body), not any caller-chosen id. An enroll token carries no senderId.
+    const enrollTok = 'a'.repeat(48);
+    await store.put('login:token:' + enrollTok, { v: 1, mode: 'enroll', emailHash, exp: Date.now() + 60000 });
+    const noSender = await call('POST', '/api/auth/verify', { token: enrollTok }, { 'cf-connecting-ip': '10.55.0.4' });
+    ok(noSender.status === 400, 'enroll verify without a senderId is rejected (need_sender)');
+    // token was consumed by the attempt above; mint a fresh one.
+    const enrollTok2 = 'b'.repeat(48);
+    await store.put('login:token:' + enrollTok2, { v: 1, mode: 'enroll', emailHash, exp: Date.now() + 60000 });
+    const enroll = await call('POST', '/api/auth/verify', { token: enrollTok2, senderId: sender }, { 'cf-connecting-ip': '10.55.0.5' });
+    ok(enroll.status === 200 && enroll.json && enroll.json.senderId === sender, 'enroll verify binds and returns THIS device senderId');
+    const bound = await store.get('login:email:' + emailHash, { json: true });
+    ok(bound && bound.senderId === sender, 'binding now exists, pointing at this device senderId');
+
+    // Single use: the same enroll token cannot be replayed.
+    const replay = await call('POST', '/api/auth/verify', { token: enrollTok2, senderId: sender }, { 'cf-connecting-ip': '10.55.0.6' });
+    ok(replay.status === 400, 'verify rejects a reused token (single-use)');
+
+    // First-bind-wins: a second enroll (foreign senderId) cannot steal the email.
+    const enrollTok3 = 'c'.repeat(48);
+    await store.put('login:token:' + enrollTok3, { v: 1, mode: 'enroll', emailHash, exp: Date.now() + 60000 });
+    const steal = await call('POST', '/api/auth/verify', { token: enrollTok3, senderId: attacker }, { 'cf-connecting-ip': '10.55.0.7' });
+    ok(steal.status === 200 && steal.json && steal.json.senderId === sender, 'first-bind-wins: foreign senderId cannot rebind a live account');
+
+    // RECOVER: a recover token returns the bound senderId, ignoring any body senderId.
+    const recTok = 'd'.repeat(48);
+    await store.put('login:token:' + recTok, { v: 1, mode: 'recover', senderId: sender, emailHash, exp: Date.now() + 60000 });
+    const rec = await call('POST', '/api/auth/verify', { token: recTok, senderId: attacker }, { 'cf-connecting-ip': '10.55.0.8' });
+    ok(rec.status === 200 && rec.json && rec.json.senderId === sender, 'recover verify returns the bound senderId (not a body-supplied one)');
+
+    // Malformed + expired tokens are rejected.
+    const bad = await call('POST', '/api/auth/verify', { token: 'nothex!!', senderId: sender }, { 'cf-connecting-ip': '10.55.0.9' });
+    ok(bad.status === 400, 'verify rejects a malformed token');
+    const expTok = 'e'.repeat(48);
+    await store.put('login:token:' + expTok, { v: 1, mode: 'recover', senderId: sender, emailHash, exp: Date.now() - 1000 });
+    const expRes = await call('POST', '/api/auth/verify', { token: expTok, senderId: sender }, { 'cf-connecting-ip': '10.55.0.10' });
+    ok(expRes.status === 400, 'verify rejects an expired token');
+  }
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

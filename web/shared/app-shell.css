@@ -1,0 +1,131 @@
+/*
+ * CyberSygn app shell: a persistent bottom navigation + account sheet that
+ * makes the separate app surfaces (home, send, documents) feel like one app.
+ * Mounted by app-shell.js on any page whose <body> has data-app-shell.
+ * Mobile-first, safe-area aware, light/dark. Zero dependencies.
+ */
+
+:root {
+  --shell-h: 60px;
+  --shell-bg: rgba(255, 255, 255, 0.92);
+  --shell-line: rgba(1, 20, 52, 0.10);
+  --shell-ink: #011434;
+  --shell-dim: #6B7A92;
+  --shell-accent: #007496;
+  --shell-accent-bg: rgba(0, 203, 246, 0.12);
+  --shell-surface: #FFFFFF;
+  --shell-elev: 0 -1px 0 rgba(1, 20, 52, 0.06), 0 -8px 24px rgba(1, 20, 52, 0.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shell-bg: rgba(3, 16, 40, 0.94);
+    --shell-line: rgba(255, 255, 255, 0.12);
+    --shell-ink: #EAF0FA;
+    --shell-dim: #9DB0CC;
+    --shell-accent: #38D6FA;
+    --shell-accent-bg: rgba(0, 203, 246, 0.18);
+    --shell-surface: #0A1E44;
+    --shell-elev: 0 -1px 0 rgba(0, 0, 0, 0.4), 0 -8px 24px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Give page content room so the fixed bar never covers the last row. */
+body.has-app-shell {
+  padding-bottom: calc(var(--shell-h) + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* ---- Bottom tab bar ---- */
+.csx-tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 2147483000;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  height: calc(var(--shell-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--shell-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--shell-line);
+  box-shadow: var(--shell-elev);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.csx-tab {
+  appearance: none; -webkit-appearance: none;
+  border: 0; background: transparent; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; min-height: 44px; text-decoration: none;
+  color: var(--shell-dim); font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+  -webkit-tap-highlight-color: transparent;
+}
+.csx-tab svg { width: 24px; height: 24px; display: block; }
+.csx-tab.is-active { color: var(--shell-accent); }
+.csx-tab.is-active .csx-tab__icon { background: var(--shell-accent-bg); }
+.csx-tab__icon {
+  width: 40px; height: 26px; border-radius: 13px;
+  display: grid; place-items: center; transition: background .16s ease;
+}
+
+/* Desktop with a mouse already has each surface's own top navigation, and a
+   floating bar would collide with those headers. The app shell is a mobile
+   pattern, so hide the bottom bar on wide pointer-fine screens. */
+@media (min-width: 900px) and (pointer: fine) {
+  .csx-tabbar { display: none; }
+  body.has-app-shell { padding-bottom: 0 !important; }
+}
+
+/* ---- Account sheet ---- */
+.csx-scrim {
+  position: fixed; inset: 0; z-index: 2147483100;
+  background: rgba(1, 20, 52, 0.44); opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+.csx-scrim.is-open { opacity: 1; pointer-events: auto; }
+.csx-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 2147483200;
+  background: var(--shell-surface); color: var(--shell-ink);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 48px rgba(1, 20, 52, 0.24);
+  padding: 8px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(102%); transition: transform .24s cubic-bezier(.32,.72,0,1);
+  max-height: 88dvh; overflow-y: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.csx-sheet.is-open { transform: translateY(0); }
+@media (min-width: 640px) {
+  .csx-sheet {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    transform: translate(-50%, -46%) scale(.98); opacity: 0;
+    width: min(440px, 92vw); border-radius: 20px;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .csx-sheet.is-open { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.csx-sheet__grip { width: 40px; height: 5px; border-radius: 3px; background: var(--shell-line); margin: 8px auto 14px; }
+.csx-sheet h2 { font-size: 20px; letter-spacing: -0.02em; margin: 0 0 2px; }
+.csx-sheet__sub { color: var(--shell-dim); font-size: 14px; margin: 0 0 18px; }
+.csx-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 15px 14px; border-radius: 14px; border: 1px solid var(--shell-line);
+  background: transparent; color: var(--shell-ink); cursor: pointer;
+  font: inherit; font-size: 15px; font-weight: 550; text-align: left; text-decoration: none;
+  margin-bottom: 10px; min-height: 52px; -webkit-tap-highlight-color: transparent;
+}
+.csx-row:active { background: var(--shell-accent-bg); }
+.csx-row__ico { width: 22px; height: 22px; flex: none; color: var(--shell-accent); }
+.csx-row__t { flex: 1; }
+.csx-row__hint { color: var(--shell-dim); font-size: 13px; font-weight: 500; }
+.csx-row--primary { background: var(--shell-ink); color: var(--shell-surface); border-color: var(--shell-ink); justify-content: center; }
+.csx-row--primary .csx-row__ico { color: var(--shell-surface); }
+.csx-row--danger { color: #D63B47; }
+.csx-row--danger .csx-row__ico { color: #D63B47; }
+.csx-field { margin: 4px 0 12px; }
+.csx-field label { display: block; font-size: 13px; font-weight: 600; color: var(--shell-dim); margin: 0 0 6px; }
+.csx-field input {
+  width: 100%; box-sizing: border-box; font: inherit; font-size: 16px;
+  padding: 13px 14px; border-radius: 12px; border: 1px solid var(--shell-line);
+  background: var(--shell-surface); color: var(--shell-ink); min-height: 48px;
+}
+.csx-note { font-size: 13px; color: var(--shell-dim); margin: 10px 2px 4px; line-height: 1.45; }
+.csx-ok { color: #1E8A5F; font-weight: 600; }
+.csx-hide { display: none !important; }

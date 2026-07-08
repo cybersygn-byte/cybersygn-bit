@@ -41,6 +41,7 @@ import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js
 import { generateDraft } from './ai-draft.js';
 import { generateSummary, mergeSignerFills } from './ai-summary.js';
 import { writeVerifyRecord, getVerifyRecord, isValidFingerprint } from './verify.js';
+import { handleRequestLink, handleVerifyLink } from './auth.js';
 import { listContacts, upsertContact, upsertContacts, removeContact, sanitizeSenderId, isValidContactEmail } from './contacts.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
 import {
@@ -194,6 +195,15 @@ const worker = {
     }
     if (request.method === 'POST' && url.pathname === '/api/free/email-signed-pdf') {
       return handleEmailSignedPdf(request, env);
+    }
+
+    // Cross-device sign-in: email magic link (the sign-in key path is
+    // client-side only). See worker/src/auth.js + docs/STANDALONE-APP.md.
+    if (request.method === 'POST' && url.pathname === '/api/auth/request-link') {
+      return handleRequestLink(request, env);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/auth/verify') {
+      return handleVerifyLink(request, env);
     }
     if (request.method === 'GET' && url.pathname === '/api/dataset/count') {
       return handleDatasetCount(env);
@@ -2269,6 +2279,11 @@ async function handleFreeSignup(request, env) {
     const emailHash = await sha256Hex(new TextEncoder().encode(String(email).trim().toLowerCase()));
     await writeFreeTokenPointer(env, result.freeToken, emailHash);
   }
+  // NOTE: email->senderId binding is deliberately NOT done here. Signup does
+  // not prove the person controls the email, so binding at this point would
+  // let an attacker pre-seed a victim's future magic-link recovery with the
+  // attacker's senderId. Binding happens only at verified magic-link confirm
+  // (worker/src/auth.js), using the confirming device's own senderId.
   return jsonResponse(200, {
     ok: true,
     freeToken: result.freeToken,

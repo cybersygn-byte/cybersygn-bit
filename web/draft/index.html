@@ -13,7 +13,11 @@
   <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
   <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
-  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <link rel="apple-touch-icon" href="/brand/icon-apple-180.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="CyberSygn" />
   <meta property="og:title" content="Describe the deal. Get a contract ready to sign." />
   <meta property="og:description" content="AI contract drafting for freelancers and small studios. Plain English in, a clean starting draft out. Starting drafts, not legal advice." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
@@ -23,7 +27,7 @@
   <link rel="stylesheet" href="./draft.css" />
   <script src="/telemetry.js"></script>
 </head>
-<body>
+<body data-app-shell>
 
   <header class="masthead">
     <div class="container masthead__inner">
@@ -162,5 +166,7 @@
 
   <script type="module" src="./app.js"></script>
 
+  <link rel="stylesheet" href="/shared/app-shell.css" />
+  <script src="/shared/app-shell.js" defer></script>
 </body>
 </html>
