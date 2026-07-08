@@ -211,8 +211,14 @@ async function sendSignInEmail(env, { to, link, mode }) {
     '',
     'CyberSygn',
   ].join('\n');
-  const html = `<!doctype html><html><body style="margin:0;background:#F7F8FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0B1B34;">
+  const html = `<!doctype html><html><head><meta charset="utf-8"/><meta name="color-scheme" content="light dark"/>
+  <style>.cs-logo-dark{display:none}@media (prefers-color-scheme: dark){body{background:#0A0E1A !important;color:#EAF0FA !important}.cs-logo-light{display:none !important}.cs-logo-dark{display:inline !important}}</style></head>
+  <body style="margin:0;background:#F7F8FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0B1B34;">
   <div style="max-width:480px;margin:0 auto;padding:32px 24px;">
+    <a href="https://cybersygn.io/" style="text-decoration:none;display:inline-block;margin:0 0 22px;">
+      <img class="cs-logo-light" src="https://cybersygn.io/brand/lockup-navy@2x.png" alt="CyberSygn" height="24" style="height:24px;width:auto;border:0;" />
+      <img class="cs-logo-dark" src="https://cybersygn.io/brand/lockup-white@2x.png" alt="CyberSygn" height="24" style="height:24px;width:auto;border:0;" />
+    </a>
     <p style="font-size:18px;font-weight:600;margin:0 0 8px;">${heading}</p>
     <p style="font-size:15px;line-height:1.5;color:#3A4A63;margin:0 0 24px;">${lede}</p>
     <a href="${link}" style="display:inline-block;background:#0B1B34;color:#fff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 28px;border-radius:12px;">Open CyberSygn</a>

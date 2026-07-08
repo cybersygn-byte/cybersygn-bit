@@ -57,6 +57,8 @@ function shell({ preheader, body }) {
 <meta name="supported-color-schemes" content="light dark" />
 <title>CyberSygn</title>
 <style>
+  .cs-logo-light { display: block; }
+  .cs-logo-dark  { display: none; }
   @media (prefers-color-scheme: dark) {
     .cs-bg     { background-color: #0A0E1A !important; }
     .cs-card   { background-color: ${NAVY} !important; border-color: rgba(255,255,255,0.08) !important; }
@@ -66,6 +68,8 @@ function shell({ preheader, body }) {
     .cs-rule   { border-top-color: rgba(255,255,255,0.10) !important; }
     .cs-kv-key { color: rgba(247,248,251,0.55) !important; }
     .cs-kv-val { color: #F7F8FB !important; }
+    .cs-logo-light { display: none !important; }
+    .cs-logo-dark  { display: block !important; }
   }
   a { color: ${CYAN}; }
 </style>
@@ -80,7 +84,10 @@ function shell({ preheader, body }) {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
           <tr>
             <td align="left" style="font-family:${FONT_STACK};font-size:14px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${NAVY};">
-              <span class="cs-title">CYBERSYGN</span>
+              <a href="https://cybersygn.io/" style="text-decoration:none;color:${NAVY};">
+                <img class="cs-logo-light" src="https://cybersygn.io/brand/lockup-navy@2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;" />
+                <img class="cs-logo-dark" src="https://cybersygn.io/brand/lockup-white@2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;display:none;" />
+              </a>
             </td>
             <td align="right" style="font-family:${FONT_STACK};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:${MUTED};" class="cs-muted">
               Built in Colorado

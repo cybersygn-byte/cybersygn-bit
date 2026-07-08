@@ -157,6 +157,12 @@
     sheet.innerHTML = '';
     var grip = document.createElement('div'); grip.className = 'csx-sheet__grip'; sheet.appendChild(grip);
 
+    var brand = document.createElement('img');
+    brand.className = 'csx-sheet__wordmark';
+    brand.src = '/brand/lockup-navy@2x.png';
+    brand.alt = 'CyberSygn';
+    sheet.appendChild(brand);
+
     var h = document.createElement('h2'); h.textContent = email ? 'Your account' : 'Your workspace';
     sheet.appendChild(h);
     var sub = document.createElement('p'); sub.className = 'csx-sheet__sub';

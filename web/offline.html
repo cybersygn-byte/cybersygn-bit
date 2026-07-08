@@ -16,7 +16,8 @@
     }
     @media (prefers-color-scheme: dark) { body { background: #011434; color: #EAF0FA; } }
     .card { max-width: 360px; text-align: center; }
-    img { width: 64px; height: 64px; border-radius: 16px; margin: 0 0 20px; }
+    .wordmark { height: 26px; width: auto; margin: 0 auto 22px; display: block; content: url("/brand/lockup-navy@2x.png"); }
+    @media (prefers-color-scheme: dark) { .wordmark { content: url("/brand/lockup-white@2x.png"); } }
     h1 { font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; }
     p { margin: 0 0 24px; color: #6B7A92; }
     @media (prefers-color-scheme: dark) { p { color: #9DB0CC; } }
@@ -29,7 +30,7 @@
 </head>
 <body>
   <div class="card">
-    <img src="/brand/icon-192.png" alt="CyberSygn" />
+    <img class="wordmark" src="/brand/lockup-navy@2x.png" alt="CyberSygn" />
     <h1>You are offline</h1>
     <p>CyberSygn needs a connection to load documents. Check your network and try again.</p>
     <button onclick="location.reload()">Try again</button>
