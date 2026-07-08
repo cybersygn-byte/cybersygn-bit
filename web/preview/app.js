@@ -454,12 +454,12 @@ function paintLossAversionBanner(remaining) {
 
   if (remaining === 1) {
     showToast(
-      'Last free document. Upgrade to Solo for unlimited sending.',
+      'Last free document. Go unlimited on Pro, or Solo from $12.',
       { action: { href: '/#pricing', label: 'See plans →' } },
     );
   } else {
     showToast(
-      'You used all 3 free documents. Solo is $12/mo with no cap.',
+      'That was your last free document. Go unlimited on Pro, or Solo from $12.',
       { action: { href: '/#pricing', label: 'Pick a plan →' } },
     );
   }
@@ -3002,8 +3002,59 @@ function showFreeSignupGate(message) {
 }
 
 /**
- * Paywall modal (slice 104). User has used all 3 free documents. Show
- * Solo + Studio pricing in-context with one-click checkout.
+ * In-context checkout for the paywall modal. Mirrors web/checkout.js
+ * (which is not loaded on the preview page): POST to
+ * /api/checkout/create-session, then redirect to Stripe's hosted page.
+ * It always lands somewhere real. If the server returns no session URL,
+ * it drops the user on /#pricing so the button is never a dead end.
+ */
+async function startPaywallCheckout(tier, button) {
+  if (!tier) return;
+  const originalLabel = button ? button.textContent : '';
+  if (button) { button.disabled = true; button.textContent = 'Opening checkout.'; }
+  const headers = { 'content-type': 'application/json' };
+  let ownerToken = null;
+  try { ownerToken = localStorage.getItem('cybersygn.owner.token'); } catch (e) {}
+  if (ownerToken) headers['X-CyberSygn-Owner'] = ownerToken;
+  // Affiliate attribution: carry ?ref or the cybersygn_ref cookie through.
+  let ref = null;
+  try {
+    const urlRef = new URLSearchParams(window.location.search).get('ref');
+    if (urlRef && /^[a-z0-9]{4,16}$/.test(urlRef.toLowerCase())) ref = urlRef.toLowerCase();
+    if (!ref) {
+      const m = document.cookie.match(/(?:^|;\s*)cybersygn_ref=([a-z0-9]{4,16})/);
+      if (m) ref = m[1].toLowerCase();
+    }
+  } catch (e) {}
+  let senderId = null;
+  try { senderId = getSenderId(); } catch (e) {}
+  try {
+    const res = await fetch('/api/checkout/create-session', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ tier, senderId, ref }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data && data.url) { window.location.assign(data.url); return; }
+    // No session URL (e.g. price not configured): fall back, never dead-end.
+    if (button) { button.disabled = false; button.textContent = originalLabel; }
+    window.location.href = '/#pricing';
+  } catch (err) {
+    if (button) { button.disabled = false; button.textContent = originalLabel; }
+    window.location.href = '/#pricing';
+  }
+}
+
+/**
+ * Paywall modal. User has used all 3 free documents. The highest-intent
+ * moment in the whole product, so we lead with the value they JUST felt
+ * and present a single best offer: Pro (the AI co-pilot tier) as the hero
+ * recommendation, with Solo as the quieter, always-live alternative.
+ *
+ * Pro may not be purchasable yet (Stripe price not set). We fetch
+ * /api/billing/config; if purchasable.pro is false (or unknown), the Pro
+ * button honestly routes to the live Solo checkout instead, so no button
+ * ever dead-ends. Solo always works.
  */
 function showPaywallModal() {
   const overlay = document.createElement('div');
@@ -3012,35 +3063,38 @@ function showPaywallModal() {
   card.className = 'modal-card modal-card--wide';
   card.innerHTML = `
     <div class="modal-card__head">
-      <span class="modal-card__kicker">You've used all 3 free documents.</span>
-      <h2 class="modal-card__title">Pick a plan to keep going.</h2>
+      <span class="modal-card__kicker">That was your 3 free documents. Nice work.</span>
+      <h2 class="modal-card__title">Keep that going, unlimited.</h2>
       <button type="button" class="modal-card__close" aria-label="Close">×</button>
     </div>
     <div class="modal-card__body">
-      <p class="modal-card__lede">Unlimited documents from here forward. Cancel anytime in one click. The next month does not bill.</p>
+      <p class="modal-card__lede">Every plan is unlimited from here. Pro adds the AI co-pilot: draft a contract from one sentence, then get a plain-language summary of anything you sign. Annual saves you two months. Cancel in one click, the next month does not bill.</p>
       <div class="paywall-grid">
+        <div class="paywall-tier paywall-tier--featured">
+          <span class="paywall-tier__badge">Recommended</span>
+          <p class="kicker">Pro</p>
+          <p class="paywall-tier__price"><strong>$19</strong>/mo</p>
+          <p class="caption" style="margin:-4px 0 8px">or $15/mo billed annually</p>
+          <ul>
+            <li>Everything in Solo, unlimited</li>
+            <li>AI co-pilot: draft from one sentence</li>
+            <li>Plain-language AI summaries</li>
+            <li>Bulk send, priority send + support</li>
+          </ul>
+          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="pro" data-paywall-pro-btn>Choose Pro</button>
+          <p class="caption" data-paywall-pro-note hidden style="margin-top:8px"></p>
+        </div>
         <div class="paywall-tier">
           <p class="kicker">Solo</p>
           <p class="paywall-tier__price"><strong>$12</strong>/mo</p>
+          <p class="caption" style="margin:-4px 0 8px">or $10/mo billed annually</p>
           <ul>
             <li>Unlimited documents</li>
             <li>Multi-signer routing</li>
             <li>Templates auto-apply</li>
             <li>Audit certificate</li>
           </ul>
-          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="solo">Choose Solo</button>
-        </div>
-        <div class="paywall-tier paywall-tier--featured">
-          <span class="paywall-tier__badge">3 seats</span>
-          <p class="kicker">Studio</p>
-          <p class="paywall-tier__price"><strong>$29</strong>/mo</p>
-          <ul>
-            <li>Everything in Solo</li>
-            <li>3 seats included</li>
-            <li>Shared workspace</li>
-            <li>Bulk send + member roles</li>
-          </ul>
-          <button class="btn btn--ink btn--block" type="button" data-checkout-tier="team">Choose Studio</button>
+          <button class="btn btn--ink btn--block" type="button" data-checkout-tier="solo">Choose Solo</button>
         </div>
       </div>
     </div>
@@ -3054,17 +3108,35 @@ function showPaywallModal() {
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   const closeBtn = card.querySelector('.modal-card__close');
   if (closeBtn) closeBtn.addEventListener('click', close);
-  // Existing checkout.js wires data-checkout-tier buttons globally;
-  // we re-trigger by dispatching click on those buttons since the
-  // modal is added after the page's existing wirings.
+
+  // Pro degradation. Until the server confirms Pro is sellable, treat it as
+  // NOT live (null = unknown, handled the same as false below) so an early
+  // click can never hit a Stripe price that does not exist yet.
+  let proPurchasable = null;
+  const proBtn = card.querySelector('[data-paywall-pro-btn]');
+  const proNote = card.querySelector('[data-paywall-pro-note]');
+  fetch('/api/billing/config', { headers: { accept: 'application/json' } })
+    .then(r => (r.ok ? r.json() : null))
+    .then(cfg => {
+      proPurchasable = !!(cfg && cfg.purchasable && cfg.purchasable.pro);
+      if (!proPurchasable && proBtn) {
+        proBtn.textContent = 'Opening soon, start on Solo';
+        if (proNote) {
+          proNote.textContent = 'Pro is opening soon. Start on Solo now, move up in one click later.';
+          proNote.hidden = false;
+        }
+      }
+    })
+    .catch(() => { proPurchasable = false; });
+
+  // Wire checkout. Solo always runs Solo. Pro runs Pro only once the server
+  // confirms it is purchasable; otherwise it falls back to the live Solo
+  // hero so the button is never dead.
   card.querySelectorAll('[data-checkout-tier]').forEach(btn => {
     btn.addEventListener('click', () => {
-      // Defer to global checkout helper if available.
-      if (window.cybersygn && typeof window.cybersygn.checkout === 'function') {
-        window.cybersygn.checkout(btn.dataset.checkoutTier);
-      } else {
-        window.location.href = '/#pricing';
-      }
+      const requested = btn.dataset.checkoutTier;
+      const tier = (requested === 'pro' && proPurchasable !== true) ? 'solo' : requested;
+      startPaywallCheckout(tier, btn);
     });
   });
 }

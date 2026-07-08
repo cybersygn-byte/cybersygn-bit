@@ -84,6 +84,7 @@ import {
   createBillingPortalSession,
   verifyStripeSignature,
   applyStripeEvent,
+  purchasableTiers,
 } from './stripe.js';
 
 const VERSION = '0.2.0';
@@ -95,11 +96,17 @@ const VERSION = '0.2.0';
 // the public pricing page. (solo $12, founding/Origin $9, team/Studio $29.)
 const TIER_MRR_CENTS = {
   solo: 1200,
-  solo_annual: 1000, // $120/yr ≈ $10/mo
+  solo_annual: 1000, // $120/yr ~ $10/mo
+  pro: 1900,
+  pro_annual: 1500, // $180/yr ~ $15/mo
   founding: 900,
-  founding_annual: 750, // $90/yr ≈ $7.50/mo
+  founding_annual: 750, // $90/yr ~ $7.50/mo
   team: 2900,
-  team_annual: 2417, // $290/yr ≈ $24.17/mo
+  team_annual: 2417, // $290/yr ~ $24.17/mo
+  business: 7900,
+  business_annual: 6500, // $780/yr ~ $65/mo
+  whitelabel: 1900, // recurring add-on
+  seat: 900, // per seat, per month (multiply by quantity at attribution)
   lifetime: 0, // one-time, not recurring
   free: 0,
 };
@@ -379,6 +386,9 @@ const worker = {
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/lifetime-count') {
       return handleLifetimeCount(env);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/billing/config') {
+      return jsonResponse(200, { purchasable: purchasableTiers(env) }, { 'cache-control': 'public, max-age=120' });
     }
     if (request.method === 'GET' && url.pathname === '/api/status/uptime') {
       return handleUptimeRead(env, url);
@@ -1070,12 +1080,12 @@ async function handleCheckoutCreateSession(request, env, url) {
   if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/checkout/create-session' });
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
-  const { tier, senderId, email, ref } = body.value || {};
+  const { tier, senderId, email, ref, quantity } = body.value || {};
 
   if (!tier || !TIERS[tier] || tier === 'free') {
     return jsonResponse(400, {
       error: 'invalid_tier',
-      message: 'Pick one of: solo, founding, team.',
+      message: 'Pick a valid plan or add-on.',
     });
   }
   if (!senderId || typeof senderId !== 'string') {
@@ -1107,6 +1117,7 @@ async function handleCheckoutCreateSession(request, env, url) {
       email: typeof email === 'string' ? email.trim() : undefined,
       origin,
       ref: typeof ref === 'string' ? ref.toLowerCase() : undefined,
+      quantity: Number.isFinite(Number(quantity)) ? Number(quantity) : undefined,
     });
     return jsonResponse(200, { url: session.url, sessionId: session.sessionId });
   } catch (err) {

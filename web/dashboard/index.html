@@ -105,6 +105,27 @@
         </div>
       </div>
 
+      <!--
+        One-time white-label upsell. Shown by app.js only right after a
+        successful checkout of a plan that does not already include
+        white-label (Solo/Pro/Studio), and only when white-label is
+        purchasable. Dismissible; shown once (localStorage flag). The add
+        button carries data-checkout-tier="whitelabel" so checkout.js sends
+        it to Stripe in one click with the sender's id.
+      -->
+      <div class="toast" id="whitelabel-upsell" hidden role="region" aria-label="White-label add-on offer" style="position: relative; top: 0; margin-bottom: var(--s-5);">
+        <div class="toast__inner" style="flex-wrap:wrap;gap:var(--s-3);">
+          <span class="toast__text">
+            <strong>One more thing: make it fully yours.</strong>
+            Remove the CyberSygn mark and use your own domain. White-label is $19/mo.
+          </span>
+          <span style="display:flex;gap:var(--s-2);align-items:center;">
+            <button id="whitelabel-upsell-add" class="btn btn--primary btn--sm" type="button" data-checkout-tier="whitelabel">Add white-label</button>
+            <button id="whitelabel-upsell-dismiss" class="btn btn--ghost btn--sm" type="button">No thanks</button>
+          </span>
+        </div>
+      </div>
+
       <!-- Command header. One primary action; everything else lives in a
            quiet overflow menu so the documents list stays the focus. -->
       <header class="cmd-head">
@@ -388,6 +409,41 @@
                 <span id="brand-preview-cta" class="brand-preview__cta">Review and sign →</span>
               </div>
             </div>
+          </section>
+
+          <!-- Add-ons panel. Shown by app.js only to a paying subscriber
+               (tier not free/owner). Two purchasable add-ons, each
+               purchasability-aware: if its Stripe price is not configured the
+               control disables and reads "Opening soon" so no click dead-ends.
+               The seat button pre-sets data-checkout-bound="1" so checkout.js
+               skips it; app.js owns its click to pass the seat quantity. -->
+          <section id="addons-panel" class="addons-panel settings-panel" hidden aria-live="polite">
+            <div class="settings-panel__head">
+              <p class="settings-panel__title">Add-ons</p>
+              <p class="settings-panel__note">
+                Bolt extra seats or white-label onto your plan. Billed alongside your subscription.
+              </p>
+            </div>
+            <div class="addons-panel__row" style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;padding:var(--s-3) 0;border-top:1px solid var(--line,rgba(0,0,0,.08));">
+              <div style="min-width:0;flex:1 1 220px;">
+                <p class="settings-panel__title" style="margin:0;">Extra seats</p>
+                <p class="settings-panel__note" style="margin:0;">Add teammates to your workspace, $9 each per month.</p>
+              </div>
+              <div style="display:flex;gap:var(--s-2);align-items:center;flex-wrap:wrap;">
+                <input id="addon-seat-qty" type="number" min="1" max="25" step="1" value="1" inputmode="numeric" aria-label="Number of seats to add" style="width:72px;padding:8px 10px;border:1px solid var(--line,rgba(0,0,0,.15));border-radius:8px;font:inherit;" />
+                <button id="addon-seat-btn" class="btn btn--ink btn--sm" type="button" data-checkout-tier="seat" data-checkout-bound="1">Add seats, $9 each</button>
+              </div>
+            </div>
+            <div class="addons-panel__row" style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;padding:var(--s-3) 0;border-top:1px solid var(--line,rgba(0,0,0,.08));">
+              <div style="min-width:0;flex:1 1 220px;">
+                <p class="settings-panel__title" style="margin:0;">White-label</p>
+                <p class="settings-panel__note" style="margin:0;">Remove the CyberSygn mark, use your domain, $19/mo.</p>
+              </div>
+              <div style="display:flex;gap:var(--s-2);align-items:center;">
+                <button id="addon-whitelabel-btn" class="btn btn--ink btn--sm" type="button" data-checkout-tier="whitelabel">Add white-label</button>
+              </div>
+            </div>
+            <p id="addon-status" class="caption" role="status" aria-live="polite" style="margin-top:var(--s-2);"></p>
           </section>
 
           <!-- Affiliate panel (slice 84). Every paying customer has a
@@ -679,15 +735,19 @@
 
       const tier = data.tier;
       const tierLabels = {
-        owner:           'Owner mode',
-        free:            'Demo',
-        solo:            'Solo',
-        solo_annual:     'Solo (annual)',
-        founding:        'Origin member',
-        founding_annual: 'Origin (annual)',
-        team:            'Studio',
-        team_annual:     'Studio (annual)',
-        lifetime:        'Lifetime',
+        owner:            'Owner mode',
+        free:             'Demo',
+        solo:             'Solo',
+        solo_annual:      'Solo (annual)',
+        pro:              'Pro',
+        pro_annual:       'Pro (annual)',
+        founding:         'Origin member',
+        founding_annual:  'Origin (annual)',
+        team:             'Studio',
+        team_annual:      'Studio (annual)',
+        business:         'Business',
+        business_annual:  'Business (annual)',
+        lifetime:         'Lifetime',
       };
       tierEl.textContent = tierLabels[tier] || tier;
       banner.dataset.tier = tier;
@@ -716,14 +776,45 @@
       // Primary action
       actionsEl.innerHTML = '';
       if (tier === 'free') {
+        // Lead with Pro (the hero plan). Solo stays available as a quieter
+        // text link so price-sensitive senders still have the cheaper door.
+        const wrap = document.createElement('div');
+        wrap.className = 'sub-banner__upgrade';
+        wrap.style.cssText = 'display:flex;flex-direction:column;align-items:flex-end;gap:4px;';
+
+        // Default to the LIVE plan (Solo) so the primary CTA never dead-ends
+        // on a not-yet-priced Pro. If /api/billing/config confirms Pro is
+        // purchasable, we lead with Pro instead.
         const btn = document.createElement('button');
         btn.className = 'btn btn--primary btn--sm';
         btn.type = 'button';
         btn.dataset.checkoutTier = 'solo';
-        btn.textContent = 'Upgrade to Solo';
-        actionsEl.appendChild(btn);
-        // Re-bind checkout buttons we just injected.
+        btn.textContent = 'Go unlimited';
+
+        const note = document.createElement('span');
+        note.className = 'caption';
+        note.textContent = 'Unlimited signing, from $12/mo';
+
+        const more = document.createElement('a');
+        more.href = '/#pricing';
+        more.textContent = 'See all plans';
+        more.style.cssText = 'color:var(--text-3,inherit);font:inherit;font-size:var(--t-xs,12px);text-decoration:underline;';
+
+        wrap.appendChild(btn);
+        wrap.appendChild(note);
+        wrap.appendChild(more);
+        actionsEl.appendChild(wrap);
         import('../checkout.js').then(mod => mod.initCheckoutButtons(actionsEl)).catch(() => {});
+        fetch('/api/billing/config', { headers: { accept: 'application/json' } })
+          .then(r => (r.ok ? r.json() : null))
+          .then(cfg => {
+            if (cfg && cfg.purchasable && cfg.purchasable.pro) {
+              btn.dataset.checkoutTier = 'pro';
+              btn.textContent = 'Upgrade to Pro';
+              note.textContent = 'Unlimited + the AI co-pilot';
+            }
+          })
+          .catch(() => {});
       }
       if (tier !== 'free' && portalBtn) {
         portalBtn.hidden = false;
@@ -824,6 +915,10 @@
       var params = new URLSearchParams(location.search);
       var state = params.get('checkout');
       var portal = params.get('portal');
+      // Stash the checkout result before we scrub the URL below. app.js reads
+      // this (after the subscription tier loads) to decide whether to offer the
+      // one-time white-label upsell on ?checkout=success.
+      try { if (state) window.__cybersygnCheckout = state; } catch (e) {}
       var messages = {
         success: 'Welcome aboard. Your subscription is active. Pick a document to send first.',
         owner:   'Owner mode active. Demo-ready. No real payment was processed.',

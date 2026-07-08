@@ -29,15 +29,51 @@ export const TIERS = {
   free:            { id: 'free',            docs: 3,        priceEnv: null,                            label: 'Demo' },
   solo:            { id: 'solo',            docs: Infinity, priceEnv: 'STRIPE_PRICE_SOLO',             label: 'Solo' },
   solo_annual:     { id: 'solo_annual',     docs: Infinity, priceEnv: 'STRIPE_PRICE_SOLO_ANNUAL',      label: 'Solo (annual)' },
+  // Pro (hero): Solo + AI co-pilot + priority. $19 / $180yr. New envs.
+  pro:             { id: 'pro',             docs: Infinity, priceEnv: 'STRIPE_PRICE_PRO',              label: 'Pro' },
+  pro_annual:      { id: 'pro_annual',      docs: Infinity, priceEnv: 'STRIPE_PRICE_PRO_ANNUAL',       label: 'Pro (annual)' },
   founding:        { id: 'founding',        docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING',         label: 'Origin' },
   founding_annual: { id: 'founding_annual', docs: Infinity, priceEnv: 'STRIPE_PRICE_FOUNDING_ANNUAL',  label: 'Origin (annual)' },
   team:            { id: 'team',            docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM',             label: 'Studio' },
   team_annual:     { id: 'team_annual',     docs: Infinity, priceEnv: 'STRIPE_PRICE_TEAM_ANNUAL',      label: 'Studio (annual)' },
+  // Business (anchor): 10 seats + white-label + SSO + API. $79 / $780yr.
+  business:        { id: 'business',        docs: Infinity, priceEnv: 'STRIPE_PRICE_BUSINESS',         label: 'Business' },
+  business_annual: { id: 'business_annual', docs: Infinity, priceEnv: 'STRIPE_PRICE_BUSINESS_ANNUAL',  label: 'Business (annual)' },
   // Lifetime tier (slice 98): one-time $299, capped at first 50 customers.
   // No recurring billing. Same feature set as Solo. Tracked separately
   // so the tier label and Stripe checkout-mode differ from subscriptions.
   lifetime:        { id: 'lifetime',        docs: Infinity, priceEnv: 'STRIPE_PRICE_LIFETIME',         label: 'Lifetime', oneTime: true },
+  // A la carte add-ons. `seat` supports a quantity; `whitelabel` is a flat
+  // recurring add-on. These attach to an existing paid workspace.
+  seat:            { id: 'seat',            docs: 0,        priceEnv: 'STRIPE_PRICE_SEAT',             label: 'Extra seat', addon: true, quantifiable: true },
+  whitelabel:      { id: 'whitelabel',      docs: 0,        priceEnv: 'STRIPE_PRICE_WHITELABEL',       label: 'White-label', addon: true },
 };
+
+/**
+ * Which purchasable things actually have a Stripe price configured. The
+ * pricing UI reads this so a not-yet-priced tier (e.g. Pro/Business before the
+ * owner creates its Stripe price) shows for the anchor effect but its CTA
+ * degrades to "notify me" instead of dead-ending on a checkout error.
+ * Annual variants fold into their base id.
+ */
+export function purchasableTiers(env) {
+  const priced = (id) => {
+    const conf = TIERS[id];
+    return !!(conf && conf.priceEnv && typeof env[conf.priceEnv] === 'string' && env[conf.priceEnv].startsWith('price_'));
+  };
+  const out = {};
+  const bases = ['solo', 'pro', 'team', 'business', 'founding', 'lifetime', 'seat', 'whitelabel'];
+  for (const id of bases) {
+    // A subscription tier is only "purchasable" for the funnel if BOTH its
+    // monthly and annual prices exist, because annual is the default cycle and
+    // an annual click with no *_annual price would dead-end. Tiers without an
+    // annual variant (lifetime, seat, whitelabel) just need their one price.
+    const annualId = `${id}_annual`;
+    const needsAnnual = !!TIERS[annualId];
+    out[id] = priced(id) && (!needsAnnual || priced(annualId));
+  }
+  return out;
+}
 
 // Cap for Lifetime tier — only the first N customers can claim it.
 export const LIFETIME_CAP = 50;
@@ -178,7 +214,7 @@ export function foundingCap() {
  * Founding 100 is gated server-side: if the count is already at the cap,
  * we refuse and ask the caller to fall back to Solo.
  */
-export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin, ref }) {
+export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin, ref, quantity }) {
   if (!env || typeof env.STRIPE_SECRET_KEY !== 'string' || !env.STRIPE_SECRET_KEY.startsWith('sk_')) {
     throw stripeError('not_configured', 'Stripe is not configured on this deployment.');
   }
@@ -189,6 +225,16 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   const priceId = env[tierConf.priceEnv];
   if (typeof priceId !== 'string' || !priceId.startsWith('price_')) {
     throw stripeError('missing_price', `Price for "${tier}" is not configured.`);
+  }
+  // Add-ons attach to a paid plan. Refuse to sell one to a free/planless
+  // account, or it would be a cheaper path to an unlimited entitlement.
+  if (tierConf.addon) {
+    const base = await getSubscription(env, senderId);
+    const hasPlan = !!(base && base.status === 'active' && base.tier !== 'free'
+      && !(TIERS[base.tier] && TIERS[base.tier].addon));
+    if (!hasPlan) {
+      throw stripeError('addon_needs_plan', 'Add-ons attach to a paid plan. Choose a plan first, then add this.');
+    }
   }
   if (tier === 'founding') {
     const taken = await getFoundingCount(env);
@@ -212,7 +258,16 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   const isOneTime = tier === 'lifetime' || tierConf.oneTime;
   body.set('mode', isOneTime ? 'payment' : 'subscription');
   body.set('line_items[0][price]', priceId);
-  body.set('line_items[0][quantity]', '1');
+  // Quantifiable add-ons (seats) accept a quantity; everything else is 1.
+  let qty = 1;
+  if (tierConf.quantifiable) {
+    const n = parseInt(quantity, 10);
+    qty = Number.isFinite(n) ? Math.min(50, Math.max(1, n)) : 1;
+    body.set('line_items[0][adjustable_quantity][enabled]', 'true');
+    body.set('line_items[0][adjustable_quantity][minimum]', '1');
+    body.set('line_items[0][adjustable_quantity][maximum]', '50');
+  }
+  body.set('line_items[0][quantity]', String(qty));
   body.set('success_url', successUrl || `${origin}/dashboard/?checkout=success&session_id={CHECKOUT_SESSION_ID}`);
   body.set('cancel_url', cancelUrl || `${origin}/?checkout=canceled`);
   body.set('client_reference_id', senderId || '');
@@ -220,6 +275,7 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   body.set('billing_address_collection', 'auto');
   body.set('metadata[tier]', tier);
   body.set('metadata[senderId]', senderId || '');
+  if (tierConf.quantifiable) body.set('metadata[quantity]', String(qty));
   if (!isOneTime) {
     body.set('subscription_data[metadata][tier]', tier);
     body.set('subscription_data[metadata][senderId]', senderId || '');
@@ -380,6 +436,26 @@ async function onCheckoutCompleted(env, session) {
     }
   }
   const storage = pickStorage(env);
+
+  // Add-ons (extra seats, white-label) ATTACH to an existing plan. They must
+  // never be written into sub:<senderId>, or they would replace the buyer's
+  // real plan with the add-on (and hand a planless buyer an unlimited
+  // entitlement for the price of an add-on). Record them under their own key.
+  if (TIERS[tier] && TIERS[tier].addon) {
+    const base = await getSubscription(env, senderId);
+    const hasPlan = !!(base && base.status === 'active' && base.tier !== 'free'
+      && !(TIERS[base.tier] && TIERS[base.tier].addon));
+    let addons = {};
+    try { addons = JSON.parse((await storage.get(`addons:${senderId}`)) || '{}') || {}; } catch (e) {}
+    addons[tier] = {
+      stripeSubscriptionId: subId || null,
+      qty: (session.metadata && parseInt(session.metadata.quantity, 10)) || 1,
+      activatedAt: new Date().toISOString(),
+      orphan: hasPlan ? undefined : true,
+    };
+    await storage.put(`addons:${senderId}`, JSON.stringify(addons));
+    return { applied: true, addon: tier, orphan: !hasPlan };
+  }
 
   // Pull the subscription so we have the canonical status and renewal date.
   let subDetails = null;

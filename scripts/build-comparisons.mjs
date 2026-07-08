@@ -125,7 +125,7 @@ function renderPage(c) {
     },
     {
       q: `Is CyberSygn cheaper than ${c.name}?`,
-      a: `${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. CyberSygn Solo is $12/month for unlimited documents. CyberSygn Origin is $9/month locked for the life of your account, available to the first 100 founders. The Origin rate disappears once the cap is filled.`,
+      a: `CyberSygn is unlimited at every plan, from $12 (Solo), $19 (Pro, with the AI co-pilot), $29 (Studio, 3 seats), to $79 (Business, white-label + SSO + API). ${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. Every CyberSygn plan starts with 3 free documents and no card. Origin is $9/month locked for the life of your account for the first 100 founders, and that rate disappears once the cap is filled.`,
     },
     {
       q: `Can I migrate from ${c.name} to CyberSygn?`,
@@ -274,8 +274,8 @@ function renderPage(c) {
                 <td>${esc(c.accountsRequired)}</td>
               </tr>
               <tr>
-                <th scope="row">Solo plan price</th>
-                <td class="compare__us">$12/mo (Solo) or $9/mo locked for life (Origin)</td>
+                <th scope="row">Plan pricing</th>
+                <td class="compare__us">Unlimited at every plan: $12 Solo, $19 Pro (AI co-pilot), $29 Studio (3 seats), $79 Business (white-label, SSO, API)</td>
                 <td>${esc(c.soloPrice)}${esc(c.soloPriceUnit)} <small>(${esc(c.soloPriceNotes)})</small></td>
               </tr>
               <tr>

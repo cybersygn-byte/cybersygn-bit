@@ -111,6 +111,32 @@
           },
           {
             "@type": "Offer",
+            "name": "Pro",
+            "price": "19",
+            "priceCurrency": "USD",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "19",
+              "priceCurrency": "USD",
+              "billingDuration": "P1M"
+            },
+            "description": "Everything in Solo plus the AI co-pilot (draft and summarize contracts), bulk send, and priority support"
+          },
+          {
+            "@type": "Offer",
+            "name": "Business",
+            "price": "79",
+            "priceCurrency": "USD",
+            "priceSpecification": {
+              "@type": "UnitPriceSpecification",
+              "price": "79",
+              "priceCurrency": "USD",
+              "billingDuration": "P1M"
+            },
+            "description": "10 seats, white-label with your own domain, single sign-on, full REST API, priority support"
+          },
+          {
+            "@type": "Offer",
             "name": "Origin",
             "price": "9",
             "priceCurrency": "USD",
@@ -192,7 +218,7 @@
             "name": "What does it cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Demo is free for 3 documents lifetime with no credit card. Solo is $12 per month for unlimited documents. Studio is $29 per month for a 3-seat team with shared workspace. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
+              "text": "Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that drafts and summarizes contracts, plus bulk send and priority support. Studio is $29 per month for a 3-seat team. Business is $79 per month for 10 seats with white-label, single sign-on, and the API. Annual billing saves two months. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
             }
           },
           {
@@ -836,45 +862,27 @@
         </p>
       </header>
 
-      <!-- Value anchor: position the flat price against the metered, per-seat norm. -->
+      <!-- Value anchor: unlimited at every tier vs the metered, per-seat norm. -->
       <p class="price-anchor">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        <span>The typical solo e-signature plan runs <strong>$20 to $25 a month</strong> and still caps how many documents you can send. <strong>CyberSygn Solo is $12 a month for unlimited.</strong></span>
+        <span>Most e-signature tools meter your documents and charge <strong>$20 to $45 a seat</strong>. Every CyberSygn plan is <strong>unlimited</strong>, and every plan starts with <strong>3 free documents, no card.</strong></span>
       </p>
 
-      <!-- Billing-cycle toggle. Annual saves ~2 months/year per tier, monthly default. -->
-      <div class="billing-toggle" role="group" aria-label="Billing cycle" data-cycle="monthly">
-        <button class="billing-toggle__opt is-active" type="button" data-cycle="monthly" aria-pressed="true">
+      <!-- Billing-cycle toggle. Annual is the default: it saves two months. -->
+      <div class="billing-toggle" role="group" aria-label="Billing cycle" data-cycle="annual">
+        <button class="billing-toggle__opt" type="button" data-cycle="monthly" aria-pressed="false">
           Monthly
         </button>
-        <button class="billing-toggle__opt" type="button" data-cycle="annual" aria-pressed="false">
-          Annual <span class="billing-toggle__badge">Save ~2 months</span>
+        <button class="billing-toggle__opt is-active" type="button" data-cycle="annual" aria-pressed="true">
+          Annual <span class="billing-toggle__badge">2 months free</span>
         </button>
       </div>
 
-      <!-- CORE LADDER: three clean choices. Solo is center-stage (most popular). -->
+      <!-- CORE LADDER: four ascending choices. Pro is the hero, Business the anchor. -->
       <div class="pricing pricing--core">
 
-        <!-- DEMO. The risk-free entry. -->
-        <article class="tier" data-tier="demo">
-          <p class="tier__name">Demo</p>
-          <div class="tier__price">
-            <span class="tier__price-num">$0</span>
-            <span class="tier__price-unit">free</span>
-          </div>
-          <p class="tier__hook">Watch it find every field on your own contract before you pay a cent.</p>
-          <ul class="tier__list">
-            <li>Three full signed documents</li>
-            <li>Every feature unlocked, no restrictions</li>
-            <li>No credit card to start</li>
-            <li>Your history carries over when you upgrade</li>
-          </ul>
-          <a class="btn btn--ghost btn--block" href="./preview/">Start free, no card →</a>
-        </article>
-
-        <!-- SOLO. Most popular, center stage, the decoy-effect anchor. -->
-        <article class="tier tier--featured" data-tier="solo" data-monthly="12" data-annual="10" data-annual-total="120">
-          <span class="tier__badge">Most popular</span>
+        <!-- SOLO. The unlimited essentials. -->
+        <article class="tier" data-tier="solo" data-monthly="12" data-annual="10" data-annual-total="120">
           <p class="tier__name">Solo</p>
           <div class="tier__price">
             <span class="tier__price-num">$12</span>
@@ -888,10 +896,31 @@
             <li>Camera scan turns paper into a signable PDF</li>
             <li>SHA-256 audit certificate on every signed doc</li>
           </ul>
-          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="solo">
+          <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="solo">
             Go unlimited →
           </button>
-          <p class="tier__reassure">No card to try. Cancel in one click.</p>
+        </article>
+
+        <!-- PRO. Hero, center stage, the value pick between Solo and the team plans. -->
+        <article class="tier tier--featured" data-tier="pro" data-tier-new="1" data-monthly="19" data-annual="15" data-annual-total="180">
+          <span class="tier__badge">Most popular</span>
+          <p class="tier__name">Pro</p>
+          <div class="tier__price">
+            <span class="tier__price-num">$19</span>
+            <span class="tier__price-unit">/mo</span>
+          </div>
+          <p class="tier__hook">Everything in Solo, plus the AI co-pilot that drafts and reads your contracts for you.</p>
+          <ul class="tier__list">
+            <li>Everything in Solo, unlimited</li>
+            <li>AI drafts a ready-to-sign contract from a sentence</li>
+            <li>Plain-language AI summary of any signed document</li>
+            <li>Bulk send to a whole list at once</li>
+            <li>Priority send and priority support</li>
+          </ul>
+          <button class="btn btn--primary btn--block" type="button" data-checkout-tier="pro">
+            Start Pro →
+          </button>
+          <p class="tier__reassure">Just $7 more than Solo. Cancel in one click.</p>
         </article>
 
         <!-- STUDIO. Small team. -->
@@ -903,14 +932,34 @@
           </div>
           <p class="tier__hook">Three seats, one shared workspace, every send in view.</p>
           <ul class="tier__list">
-            <li>Three seats, add more at $9 each</li>
+            <li>Everything in Pro, for your whole team</li>
+            <li>Three seats included, add more at $9 each</li>
             <li>Shared workspace and aggregated dashboard</li>
             <li>Member roles: who can send, sign, and audit</li>
-            <li>Bulk send and a shared template library</li>
             <li>Webhooks to wire signing into your stack</li>
           </ul>
           <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="team">
             Set up your team →
+          </button>
+        </article>
+
+        <!-- BUSINESS. The high anchor: white-label + SSO + API. -->
+        <article class="tier tier--anchor" data-tier="business" data-tier-new="1" data-monthly="79" data-annual="65" data-annual-total="780">
+          <p class="tier__name">Business</p>
+          <div class="tier__price">
+            <span class="tier__price-num">$79</span>
+            <span class="tier__price-unit">/mo</span>
+          </div>
+          <p class="tier__hook">Your brand, your domain, your systems. Signing that looks and feels like you built it.</p>
+          <ul class="tier__list">
+            <li>Everything in Studio, ten seats included</li>
+            <li>White-label: your logo, your domain, no CyberSygn mark</li>
+            <li>Single sign-on (SSO) for your team</li>
+            <li>Full REST API and higher rate limits</li>
+            <li>Priority support with a real person</li>
+          </ul>
+          <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="business">
+            Scale on Business →
           </button>
         </article>
       </div>
@@ -933,7 +982,7 @@
         <div class="pricing pricing--founder">
 
           <!-- ORIGIN. Founding 100. Lifetime-lock + FOMO. -->
-          <article class="tier tier--founder" data-tier="origin" data-monthly="9" data-annual="7" data-annual-total="84">
+          <article class="tier tier--founder" data-tier="origin">
             <span class="tier__badge" id="founding-badge">$9 for life</span>
             <p class="tier__name">Origin</p>
             <div class="tier__price">
@@ -1134,11 +1183,13 @@
           <summary class="faq__q">What does it cost?</summary>
           <div class="faq__a">
             <p>
-              Demo is free for 3 documents lifetime, no card required. Solo is $12 per month for
-              unlimited documents. Studio is $29 per month for a 3-seat team with shared workspace
-              and member roles. Two early-adopter options exist while founding spots remain:
-              Origin at $9 per month locked for the life of your account (first 100 customers) and
-              Lifetime at $299 one-time (first 50 customers).
+              Every plan is unlimited and starts with 3 free documents, no card required. Solo is
+              $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that
+              drafts and reads your contracts, plus bulk send and priority support. Studio is $29
+              per month for a 3-seat team. Business is $79 per month for 10 seats with white-label,
+              single sign-on, and the API. Annual billing saves two months. Two early-adopter
+              options remain while spots last: Origin at $9 per month locked for the life of your
+              account (first 100 customers) and Lifetime at $299 one-time (first 50 customers).
             </p>
           </div>
         </details>

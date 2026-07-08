@@ -1372,6 +1372,45 @@ async function main() {
     ok(expRes.status === 400, 'verify rejects an expired token');
   }
 
+  // 56. Pricing add-ons: purchasability + no entitlement clobber.
+  console.log('\n56. Pricing add-ons (purchasability + entitlement safety)');
+  {
+    const stripe = await import('../worker/src/stripe.js');
+    const store = (await import('../worker/src/storage.js')).getStorage(env).docs;
+
+    // purchasableTiers requires BOTH monthly and annual for a subscription tier
+    // (annual is the default cycle, so a missing *_annual would dead-end).
+    const pMonthlyOnly = stripe.purchasableTiers({ STRIPE_PRICE_PRO: 'price_x' });
+    ok(pMonthlyOnly.pro === false, 'pro not purchasable when only the monthly price exists');
+    const pBoth = stripe.purchasableTiers({ STRIPE_PRICE_PRO: 'price_x', STRIPE_PRICE_PRO_ANNUAL: 'price_y' });
+    ok(pBoth.pro === true, 'pro purchasable when both monthly and annual prices exist');
+    const pSeat = stripe.purchasableTiers({ STRIPE_PRICE_SEAT: 'price_s' });
+    ok(pSeat.seat === true, 'seat add-on purchasable with its single price (no annual variant needed)');
+    ok(stripe.purchasableTiers({}).solo === false, 'unpriced tier is not purchasable');
+
+    // An add-on purchase must NOT overwrite the base plan in sub:<senderId>.
+    await store.put('sub:addon-tester', JSON.stringify({ tier: 'pro', status: 'active', stripeSubscriptionId: 'sub_base' }));
+    const applied = await stripe.applyStripeEvent(env, {
+      type: 'checkout.session.completed',
+      data: { object: { client_reference_id: 'addon-tester', customer: 'cus_a',
+        metadata: { tier: 'seat', senderId: 'addon-tester', quantity: '3' } } },
+    });
+    ok(applied && applied.addon === 'seat', 'add-on checkout routes to the add-on handler');
+    const baseAfter = JSON.parse(await store.get('sub:addon-tester'));
+    ok(baseAfter.tier === 'pro' && baseAfter.stripeSubscriptionId === 'sub_base', 'base plan is untouched by an add-on purchase (no entitlement clobber)');
+    const addonsAfter = JSON.parse((await store.get('addons:addon-tester')) || '{}');
+    ok(addonsAfter.seat && addonsAfter.seat.qty === 3 && !addonsAfter.seat.orphan, 'seat add-on recorded separately with its quantity');
+
+    // A planless account buying an add-on is flagged orphan, never granted a plan.
+    const orphanApplied = await stripe.applyStripeEvent(env, {
+      type: 'checkout.session.completed',
+      data: { object: { client_reference_id: 'addon-orphan', customer: 'cus_o',
+        metadata: { tier: 'whitelabel', senderId: 'addon-orphan' } } },
+    });
+    ok(orphanApplied && orphanApplied.orphan === true, 'add-on bought with no base plan is flagged orphan');
+    ok(!(await store.get('sub:addon-orphan')), 'a planless add-on buyer is NOT granted a base subscription');
+  }
+
   console.log('\n======================================');
   console.log(`${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);

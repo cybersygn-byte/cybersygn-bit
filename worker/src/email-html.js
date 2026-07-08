@@ -332,6 +332,11 @@ export function renderDripDay3Html({ name, url }) {
         One contract, one template, infinite repeat sends. The way every signing
         tool should work and somehow none of them do.
       </p>
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
+        And if you need the next contract itself, not just the fields: on Pro, the
+        AI co-pilot drafts one from a single sentence, then you sign it the same
+        way. A tip for later, no rush.
+      </p>
       <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
       <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">
         Nathan, founder. <a href="${esc(url)}" style="color:${CYAN};">cybersygn.io</a>
@@ -340,7 +345,7 @@ export function renderDripDay3Html({ name, url }) {
 }
 
 /**
- * Day 7. Conversion ask — Origin with FOMO + Solo as soft secondary.
+ * Day 7. Conversion ask. Origin leads, Pro is the everyday pick, Solo the floor.
  */
 export function renderDripDay7Html({ name, url }) {
   const founding = `${url}/#founding`;
@@ -357,23 +362,34 @@ export function renderDripDay7Html({ name, url }) {
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
         A week ago you signed up for the Demo. If CyberSygn is the right tool for
-        you, this is the right time to lock the founder rate before it closes
-        for good.
+        you, this is a good moment to pick a plan. Here is the honest map, best
+        deal first.
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
-        <strong>Origin:</strong> $9/month, locked for the life of your account.
-        100 spots, limited, never re-opens. Same product as Solo, $3 less every
-        month forever, direct line to me, a vote on what we build next, and
-        your name on the Origin wall when we ship it.
+        <strong>Origin, $9/month, locked for the life of your account.</strong>
+        The first 100 accounts only, with a live count on the page, and it never
+        re-opens. Same product as Solo, $3 less every month for as long as you
+        stay, a direct line to me, a vote on what we build next, and your name on
+        the Origin wall when we ship it. If the counter still shows spots, this is
+        the best rate CyberSygn will ever offer.
       </p>
       ${ctaButton({ url: founding, label: 'Claim an Origin spot →' })}
-      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
-        If Origin is full or not your thing, <a href="${esc(pricing)}" style="color:${CYAN};">Solo is $12/month with no cap</a>.
+      <p class="cs-text" style="margin:20px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.6;color:${INK};">
+        <strong>Pro, $19/month, the everyday pick.</strong> Everything in Solo
+        plus the AI co-pilot: it drafts a contract from a single sentence and
+        reads any signed document back to you in plain language, with bulk and
+        priority send on top. If you write and sign more than the occasional
+        one-off, this is the one I would choose.
+      </p>
+      <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.6;color:${INK};">
+        <strong>Solo, $12/month, the floor.</strong> One user, unlimited
+        documents, the simplest way to keep signing after your 3 free docs.
+        <a href="${esc(pricing)}" style="color:${CYAN};">See all plans</a>.
       </p>
       <p class="cs-text" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:14px;line-height:1.55;color:${INK};">
-        Honest math: at $60/hour, Origin pays for itself the first time you
-        avoid 9 minutes of placing fields by hand. Two contracts a month
-        and the math is no longer interesting.
+        Honest math: at $60/hour, any of these pays for itself the first time you
+        avoid 9 minutes of placing fields by hand. Two contracts a month and the
+        math is no longer interesting.
       </p>
       <hr class="cs-rule" style="border:0;border-top:1px solid ${LINE};margin:24px 0 16px 0;" />
       <p class="cs-muted" style="margin:0;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};">

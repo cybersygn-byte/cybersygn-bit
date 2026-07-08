@@ -64,7 +64,7 @@ function renderPage(doc, vert) {
     },
     {
       q: 'What does this cost?',
-      a: 'Demo: 3 documents lifetime, free, no credit card. Solo: $12 a month unlimited. Studio: $29 a month for a 3-seat team. Early-adopter tiers (Origin and Lifetime) are available while founding spots remain.',
+      a: 'Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 a month. Pro is $19 a month and adds an AI co-pilot that drafts a contract from a sentence and summarizes any signed document in plain language. Studio is $29 a month for a 3-seat team. Business is $79 a month with white-label, SSO, and a full REST API. Annual billing saves two months. Early adopters can lock Origin at $9 a month for life or take Lifetime for $299 once, while founding spots remain.',
     },
   ];
 
@@ -211,9 +211,11 @@ function renderPage(doc, vert) {
             <h2 class="h-section section__title">Pricing that respects ${esc(vert.singular)}.</h2>
           </div>
           <p class="lede section__lede">
-            Demo is free for three documents lifetime. Solo is $12 a month, unlimited. Studio is $29
-            a month for three seats. Early-adopter Origin and Lifetime tiers are available while
-            founding spots remain.
+            Every plan is unlimited and starts with three free documents, no card. Solo is $12 a month.
+            Pro is $19 a month and adds an AI co-pilot that drafts contracts and summarizes signed
+            documents in plain language. Studio is $29 a month for three seats. Business is $79 a month
+            with white-label, SSO, and a full API. Annual billing saves two months, and early-adopter
+            Origin ($9 a month for life) and Lifetime ($299 once) tiers are open while founding spots remain.
           </p>
         </header>
         <div class="hero__actions" style="margin-top: var(--s-5);">

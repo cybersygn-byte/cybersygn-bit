@@ -193,6 +193,8 @@ window.addEventListener('cybersygn:sub', e => {
   if (e && e.detail) window.__cybersygnSub = e.detail;
   ensureWebhookPanel();
   ensureBrandPanel();
+  ensureAddonsPanel();
+  maybeShowWhitelabelUpsell();
 });
 
 load();
@@ -241,6 +243,7 @@ async function load() {
   ensureAffiliateCode();
   ensureBrandPanel();
   ensureWebhookPanel();
+  ensureAddonsPanel();
   if (docs.length === 0) {
     showState('empty');
     return;
@@ -407,6 +410,163 @@ async function ensureWebhookPanel() {
   }
 
   await refresh();
+}
+
+/**
+ * Add-ons panel. Visible to any paying subscriber (tier not free/owner).
+ * Two a-la-carte add-ons that attach to the current plan:
+ *   - Extra seats: number input (1..25) + a checkout that carries the
+ *     quantity. The checkout helper cannot pass quantity, so this POSTs
+ *     /api/checkout/create-session {tier:'seat', senderId, quantity} and
+ *     redirects to the returned Stripe url. The seat button pre-sets
+ *     data-checkout-bound="1" in the markup so checkout.js does not also
+ *     bind it (which would fire a second, quantity-less session).
+ *   - White-label: a flat $19/mo add-on wired through checkout.js via its
+ *     data-checkout-tier="whitelabel".
+ * Purchasability-aware: /api/billing/config reports which add-ons have a
+ * Stripe price; a not-yet-priced add-on disables its control and reads
+ * "Opening soon" so a click never dead-ends.
+ */
+let addonsWired = false;
+async function ensureAddonsPanel() {
+  const panel = document.getElementById('addons-panel');
+  if (!panel) return;
+  const senderId = getSenderId();
+  if (!senderId) { panel.hidden = true; return; }
+
+  // Paying-subscriber gate. Free + owner (demo) see nothing.
+  let paying = false;
+  try {
+    const sub = window.__cybersygnSub;
+    if (sub && sub.tier && sub.tier !== 'free' && sub.tier !== 'owner') paying = true;
+  } catch (e) {}
+  if (!paying) { panel.hidden = true; return; }
+  panel.hidden = false;
+
+  // Wire once. Re-entrant calls (load + the cybersygn:sub event) just toggle
+  // visibility above.
+  if (addonsWired) return;
+  addonsWired = true;
+
+  const seatBtn = document.getElementById('addon-seat-btn');
+  const seatQty = document.getElementById('addon-seat-qty');
+  const wlBtn = document.getElementById('addon-whitelabel-btn');
+  const statusEl = document.getElementById('addon-status');
+
+  // Purchasability. Default optimistic; only the config explicitly saying an
+  // add-on is not purchasable downgrades it to "Opening soon". If the fetch
+  // fails we leave the controls live: the checkout endpoint itself returns a
+  // clean error the handler surfaces, so no click silently dead-ends.
+  let purchasable = { seat: true, whitelabel: true };
+  try {
+    const res = await fetch('/api/billing/config');
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg && cfg.purchasable) purchasable = cfg.purchasable;
+    }
+  } catch (e) {}
+
+  // Extra seats.
+  if (seatBtn) {
+    if (!purchasable.seat) {
+      seatBtn.disabled = true;
+      seatBtn.textContent = 'Opening soon';
+      if (seatQty) seatQty.disabled = true;
+    } else {
+      seatBtn.addEventListener('click', async () => {
+        let qty = parseInt(seatQty && seatQty.value, 10);
+        if (!Number.isFinite(qty) || qty < 1) qty = 1;
+        if (qty > 25) qty = 25;
+        if (seatQty) seatQty.value = String(qty);
+        const sid = getSenderId();
+        if (!sid) { if (statusEl) statusEl.textContent = 'Add your account key first, then try again.'; return; }
+        seatBtn.disabled = true;
+        const label = seatBtn.textContent;
+        seatBtn.textContent = 'Opening checkout.';
+        if (statusEl) statusEl.textContent = '';
+        try {
+          const r = await fetch('/api/checkout/create-session', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ tier: 'seat', senderId: sid, quantity: qty }),
+          });
+          const j = await r.json().catch(() => ({}));
+          if (r.ok && j.url) { window.location.assign(j.url); return; }
+          if (statusEl) statusEl.textContent = (j && j.message) || 'Could not start checkout. Try again.';
+        } catch (e) {
+          if (statusEl) statusEl.textContent = 'Network problem. Try again.';
+        }
+        seatBtn.disabled = false;
+        seatBtn.textContent = label;
+      });
+    }
+  }
+
+  // White-label (flat add-on). checkout.js owns the click via
+  // data-checkout-tier="whitelabel"; ensure it is bound even if this panel
+  // mounted after checkout.js auto-init ran.
+  if (wlBtn) {
+    if (!purchasable.whitelabel) {
+      wlBtn.disabled = true;
+      wlBtn.textContent = 'Opening soon';
+    } else {
+      import('../checkout.js').then(mod => mod.initCheckoutButtons(panel)).catch(() => {});
+    }
+  }
+}
+
+/**
+ * One-time white-label upsell. Right after a successful checkout of a plan
+ * that does not already include white-label (Solo/Pro/Studio), offer the
+ * white-label add-on in one click. Honest ($19/mo), dismissible, and shown
+ * only once (localStorage flag). Never shown if white-label has no Stripe
+ * price. The success signal comes from window.__cybersygnCheckout, which the
+ * index.html checkout-return script stashes before it scrubs the URL.
+ */
+const UPSELL_SEEN_KEY = 'cybersygn.upsell.whitelabel.seen';
+let upsellSettled = false;
+async function maybeShowWhitelabelUpsell() {
+  if (upsellSettled) return;
+  const card = document.getElementById('whitelabel-upsell');
+  if (!card) return;
+
+  // Only right after a successful checkout return.
+  let justBought = false;
+  try { justBought = window.__cybersygnCheckout === 'success'; } catch (e) {}
+  if (!justBought) return;
+
+  // Shown once, ever.
+  try { if (localStorage.getItem(UPSELL_SEEN_KEY)) { upsellSettled = true; return; } } catch (e) {}
+
+  // Only plans that lack white-label. Business already includes it; free/owner
+  // never reach a success return with a paid tier.
+  const sub = window.__cybersygnSub;
+  const tier = sub && sub.tier;
+  const LACKS_WHITELABEL = ['solo', 'solo_annual', 'pro', 'pro_annual', 'team', 'team_annual'];
+  if (!tier || LACKS_WHITELABEL.indexOf(tier) === -1) return;
+  // Past this point the decision is final for this page load.
+  upsellSettled = true;
+
+  // White-label must actually be purchasable, never a dead offer.
+  let purchasable = true;
+  try {
+    const res = await fetch('/api/billing/config');
+    if (res.ok) {
+      const cfg = await res.json();
+      if (cfg && cfg.purchasable) purchasable = !!cfg.purchasable.whitelabel;
+    }
+  } catch (e) {}
+  if (!purchasable) return;
+
+  // Mark seen the moment we commit to showing it, so a reload never repeats it.
+  try { localStorage.setItem(UPSELL_SEEN_KEY, '1'); } catch (e) {}
+
+  const dismiss = document.getElementById('whitelabel-upsell-dismiss');
+  if (dismiss) dismiss.addEventListener('click', () => { card.hidden = true; });
+  // The add button carries data-checkout-tier="whitelabel"; make sure it is
+  // wired even if it mounted after checkout.js auto-init.
+  import('../checkout.js').then(mod => mod.initCheckoutButtons(card)).catch(() => {});
+  card.hidden = false;
 }
 
 /**

@@ -30,7 +30,9 @@ async function startCheckout(button) {
   // to the tier's annual price id so the buyer is charged the ADVERTISED annual
   // rate. The *_annual tiers resolve to STRIPE_PRICE_*_ANNUAL server-side and are
   // accepted by TIERS in the worker. Lifetime/free have no annual variant.
-  const ANNUAL = { solo: 'solo_annual', founding: 'founding_annual', team: 'team_annual' };
+  // Origin (founding) is a fixed $9-for-life offer and is deliberately NOT in
+  // the monthly/annual toggle, so its button always charges the $9 rate.
+  const ANNUAL = { solo: 'solo_annual', pro: 'pro_annual', team: 'team_annual', business: 'business_annual' };
   const tier = (button.dataset.checkoutCycle === 'annual' && ANNUAL[baseTier]) ? ANNUAL[baseTier] : baseTier;
   const originalLabel = button.textContent;
   const senderId = getSenderId();

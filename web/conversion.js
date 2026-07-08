@@ -51,7 +51,7 @@
           }
           const monthlyTotal = Number(monthly) * 12;
           const savedDollars = monthlyTotal - Number(annualTotal);
-          foot.textContent = '$' + annualTotal + ' / year · save $' + savedDollars;
+          foot.innerHTML = '<s>$' + monthlyTotal + '</s> $' + annualTotal + ' a year, save $' + savedDollars;
         } else {
           num.textContent = '$' + monthly;
           unit.textContent = (tier.dataset.tier === 'origin') ? '/mo forever' : '/mo';
@@ -65,11 +65,58 @@
       try { sessionStorage.setItem('cybersygn.billingCycle', cycle); } catch (e) {}
     }
     opts.forEach(o => o.addEventListener('click', () => applyCycle(o.dataset.cycle)));
-    // Restore prior choice within the session.
-    let prior = 'monthly';
-    try { prior = sessionStorage.getItem('cybersygn.billingCycle') || 'monthly'; } catch (e) {}
-    if (prior === 'annual') applyCycle('annual');
+    // Annual is the default (best value, shown first). A prior in-session
+    // choice wins so the toggle is not sticky-fighting the visitor.
+    let prior = 'annual';
+    try { prior = sessionStorage.getItem('cybersygn.billingCycle') || 'annual'; } catch (e) {}
+    applyCycle(prior === 'monthly' ? 'monthly' : 'annual');
   }
+
+  // ─────────────────────────────────────────────────────────
+  // Purchasability: new tiers (Pro, Business) show for the anchor effect,
+  // but their CTA must never dead-end on a checkout with no Stripe price.
+  // If the server says a tier is not purchasable yet, swap its button to an
+  // honest "start free, you will be first in" that routes into the funnel.
+  // ─────────────────────────────────────────────────────────
+  (function () {
+    const newCards = document.querySelectorAll('.tier[data-tier-new]');
+    if (!newCards.length) return;
+    // Pessimistic by default: until /api/billing/config CONFIRMS a new tier is
+    // live, intercept its checkout click and route into the free funnel. This
+    // closes the race (a click before config resolves) and the fail-open case
+    // (config errors), so a not-yet-priced tier can never dead-end on a 503.
+    const live = {};
+    newCards.forEach(card => {
+      const key = card.dataset.tier; // 'pro' | 'business'
+      const btn = card.querySelector('[data-checkout-tier]');
+      if (!btn) return;
+      btn.addEventListener('click', function (e) {
+        if (live[key]) return; // confirmed live: let checkout.js run
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        window.location.href = './preview/?want=' + encodeURIComponent(key);
+      }, true);
+    });
+    fetch('/api/billing/config', { headers: { accept: 'application/json' } })
+      .then(r => (r.ok ? r.json() : null))
+      .then(cfg => {
+        const ok = cfg && cfg.purchasable;
+        newCards.forEach(card => {
+          const key = card.dataset.tier;
+          const btn = card.querySelector('[data-checkout-tier]');
+          if (!btn) return;
+          if (ok && ok[key]) { live[key] = true; return; } // priced and live
+          btn.textContent = (key === 'business') ? 'See it free first →' : 'Start free, be first in →';
+          if (!card.querySelector('.tier__reassure--soon')) {
+            const note = document.createElement('p');
+            note.className = 'tier__reassure tier__reassure--soon';
+            note.textContent = 'Opening soon. Start free now and you are first to know.';
+            btn.after(note);
+          }
+        });
+      })
+      .catch(() => {});
+  })();
 
   // ─────────────────────────────────────────────────────────
   // "Your DocuSign tax" calculator
