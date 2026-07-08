@@ -20,6 +20,7 @@
     docTokens: 'cybersygn.docTokens',
     workspaces: 'cybersygn.workspaces',
     activeWs: 'cybersygn.activeWorkspaceId',
+    installDismiss: 'cybersygn.installDismiss',
   };
 
   function ls(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
@@ -82,7 +83,61 @@
     deferredInstall = e;
     var row = document.getElementById('csx-install-row');
     if (row) row.classList.remove('csx-hide');
+    // The browser says we are installable: proactively offer it (mobile).
+    maybeShowInstallBanner('android');
   });
+  window.addEventListener('appinstalled', function () {
+    lsSet(K.installDismiss, String(Date.now()));
+    hideInstallBanner();
+  });
+
+  // ---- Proactive install prompt (mobile) ------------------------------------
+  // Android/Chrome: shown when the browser fires beforeinstallprompt.
+  // iOS Safari: shown with Add-to-Home-Screen instructions (no JS install API).
+  // Dismissible, remembered for 14 days, never shown when already installed.
+  var installBanner = null;
+  function isIosSafari() {
+    var ua = navigator.userAgent;
+    return isIOS() && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|GSA|OPiOS|Chrome/.test(ua);
+  }
+  function installSuppressed() {
+    if (isStandalone()) return true;
+    var t = ls(K.installDismiss);
+    if (t && (Date.now() - parseInt(t, 10)) < 14 * 24 * 3600 * 1000) return true;
+    return false;
+  }
+  function hideInstallBanner() { if (installBanner) installBanner.classList.add('csx-hide'); }
+  function maybeShowInstallBanner(kind) {
+    if (installSuppressed()) return;
+    if (kind === 'android' && !deferredInstall) return;
+    if (kind === 'ios' && !isIosSafari()) return;
+    if (installBanner) { installBanner.classList.remove('csx-hide'); return; }
+    var bar = document.createElement('div');
+    bar.className = 'csx-install-banner csx-ib-enter';
+    bar.setAttribute('role', 'dialog');
+    bar.setAttribute('aria-label', 'Install CyberSygn');
+    var line = kind === 'ios'
+      ? 'Tap the Share icon, then "Add to Home Screen".'
+      : 'Add it to your home screen for one-tap signing.';
+    var actionBtn = kind === 'ios' ? '' : '<button type="button" class="csx-ib__go">Install</button>';
+    bar.innerHTML =
+      '<img class="csx-ib__icon" src="/brand/icon-192.png" alt="" />' +
+      '<div class="csx-ib__txt"><strong>Install CyberSygn</strong><span>' + line + '</span></div>' +
+      actionBtn +
+      '<button type="button" class="csx-ib__x" aria-label="Not now">×</button>';
+    document.body.appendChild(bar);
+    installBanner = bar;
+    var go = bar.querySelector('.csx-ib__go');
+    if (go) go.addEventListener('click', function () { doInstall(); });
+    bar.querySelector('.csx-ib__x').addEventListener('click', function () {
+      lsSet(K.installDismiss, String(Date.now()));
+      hideInstallBanner();
+    });
+    // Rest state is visible (see CSS). Remove the entrance class on a timer
+    // (setTimeout fires even in a background tab, unlike rAF) so it slides in
+    // but is never left invisible if the timer is delayed.
+    setTimeout(function () { bar.classList.remove('csx-ib-enter'); }, 30);
+  }
 
   // ---- Tab bar --------------------------------------------------------------
   function tab(href, id, label, icon, active, onClick) {
@@ -304,6 +359,7 @@
       deferredInstall = null;
       var row = document.getElementById('csx-install-row');
       if (row) row.classList.add('csx-hide');
+      hideInstallBanner();
     });
   }
 
@@ -321,6 +377,12 @@
     if (!shouldMount()) return;
     buildTabbar();
     registerSW();
+    // iOS Safari never fires beforeinstallprompt, so offer the Add-to-Home-
+    // Screen hint directly after a short beat. Android is handled by the
+    // beforeinstallprompt event when the browser deems the app installable.
+    if (isIosSafari() && !installSuppressed()) {
+      setTimeout(function () { maybeShowInstallBanner('ios'); }, 1600);
+    }
   }
 
   window.CyberSygnShell = {

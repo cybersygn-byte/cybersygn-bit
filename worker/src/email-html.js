@@ -47,7 +47,14 @@ function esc(s) {
  * Shared shell: head, dark-mode <style> hint, outer wrapper table.
  * Caller provides the inner body markup.
  */
-function shell({ preheader, body }) {
+// Why-you-got-this footers, one per email context. Passing the accurate one
+// keeps every email honest about how the recipient's address was used.
+const FOOTER_SIGNER = 'You received this because a CyberSygn sender added your email to a document to sign.';
+const FOOTER_ACCOUNT = 'You are getting this because you created a free CyberSygn account. Reply to this email to stop these getting-started notes.';
+const FOOTER_ORIGIN = 'You are getting this because you joined CyberSygn Origin. Reply to this email with any questions.';
+
+function shell({ preheader, body, footer }) {
+  const footerLine = footer || FOOTER_SIGNER;
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -103,9 +110,8 @@ function shell({ preheader, body }) {
 
       <!-- Footer -->
       <tr><td align="center" style="padding:24px 8px 8px 8px;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};" class="cs-muted">
-        You received this because a CyberSygn sender added your email to a document signing list. <br />
-        Reply to this email with questions or visit
-        <a href="https://cybersygn.io/" style="color:${CYAN};text-decoration:underline;">cybersygn.io</a>.
+        ${footerLine} <br />
+        Visit <a href="https://cybersygn.io/" style="color:${CYAN};text-decoration:underline;">cybersygn.io</a>.
       </td></tr>
     </table>
   </td></tr>
@@ -267,6 +273,7 @@ export function renderDripDay1Html({ name, url }) {
   const preview = `${url}/preview/`;
   return shell({
     preheader: 'Your first contract in 3 seconds. Here is how.',
+    footer: FOOTER_ACCOUNT,
     body: `
       <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
         Your first contract in 3 seconds.
@@ -301,6 +308,7 @@ export function renderDripDay3Html({ name, url }) {
   const preview = `${url}/preview/`;
   return shell({
     preheader: 'Stop re-detecting the same PDF every week.',
+    footer: FOOTER_ACCOUNT,
     body: `
       <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
         Stop re-detecting the same PDF.
@@ -339,6 +347,7 @@ export function renderDripDay7Html({ name, url }) {
   const pricing = `${url}/#pricing`;
   return shell({
     preheader: 'One week in. Lock $9 for life with Origin.',
+    footer: FOOTER_ACCOUNT,
     body: `
       <h1 class="cs-title" style="margin:0 0 12px 0;font-family:${FONT_STACK};font-size:24px;line-height:1.2;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">
         Origin rate is still open.
@@ -386,6 +395,7 @@ export function renderOriginWelcomeHtml({ name, foundingNumber, url }) {
   const preview = `${url}/preview/`;
   return shell({
     preheader: `You are Origin member #${num}. \$9 for life, locked.`,
+    footer: FOOTER_ORIGIN,
     body: `
       <p style="margin:0 0 4px 0;font-family:${FONT_STACK};font-size:12px;line-height:1.2;letter-spacing:0.14em;text-transform:uppercase;color:${CYAN};">
         Origin member.

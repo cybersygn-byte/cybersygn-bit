@@ -73,7 +73,7 @@
     if (document.getElementById('csx-apphome-style')) return;
     var css = ''
       + 'html.csx-app-mode, body.csx-app-mode { background: var(--bg, #F7F8FB); }'
-      + 'body.csx-app-mode > *:not(.csx-apphome):not(.csx-tabbar):not(.csx-scrim):not(.csx-sheet):not(script):not(style):not(link){ display:none !important; }'
+      + 'body.csx-app-mode > *:not(.csx-apphome):not(.csx-tabbar):not(.csx-scrim):not(.csx-sheet):not(.csx-install-banner):not(script):not(style):not(link){ display:none !important; }'
       + '.csx-apphome{ max-width: 720px; margin: 0 auto; padding: 28px 20px 40px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color: var(--text,#011434); }'
       + '.csx-ah-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px; }'
       + '.csx-ah-brand{ display:flex; align-items:center; }'
