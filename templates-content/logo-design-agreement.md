@@ -202,7 +202,7 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Logo Brief**
+**Schedule A, Logo Brief**
 
 - **Business / brand name:** [NAME]
 - **Intended use:** [e.g. website, signage, packaging]

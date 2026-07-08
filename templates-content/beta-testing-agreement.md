@@ -191,7 +191,7 @@ Date.
 
 ---
 
-### Schedule 1 — Beta Product and Testing Scope
+### Schedule 1, Beta Product and Testing Scope
 
 - **Beta Product:** **[NAME / VERSION / DESCRIPTION]**
 - **Features to test:** **[DESCRIBE]**

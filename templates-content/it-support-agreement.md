@@ -42,9 +42,9 @@ patch management, user administration, and on-site or remote troubleshooting.
 tier described in **Exhibit A**, which determines coverage hours, included services, and
 response targets.
 
-1.4 **Out-of-scope work.** Work not described in Exhibit A — including projects,
+1.4 **Out-of-scope work.** Work not described in Exhibit A, including projects,
 hardware procurement, major migrations, cabling, and after-hours work beyond the
-coverage hours — is out of scope and billed separately under Section 4.4, subject to
+coverage hours, is out of scope and billed separately under Section 4.4, subject to
 Client's prior written approval.
 
 ## 2. Coverage Hours and Response Times
@@ -53,15 +53,15 @@ Client's prior written approval.
 [TIME ZONE], Monday–Friday, excluding holidays]**, unless Exhibit A provides extended
 or 24/7 coverage.
 
-2.2 **Priority levels.** Each request is assigned a priority: (a) **P1 (Critical)** — a
-business-critical system is down affecting multiple users; (b) **P2 (High)** — a
+2.2 **Priority levels.** Each request is assigned a priority: (a) **P1 (Critical)**, a
+business-critical system is down affecting multiple users; (b) **P2 (High)**, a
 significant issue affecting one or more users with limited workaround; (c) **P3
-(Normal)** — a routine issue affecting a single user; (d) **P4 (Low)** — a request,
+(Normal)**, a routine issue affecting a single user; (d) **P4 (Low)**, a request,
 question, or scheduled task.
 
 2.3 **Target response times.** Provider will use commercially reasonable efforts to
-respond within: P1 — **[e.g. 1 hour]**; P2 — **[e.g. 4 hours]**; P3 — **[e.g. 1
-business day]**; P4 — **[e.g. 2 business days]**. Response measures acknowledgment and
+respond within: P1, **[e.g. 1 hour]**; P2, **[e.g. 4 hours]**; P3, **[e.g. 1
+business day]**; P4, **[e.g. 2 business days]**. Response measures acknowledgment and
 the start of work, not resolution.
 
 2.4 **Best efforts.** Provider will use commercially reasonable efforts to resolve each

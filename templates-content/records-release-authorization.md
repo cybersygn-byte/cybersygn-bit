@@ -54,7 +54,7 @@ the records described in Section 2.
 
 2.1 **Records covered.** The Authorizing Party authorizes the Custodian to release
 the following records to the Recipient (the "**Records**): **[DESCRIBE THE RECORDS
-— e.g., complete client file, billing records, account statements, correspondence,
+, e.g., complete client file, billing records, account statements, correspondence,
 reports dated between [START DATE] and [END DATE]]**.
 
 2.2 **Format of release.** The Records may be released in **[PAPER / ELECTRONIC /
@@ -75,7 +75,7 @@ STATE "NONE"]**.
 ## 3. Purpose and Permitted Use
 
 3.1 **Purpose.** The Records are being released for the following purpose:
-**[STATE PURPOSE — e.g., transfer to a new provider, review by a designated
+**[STATE PURPOSE, e.g., transfer to a new provider, review by a designated
 professional, support of a claim or application]**.
 
 3.2 **Limited use.** The Recipient is authorized to use the Records only for the
@@ -91,7 +91,7 @@ stated purpose.
 ## 4. Term, Expiration, and Revocation
 
 4.1 **Effective period.** This Authorization is effective on the date signed and
-remains in effect until **[EXPIRATION DATE OR EVENT — e.g., one year from the date
+remains in effect until **[EXPIRATION DATE OR EVENT, e.g., one year from the date
 of signature, or completion of the stated purpose]**, unless revoked earlier under
 Section 4.2.
 

@@ -151,7 +151,7 @@ function renderPage(doc, vert) {
             <h1 class="h-display hero__title">${esc(h1)}</h1>
             <p class="lede hero__lede">
               ${esc(vert.audienceLine)} CyberSygn reads your ${esc(doc.name)} and places every signature line,
-              initial, date, and checkbox — automatically, in about three seconds. Send it. Sign it. Done.
+              initial, date, and checkbox, automatically, in about three seconds. Send it. Sign it. Done.
             </p>
             <div class="hero__actions">
               <a class="btn btn--primary btn--lg" href="../../../preview/">
@@ -178,8 +178,8 @@ function renderPage(doc, vert) {
             <h2 class="h-section section__title">Three steps. Field detection does the placement.</h2>
           </div>
           <p class="lede section__lede">
-            ${esc(doc.description)} CyberSygn was built so the slowest part of signing — finding and placing
-            every field — disappears.
+            ${esc(doc.description)} CyberSygn was built so the slowest part of signing, finding and placing
+            every field, disappears.
           </p>
         </header>
 

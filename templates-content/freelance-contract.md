@@ -183,7 +183,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 10.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: arbitration or mediation clause — discuss with
+written notice. **[OPTIONAL: arbitration or mediation clause, discuss with
 counsel.]**
 
 10.3 **Assignment.** Neither Party may assign this Agreement without the other's

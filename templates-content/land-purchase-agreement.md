@@ -48,7 +48,7 @@ for satisfying itself as to the Land's suitability through the diligence permitt
 in Section 4.
 
 1.4 **Conveyance.** At Closing, Seller will convey marketable title to the Land by
-**[GENERAL WARRANTY DEED / SPECIAL WARRANTY DEED / QUITCLAIM DEED — choose per local
+**[GENERAL WARRANTY DEED / SPECIAL WARRANTY DEED / QUITCLAIM DEED, choose per local
 practice and risk tolerance]**, subject only to the Permitted Exceptions defined in
 Section 6.
 

@@ -219,15 +219,15 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Image Schedule and Licensed Use**
+**Schedule A, Image Schedule and Licensed Use**
 
 - **Images (filenames / asset numbers):** [LIST]
 - **Licensed Use / purpose:** [e.g. company website and social media]
 - **Permitted media:** [e.g. web, print, email]
 - **Territory:** [e.g. United States / worldwide]
 - **License type:** [exclusive / non-exclusive]
-- **Derivative rights:** [yes / no — describe]
-- **Credit Line required:** [yes — form / no]
+- **Derivative rights:** [yes / no, describe]
+- **Credit Line required:** [yes, form / no]
 - **Releases on file:** [model / property / none]
 - **License Fee and payment schedule:** [AMOUNT AND TERMS]
 

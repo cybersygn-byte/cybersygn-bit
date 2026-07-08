@@ -108,7 +108,7 @@ async function loadCode(env, code) {
 // ---- Counters -------------------------------------------------------------
 
 /**
- * Increment the click counter for an affiliate code. Public — fired
+ * Increment the click counter for an affiliate code. Public, fired
  * when a visitor lands with ?ref=<code>. Cheap KV read + write.
  */
 export async function bumpClick(env, code) {

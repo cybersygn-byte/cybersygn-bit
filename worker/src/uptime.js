@@ -11,7 +11,7 @@
  *
  * The probe is internal (the worker calls its own /api/health), so it
  * costs zero outbound bandwidth and zero auth. KV writes are
- * idempotent — each day's record updates in place as the day's probes
+ * idempotent, each day's record updates in place as the day's probes
  * accumulate.
  */
 

@@ -92,7 +92,7 @@ export async function saveTemplate(env, opts) {
   // Owner-test isolation: an active owner session writing a public
   // template is doing demo work, not contributing real customer data.
   // Downgrade to private so the public-corpus stays clean. The owner
-  // can still verify the save round-trip — it just lives under
+  // can still verify the save round-trip, it just lives under
   // tpl-priv:<docId>:<senderId> instead of polluting tpl:<docId>.
   const ownerCreated = Boolean(opts && opts.ownerCreated);
   if (ownerCreated && scope === 'public') {
@@ -128,7 +128,7 @@ export async function saveTemplate(env, opts) {
     // Owner-created records persist this flag so downstream aggregates
     // (dataset stats, export, public-template lookups) can skip them.
     // Inherits from prior record if the same template was previously
-    // saved as owner-created — owner status is a property of the
+    // saved as owner-created, owner status is a property of the
     // template record itself, not the moment of write.
     ownerCreated: ownerCreated || (existing && existing.ownerCreated) || false,
   };

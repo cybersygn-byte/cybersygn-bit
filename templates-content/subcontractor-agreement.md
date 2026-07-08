@@ -90,7 +90,7 @@ COMPLETION / MONTHLY / AS STATED IN THE WORK ORDER]**, with reasonable supportin
 documentation. Each invoice must reference the applicable Work Order.
 
 3.3 **Payment timing.** Contractor will pay each undisputed invoice within
-**[NUMBER, e.g. 30]** days of receipt. **[OPTIONAL — pay-when-paid: Payment to
+**[NUMBER, e.g. 30]** days of receipt. **[OPTIONAL, pay-when-paid: Payment to
 Subcontractor for a given Work Order is due within [NUMBER] days after Contractor
 receives the corresponding payment from its customer under the Prime Contract.
 Pay-when-paid and pay-if-paid clauses are restricted or unenforceable in some

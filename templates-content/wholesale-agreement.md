@@ -86,7 +86,7 @@ invoice date, describing the basis for the dispute.
 ## 3. Shipping, Delivery, and Title
 
 3.1 **Shipping terms.** Unless a purchase order states otherwise, Products are
-shipped **[FOB / EXW / DDP — specify shipping point or named place]**. Title and
+shipped **[FOB / EXW / DDP, specify shipping point or named place]**. Title and
 risk of loss pass to Buyer in accordance with the stated shipping term.
 
 3.2 **Delivery dates.** Delivery dates are estimates. Supplier will use

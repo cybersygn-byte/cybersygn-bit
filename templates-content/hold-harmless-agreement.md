@@ -23,7 +23,7 @@ principal place of business or residence at **[INDEMNITEE ADDRESS]** (the
 The Indemnitor and the Indemnitee are each a "**Party**" and together the
 "**Parties**."
 
-**Recitals.** The Indemnitor wishes to **[DESCRIBE THE ACTIVITY OR RELATIONSHIP —
+**Recitals.** The Indemnitor wishes to **[DESCRIBE THE ACTIVITY OR RELATIONSHIP, 
 e.g. use the Indemnitee's property or equipment, perform work on the Indemnitee's
 premises, participate in an event hosted by the Indemnitee, or operate under a
 license from the Indemnitee]** (the "**Activity**"). As a condition of the

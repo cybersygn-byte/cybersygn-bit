@@ -50,7 +50,7 @@ the stated purpose and should not be used for any other purpose.
 currently employed by / was formerly employed by]** the Company.
 
 2.2 **Dates of employment.** The Employee's start date is **[START DATE]**, and,
-if employment has ended, the end date is **[END DATE / "N/A — currently
+if employment has ended, the end date is **[END DATE / "N/A, currently
 employed"]**.
 
 2.3 **Status.** The Employee's employment status is **[full-time / part-time /
@@ -84,7 +84,7 @@ semimonthly / monthly]** basis.
 **[overtime, bonus, or commission]**. Where applicable, the typical additional
 amount is **[AMOUNT / RANGE, or "varies"]**.
 
-4.4 **Year-to-date and prior-year earnings.** **[OPTIONAL — for lending: The
+4.4 **Year-to-date and prior-year earnings.** **[OPTIONAL, for lending: The
 Employee's year-to-date gross earnings are approximately $[AMOUNT], and prior-year
 gross earnings were approximately $[AMOUNT], as recorded in the Company's payroll
 system.]**
@@ -98,7 +98,7 @@ earnings.
 5.1 **Scheduled hours.** The Employee's scheduled hours are approximately
 **[NUMBER]** hours per week.
 
-5.2 **Probability of continued employment.** **[OPTIONAL — for lending: The
+5.2 **Probability of continued employment.** **[OPTIONAL, for lending: The
 Employer considers the Employee's continued employment to be [likely / not
 determinable]. The Employer makes no guarantee of continued employment, which,
 where applicable, is at will.]**

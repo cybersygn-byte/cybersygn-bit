@@ -123,8 +123,8 @@ or as required by law.
 
 ## 6. Exclusivity (Optional)
 
-6.1 **Scope.** **[OPTIONAL: If the Parties agree to any exclusivity — e.g. not
-co-streaming with a direct competitor during the Term — state its precise scope,
+6.1 **Scope.** **[OPTIONAL: If the Parties agree to any exclusivity, e.g. not
+co-streaming with a direct competitor during the Term, state its precise scope,
 duration, and limits here. Keep any restriction narrow and reasonable; overbroad
 restraints may be unenforceable under applicable law.]**
 

@@ -45,7 +45,7 @@ Section 6.
 
 1.2 **Description of Leased Premises.** The Leased Premises consist of the lands
 located in **[COUNTY, STATE]**, more particularly described as: **[LEGAL
-DESCRIPTION — metes and bounds, lot/block, or governmental survey
+DESCRIPTION, metes and bounds, lot/block, or governmental survey
 section/township/range]**, containing approximately **[NUMBER]** acres, more or
 less (the "**Land**"). The recorded instrument or plat reference is **[BOOK/PAGE
 OR INSTRUMENT NUMBER]**.
@@ -66,7 +66,7 @@ addressed in Section 9.4.
 2.1 **Primary term.** This Lease is for a primary term of **[NUMBER]** years from
 the Effective Date (the "**Primary Term**").
 
-2.2 **Secondary term — habendum.** This Lease continues beyond the Primary Term
+2.2 **Secondary term, habendum.** This Lease continues beyond the Primary Term
 for so long thereafter as Leased Substances are produced in paying quantities from
 the Leased Premises or from lands pooled or unitized with it, or for so long as
 operations are continuously conducted under Section 2.3 or 2.4 (the "**Secondary
@@ -90,7 +90,7 @@ thereafter, for a maximum of **[NUMBER]** consecutive years.
 upon execution of this Lease, receipt of which is acknowledged subject to clearance
 of payment.
 
-3.2 **Delay rental.** **[OPTION A — PAID-UP LEASE: This is a paid-up lease and no
+3.2 **Delay rental.** **[OPTION A, PAID-UP LEASE: This is a paid-up lease and no
 delay rentals are due during the Primary Term.]** **[OPTION B: If operations are
 not commenced within twelve months of the Effective Date, this Lease terminates
 unless Lessee pays a delay rental of [$ AMOUNT] on or before each anniversary to
@@ -209,9 +209,9 @@ shut-in payments may be apportioned among the divided tracts.
 ## 9. Force Majeure, Default, and Proportionate Reduction
 
 9.1 **Force majeure.** If Lessee is prevented from conducting operations or
-producing by force majeure — including acts of God, war, regulatory orders,
+producing by force majeure, including acts of God, war, regulatory orders,
 inability to obtain permits or equipment, or other causes beyond Lessee's
-reasonable control — the affected obligations are suspended and the Lease term is
+reasonable control, the affected obligations are suspended and the Lease term is
 extended for the period of suspension, plus **[NUMBER]** days.
 
 9.2 **Notice and cure.** This Lease may not be terminated for breach until Lessor
@@ -250,7 +250,7 @@ subject to the exclusive jurisdiction of the state and federal courts located in
 11.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
 written notice. Disputes over the amount of surface damages may, at either Party's
-election, be submitted to **[APPRAISAL / MEDIATION / ARBITRATION — discuss with
+election, be submitted to **[APPRAISAL / MEDIATION / ARBITRATION, discuss with
 counsel]**.
 
 11.3 **Notices.** Notices must be in writing and sent to the addresses above (or

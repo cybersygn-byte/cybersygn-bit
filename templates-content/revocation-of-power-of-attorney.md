@@ -95,7 +95,7 @@ e.g. the [COUNTY, STATE] recorder of deeds.]**
 ## 4. New or Replacement Power of Attorney
 
 4.1 **Replacement (optional).** **[OPTIONAL: If the Principal has signed or
-intends to sign a new power of attorney, identify it here — e.g. "The Principal
+intends to sign a new power of attorney, identify it here, e.g. "The Principal
 has executed a new Durable Power of Attorney dated [DATE] appointing [NEW AGENT
 NAME]." Otherwise state "The Principal does not, by this Revocation, appoint any
 new agent."]**

@@ -89,7 +89,7 @@ relationship / the closing salesperson / a documented split]**. The Company's
 good-faith determination of crediting controls, absent manifest error.
 
 3.3 **House and excluded accounts.** Sales to the accounts listed in **[Schedule
-A — House Accounts]**, and any sales the Company makes through other channels, are
+A, House Accounts]**, and any sales the Company makes through other channels, are
 excluded from commission unless the Parties agree otherwise in writing.
 
 ## 4. Payment of Commissions
@@ -121,7 +121,7 @@ pre-approved, documented expenses.
 5.2 **Independent contractor.** If the Salesperson is engaged as an independent
 contractor, the Salesperson is solely responsible for all taxes on commissions,
 will not be treated as an employee, and is not entitled to employee benefits. The
-classification of the relationship is **[independent contractor / employment — set
+classification of the relationship is **[independent contractor / employment, set
 the correct status and comply with applicable wage, tax, and benefits law]**.
 
 ## 6. Confidentiality and Non-Solicitation
@@ -137,7 +137,7 @@ Salesperson will return all customer information and Company materials.
 6.3 **Non-solicitation (optional).** **[OPTIONAL: To the extent permitted by
 applicable law, the Salesperson agrees, for [NUMBER] months after termination, not
 to solicit the Company's customers it dealt with for competing products. Restraint
-on trade is heavily regulated and varies by jurisdiction — have counsel confirm
+on trade is heavily regulated and varies by jurisdiction, have counsel confirm
 enforceability. Otherwise delete.]**
 
 ## 7. Term and Termination

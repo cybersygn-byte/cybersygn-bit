@@ -59,7 +59,7 @@ duties after written notice and a reasonable opportunity to cure.
 material reduction in the Employee's base salary, a material diminution of duties,
 or a relocation of the Employee's primary work location by more than **[NUMBER]**
 miles, in each case without the Employee's consent and not cured by the Company
-within **[NUMBER]** days after written notice. **[OPTIONAL — delete if Good
+within **[NUMBER]** days after written notice. **[OPTIONAL, delete if Good
 Reason is not offered.]**
 
 ## 2. Retention Bonus and Payment Schedule

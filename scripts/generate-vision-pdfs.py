@@ -3,20 +3,20 @@ Generate ten VISION-FALLBACK synthetic PDFs for CyberSygn.
 
 These PDFs are designed so the text-based detector in worker/src/detect.js
 either returns zero signature/date/checkbox fields or returns the wrong
-ones — which forces the vision-based detection path to kick in. They are
+ones, which forces the vision-based detection path to kick in. They are
 the regression suite for the vision fallback.
 
 Each PDF mimics a real-world failure mode of text-layer detection:
-  11 — blank lines only, no English labels
-  12 — stylized X-marks instead of "Signature:" labels
-  13 — page contents rotated 90 degrees (landscape baselines)
-  14 — numbered blanks with no semantic labels
-  15 — pure tabular signature block, columns headed Name / Title / Date
-  16 — Spanish "Firma:" / "Fecha:" / "Iniciales:"
-  17 — French "Signature:" + "Date:" + "Paraphe:" mixed
-  18 — German "Unterschrift:" / "Datum:" / "Initialen:"
-  19 — heavy DRAFT watermark + decorative borders obscuring labels
-  20 — shape-only form (circles, lines) with no labels at all
+  11, blank lines only, no English labels
+  12, stylized X-marks instead of "Signature:" labels
+  13, page contents rotated 90 degrees (landscape baselines)
+  14, numbered blanks with no semantic labels
+  15, pure tabular signature block, columns headed Name / Title / Date
+  16, Spanish "Firma:" / "Fecha:" / "Iniciales:"
+  17, French "Signature:" + "Date:" + "Paraphe:" mixed
+  18, German "Unterschrift:" / "Datum:" / "Initialen:"
+  19, heavy DRAFT watermark + decorative borders obscuring labels
+  20, shape-only form (circles, lines) with no labels at all
 
 Run: python3 scripts/generate-vision-pdfs.py
 Output: test-pdfs/11-*.pdf through test-pdfs/20-*.pdf
@@ -61,14 +61,14 @@ def blank_line(c, y, x_start, length_inches=3.0):
 
 
 def blank_box(c, y, x_start, length_inches=3.0, height=22):
-    """Rectangle outline as a signature target — no horizontal line for the
+    """Rectangle outline as a signature target, no horizontal line for the
     text detector to grab, but visually unmistakable to a vision model."""
     c.rect(x_start, y - height + 6, length_inches * inch, height)
     return y - LINE_H - 12
 
 
 def doc_11_blank_lines_only():
-    """No labels, no horizontal lines — just empty rectangles where a human
+    """No labels, no horizontal lines, just empty rectangles where a human
     signs. Vision sees the obvious signing areas; text walker finds nothing
     matchable."""
     path = OUT / "11-blank-lines-only.pdf"
@@ -104,7 +104,7 @@ def doc_12_stylized_x_marks():
         cx, cy = LEFT, y
         c.line(cx, cy - 6, cx + 10, cy + 4)
         c.line(cx, cy + 4, cx + 10, cy - 6)
-        # Empty rectangle beside the X — vision sees a signing area
+        # Empty rectangle beside the X, vision sees a signing area
         c.rect(cx + 18, y - 16, 4 * inch, 22)
         y -= LINE_H * 3
     c.save()
@@ -112,7 +112,7 @@ def doc_12_stylized_x_marks():
 
 
 def doc_13_rotated_landscape():
-    """Rotated 90 degrees and rendered with no text — only shapes. Vision
+    """Rotated 90 degrees and rendered with no text, only shapes. Vision
     sees the layout; text walker finds nothing because there is no text
     content stream in the page."""
     path = OUT / "13-rotated-landscape.pdf"
@@ -154,7 +154,7 @@ def doc_14_numbered_blanks():
 
 
 def doc_15_tabular_signature():
-    """Two-row table with header Name/Title/Date — no 'Signature' text."""
+    """Two-row table with header Name/Title/Date, no 'Signature' text."""
     path = OUT / "15-tabular-signature.pdf"
     c = canvas.Canvas(str(path), pagesize=letter)
     y = header(c, "Acceptance Record")
@@ -289,7 +289,7 @@ def doc_19_watermark_decorative():
 
 
 def doc_20_shape_only_form():
-    """Pure shapes — circles, rectangles. No text, no horizontal lines that
+    """Pure shapes, circles, rectangles. No text, no horizontal lines that
     the text detector could match as signature underlines."""
     path = OUT / "20-shape-only-form.pdf"
     c = canvas.Canvas(str(path), pagesize=letter)

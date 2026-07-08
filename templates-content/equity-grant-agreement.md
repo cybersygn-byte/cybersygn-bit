@@ -73,7 +73,7 @@ Continuous Service except as required by applicable law.
 
 2.4 **Acceleration.** The Company's board of directors may accelerate vesting in
 whole or in part. **[OPTIONAL: describe single-trigger or double-trigger
-acceleration on a change of control or involuntary termination — discuss with
+acceleration on a change of control or involuntary termination, discuss with
 counsel.]**
 
 ## 3. Forfeiture of Unvested Shares

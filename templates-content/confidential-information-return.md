@@ -164,7 +164,7 @@ which together form one agreement.
 
 ---
 
-## Exhibit A — Inventory of Returned Company Materials
+## Exhibit A, Inventory of Returned Company Materials
 
 | Item Description | Quantity | Returned (Y/N) | Notes |
 | --- | --- | --- | --- |

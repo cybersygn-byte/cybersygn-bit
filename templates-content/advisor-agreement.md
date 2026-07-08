@@ -145,7 +145,7 @@ they do not breach this Agreement or the Advisor's confidentiality obligations.
 6.2 **Conflicts of interest.** The Advisor will disclose to the Company any
 actual or potential conflict of interest, including advising a direct competitor
 of the Company. **[OPTIONAL: The Advisor will not advise a company that directly
-competes with the Company in [DEFINED FIELD] during the term — discuss scope with
+competes with the Company in [DEFINED FIELD] during the term, discuss scope with
 counsel, as restrictions vary by jurisdiction.]**
 
 ## 7. Term and Termination

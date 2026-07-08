@@ -2,7 +2,7 @@
 
 ## Why this matters
 
-The audience for CyberSygn is solo professionals — freelancers, photographers, coaches, indie founders. **They convert on people, not features.** Marketing copy from a faceless company reads as another SaaS launch. Posts from a real founder building in public read as a peer journey.
+The audience for CyberSygn is solo professionals, freelancers, photographers, coaches, indie founders. **They convert on people, not features.** Marketing copy from a faceless company reads as another SaaS launch. Posts from a real founder building in public read as a peer journey.
 
 Your build-in-public habit IS your marketing channel. Treat it that way.
 
@@ -19,17 +19,17 @@ Your build-in-public habit IS your marketing channel. Treat it that way.
 ## The principles
 
 1. **Specific numbers beat vague claims.** "Day 73: $1,592 MRR" beats "Things are going well."
-2. **Show failures.** "Lost 2 hours to a duplicate CSS selector bug today. Lessons:" — vulnerability earns trust.
+2. **Show failures.** "Lost 2 hours to a duplicate CSS selector bug today. Lessons:", vulnerability earns trust.
 3. **Teach, don't sell.** Every post should leave the reader smarter even if they never buy.
 4. **Reply to every reply.** For at least the first year. People remember founders who respond.
 5. **No emoji-heavy hype posts.** "🚀🔥 BIG NEWS 🔥🚀" reads as fake. Use words.
-6. **Photo of you occasionally.** Not your dog, not your desk — you. Face = trust.
+6. **Photo of you occasionally.** Not your dog, not your desk, you. Face = trust.
 
 ## 30 days of post drafts
 
 Copy-paste, edit lightly, schedule.
 
-### Week 1 — what + why
+### Week 1, what + why
 
 **Day 1 (Twitter/X):**
 > Day 1 of building CyberSygn in public.
@@ -70,9 +70,9 @@ Copy-paste, edit lightly, schedule.
 **Day 5 (Twitter/X):**
 > Pricing: $9/mo for the first 100 (Origin tier), $12 after.
 >
-> "Why $9?" — because 100 founding customers paying $9/mo = $900 MRR, enough to keep building without rushing.
+> "Why $9?", because 100 founding customers paying $9/mo = $900 MRR, enough to keep building without rushing.
 >
-> "Why $12 after?" — because compounding small customers is more durable than chasing one big one.
+> "Why $12 after?", because compounding small customers is more durable than chasing one big one.
 
 **Day 6 (Blog post):**
 > Title: "Why I built a DocuSign alternative on Cloudflare Workers"
@@ -80,9 +80,9 @@ Copy-paste, edit lightly, schedule.
 
 **Day 7 (Indie Hackers milestone):**
 > Title: "From 0 to launching: 7 days of CyberSygn"
-> Honest numbers — signups, traffic sources, one win, one failure.
+> Honest numbers, signups, traffic sources, one win, one failure.
 
-### Week 2 — show the magic
+### Week 2, show the magic
 
 **Day 8 (Twitter/X, video clip):**
 > Screen recording, 12 seconds. Drop a contract PDF, fields appear.
@@ -137,7 +137,7 @@ Copy-paste, edit lightly, schedule.
 >
 > Building one slice at a time.
 
-### Week 3 — establish credibility through depth
+### Week 3, establish credibility through depth
 
 **Day 15 (Twitter/X):**
 > Shipped today: real-time co-signing.
@@ -179,20 +179,20 @@ Copy-paste, edit lightly, schedule.
 > The viral loop is real. Every signed PDF that goes out is a sales call.
 
 **Day 20 (Blog post):**
-> "Why receivers hate signing accounts" — long-form pitch against DocuSign's account-creation friction. Customer-language piece.
+> "Why receivers hate signing accounts", long-form pitch against DocuSign's account-creation friction. Customer-language piece.
 
 **Day 21 (Indie Hackers + Twitter/X):**
 > Week 3:
 >
 > [numbers, lesson, what's next]
 
-### Week 4 — direct invitation
+### Week 4, direct invitation
 
 **Day 22-28 (mix):**
 - One product clip per day
 - One opinion post per day
 - One reply marathon (spend 1 hour replying to every comment that week)
-- Launch the "Freelancer Pack" — 25 Lifetime spots at $199 for the first 25 freelancers
+- Launch the "Freelancer Pack", 25 Lifetime spots at $199 for the first 25 freelancers
 
 **Day 28 (Twitter/X):**
 > One month of building CyberSygn in public.
@@ -207,7 +207,7 @@ Copy-paste, edit lightly, schedule.
 >
 > Try it: cybersygn.io
 
-**Day 30 (Newsletter — month 1):**
+**Day 30 (Newsletter, month 1):**
 > Subject: "30 days of CyberSygn: numbers, lessons, what's next"
 > Long-form. Real numbers. The next month's plan.
 

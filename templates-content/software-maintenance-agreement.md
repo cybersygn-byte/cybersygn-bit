@@ -82,15 +82,15 @@ diagnose the issue efficiently.
 
 ## 4. Severity Levels and Response Targets
 
-4.1 **Severity levels.** Each Error is classified as: (a) **Severity 1 (Critical)** —
+4.1 **Severity levels.** Each Error is classified as: (a) **Severity 1 (Critical)**, 
 the Software is inoperable or a core function fails with no workaround; (b) **Severity 2
-(High)** — a major function is impaired but a workaround exists; (c) **Severity 3
-(Normal)** — a minor or non-critical issue; (d) **Severity 4 (Low)** — a question or
+(High)**, a major function is impaired but a workaround exists; (c) **Severity 3
+(Normal)**, a minor or non-critical issue; (d) **Severity 4 (Low)**, a question or
 cosmetic issue.
 
 4.2 **Response targets.** Provider will use commercially reasonable efforts to
-acknowledge requests within: Severity 1 — **[e.g. 2 hours]**; Severity 2 — **[e.g. 1
-business day]**; Severity 3 — **[e.g. 3 business days]**; Severity 4 — **[e.g. 5
+acknowledge requests within: Severity 1, **[e.g. 2 hours]**; Severity 2, **[e.g. 1
+business day]**; Severity 3, **[e.g. 3 business days]**; Severity 4, **[e.g. 5
 business days]**. These targets measure initial response, not resolution.
 
 4.3 **Resolution efforts.** Provider will work the issue continuously during support

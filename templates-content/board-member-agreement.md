@@ -142,7 +142,7 @@ where legally permitted.
 to the fullest extent permitted by the Company's certificate of incorporation,
 bylaws, and applicable law for claims arising from the Director's service on the
 Board, including advancement of expenses where permitted. **[A separate, more
-detailed indemnification agreement is strongly recommended — discuss with
+detailed indemnification agreement is strongly recommended, discuss with
 counsel.]**
 
 7.2 **D&O insurance.** The Company will use reasonable efforts to maintain

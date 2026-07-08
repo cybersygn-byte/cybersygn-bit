@@ -162,7 +162,7 @@ federal courts located in **[COUNTY, STATE]**.
 
 8.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good faith to
 resolve any dispute by contacting **[CONTACT EMAIL]**. **[OPTIONAL: mediation or
-arbitration clause — discuss with counsel.]**
+arbitration clause, discuss with counsel.]**
 
 8.3 **Entire agreement; amendment.** This Agreement, together with the Rules and any
 schedules, is the entire agreement between the Parties on its subject. The Organization

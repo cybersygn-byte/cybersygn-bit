@@ -21,8 +21,8 @@ of business at **[LICENSEE ADDRESS]** (the "**Licensee**").
 The Licensor and the Licensee are each a "**Party**" and together the
 "**Parties**."
 
-**Recitals.** The Licensor owns or controls certain content — which may include
-articles, written copy, photographs, video, audio, graphics, or other media —
+**Recitals.** The Licensor owns or controls certain content, which may include
+articles, written copy, photographs, video, audio, graphics, or other media, 
 and the Licensee wishes to use that content for the purposes described below. The
 Licensor is willing to grant the Licensee a license on the terms of this
 Agreement. In consideration of the mutual promises below, the Parties agree as
@@ -225,7 +225,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Content, Fees, and Use Details
+### Exhibit A, Content, Fees, and Use Details
 
 | Item | Details |
 | --- | --- |

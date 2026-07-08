@@ -64,7 +64,7 @@ rent-cap rules applicable to the Premises.
 
 ## 3. Reason and Good-Faith Basis
 
-3.1 **Basis for increase.** The increase reflects **[DESCRIBE BASIS — e.g. market
+3.1 **Basis for increase.** The increase reflects **[DESCRIBE BASIS, e.g. market
 adjustment, increased operating costs, taxes, insurance, or improvements]**. No
 statement of reason is required in every jurisdiction; this section is provided
 for transparency.

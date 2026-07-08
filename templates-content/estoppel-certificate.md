@@ -15,7 +15,7 @@ at **[PREMISES ADDRESS, INCLUDING SUITE/UNIT]**, **[CITY, STATE, ZIP]** (the
 "**Premises**"), which form part of the property commonly known as **[PROPERTY
 NAME / ADDRESS]** (the "**Property**").
 
-This Certificate is given to and for the benefit of **[RECIPIENT LEGAL NAME — e.g.,
+This Certificate is given to and for the benefit of **[RECIPIENT LEGAL NAME, e.g.,
 PROSPECTIVE PURCHASER, LENDER, OR LANDLORD]** and its successors and assigns (the
 "**Recipient**"), in connection with the Recipient's **[PURCHASE OF / LOAN SECURED
 BY / OTHER TRANSACTION INVOLVING]** the Property.

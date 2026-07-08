@@ -18,7 +18,7 @@ themselves to form:
 
 **[ORGANIZATION NAME]** (the "**Organization**"), to be constituted under the
 laws of **[STATE / JURISDICTION]** as a **[NONPROFIT CORPORATION / ASSOCIATION /
-COMPANY LIMITED BY GUARANTEE — confirm the correct local form]**.
+COMPANY LIMITED BY GUARANTEE, confirm the correct local form]**.
 
 **Recitals.** This Memorandum is the Organization's founding constitutional
 document. It records the Organization's name, registered office, objects,
@@ -95,7 +95,7 @@ and will be governed by its directors]**. The classes, qualifications, rights,
 and admission of members, if any, are set out in the Organization's articles or
 bylaws.
 
-5.2 **Liability of members.** The liability of the members is **[LIMITED — no
+5.2 **Liability of members.** The liability of the members is **[LIMITED, no
 member is personally liable for the debts of the Organization beyond any amount
 the member has agreed to contribute on winding up, e.g. [AMOUNT] per member /
 AS PROVIDED BY APPLICABLE LAW FOR THIS ENTITY TYPE]**.

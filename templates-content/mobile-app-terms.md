@@ -188,7 +188,7 @@ the state and federal courts located in **[COUNTY, STATE]**.
 
 9.5 **Dispute resolution.** Before filing any claim, the Parties will attempt in
 good faith to resolve the dispute by contacting **[SUPPORT EMAIL]**. **[OPTIONAL:
-arbitration and class-action-waiver clause — discuss with counsel, as enforceability
+arbitration and class-action-waiver clause, discuss with counsel, as enforceability
 varies by jurisdiction.]**
 
 9.6 **Entire agreement; severability; waiver.** These Terms, together with the

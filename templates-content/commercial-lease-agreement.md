@@ -44,7 +44,7 @@ common areas designated by Landlord.
 unless sooner terminated under this Lease.
 
 1.3 **Delivery and acceptance.** Landlord will deliver the Premises in the
-condition described in **[EXHIBIT — DELIVERY CONDITION / "AS-IS"]**. Tenant's
+condition described in **[EXHIBIT, DELIVERY CONDITION / "AS-IS"]**. Tenant's
 taking of possession is deemed acceptance of the Premises, subject to any
 punch-list items the Parties agree to in writing and any latent defects.
 

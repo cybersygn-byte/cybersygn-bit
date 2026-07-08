@@ -24,7 +24,7 @@ The Indemnifying Party and the Indemnified Party are each a "**Party**" and toge
 the "**Parties**."
 
 **Recitals.** The Parties have entered into, or are entering into, a relationship
-involving **[DESCRIBE THE UNDERLYING RELATIONSHIP — e.g. a service engagement, a
+involving **[DESCRIBE THE UNDERLYING RELATIONSHIP, e.g. a service engagement, a
 license, the Indemnified Party's service as a director or officer, a joint project,
 or use of the Indemnifying Party's product]** (the "**Relationship**"). The Parties
 wish to set out stand-alone indemnification terms that allocate responsibility for
@@ -57,7 +57,7 @@ Indemnifying Party will indemnify, defend, and hold the Indemnitees harmless fro
 against all Losses arising out of or related to: (a) the Indemnifying Party's breach
 of this Agreement or the underlying Relationship; (b) the Indemnifying Party's
 negligence, recklessness, or willful misconduct; (c) the Indemnifying Party's
-violation of applicable law; and (d) any **[describe specific covered matters — e.g.
+violation of applicable law; and (d) any **[describe specific covered matters, e.g.
 infringement, product defect, data breach, employment claim, or environmental
 liability]**.
 
@@ -69,7 +69,7 @@ limitation of liability the Parties have agreed in the underlying Relationship.
 caused by an Indemnitee's own gross negligence, willful misconduct, or material
 breach, or for any matter that applicable law prohibits from being indemnified.
 
-2.4 **Advancement of expenses.** **[SELECT IF APPLICABLE — common for director and
+2.4 **Advancement of expenses.** **[SELECT IF APPLICABLE, common for director and
 officer indemnities:]** The Indemnifying Party will advance reasonable defense
 expenses to an Indemnitee as they are incurred, subject to the Indemnitee's written
 undertaking to repay the advance if it is finally determined that the Indemnitee was

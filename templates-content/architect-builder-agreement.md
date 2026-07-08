@@ -41,7 +41,7 @@ services (the "**Design Services**") and the construction services (the
 and delivering both as an integrated whole.
 
 1.2 **Program.** Owner's program, objectives, and any criteria documents are
-described in **[EXHIBIT A — Owner's Program]** (the "**Program**"). The Design
+described in **[EXHIBIT A, Owner's Program]** (the "**Program**"). The Design
 Services and Construction will conform to the Program as developed and approved
 under Section 2.
 
@@ -145,8 +145,8 @@ the design phases, permitting, and construction milestones, with a target
 Substantial Completion of **[DATE or NUMBER of days]**.
 
 5.2 **Excusable delay.** A delay caused by an event beyond Design-Builder's
-reasonable control — including unusual weather, concealed conditions, permitting
-delay, force majeure, or Owner-caused delay — extends the schedule by the time lost
+reasonable control, including unusual weather, concealed conditions, permitting
+delay, force majeure, or Owner-caused delay, extends the schedule by the time lost
 without penalty, and any added cost is handled by change order.
 
 ## 6. Owner Responsibilities
@@ -251,7 +251,7 @@ STATE]**.
 
 12.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion and **[OPTIONAL: mediation]**
-within **[NUMBER]** days of written notice. **[OPTIONAL: arbitration — discuss with
+within **[NUMBER]** days of written notice. **[OPTIONAL: arbitration, discuss with
 counsel.]**
 
 12.4 **Assignment.** Neither Party may assign this Agreement without the other's

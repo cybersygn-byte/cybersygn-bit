@@ -46,14 +46,14 @@ financial return, except as expressly disclosed in Section 4.
 ## 2. Description of the Donated Property or Services
 
 2.1 **Description.** The Donation consists of the following property or services
-(the "**Donated Items**): **[detailed description — e.g. quantity, make/model,
+(the "**Donated Items**): **[detailed description, e.g. quantity, make/model,
 condition, materials, or scope of donated services]**.
 
 2.2 **Date received.** The Organization received the Donated Items on
 **[DATE OF DONATION]**.
 
 2.3 **Condition.** The Donated Items were received in the following condition:
-**[NEW / USED — GOOD / FAIR / describe]**.
+**[NEW / USED, GOOD / FAIR / describe]**.
 
 2.4 **Donor description only.** The description above is provided by or confirmed
 with the Donor. The Organization does not independently verify the description and
@@ -62,7 +62,7 @@ makes no representation about it.
 ## 3. Valuation and Tax Treatment
 
 3.1 **No valuation by the Organization.** Under generally applicable tax practice,
-the Donor — not the Organization — is responsible for determining the fair market
+the Donor, not the Organization, is responsible for determining the fair market
 value of the Donated Items. The Organization does not assign a dollar value to the
 Donated Items in this Receipt.
 

@@ -33,7 +33,7 @@ engagement, to provide the consulting services described in this Agreement and i
 any exhibit or scope description attached or referenced (the "**Services**").
 
 1.2 **Description of Services.** Consultant will provide the following Services:
-**[DESCRIBE THE SCOPE — advisory areas, expected activities, meetings, reports,
+**[DESCRIBE THE SCOPE, advisory areas, expected activities, meetings, reports,
 and any specific deliverables]**.
 
 1.3 **Standard of performance.** Consultant will perform the Services in a

@@ -83,7 +83,7 @@ required by applicable law or the Plan.
 
 2.5 **Acceleration.** The Administrator may, in its discretion, accelerate vesting
 in whole or in part. **[OPTIONAL: describe any agreed acceleration on a change of
-control or involuntary termination — discuss with counsel.]**
+control or involuntary termination, discuss with counsel.]**
 
 ## 3. Exercise of the Option
 

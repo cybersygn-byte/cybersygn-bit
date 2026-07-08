@@ -177,7 +177,7 @@ async function loadKpis() {
 }
 
 function statBlock(num, label, sub) {
-  const n = Number.isFinite(num) ? Number(num).toLocaleString() : '—';
+  const n = Number.isFinite(num) ? Number(num).toLocaleString() : '-';
   return '<div class="control-stat">' +
     '<span class="control-stat__num">' + n + '</span>' +
     '<span class="control-stat__label">' + label + '</span>' +

@@ -157,7 +157,7 @@ willful misconduct.
 
 8.4 **Dispute resolution.** The Parties will first attempt in good faith to resolve
 any dispute through discussion within **[NUMBER, e.g. 30]** days of written notice.
-**[OPTIONAL: arbitration clause — discuss with counsel.]**
+**[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 ## 9. Term and General Provisions
 
@@ -188,7 +188,7 @@ which together form one agreement.
 
 ---
 
-**Schedule 1 — Deposit Materials, Release Conditions, and Fees.** Software and
+**Schedule 1, Deposit Materials, Release Conditions, and Fees.** Software and
 versions: **[DESCRIBE]**. Deposit Materials: **[LIST]**. Deposit schedule:
 **[DESCRIBE]**. Additional Release Conditions: **[DESCRIBE]**. Escrow Agent fees:
 **[DESCRIBE]**. Escrow Agent liability cap: **[AMOUNT]**.

@@ -188,7 +188,7 @@ Effective Date.
 | Title: **[TITLE]** | Title: **[TITLE OR N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**If Guest is a minor — parent or guardian consent:**
+**If Guest is a minor, parent or guardian consent:**
 
 | **PARENT / GUARDIAN** |
 | --- |

@@ -215,7 +215,7 @@ Parties submit to the courts located in **[COUNTY, STATE]**.
 
 11.5 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute through discussion before filing suit. **[OPTIONAL: mediation or
-arbitration clause — discuss with counsel.]**
+arbitration clause, discuss with counsel.]**
 
 11.6 **Entire agreement; amendment.** This Agreement and its Exhibits are the
 entire agreement on their subject and may be amended only in a writing signed by

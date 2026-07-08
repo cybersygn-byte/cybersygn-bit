@@ -167,7 +167,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 8.5 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+written notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 8.6 **Assignment.** Neither Party may assign this Agreement without the other's
 prior written consent, except to a successor in connection with a merger or sale

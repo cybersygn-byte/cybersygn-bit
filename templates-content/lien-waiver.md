@@ -41,7 +41,7 @@ waive and release certain lien and claim rights as set out in this Waiver.
 about to receive payment in the amount of **[$AMOUNT]** (the "**Payment**").
 
 1.2 **Application of Payment.** The Payment is for **[LABOR / MATERIALS / SERVICES]**
-furnished to the Property **[through DATE — for a progress waiver / in full — for a
+furnished to the Property **[through DATE, for a progress waiver / in full, for a
 final waiver]**.
 
 1.3 **Form of payment.** The Payment was or will be made by **[CHECK NO. / WIRE /
@@ -49,8 +49,8 @@ ACH / OTHER]** dated **[DATE]** drawn on **[BANK / PAYOR]**.
 
 ## 2. Type of Waiver
 
-2.1 **Conditional or unconditional.** This Waiver is **[CONDITIONAL — effective only
-when the Payment is actually received and clears / UNCONDITIONAL — effective on
+2.1 **Conditional or unconditional.** This Waiver is **[CONDITIONAL, effective only
+when the Payment is actually received and clears / UNCONDITIONAL, effective on
 signing regardless of whether the Payment clears]**.
 
 2.2 **Progress or final.** This Waiver is **[a PROGRESS waiver, releasing rights only
@@ -67,8 +67,8 @@ Claimant should sign an unconditional waiver only after payment has actually cle
 in consideration of the Payment, Claimant waives and releases any mechanic's lien,
 materialman's lien, stop-payment notice, bond claim, or similar right or claim
 against the Property, the Owner, and any construction or payment bond, to the extent
-of the **[work and amounts through the date in Section 1.2 — progress / all work and
-amounts — final]**.
+of the **[work and amounts through the date in Section 1.2, progress / all work and
+amounts, final]**.
 
 3.2 **Scope.** This Waiver covers only the rights expressly released in Section 3.1.
 It applies to amounts arising from the labor, materials, equipment, or services
@@ -158,7 +158,7 @@ required by applicable law or by the Owner or lender. See the notary block below
 | Company: **[CLAIMANT NAME]** | |
 | Date: __________________________ | |
 
-**[OPTIONAL — NOTARY ACKNOWLEDGMENT]**
+**[OPTIONAL, NOTARY ACKNOWLEDGMENT]**
 
 State of **[STATE]** )
 County of **[COUNTY]** )

@@ -1,12 +1,12 @@
 ---
 title: What is automatic field detection?
-description: The technical wedge that makes CyberSygn different from every other e-signature tool. Heuristic detection of signature lines, initials, dates, and checkboxes — in about three seconds per document.
+description: The technical wedge that makes CyberSygn different from every other e-signature tool. Heuristic detection of signature lines, initials, dates, and checkboxes, in about three seconds per document.
 date: 2026-06-04
 author: Nathan Vogt
 slug: what-is-automatic-field-detection
 ---
 
-Every other e-signature tool — DocuSign, HelloSign, PandaDoc, SignWell, SignNow — makes you draw a box on the screen for every place someone needs to sign. Every line. Every initial. Every date field. Twenty minutes of clicking and dragging, every single contract.
+Every other e-signature tool, DocuSign, HelloSign, PandaDoc, SignWell, SignNow, makes you draw a box on the screen for every place someone needs to sign. Every line. Every initial. Every date field. Twenty minutes of clicking and dragging, every single contract.
 
 CyberSygn doesn't. We find the fields for you, in about three seconds. Here's how that actually works.
 
@@ -68,7 +68,7 @@ The detection engine passes 37 out of 37 real-world contracts on our regression 
 
 DocuSign's drag-and-drop UX is what happens when you build for the legal team that signed off on the requirements doc. The legal team isn't the one wasting 30 minutes per contract.
 
-The hardest part of building CyberSygn wasn't the detection engine — it was convincing myself that detection was actually worth building. The signing market is locked-in, the incumbents have huge moats, and nobody was demanding this feature.
+The hardest part of building CyberSygn wasn't the detection engine, it was convincing myself that detection was actually worth building. The signing market is locked-in, the incumbents have huge moats, and nobody was demanding this feature.
 
 Once the engine worked, the demand showed up immediately. Turns out: when you stop forcing people to do the slow work, they notice.
 

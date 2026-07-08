@@ -50,20 +50,20 @@ Current Provider.
 
 2.1 **The File.** The Client authorizes and directs the Current Provider to transfer
 to the Receiving Provider the Client's file relating to the Matter (the "**File**"),
-which includes, except as limited below: **[DESCRIBE THE FILE — e.g., all documents,
+which includes, except as limited below: **[DESCRIBE THE FILE, e.g., all documents,
 correspondence, records, data, and materials the Client provided or that were
 created for the Client in connection with the Matter]**.
 
 2.2 **Items expressly included.** The File includes, without limitation: **[LIST
-KEY ITEMS — e.g., final work product, originals of documents belonging to the
+KEY ITEMS, e.g., final work product, originals of documents belonging to the
 Client, third-party records, and active items needed to continue the Matter]**.
 
 2.3 **Items the Current Provider may retain.** The Current Provider may retain a
 copy of the File for its records, and may retain originals only of items that
 applicable law or professional rules permit it to keep. The following items, if
-any, are excluded from the transfer: **[LIST EXCLUDED ITEMS — e.g., the Current
+any, are excluded from the transfer: **[LIST EXCLUDED ITEMS, e.g., the Current
 Provider's internal notes or proprietary materials, to the extent permitted by
-applicable rules — OR STATE "NONE"]**.
+applicable rules, OR STATE "NONE"]**.
 
 2.4 **Format.** The File may be transferred in **[ORIGINAL / PAPER / ELECTRONIC]**
 form, by **[SECURE ELECTRONIC TRANSFER / COURIER / IN-PERSON DELIVERY / AS THE

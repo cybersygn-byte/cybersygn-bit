@@ -19,7 +19,7 @@ and between:
 The Releasor and the Releasee are each a "**Party**" and together the "**Parties**."
 
 **Recitals.** A dispute, incident, or potential claim has arisen between the Parties
-relating to **[DESCRIBE THE UNDERLYING MATTER — e.g. a vehicle accident on [DATE], a
+relating to **[DESCRIBE THE UNDERLYING MATTER, e.g. a vehicle accident on [DATE], a
 property-damage incident, a completed transaction, or a disputed debt]** (the
 "**Claim Matter**"). The Parties wish to fully and finally resolve the Claim Matter
 and to release the Releasee from liability in exchange for the consideration

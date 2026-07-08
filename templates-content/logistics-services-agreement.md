@@ -259,7 +259,7 @@ STATE]**.
 
 11.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through senior-management discussion within **[NUMBER]**
-days of written notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+days of written notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 11.4 **Assignment.** Neither Party may assign this Agreement without the other's prior
 written consent, except to a successor in connection with a merger, acquisition, or

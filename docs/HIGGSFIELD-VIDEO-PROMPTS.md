@@ -1,4 +1,4 @@
-# Cinematic hero video — Higgsfield workflow
+# Cinematic hero video, Higgsfield workflow
 
 The homepage cinematic hero has a drop-in slot at `web/brand/hero.mp4`. Until the file lands, a CSS/SVG placeholder runs in the same canvas. The moment the MP4 is present, the video takes over and scroll-scrubbing kicks in.
 
@@ -7,24 +7,24 @@ The homepage cinematic hero has a drop-in slot at `web/brand/hero.mp4`. Until th
 **Length**: 10–14 seconds (scrubbed, so duration is "frames you scroll through")
 **Aspect**: 16:9 (1920x1080 minimum, 3840x2160 ideal)
 **Format**: MP4, h.264 baseline OR h.265, frequent keyframes (every 6–10 frames)
-**Audio**: none — the video plays muted in autoplay/scrub mode anyway
+**Audio**: none, the video plays muted in autoplay/scrub mode anyway
 **Style**: Apple product-page cinematography. Soft, slow, deliberate. No fast cuts. Camera moves slowly and the subject moves slowly. Dark navy background, cyan accent matching brand.
 
-## Higgsfield prompt — primary
+## Higgsfield prompt, primary
 
 Paste this into Higgsfield. Tune the camera language if their model prefers different keywords.
 
 ```
 A close-up cinematic product reveal: a single white sheet of paper, like a
 contract document, floating gently against a deep navy background. The
-paper has black text on it — three short typewritten lines at the top, a
+paper has black text on it, three short typewritten lines at the top, a
 paragraph below, and two signature lines at the bottom marked with thin
 gray underscores.
 
 A soft cyan light source from above-left illuminates the page. The camera
 pulls back slowly, very slowly, no jitter. As the camera pulls back, glowing
 cyan rectangles bloom into existence one at a time over the signature
-lines and date fields — like detection markers materializing. Each
+lines and date fields, like detection markers materializing. Each
 rectangle pulses gently for a half-second after it appears.
 
 The mood is calm, confident, almost reverent. Think Apple product
@@ -43,7 +43,7 @@ paper, no other colors.
 Resolution: 1920x1080 minimum, 3840x2160 if available.
 ```
 
-## Higgsfield prompt — alternate (more abstract)
+## Higgsfield prompt, alternate (more abstract)
 
 If the literal "paper with fields" feels too on-the-nose, try this:
 
@@ -51,7 +51,7 @@ If the literal "paper with fields" feels too on-the-nose, try this:
 A cinematic abstract sequence: thin cyan lines draw themselves across a
 deep navy background, forming a grid that suggests a document being
 parsed. The lines extend slowly, deliberately, like ink on paper. As they
-complete, soft cyan glows blossom at the intersections — small,
+complete, soft cyan glows blossom at the intersections, small,
 restrained, never showy. The camera drifts almost imperceptibly to the
 right.
 
@@ -65,7 +65,7 @@ nothing else.
 Camera: very slow horizontal drift, ease in/out.
 ```
 
-## Higgsfield prompt — alternate (story-driven)
+## Higgsfield prompt, alternate (story-driven)
 
 If you want a clearer "look what we do" narrative:
 
@@ -79,12 +79,12 @@ Act 2 (3-6s): The contract unfolds smoothly. As it opens, the signature
 line at the bottom is empty.
 
 Act 3 (6-9s): A glowing cyan rectangle materializes precisely over the
-signature line — not drawn, not placed, just appears. Then another over
+signature line, not drawn, not placed, just appears. Then another over
 a date field. Then a third over an initial line. Each rectangle pulses
 softly once.
 
 Act 4 (9-12s): The rectangles fade gently as a delicate ink-flow
-animation fills the signature line — a handwritten signature appearing
+animation fills the signature line, a handwritten signature appearing
 character by character.
 
 Act 5 (12-15s): The contract slowly closes itself back into a folded
@@ -140,7 +140,7 @@ After Higgsfield generates the video:
    ```
 
    Wire `<source media="(max-width: 768px)" src="brand/hero-mobile.mp4">`
-   into the `<video>` element. (Skip this on first pass — Cloudflare's
+   into the `<video>` element. (Skip this on first pass, Cloudflare's
    edge caching makes the full-size file cheap.)
 
 4. Drop the final file at `web/brand/hero.mp4`. Add to git:
@@ -163,7 +163,7 @@ no broken layout.
 
 ## When to update the video
 
-The cinematic should evolve. Quarterly is reasonable — refresh the
+The cinematic should evolve. Quarterly is reasonable, refresh the
 prompt with whatever new product capability is worth showing (Phase 3
 ML when it ships, mobile signing, branded sender domains). Same file
 location, same `wrangler deploy`, instant rollout.

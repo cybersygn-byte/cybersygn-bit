@@ -190,7 +190,7 @@ Effective Date.
 | Title: N/A |
 | Date: __________________________ |
 
-**Landlord acknowledgment (optional — required only if the landlord agrees to
+**Landlord acknowledgment (optional, required only if the landlord agrees to
 release or transfer obligations):**
 
 | **LANDLORD** |

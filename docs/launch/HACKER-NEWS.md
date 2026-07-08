@@ -1,4 +1,4 @@
-# Hacker News launch — CyberSygn
+# Hacker News launch, CyberSygn
 
 HN is the highest-leverage launch surface for technical/indie products.
 The audience is engineers; the title and the technical-substance of the
@@ -28,13 +28,13 @@ will rewrite or sink the post. "Show HN:" prefix is mandatory.
 Hi HN,
 
 I built CyberSygn because the slowest part of signing a contract isn't
-reading it — it's telling DocuSign where the fields are. Twenty minutes
+reading it, it's telling DocuSign where the fields are. Twenty minutes
 of dragging signature boxes onto every page, every time.
 
 The wedge here is automatic field detection. CyberSygn reads the PDF's
 text operators + geometry and locates every signature line, initial,
 date, and checkbox. About 50 ms per contract on a Cloudflare Worker.
-The detection engine is heuristic, not ML — I'll open-source it as
+The detection engine is heuristic, not ML, I'll open-source it as
 `cybersygn-detect` (MIT) once a few more people kick the tires.
 
 Technical notes that might be interesting:
@@ -55,7 +55,7 @@ Technical notes that might be interesting:
 
 Detection accuracy: 100% on a regression set of 37 real-world contracts
 and 10 synthetic PDFs. Most failures during dev were around exotic
-fonts (Hiragino CJK, etc.) — pdf.js needs CMap data shipped alongside.
+fonts (Hiragino CJK, etc.), pdf.js needs CMap data shipped alongside.
 
 Pricing: 3 free signs (lifetime, no card). $9/mo Origin (founding 100,
 locked for life). $12/mo Solo. $29/mo Studio (3 seats). Why those
@@ -85,7 +85,7 @@ PT (US not online), late evenings.
   technical comment with substance.
 - Don't argue. HN respects "fair point, here's what we considered" more
   than "you're wrong, here's why."
-- When someone asks "why not just use DocuSign?" — answer with the
+- When someone asks "why not just use DocuSign?", answer with the
   detection-engine technical detail, not with marketing copy.
 - Have detection screenshots / GIFs ready to paste as imgur links.
 - If the post goes well (front page), prepare to handle 5-10x normal
@@ -95,7 +95,7 @@ PT (US not online), late evenings.
 ## What NOT to do
 
 - Don't say "please upvote." HN auto-detects and shadow-bans.
-- Don't link to your own posts elsewhere ("as I wrote on IH..." — fine,
+- Don't link to your own posts elsewhere ("as I wrote on IH...", fine,
   but never "see my IH post for more").
 - Don't reply with marketing speak. The audience smells it instantly.
 - Don't take feedback personally in public, even when it's wrong.

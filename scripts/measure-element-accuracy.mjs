@@ -8,8 +8,8 @@
  * 90%+ confidence on well-formed inputs.
  *
  * Each category folder maps to the element type its PDFs are built to exercise.
- * For adversarial/, the goal is the inverse — the ONE real signature is found,
- * decoys are not — so we measure the real-signature detection rate.
+ * For adversarial/, the goal is the inverse, the ONE real signature is found,
+ * decoys are not, so we measure the real-signature detection rate.
  *
  * Run: node scripts/measure-element-accuracy.mjs
  */

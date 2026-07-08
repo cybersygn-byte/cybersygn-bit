@@ -39,7 +39,7 @@ person to whom the negative entry relates.
 loan, mortgage / DATE OPENED]**.
 
 1.3 **The negative entry.** The entry the Consumer asks the Creditor to reconsider
-is: **[DESCRIBE — e.g. "a 30-day late payment reported for [MONTH, YEAR]" or "a
+is: **[DESCRIBE, e.g. "a 30-day late payment reported for [MONTH, YEAR]" or "a
 series of late payments between [DATE] and [DATE]"]** (the "**Reported Entry**").
 
 1.4 **Not a dispute of accuracy.** This Letter is a goodwill request. It is **not**
@@ -50,7 +50,7 @@ LETTER INSTEAD OF THIS GOODWILL LETTER.]**
 ## 2. The Consumer's Account History
 
 2.1 **Positive history.** Apart from the Reported Entry, the Consumer has
-maintained the Account responsibly, including: **[DESCRIBE — e.g. "on-time
+maintained the Account responsibly, including: **[DESCRIBE, e.g. "on-time
 payments for [NUMBER] years," "the Account is current and in good standing," or
 "the balance has been paid in full"]**.
 
@@ -63,13 +63,13 @@ since **[YEAR]**, a relationship the Consumer values and wishes to continue.
 ## 3. The Reason for the Reported Entry
 
 3.1 **Explanation.** The circumstance that led to the Reported Entry was:
-**[BRIEFLY AND HONESTLY EXPLAIN — e.g. "an unexpected medical emergency," "a job
+**[BRIEFLY AND HONESTLY EXPLAIN, e.g. "an unexpected medical emergency," "a job
 loss," "a temporary banking error that delayed an automatic payment," "a change of
 address that caused a statement not to reach me," or "a one-time oversight during
 an otherwise difficult period"]**.
 
 3.2 **Resolution.** The Consumer has since resolved the underlying issue by:
-**[DESCRIBE — e.g. "enrolling in automatic payments," "rebuilding an emergency
+**[DESCRIBE, e.g. "enrolling in automatic payments," "rebuilding an emergency
 fund," "updating contact information," or "bringing and keeping the Account
 current"]**, and the lapse has not recurred.
 

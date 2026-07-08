@@ -2,7 +2,7 @@
 
 Submit CyberSygn to "DocuSign alternative" directories. Each listing is
 a referral pipeline + a backlink. Submission templates below. Do these
-in the week leading up to the PH/HN launch — they take 5-15 minutes
+in the week leading up to the PH/HN launch, they take 5-15 minutes
 each, compound for years.
 
 ## The ten directories (priority order)
@@ -12,11 +12,11 @@ each, compound for years.
 | 1 | **G2** | https://www.g2.com/ | 90+ | The biggest. Listing requires email verification + a few real users to review. Submit a profile via [G2 vendor page](https://sell.g2.com/). Expect 4-6 weeks to be approved. |
 | 2 | **Capterra** | https://www.capterra.com/ | 88+ | Gartner-owned. Submit via [Capterra Add Your Software](https://www.capterra.com/vendors/sign-up). Lots of high-intent traffic. |
 | 3 | **GetApp** | https://www.getapp.com/ | 86+ | Gartner-owned sibling of Capterra. Same submission gets you on both. |
-| 4 | **Tekpon** | https://tekpon.com/ | 65+ | Emerging directory. Founder is responsive — DM them on Twitter and they'll often expedite. |
+| 4 | **Tekpon** | https://tekpon.com/ | 65+ | Emerging directory. Founder is responsive, DM them on Twitter and they'll often expedite. |
 | 5 | **AlternativeTo** | https://alternativeto.net/ | 78+ | Crowd-curated. Submit CyberSygn as an alternative to DocuSign, HelloSign, Dropbox Sign, PandaDoc separately. Each gets a separate listing. |
 | 6 | **SaasHub** | https://www.saashub.com/ | 60+ | Free submission, fast turnaround. |
 | 7 | **Slant** | https://www.slant.co/ | 70+ | Question-driven ("What is the best DocuSign alternative?"). Add CyberSygn as a pro answer. |
-| 8 | **Product Hunt Alternatives** | https://www.producthunt.com/alternatives/ | 88+ | Auto-generated from PH launches — covered by the PH launch itself. |
+| 8 | **Product Hunt Alternatives** | https://www.producthunt.com/alternatives/ | 88+ | Auto-generated from PH launches, covered by the PH launch itself. |
 | 9 | **Indie Hackers Product Directory** | https://www.indiehackers.com/products | 65+ | Free submission. Connects you to the IH revenue-share community. |
 | 10 | **BetaList** | https://betalist.com/ | 70+ | Pre/at-launch friendly. Pairs well with PH timing. |
 
@@ -30,7 +30,7 @@ Tagline: The e-signature tool that finds every field for you.
 Description (150 words):
 CyberSygn is a DocuSign alternative built around automatic field detection.
 Drop a PDF and CyberSygn locates every signature line, initial, date, and
-checkbox in about three seconds — no drag-and-drop required.
+checkbox in about three seconds, no drag-and-drop required.
 
 Signers click a unique magic link and sign in their browser. No account,
 no app, no friction. The signed PDF returns to you with a SHA-256 audit
@@ -42,7 +42,7 @@ lifetime. Origin tier $9/mo locked for life (first 100 founders only).
 Solo $12/mo for unlimited. Studio $29/mo for a 3-seat team.
 
 Differentiated from DocuSign, Dropbox Sign, and HelloSign by the
-detection step — none of the alternatives do this automatically.
+detection step, none of the alternatives do this automatically.
 
 Website: https://cybersygn.io
 Pricing: $0 free, $9-29/mo paid

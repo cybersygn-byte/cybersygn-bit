@@ -175,7 +175,7 @@ will provide any required cancellation notice.
 
 8.4 **Dispute resolution and governing law.** Before filing suit, the Parties will
 attempt in good faith to resolve any dispute through direct discussion and, if
-unresolved, through **[MEDIATION / ARBITRATION — discuss with counsel]**. This
+unresolved, through **[MEDIATION / ARBITRATION, discuss with counsel]**. This
 Agreement is governed by the laws of the State of **[STATE]**, and the Parties
 submit to the courts located in **[COUNTY, STATE]**.
 

@@ -46,7 +46,7 @@ and has no authority to bind Supplier or make commitments on its behalf.
 
 1.4 **Reservation.** Supplier reserves all rights not expressly granted, including
 the right to sell directly to **[e.g. national accounts, government buyers, or
-online channels — specify any reserved customers or channels]**, as described in
+online channels, specify any reserved customers or channels]**, as described in
 Exhibit B.
 
 ## 2. Distributor Obligations
@@ -118,7 +118,7 @@ Exhibit E.
 
 ## 5. Minimum Purchases
 
-5.1 **Minimums.** **[OPTIONAL — for exclusive arrangements: During each [PERIOD],
+5.1 **Minimums.** **[OPTIONAL, for exclusive arrangements: During each [PERIOD],
 Distributor will purchase at least the minimum quantity or value stated in Exhibit
 C (the "Minimum").]**
 

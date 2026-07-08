@@ -16,7 +16,7 @@
  * Bump CACHE_VERSION to invalidate everything on the next visit.
  */
 
-const CACHE_VERSION = 'cybersygn-v1';
+const CACHE_VERSION = 'cybersygn-v2';
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [
   OFFLINE_URL,

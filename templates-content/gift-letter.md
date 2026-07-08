@@ -138,7 +138,7 @@ Date.
 | Title (or N/A): **N/A** | Title (or N/A): **N/A** |
 | Date: __________________________ | Date: __________________________ |
 
-**[OPTIONAL — Notary acknowledgment. Some lenders or institutions require this
+**[OPTIONAL, Notary acknowledgment. Some lenders or institutions require this
 Letter to be notarized. If so, add the notary block your jurisdiction uses.]**
 
 State of **[STATE]**, County of **[COUNTY]**.

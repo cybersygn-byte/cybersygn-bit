@@ -8,7 +8,7 @@
  * never appears in your shell history, never gets pasted into a chat
  * log, never gets logged by node or by wrangler. The hash that
  * wrangler uploads is sha256(username + ':' + password + ':' + salt)
- * — same shape the worker's loginWithCredentials() expects.
+ *, same shape the worker's loginWithCredentials() expects.
  *
  * Usage from project root:
  *   node scripts/set-owner-password.mjs

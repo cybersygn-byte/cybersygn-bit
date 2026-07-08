@@ -31,7 +31,7 @@ Client (the "**Services**") and defines what is included in, and excluded from, 
 engagement.
 
 1.2 **Objectives.** The objectives of the engagement are: **[STATE THE OUTCOMES THE
-CLIENT IS SEEKING — e.g., complete a defined project, deliver a defined report,
+CLIENT IS SEEKING, e.g., complete a defined project, deliver a defined report,
 or achieve a defined milestone]**.
 
 1.3 **Order of precedence.** If this Scope conflicts with a separate engagement
@@ -42,7 +42,7 @@ this Scope expressly states that it overrides a specific provision and identifie
 
 2.1 **Included services.** The Services consist of the following, and only the
 following, unless changed under Section 7: **[LIST THE INCLUDED SERVICES AS
-SPECIFICALLY AS POSSIBLE — e.g., tasks, phases, analyses, or activities the Provider
+SPECIFICALLY AS POSSIBLE, e.g., tasks, phases, analyses, or activities the Provider
 will perform]**.
 
 2.2 **Deliverables.** The Provider will produce the following deliverables (the
@@ -61,7 +61,7 @@ revisions are out of scope and are handled under Section 7.
 
 3.1 **Out of scope.** The following are expressly excluded from the Services and are
 not the Provider's responsibility under this Scope unless added by a signed change
-under Section 7: **[LIST EXCLUSIONS — e.g., work outside the listed tasks, services
+under Section 7: **[LIST EXCLUSIONS, e.g., work outside the listed tasks, services
 requiring a different specialty, ongoing maintenance, or third-party deliverables]**.
 
 3.2 **No implied services.** The Provider has no obligation to perform any service
@@ -74,12 +74,12 @@ CONCRETE EXAMPLES OF NEAR-SCOPE WORK THAT IS EXCLUDED, TO PREVENT MISUNDERSTANDI
 ## 4. Assumptions and Dependencies
 
 4.1 **Assumptions.** This Scope, including the Provider's estimates of time and cost,
-is based on the following assumptions: **[LIST ASSUMPTIONS — e.g., the availability
+is based on the following assumptions: **[LIST ASSUMPTIONS, e.g., the availability
 of data, the accuracy of information provided, the readiness of systems, or the
 absence of unforeseen complications]**.
 
 4.2 **Dependencies.** The Provider's ability to perform depends on the following
-inputs from the Client or third parties: **[LIST DEPENDENCIES — e.g., access,
+inputs from the Client or third parties: **[LIST DEPENDENCIES, e.g., access,
 approvals, materials, or third-party deliverables]**.
 
 4.3 **Effect of changed assumptions.** If an assumption proves incorrect or a
@@ -112,7 +112,7 @@ schedule or milestones: **[STATE START DATE, MILESTONES, AND TARGET COMPLETION, 
 REFER TO A SEPARATE SCHEDULE]**. Dates are good-faith targets and depend on the
 assumptions and dependencies in Section 4.
 
-6.2 **Fees.** The fees for the Services are: **[STATE THE FEE BASIS — FLAT FEE,
+6.2 **Fees.** The fees for the Services are: **[STATE THE FEE BASIS, FLAT FEE,
 HOURLY RATE, MILESTONE-BASED, OR AS SET OUT IN A SEPARATE AGREEMENT]**. Fees for
 out-of-scope work are handled under Section 7.
 

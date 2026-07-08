@@ -11,13 +11,13 @@ CyberSygn launched in beta after 60 days of solo development. Here's what's actu
 ## The stack
 
 - **Frontend**: vanilla HTML + ES modules. No React, no Vue, no build framework. Plain `<script type="module">` and `import`. CSS is one ~6000-line file structured as `@layer base, components, utilities`.
-- **Backend**: Cloudflare Workers, exclusively. Every API route, the cron handler, the webhook listener, the audit-cert renderer — all one Worker.
-- **Storage**: Cloudflare KV. Six namespaces: `CYBERSYGN_DOCS`, `CYBERSYGN_PDFS`, `CYBERSYGN_EVENTS` (Analytics Engine), founding-signups, drip records, owner tokens. R2 was on deck if I needed object storage at scale — turns out KV is sufficient at current volume.
+- **Backend**: Cloudflare Workers, exclusively. Every API route, the cron handler, the webhook listener, the audit-cert renderer, all one Worker.
+- **Storage**: Cloudflare KV. Six namespaces: `CYBERSYGN_DOCS`, `CYBERSYGN_PDFS`, `CYBERSYGN_EVENTS` (Analytics Engine), founding-signups, drip records, owner tokens. R2 was on deck if I needed object storage at scale, turns out KV is sufficient at current volume.
 - **Email**: Resend. ~$0 at the volume I'm at, generous free tier, drop-dead simple API.
 - **Payments**: Stripe Checkout + webhook handler with idempotency. Customer Portal for self-service cancellation. Six event types handled: subscription paid, customer deleted, invoice failed, etc.
 - **PDF**: pdf.js (parsing + rendering) in the browser, pdf-lib (modification + signing) in the browser AND in the Worker for audit-cert generation.
-- **Detection engine**: heuristic, not ML. ~50ms per PDF on a Cloudflare Worker. Multi-strategy fallback — five field types (signature, initial, date, checkbox, text), each detected by a different ordered heuristic. 100% accuracy on a regression set of 37 real-world contracts.
-- **Voice + design**: own house style. Inter Display + Inter for typography. Navy (#011434), cyan (#00CBF6), paper (#F7F8FB) — three colors, no expansion. Period-terminated headlines.
+- **Detection engine**: heuristic, not ML. ~50ms per PDF on a Cloudflare Worker. Multi-strategy fallback, five field types (signature, initial, date, checkbox, text), each detected by a different ordered heuristic. 100% accuracy on a regression set of 37 real-world contracts.
+- **Voice + design**: own house style. Inter Display + Inter for typography. Navy (#011434), cyan (#00CBF6), paper (#F7F8FB), three colors, no expansion. Period-terminated headlines.
 - **Cron**: Workers scheduled handler. Every hour for reminder sweeps; once-daily for the drip campaign and the monthly owner report.
 
 ## The numbers
@@ -52,7 +52,7 @@ CyberSygn launched in beta after 60 days of solo development. Here's what's actu
 
 I did it in the opposite order. The copy is good but unsupported.
 
-**The /preview/ sidebar took too many slices.** Slice 34, 45, 46, 47, 48, 58 — all sidebar UX iterations. Should have done one bigger rebuild upfront rather than iterating in public.
+**The /preview/ sidebar took too many slices.** Slice 34, 45, 46, 47, 48, 58, all sidebar UX iterations. Should have done one bigger rebuild upfront rather than iterating in public.
 
 **Higgsfield-rendered video came late.** The cinematic hero went live in slice 57; I should have had it from the start. A 12-second product reveal is the single most expensive thing on the homepage to compete with.
 
@@ -67,7 +67,7 @@ I did it in the opposite order. The copy is good but unsupported.
 
 ## What's next
 
-Free tools subdomain at `tools.cybersygn.io` (free PDF sign, compress, merge, split — pure SEO bait that funnels into the paid product). Real video testimonials from Origin members as they land. ML-trained detection engine v2 once the corpus hits 5K labeled examples.
+Free tools subdomain at `tools.cybersygn.io` (free PDF sign, compress, merge, split, pure SEO bait that funnels into the paid product). Real video testimonials from Origin members as they land. ML-trained detection engine v2 once the corpus hits 5K labeled examples.
 
 For now: shipped. Now I have to figure out distribution.
 

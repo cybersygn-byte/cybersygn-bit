@@ -37,7 +37,7 @@ Effective Date, the Debtor owes the Creditor the sum of **[AMOUNT IN WORDS]
 dollars ($[AMOUNT])** (the "**Debt**").
 
 1.2 **Origin of the Debt.** The Debt arises from **[DESCRIBE THE UNDERLYING
-TRANSACTIONS — e.g. goods sold and delivered, services rendered, money lent,
+TRANSACTIONS, e.g. goods sold and delivered, services rendered, money lent,
 unpaid invoices numbered [____], rent in arrears, or other basis]**, the details
 of which the Debtor confirms are accurate.
 

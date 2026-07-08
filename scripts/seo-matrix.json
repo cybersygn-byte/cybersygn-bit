@@ -101,7 +101,7 @@
       "slug": "coaches",
       "name": "coaches",
       "singular": "a coach",
-      "audienceLine": "Onboarding a new client should take five minutes, not fifty. The intake forms, the agreement, the cancellation policy — all on the same device, same session.",
+      "audienceLine": "Onboarding a new client should take five minutes, not fifty. The intake forms, the agreement, the cancellation policy, all on the same device, same session.",
       "ideal": ["coaching-agreement", "nda", "consulting-agreement"]
     },
     {
@@ -115,7 +115,7 @@
       "slug": "startups",
       "name": "startups",
       "singular": "a startup",
-      "audienceLine": "Speed is the only moat. Contractor agreements, NDAs, advisor agreements — same templates, every time, signed without friction.",
+      "audienceLine": "Speed is the only moat. Contractor agreements, NDAs, advisor agreements, same templates, every time, signed without friction.",
       "ideal": ["nda", "contractor-agreement", "msa", "employment-agreement"]
     },
     {
@@ -136,7 +136,7 @@
       "slug": "lawyers",
       "name": "lawyers",
       "singular": "a solo or small-firm lawyer",
-      "audienceLine": "Engagement letters, NDAs, retainer agreements — every page needs initials, every signature needs an audit certificate. Detection that does the placement makes intake feel like the rest of your practice.",
+      "audienceLine": "Engagement letters, NDAs, retainer agreements, every page needs initials, every signature needs an audit certificate. Detection that does the placement makes intake feel like the rest of your practice.",
       "ideal": ["consulting-agreement", "nda", "msa"]
     }
   ]

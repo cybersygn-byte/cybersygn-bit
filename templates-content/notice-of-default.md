@@ -36,12 +36,12 @@ Party, all of which are expressly reserved.
 ## 1. The Agreement
 
 1.1 **Identification.** The parties are bound by the Agreement titled
-**[AGREEMENT TITLE — e.g. Promissory Note, Loan Agreement, Lease, Security
+**[AGREEMENT TITLE, e.g. Promissory Note, Loan Agreement, Lease, Security
 Agreement]**, dated **[AGREEMENT DATE]**, between the Non-Defaulting Party and the
 Defaulting Party **[and any guarantor or other party]**.
 
 1.2 **Relevant obligation.** Under the Agreement, the Defaulting Party is obligated
-to **[DESCRIBE THE OBLIGATION — e.g. make scheduled payments, maintain insurance,
+to **[DESCRIBE THE OBLIGATION, e.g. make scheduled payments, maintain insurance,
 keep collateral in good condition, observe a financial covenant, or perform a
 described duty]**, as set out in **[SECTION OR PARAGRAPH NUMBER OF THE
 AGREEMENT]**.
@@ -87,7 +87,7 @@ is satisfied in full.
 4.1 **Demand to cure.** The Non-Defaulting Party demands that the Defaulting Party
 cure the default by **[paying the total amount in default / performing the
 obligation / restoring the covenant to compliance]** on or before **[DEADLINE
-DATE — e.g. [NUMBER] days from the date of this Notice, or the cure period stated
+DATE, e.g. [NUMBER] days from the date of this Notice, or the cure period stated
 in the Agreement if longer]** (the "**Cure Period**").
 
 4.2 **Contractual and legal cure provisions.** If the Agreement or applicable law
@@ -174,7 +174,7 @@ default is not cured within the Cure Period.
 | Title: **[TITLE OR N/A]** |
 | Date: __________________________ |
 
-**Enclosures:** **[LIST ENCLOSED DOCUMENTS — e.g. payment history, the Agreement,
+**Enclosures:** **[LIST ENCLOSED DOCUMENTS, e.g. payment history, the Agreement,
 or "None"]**
 
 ---

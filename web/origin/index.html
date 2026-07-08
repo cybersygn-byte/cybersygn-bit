@@ -74,7 +74,7 @@
             <span class="accent">$9, locked forever.</span>
           </h1>
           <p class="lede hero__lede">
-            Origin is a one-time deal. <strong><span id="origin-taken">—</span> of <span id="origin-cap-2">100</span> spots</strong>
+            Origin is a one-time deal. <strong><span id="origin-taken">-</span> of <span id="origin-cap-2">100</span> spots</strong>
             claimed. Once we hit one hundred, the rate goes up and never comes back down for new
             members. This page lists every Origin member, in the order they signed up.
           </p>
@@ -98,7 +98,7 @@
           </div>
           <p class="lede section__lede" id="wall-lede">
             Every member, in chronological order, with their Origin number and city. Display names
-            and cities are optional — some members keep it minimal.
+            and cities are optional, some members keep it minimal.
           </p>
         </header>
 
@@ -110,7 +110,7 @@
           <p class="origin-empty__kicker">Be the first.</p>
           <h3 class="h-card origin-empty__title">No Origin members yet.</h3>
           <p class="origin-empty__lede">
-            The wall is empty. Whoever claims the first spot becomes <strong>#001</strong> — the
+            The wall is empty. Whoever claims the first spot becomes <strong>#001</strong>, the
             first name on this page, locked at $9 per month for the life of their account.
           </p>
           <a class="btn btn--primary btn--lg" href="../#founding">
@@ -170,7 +170,7 @@
           var card = document.createElement('article');
           card.className = 'origin-card';
           var n = String(m.number).padStart(3, '0');
-          var name = m.displayName || '—';
+          var name = m.displayName || 'Anonymous';
           var city = m.city || '';
           var date = m.joinedAt ? new Date(m.joinedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
           card.innerHTML =

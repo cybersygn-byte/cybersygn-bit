@@ -33,7 +33,7 @@ advice. In consideration of the mutual promises below, the Parties agree as foll
 ## 1. The Gift
 
 1.1 **Gift.** The Donor agrees to give, and the Organization agrees to accept, the
-following (the "**Gift**"): **[DESCRIBE — e.g. a cash gift of $[AMOUNT]; the
+following (the "**Gift**"): **[DESCRIBE, e.g. a cash gift of $[AMOUNT]; the
 following property: [DESCRIBE PROPERTY]; or the following securities: [DESCRIBE]]**.
 
 1.2 **Form and delivery.** The Donor will deliver the Gift **[in a single payment /
@@ -66,7 +66,7 @@ designated account or address.
 ## 3. Use of the Gift
 
 3.1 **Designated use.** The Donor designates the Gift for the following purpose
-(the "**Designated Purpose**"): **[DESCRIBE — e.g. unrestricted general support;
+(the "**Designated Purpose**"): **[DESCRIBE, e.g. unrestricted general support;
 the [PROGRAM NAME] program; the building fund; an endowment]**. If the Gift is
 unrestricted, the Organization may use it for any of its charitable purposes.
 

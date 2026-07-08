@@ -59,7 +59,7 @@ the Occupant will vacate as provided in Section 6.
 2.1 **Occupancy fee.** The Occupant will pay an occupancy fee of **[AMOUNT]** per
 **[DAY / MONTH]** for the Occupancy Period, calculated to approximate the Owner's
 **[carrying costs / market rent]**. **[For a short pre- or post-closing occupancy,
-the Parties may instead agree to a flat fee or no fee — specify here.]**
+the Parties may instead agree to a flat fee or no fee, specify here.]**
 
 2.2 **Payment.** The occupancy fee is due **[in advance at the start of the
 Occupancy Period / at Closing / as follows: [TERMS]]**. Any per-day fee for a
@@ -186,7 +186,7 @@ Effective Date.
 | Title: **[N/A]** | Title: **[N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**Exhibit A — Move-in condition report and walk-through**
+**Exhibit A, Move-in condition report and walk-through**
 
 ---
 

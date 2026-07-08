@@ -78,9 +78,9 @@ check-out.
 ## 4. Cancellation and Refunds
 
 4.1 **Cancellation by Guest.** If Guest cancels, refunds are governed by this
-schedule: cancellation **[NUMBER]+** days before check-in — **[REFUND %]**;
-**[NUMBER]** to **[NUMBER]** days before — **[REFUND %]**; fewer than
-**[NUMBER]** days — **[REFUND %]**.
+schedule: cancellation **[NUMBER]+** days before check-in, **[REFUND %]**;
+**[NUMBER]** to **[NUMBER]** days before, **[REFUND %]**; fewer than
+**[NUMBER]** days, **[REFUND %]**.
 
 4.2 **Cancellation by Host.** If Host must cancel due to circumstances making the
 Property unavailable, Host will refund all amounts paid or, if Guest agrees, offer

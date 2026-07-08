@@ -43,7 +43,7 @@ an account / an incident / a course of dealing]** described as **[DESCRIBE THE
 RELATIONSHIP OR AGREEMENT]**.
 
 1.2 **What happened.** The facts giving rise to this Demand are as follows:
-**[STATE THE FACTS IN PLAIN, CHRONOLOGICAL ORDER — what was agreed or owed, what
+**[STATE THE FACTS IN PLAIN, CHRONOLOGICAL ORDER, what was agreed or owed, what
 the Recipient did or failed to do, and the relevant dates and amounts]**.
 
 1.3 **Supporting documentation.** The Claimant's position is supported by
@@ -93,7 +93,7 @@ Please reference **[MATTER OR ACCOUNT NUMBER]** with any payment or response.
 ## 4. Deadline to Comply
 
 4.1 **Deadline.** The Recipient must fully comply with this Demand on or before
-**[DEADLINE DATE — e.g. [NUMBER] days from the date of this letter]** (the
+**[DEADLINE DATE, e.g. [NUMBER] days from the date of this letter]** (the
 "**Deadline**").
 
 4.2 **Reasonableness.** The Claimant believes the Deadline gives the Recipient a

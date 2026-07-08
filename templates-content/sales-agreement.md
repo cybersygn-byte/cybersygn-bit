@@ -54,7 +54,7 @@ stated shipping charges.
 
 2.2 **Deposit.** Buyer will pay a deposit of **[$ AMOUNT / PERCENT]** on signing,
 which will be applied to the Purchase Price. **[State whether the deposit is
-refundable and under what conditions — deposit rules vary by jurisdiction and by
+refundable and under what conditions, deposit rules vary by jurisdiction and by
 the nature of the Goods.]**
 
 2.3 **Balance.** Buyer will pay the balance of the Purchase Price

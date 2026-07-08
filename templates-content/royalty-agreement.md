@@ -227,7 +227,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Licensed Property and Royalty Terms
+### Exhibit A, Licensed Property and Royalty Terms
 
 | Item | Details |
 | --- | --- |

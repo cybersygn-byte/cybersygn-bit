@@ -43,8 +43,8 @@ required standard.
 ## 2. Performance Concerns
 
 2.1 **Summary of concerns.** The specific performance concerns prompting this Plan
-are: **[Describe each concern factually and specifically — e.g. missed deadlines,
-quality issues, attendance, communication, or behavior — with concrete examples
+are: **[Describe each concern factually and specifically, e.g. missed deadlines,
+quality issues, attendance, communication, or behavior, with concrete examples
 and dates where available.]**
 
 2.2 **Prior feedback.** The Company has previously raised these or related concerns

@@ -26,8 +26,8 @@ Borrower and Lender are each a "**Party**" and together the "**Parties**."
 
 **Recitals.** Lender has agreed to lend, and Borrower has agreed to borrow, the
 principal sum stated below on terms under which Borrower makes a series of
-smaller periodic payments and then a single large final payment — the
-"**Balloon Payment**" — that retires the remaining balance at maturity. Borrower
+smaller periodic payments and then a single large final payment, the
+"**Balloon Payment**", that retires the remaining balance at maturity. Borrower
 understands the Balloon Payment will be substantially larger than the periodic
 payments. In consideration of the loan and the mutual promises below, the Parties
 agree as follows.

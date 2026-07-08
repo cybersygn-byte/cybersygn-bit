@@ -26,9 +26,9 @@ The Company and the Owners are each a "**Party**" and together the "**Parties**.
 
 **Recitals.** The Owners collectively own all of the outstanding Interests in the
 Company. The Parties wish to provide for the orderly transfer of an Owner's
-Interest on certain trigger events — such as death, disability, withdrawal,
+Interest on certain trigger events, such as death, disability, withdrawal,
 attempted transfer to an outside party, divorce, bankruptcy, or termination of
-employment — to preserve continuity of ownership, avoid unwanted co-owners, and
+employment, to preserve continuity of ownership, avoid unwanted co-owners, and
 provide a fair and predictable mechanism for valuing and paying for a departing
 Owner's Interest. In consideration of the mutual promises below, the Parties agree
 as follows.
@@ -71,7 +71,7 @@ the same price and terms, by written notice. The Company and the Owners have
 or (b), the Company has the first right, and the other Owners have the second
 right (pro rata), to purchase the Selling Owner's entire Interest at the price
 determined under Section 4 and on the terms in Section 5. **[SELECT: this right is
-an obligation (mandatory buyout) / an option (optional buyout) — discuss with
+an obligation (mandatory buyout) / an option (optional buyout), discuss with
 counsel, as this drives funding and tax treatment.]**
 
 2.4 **Purchase on other trigger events.** On any other Trigger Event, the Company

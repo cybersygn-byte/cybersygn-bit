@@ -123,7 +123,7 @@ admitting a Partner's transferee as a substitute Partner.
 
 5.2 **Deadlock.** If the Partners are deadlocked on a Major Decision, they will first
 attempt resolution under Section 10.3. **[OPTIONAL: If unresolved, the deadlock may
-be addressed through [MEDIATION / BUYOUT / DISSOLUTION] — discuss with counsel.]**
+be addressed through [MEDIATION / BUYOUT / DISSOLUTION], discuss with counsel.]**
 
 ## 6. New Partners and Transfers of Interest
 

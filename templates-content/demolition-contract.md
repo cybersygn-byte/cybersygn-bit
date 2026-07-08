@@ -89,8 +89,8 @@ required for Contractor to perform.
 subject to permits, weather, utility disconnection, and any Excusable Delay.
 
 3.2 **Excusable Delay.** A delay caused by an event beyond Contractor's reasonable
-control — including severe weather, unmarked or mislocated utilities, undisclosed
-site conditions, hazardous materials, permitting delays, or Owner-caused delay —
+control, including severe weather, unmarked or mislocated utilities, undisclosed
+site conditions, hazardous materials, permitting delays, or Owner-caused delay, 
 is an "**Excusable Delay**" and extends the schedule by the time lost, without
 penalty to Contractor.
 
@@ -105,7 +105,7 @@ fencing, barriers, and signage as required by applicable safety rules and will
 restrict access to authorized personnel.
 
 4.2 **Dust, noise, and vibration control.** Contractor will use commercially
-reasonable measures — including water suppression and scheduling — to control
+reasonable measures, including water suppression and scheduling, to control
 dust, debris migration, noise, and vibration affecting neighboring property.
 
 4.3 **Protection of adjacent property.** Contractor will take reasonable measures
@@ -120,8 +120,8 @@ federal and state agencies. Contractor will maintain a competent on-site
 supervisor at all times during active Work.
 
 4.5 **Concealed conditions.** If Contractor encounters concealed or unforeseen
-conditions that materially differ from those reasonably anticipated — including
-unmarked utilities, structural conditions, voids, or buried materials — Contractor
+conditions that materially differ from those reasonably anticipated, including
+unmarked utilities, structural conditions, voids, or buried materials, Contractor
 will stop affected Work, promptly notify Owner, and the Parties will address the
 condition by change order under Section 9.
 
@@ -252,7 +252,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 12.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+written notice. **[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 12.4 **Assignment.** Neither Party may assign this Contract without the other's
 prior written consent.

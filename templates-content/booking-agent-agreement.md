@@ -34,7 +34,7 @@ booking agent to solicit, procure, and negotiate Engagements (defined below) in 
 Territory during the Term.
 
 1.2 **Engagements.** "**Engagement**" means a live performance, appearance, or set by
-Artist — including concerts, festivals, club dates, private events, and **[OTHER]** —
+Artist, including concerts, festivals, club dates, private events, and **[OTHER]**, 
 booked through or with the involvement of Agent.
 
 1.3 **Scope of authority.** Agent will: (a) solicit and field offers for Engagements;

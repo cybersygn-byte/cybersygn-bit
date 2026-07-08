@@ -101,7 +101,7 @@ applicable law, to compensate Lender for the cost of handling the delinquency.
 4.1 **Grant of security interest.** To secure the prompt payment and performance
 of all obligations under this Note (the "**Obligations**"), Borrower grants
 Lender a security interest in the following property and all proceeds of it (the
-"**Collateral**"): **[DESCRIBE COLLATERAL — e.g. the equipment, vehicle, account,
+"**Collateral**"): **[DESCRIBE COLLATERAL, e.g. the equipment, vehicle, account,
 or other property, with serial numbers, VIN, account numbers, or other
 identifying detail]**.
 
@@ -167,7 +167,7 @@ right to require strict performance.
 and authority to enter into this Note; (b) this Note is a valid and binding
 obligation enforceable against Borrower; (c) it owns the Collateral free of
 undisclosed liens; and (d) the loan proceeds will be used for **[PURPOSE,
-e.g. business / personal — note consumer-credit rules differ]**.
+e.g. business / personal, note consumer-credit rules differ]**.
 
 7.2 **Affirmative covenants.** Borrower will pay the Obligations when due, keep
 accurate records, comply with applicable law, and promptly notify Lender of any

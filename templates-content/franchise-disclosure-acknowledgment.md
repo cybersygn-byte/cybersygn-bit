@@ -98,7 +98,7 @@ FDD were **[ANSWERED / DIRECTED TO THE APPROPRIATE FRANCHISOR REPRESENTATIVE]**.
 ## 5. No Representations Outside the FDD
 
 5.1 **Reliance on the FDD only.** The Prospective Franchisee acknowledges that any
-representation about the franchise — including earnings, profits, or performance —
+representation about the franchise, including earnings, profits, or performance, 
 is contained only in the FDD, and that no representation outside the FDD has been
 relied upon.
 

@@ -10,7 +10,7 @@ and the workflow for pulling a curated subset into our training pipeline.
 
 ## The big sources (ranked by signal-per-megabyte)
 
-### 1. SEC EDGAR — best signal for contracts ★★★★★
+### 1. SEC EDGAR, best signal for contracts ★★★★★
 
 URL: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany
 API: https://data.sec.gov/
@@ -36,7 +36,7 @@ extract the PDF exhibits, run them through our detection regression
 suite. Add the ones with cleanly-detected fields to our training
 corpus.
 
-### 2. GovInfo.gov — public federal documents ★★★★☆
+### 2. GovInfo.gov, public federal documents ★★★★☆
 
 URL: https://www.govinfo.gov/
 
@@ -52,7 +52,7 @@ Useful collections:
 
 Licensing: U.S. government, public domain.
 
-### 3. PubLayNet — layout-labeled academic PDFs ★★★☆☆
+### 3. PubLayNet, layout-labeled academic PDFs ★★★☆☆
 
 URL: https://github.com/ibm-aur-nlp/PubLayNet
 
@@ -65,7 +65,7 @@ Useful for: training a layout-detection model. Less useful for
 signature-field detection specifically (academic papers don't have
 signature blocks).
 
-### 4. DocBank — labeled academic PDFs ★★★☆☆
+### 4. DocBank, labeled academic PDFs ★★★☆☆
 
 URL: https://github.com/doc-analysis/DocBank
 
@@ -73,10 +73,10 @@ Microsoft Research, 500,000 PDFs from arXiv with token-level labels.
 
 License: Apache 2.0.
 
-Same caveat as PubLayNet — academic, no signature blocks. Useful for
+Same caveat as PubLayNet, academic, no signature blocks. Useful for
 general document-structure understanding.
 
-### 5. FUNSD — Form Understanding in Noisy Scanned Documents ★★★★☆
+### 5. FUNSD, Form Understanding in Noisy Scanned Documents ★★★★☆
 
 URL: https://guillaumejaume.github.io/FUNSD/
 
@@ -89,7 +89,7 @@ Useful for: training a form-field detector. We can use it for
 research/validation but cannot redistribute as a CyberSygn-branded
 training set.
 
-### 6. RVL-CDIP — document classification ★★★☆☆
+### 6. RVL-CDIP, document classification ★★★☆☆
 
 URL: https://www.cs.cmu.edu/~aharley/rvl-cdip/
 
@@ -140,11 +140,11 @@ Open-source contract clauses and templates. CC-BY.
 
 For Phase 3 ML training:
 
-1. **Pull SEC EDGAR 10-K Exhibit 10s** (200-500 filings) — most realistic
+1. **Pull SEC EDGAR 10-K Exhibit 10s** (200-500 filings), most realistic
    contracts in the corpus. Public domain.
-2. **Pull SAFE templates and Common Paper templates** (30-50 documents) —
+2. **Pull SAFE templates and Common Paper templates** (30-50 documents), 
    clean, well-structured, useful for synthetic-augmentation.
-3. **Add GovInfo Presidential documents** (50 documents) — signature-rich,
+3. **Add GovInfo Presidential documents** (50 documents), signature-rich,
    public domain.
 4. **Generate 200-500 synthetic PDFs** by filling open-source templates
    with plausible random data.

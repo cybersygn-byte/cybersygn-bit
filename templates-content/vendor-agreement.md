@@ -82,7 +82,7 @@ taxes separately on each invoice.
 
 3.1 **Delivery.** Vendor will deliver Goods to the location and by the date stated
 in each Order. Unless the Order says otherwise, delivery terms are **[e.g. FOB
-Destination / FOB Origin — confirm and define the Incoterm or shipping term used]**.
+Destination / FOB Origin, confirm and define the Incoterm or shipping term used]**.
 
 3.2 **Title and risk of loss.** Title and risk of loss to Goods pass to Customer
 in accordance with the agreed delivery term in Section 3.1. For Services, this

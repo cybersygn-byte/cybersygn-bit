@@ -207,7 +207,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 9.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through senior-management discussion within
 **[NUMBER]** days of written notice of the dispute. **[OPTIONAL: arbitration
-clause — discuss with counsel.]**
+clause, discuss with counsel.]**
 
 9.4 **Assignment.** Neither Party may assign this Agreement without the other's
 prior written consent, except to a successor in connection with a merger,

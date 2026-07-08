@@ -23,7 +23,7 @@ child]**.
 
 **Recitals.** The Lender has agreed to lend money to the Borrower, and the
 Borrower has agreed to repay it on the terms below. The Parties want to put their
-understanding in writing — even though they are family — so that the loan is clear,
+understanding in writing, even though they are family, so that the loan is clear,
 the expectations are shared, and the arrangement does not strain their
 relationship. The Parties intend this to be a genuine loan, not a gift. In
 consideration of the mutual promises below, the Parties agree as follows.

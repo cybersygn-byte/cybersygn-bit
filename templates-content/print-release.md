@@ -167,7 +167,7 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Session and Release Details**
+**Schedule A, Session and Release Details**
 
 - **Session description / date:** [DESCRIPTION]
 - **Images (gallery / file numbers):** [LIST]

@@ -229,13 +229,13 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Platform, Branding, and Support.** **[DESCRIBE THE PLATFORM,
+**Schedule A, Platform, Branding, and Support.** **[DESCRIBE THE PLATFORM,
 WHITE-LABEL CONFIGURATION, SUPPORT TIERS, AND ANY ATTRIBUTION REQUIREMENTS.]**
 
-**Schedule B — Service Levels and Security.** **[DESCRIBE UPTIME, SUPPORT RESPONSE
+**Schedule B, Service Levels and Security.** **[DESCRIBE UPTIME, SUPPORT RESPONSE
 TIMES, AND SECURITY MEASURES.]**
 
-**Schedule C — Fees.** **[DESCRIBE PLATFORM FEE, PER-SEAT/USAGE FEES, OR REVENUE
+**Schedule C, Fees.** **[DESCRIBE PLATFORM FEE, PER-SEAT/USAGE FEES, OR REVENUE
 SHARE.]**
 
 ---

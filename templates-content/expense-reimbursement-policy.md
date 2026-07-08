@@ -80,9 +80,9 @@ travel, equipment purchases, or recurring subscriptions.]**
 ## 4. Spending Limits and Approval Authority
 
 4.1 **Approval thresholds.** Expenses are subject to the following approval
-levels: (a) up to **[AMOUNT]** — approved by the Covered Person's manager;
-(b) **[AMOUNT]** to **[AMOUNT]** — approved by **[DEPARTMENT HEAD / DIRECTOR]**;
-and (c) above **[AMOUNT]** — approved by **[FINANCE / OFFICER]**.
+levels: (a) up to **[AMOUNT]**, approved by the Covered Person's manager;
+(b) **[AMOUNT]** to **[AMOUNT]**, approved by **[DEPARTMENT HEAD / DIRECTOR]**;
+and (c) above **[AMOUNT]**, approved by **[FINANCE / OFFICER]**.
 
 4.2 **No self-approval.** A Covered Person may not approve their own expense claim.
 Claims must be approved by a person with appropriate authority who did not incur

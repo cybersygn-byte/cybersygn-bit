@@ -4,7 +4,7 @@
  *
  * Throws a battery of pathological inputs at detectFields() and records, for
  * each, whether it: returned cleanly (ok), threw (CRASH), or exceeded a time
- * budget (HANG). The money-maker must NEVER crash or hang on any input — the
+ * budget (HANG). The money-maker must NEVER crash or hang on any input, the
  * worst acceptable outcome is "returned zero fields."
  *
  * Run: node scripts/fuzz-detector.mjs
@@ -48,13 +48,13 @@ async function buildCases() {
   cases.push(['null byte soup', randomBytes(4096).map(() => 0)]);
   cases.push(['xref-less PDF stub', ascii('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF')]);
 
-  // A real, valid template PDF — must still return fields (regression).
+  // A real, valid template PDF, must still return fields (regression).
   const validPdf = join(ROOT, 'web', 'templates-pdf', 'master-services-agreement.pdf');
   if (existsSync(validPdf)) {
     const buf = await readFile(validPdf);
     const bytes = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
     cases.push(['VALID master-services-agreement (regression)', bytes]);
-    // Truncated real PDF — header valid, body cut off.
+    // Truncated real PDF, header valid, body cut off.
     cases.push(['truncated real PDF (first 300 bytes)', bytes.slice(0, 300)]);
     // Real PDF with a flipped byte mid-stream.
     const corrupt = bytes.slice();
@@ -105,7 +105,7 @@ async function main() {
   console.log(`\n${ok} clean, ${crashes} crash/garbage, ${hangs} hang, of ${cases.length}.`);
   console.log(crashes + hangs === 0
     ? 'DETECTOR SURVIVED EVERY INPUT.'
-    : `DETECTOR BROKE on ${crashes + hangs} input(s) — diagnose and harden.`);
+    : `DETECTOR BROKE on ${crashes + hangs} input(s), diagnose and harden.`);
   process.exit(crashes + hangs === 0 ? 0 : 1);
 }
 

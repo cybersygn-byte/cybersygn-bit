@@ -91,8 +91,8 @@ the Assignor: **[LIST OR "NONE"]**.
 ## 4. Direction to the Obligor
 
 4.1 **Perform to the Assignee.** From and after the Assignment Date, the Obligor
-is directed to render all performance covered by the assigned rights — including
-all payments — to the Assignee, and not to the Assignor, until the Obligor
+is directed to render all performance covered by the assigned rights, including
+all payments, to the Assignee, and not to the Assignor, until the Obligor
 receives written notice signed by the Assignee directing otherwise.
 
 4.2 **Payment instructions.** Payments should be made as follows:

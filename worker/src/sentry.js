@@ -2,7 +2,7 @@
  * Sentry hook (slice 100).
  *
  * Optional. If env.SENTRY_DSN is set, report() forwards uncaught
- * exceptions to Sentry's HTTP API (no SDK — single fetch). If not
+ * exceptions to Sentry's HTTP API (no SDK, single fetch). If not
  * set, falls back to console.error. This keeps the worker bundle
  * small and lets the operator turn monitoring on by setting one
  * secret with `wrangler secret put SENTRY_DSN`.
@@ -67,7 +67,7 @@ export async function reportToSentry(env, err, context = {}) {
       body: JSON.stringify(event),
     });
   } catch (e) {
-    // Swallow — we don't want a Sentry failure to cascade.
+    // Swallow, we don't want a Sentry failure to cascade.
   }
 }
 

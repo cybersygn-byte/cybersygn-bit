@@ -73,7 +73,7 @@ within **[NUMBER, e.g. 10]** days of Landlord's reasonable written request.
 3.3 **Notice of change.** Tenant will notify Landlord promptly if the policy is
 cancelled, lapses, materially changes, or is not renewed during the term.
 
-## 4. Scope and Limits of Coverage — Acknowledgments by Tenant
+## 4. Scope and Limits of Coverage, Acknowledgments by Tenant
 
 4.1 **Landlord's policy.** Tenant acknowledges that Landlord's property insurance
 covers the building and Landlord's property only, and does **not** cover Tenant's

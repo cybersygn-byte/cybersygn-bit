@@ -70,8 +70,8 @@ of the Composition or use it in a defamatory or misleading manner.
 ## 3. Restrictions
 
 3.1 **Within scope only.** Licensee will use the music only within the scope
-defined in **Exhibit A**. Any use beyond that scope — including new media,
-territories, or a longer use period — requires Licensor's prior written consent and
+defined in **Exhibit A**. Any use beyond that scope, including new media,
+territories, or a longer use period, requires Licensor's prior written consent and
 may require an additional fee.
 
 3.2 **No standalone distribution.** Licensee will not distribute, sell, or stream

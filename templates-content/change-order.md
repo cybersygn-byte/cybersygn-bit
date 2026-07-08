@@ -47,7 +47,7 @@ resolution.
 ARCHITECT / OTHER]** on **[DATE]**.
 
 2.2 **Scope of the change.** The Work is modified as follows:
-**[DESCRIBE IN PLAIN, SPECIFIC TERMS WHAT IS BEING ADDED, REMOVED, OR ALTERED —
+**[DESCRIBE IN PLAIN, SPECIFIC TERMS WHAT IS BEING ADDED, REMOVED, OR ALTERED, 
 e.g. "Add a 200 sq. ft. covered patio with concrete slab and two structural posts
 per revised drawing A-3 dated [DATE]" or "Delete the original tile flooring in the
 kitchen and substitute luxury vinyl plank as specified in Exhibit 1."]**
@@ -125,7 +125,7 @@ provide updated certificates on request if the change materially affects coverag
 
 7.1 **Reservations.** The following claims, if any, are expressly reserved and are
 not resolved by this Change Order: **[DESCRIBE ANY RESERVED CLAIMS, e.g. cumulative
-delay impact, or write "None — this Change Order fully resolves the cost and time
+delay impact, or write "None, this Change Order fully resolves the cost and time
 impact of the described change."]**.
 
 ## 8. General Provisions
@@ -160,7 +160,7 @@ Effective Date.
 | Title: **[TITLE]** | Title: **[TITLE / N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**[OPTIONAL — ARCHITECT / DESIGN PROFESSIONAL ACKNOWLEDGMENT]**
+**[OPTIONAL, ARCHITECT / DESIGN PROFESSIONAL ACKNOWLEDGMENT]**
 
 | **ARCHITECT / ENGINEER** |
 | --- |

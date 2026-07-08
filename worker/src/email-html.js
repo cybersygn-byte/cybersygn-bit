@@ -302,7 +302,7 @@ export function renderDripDay1Html({ name, url }) {
 }
 
 /**
- * Day 3. Templates tip — the lock-in mechanic.
+ * Day 3. Templates tip, the lock-in mechanic.
  */
 export function renderDripDay3Html({ name, url }) {
   const preview = `${url}/preview/`;
@@ -317,8 +317,8 @@ export function renderDripDay3Html({ name, url }) {
         Hello ${esc(name || 'there')},
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
-        If you sign the same kind of contract every week — NDAs, intake forms,
-        invoices, vendor agreements, retainers — there is a tip that pays for
+        If you sign the same kind of contract every week, NDAs, intake forms,
+        invoices, vendor agreements, retainers, there is a tip that pays for
         itself the second time you upload one.
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">
@@ -401,7 +401,7 @@ export function renderDripDay7Html({ name, url }) {
 
 /**
  * Welcome-to-Origin email. Fires once when a founding number is
- * assigned by the webhook. Earned, personal, no upsell — they
+ * assigned by the webhook. Earned, personal, no upsell, they
  * already paid. The job of this email is to anchor the relationship.
  */
 export function renderOriginWelcomeHtml({ name, foundingNumber, url }) {
@@ -433,7 +433,7 @@ export function renderOriginWelcomeHtml({ name, foundingNumber, url }) {
       <ol style="margin:0 0 20px 20px;padding:0;font-family:${FONT_STACK};font-size:15px;line-height:1.65;color:${INK};">
         <li style="margin-bottom:10px;">
           Open your <a href="${esc(dashboard)}" style="color:${CYAN};">dashboard</a> and find the Origin card.
-          Set how your name and city appear on the wall — or leave it minimal.
+          Set how your name and city appear on the wall, or leave it minimal.
           Whatever you prefer.
         </li>
         <li>

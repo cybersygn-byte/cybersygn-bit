@@ -59,8 +59,8 @@ written change order.
 from Agency's management fee under Section 4.
 
 2.2 **Payment of media costs.** The Parties will choose one method in **Exhibit A**:
-(a) **Client-funded** — Client's own payment method is billed directly by the
-Platforms; or (b) **Agency-funded pass-through** — Agency advances media costs and
+(a) **Client-funded**, Client's own payment method is billed directly by the
+Platforms; or (b) **Agency-funded pass-through**, Agency advances media costs and
 Client reimburses Agency. If Agency advances costs, Client will pre-fund or reimburse
 on the schedule in **Exhibit A**, and Agency may pause campaigns if funds are not
 provided.

@@ -86,7 +86,7 @@ they agree in writing to a different split (for example, equal ownership
 regardless of contribution).
 
 4.2 **Agreed split.** The Parties agree their respective beneficial shares of the
-Account are: Co-Owner 1 — **[%]**; Co-Owner 2 — **[%]**. **[Adjust or delete if
+Account are: Co-Owner 1, **[%]**; Co-Owner 2, **[%]**. **[Adjust or delete if
 ownership is to follow net contributions.]**
 
 4.3 **No gift presumption.** Unless the Parties expressly state otherwise in

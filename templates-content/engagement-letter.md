@@ -27,7 +27,7 @@ between the Parties for the engagement described below.
 ## 1. Scope of Engagement
 
 1.1 **Services.** The Firm will provide the following professional services (the
-"**Services**"): **[DESCRIBE THE SERVICES IN PLAIN, SPECIFIC TERMS — e.g.,
+"**Services**"): **[DESCRIBE THE SERVICES IN PLAIN, SPECIFIC TERMS, e.g.,
 preparation of the Client's [YEAR] tax returns; advisory services in connection
 with [MATTER]; audit of financial statements for the period ending [DATE]].**
 
@@ -37,7 +37,7 @@ Firm's field, consistent with applicable professional standards.
 
 1.3 **Exclusions.** The Services do not include any matter not expressly described
 in Section 1.1. Without limiting the foregoing, the Services do not include
-**[LIST KEY EXCLUSIONS — e.g., legal advice, investment advice, representation in
+**[LIST KEY EXCLUSIONS, e.g., legal advice, investment advice, representation in
 litigation, or matters outside the Firm's professional licensure]**.
 
 1.4 **Additional services.** Any work beyond the scope of Section 1.1 will be
@@ -66,7 +66,7 @@ fees may be equitably adjusted.
 ## 3. Fees and Billing
 
 3.1 **Fees.** The Client will pay the Firm for the Services on the following basis:
-**[CHOOSE — e.g., a fixed fee of [AMOUNT]; an hourly rate of [RATE] per hour by
+**[CHOOSE, e.g., a fixed fee of [AMOUNT]; an hourly rate of [RATE] per hour by
 the personnel performing the work; a monthly retainer of [AMOUNT]]**. Fees are
 stated in **[CURRENCY]** and are exclusive of taxes unless stated otherwise.
 
@@ -170,7 +170,7 @@ the exclusive jurisdiction of the state and federal courts located in
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through discussion within **[NUMBER]** days of written
-notice. **[OPTIONAL: mediation or arbitration clause — discuss with counsel.]**
+notice. **[OPTIONAL: mediation or arbitration clause, discuss with counsel.]**
 
 8.4 **Assignment.** Neither Party may assign this Letter without the other's prior
 written consent.

@@ -27,7 +27,7 @@ import { PDFDocument, rgb, StandardFonts } from '../vendor/pdf-lib.mjs';
  * 'cybersygn.viralFooter' = 'off' (the dashboard settings panel sets
  * this when the user is on Solo / Origin / Studio).
  *
- * Free-tier users cannot disable — the footer is the price of free.
+ * Free-tier users cannot disable, the footer is the price of free.
  *
  * Why this is in PDF user units: pdf-lib uses the original PDF
  * coordinate system (origin bottom-left, points). 12pt from the bottom
@@ -66,7 +66,7 @@ async function drawViralFooter(pdfDoc, font) {
 
     // Add an invisible URI annotation rectangle over the text so a PDF
     // reader treats it as a clickable link. pdf-lib supports raw
-    // annotations via context.obj() — minimal Link annotation.
+    // annotations via context.obj(), minimal Link annotation.
     try {
       const linkAnnot = pdfDoc.context.obj({
         Type: 'Annot',
@@ -90,7 +90,7 @@ async function drawViralFooter(pdfDoc, font) {
     } catch (e) {
       // If the annotation can't be written for any reason (corrupted
       // PDF dictionary, e.g.) the text-only footer still ships. We do
-      // NOT throw — the download must succeed.
+      // NOT throw, the download must succeed.
     }
   }
 }
@@ -548,7 +548,7 @@ export async function flattenAndDownload({ originalBytes, fields, fillStore, fil
 
   // Viral footer. Add a discreet "Signed with CyberSygn" line in the
   // bottom margin of every page, clickable, brand-colored. Required for
-  // free tier (paid users can disable via localStorage flag — toggled
+  // free tier (paid users can disable via localStorage flag, toggled
   // from /dashboard/ settings panel). The marker text + URL both go to
   // the page so search engines indexing PDFs see the brand mention.
   await drawViralFooter(pdfDoc, helvetica);
@@ -567,7 +567,7 @@ export async function flattenAndDownload({ originalBytes, fields, fillStore, fil
   // Fire-and-forget: mail a copy of the signed PDF to the email on file
   // for this freeToken. The user gets a permanent record in their inbox
   // and the bounce/no-bounce signal from Resend doubles as real-time
-  // email verification. Failures are silent — the download already
+  // email verification. Failures are silent, the download already
   // succeeded client-side, this is a best-effort copy.
   try {
     const freeToken = localStorage.getItem('cybersygn.freeToken');

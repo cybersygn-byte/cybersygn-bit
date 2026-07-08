@@ -153,7 +153,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 8.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through discussion within **[NUMBER]** days of written
-notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 8.3 **Assignment.** The Assignee may further assign its rights under this Agreement
 and in the Assigned Debt. The Assignor may not assign its obligations without the

@@ -138,8 +138,8 @@ Price and schedule. Contractor is not obligated to perform extra work until a
 change order is signed.
 
 6.2 **Concealed conditions.** If Contractor encounters concealed or unforeseen
-conditions—such as undersized service, aluminum or knob-and-tube wiring, missing
-grounding, or non-conforming prior work—that materially affect cost or schedule,
+conditions, such as undersized service, aluminum or knob-and-tube wiring, missing
+grounding, or non-conforming prior work, that materially affect cost or schedule,
 Contractor will stop the affected Work, notify Customer, and proceed only after
 the Parties agree on a change order, except where emergency action is required
 to prevent a hazard.
@@ -193,7 +193,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 9.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 9.4 **Notices.** Notices must be in writing and delivered to the addresses above
 or as updated in writing, and are effective on receipt.

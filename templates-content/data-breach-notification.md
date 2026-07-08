@@ -18,9 +18,9 @@ principal place of business at **[ORGANIZATION ADDRESS]** (the "**Organization**
 "**Recipient**" or "**you**"), whose personal information may have been involved in a
 data security incident described below.
 
-Breach-notification obligations — including who must be notified, what the notice must
+Breach-notification obligations, including who must be notified, what the notice must
 say, the deadline to send it, and whether regulators or credit bureaus must also be
-informed — are set by federal, state, and sometimes international law and vary
+informed, are set by federal, state, and sometimes international law and vary
 substantially by jurisdiction and by the type of data involved. This template is a
 drafting aid only; the Organization must confirm the specific legal requirements that
 apply before sending any notice.

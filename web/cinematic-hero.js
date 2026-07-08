@@ -1,5 +1,5 @@
 /**
- * Cinematic hero — one-shot autoplay with logo-overlay outro.
+ * Cinematic hero, one-shot autoplay with logo-overlay outro.
  *
  * Behavior:
  *   1. If web/brand/hero.mp4 loads successfully, the <video> autoplays
@@ -120,7 +120,7 @@
     rafId = requestAnimationFrame(tickLogo);
   }
   // When the tab becomes hidden during playback, the browser may pause
-  // the video. We do NOT auto-resume on visibilitychange — the spec is
+  // the video. We do NOT auto-resume on visibilitychange, the spec is
   // "play once, hold." If the user returns to a paused mid-play state,
   // they'll see the frame the browser parked on plus the logo state
   // we last drove, which is honest and reflects the one-shot rule.

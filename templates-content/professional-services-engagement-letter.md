@@ -43,7 +43,7 @@ will perform the Services with reasonable skill and care and in a professional
 manner consistent with generally accepted standards in its field.
 
 1.2 **Exclusions.** Unless this Letter or a later signed writing says otherwise,
-the Services do not include: **[LIST EXCLUDED SERVICES — e.g., matters outside the
+the Services do not include: **[LIST EXCLUDED SERVICES, e.g., matters outside the
 described engagement, work for affiliates, or services requiring a different
 specialty]**. The Firm has no obligation to perform excluded work.
 
@@ -188,7 +188,7 @@ jurisdiction of the courts located in **[COUNTY, STATE]**.
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+written notice. **[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 8.4 **Notices.** Notices must be in writing and sent to the addresses above (or as
 updated in writing) and are effective on receipt.

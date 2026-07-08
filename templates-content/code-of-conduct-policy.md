@@ -74,9 +74,9 @@ which personal interests conflict, or appear to conflict, with those of the
 Company.
 
 3.2 **Disclosure.** A Covered Person who has, or may have, a conflict of
-interest—including outside employment, a financial interest in a competitor,
+interest, including outside employment, a financial interest in a competitor,
 supplier, or customer, or a close personal relationship affecting work
-decisions—will promptly disclose it in writing to **[MANAGER / HR / DESIGNATED
+decisions, will promptly disclose it in writing to **[MANAGER / HR / DESIGNATED
 OFFICER]**.
 
 3.3 **Gifts and entertainment.** A Covered Person will not solicit or accept

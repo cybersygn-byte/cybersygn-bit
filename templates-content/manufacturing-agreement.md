@@ -31,7 +31,7 @@ of the mutual promises below, the Parties agree as follows.
 ## 1. Products and Specifications
 
 1.1 **Products.** The Manufacturer will manufacture and supply to the Customer the
-products described in **[Schedule A — Products]** (the "**Products**") in
+products described in **[Schedule A, Products]** (the "**Products**") in
 accordance with this Agreement.
 
 1.2 **Specifications.** The Manufacturer will manufacture the Products strictly in
@@ -68,7 +68,7 @@ purchase order within **[NUMBER]** business days and may reject only for good ca
 days from order acceptance, unless otherwise agreed.
 
 2.4 **Delivery terms.** The Manufacturer will deliver Products **[INCOTERM, e.g.
-FOB Manufacturer's facility / DAP Customer's facility — specify shipping point and
+FOB Manufacturer's facility / DAP Customer's facility, specify shipping point and
 who bears freight and risk of loss]**. Title and risk of loss pass to the Customer
 **[on delivery to the carrier / on delivery to the destination]**.
 

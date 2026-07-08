@@ -194,7 +194,7 @@ STATE]**.
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice of the dispute. **[OPTIONAL: mediation or arbitration clause —
+written notice of the dispute. **[OPTIONAL: mediation or arbitration clause, 
 discuss with counsel.]**
 
 8.4 **Assignment.** Client may not assign this Agreement without Photographer's

@@ -65,7 +65,7 @@ Assignor for the Company; or (c) are developed using the Company's equipment,
 supplies, facilities, Confidential Information, or trade secrets.
 
 2.2 **Statutory carve-out.** Some jurisdictions limit the inventions an employer
-may require an employee to assign — typically excluding inventions developed
+may require an employee to assign, typically excluding inventions developed
 entirely on the employee's own time without using the employer's equipment,
 supplies, facilities, or trade secrets, unless the invention relates to the
 employer's business or results from work for the employer. To the extent any
@@ -208,7 +208,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Prior Inventions
+### Exhibit A, Prior Inventions
 
 List below any inventions, works, or intellectual property owned or controlled by
 the Assignor before the period of engagement that are to be excluded from

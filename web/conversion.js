@@ -13,7 +13,7 @@
  *      flow with a "Send me three free signs" CTA. localStorage flag
  *      suppresses re-fire across reloads.
  *
- * Both opt out of `prefers-reduced-motion` gracefully — the toggle
+ * Both opt out of `prefers-reduced-motion` gracefully, the toggle
  * works without animation; exit-intent skips its slide-in.
  */
 (function () {
@@ -143,7 +143,7 @@
       if (calcDollars) calcDollars.textContent = '$' + Math.round(dollars).toLocaleString();
       if (calcPayback) {
         if (!isFinite(paybackDays)) {
-          calcPayback.textContent = '—';
+          calcPayback.textContent = '-';
         } else if (paybackDays < 1) {
           const hoursPay = Math.max(0.1, paybackDays * 24);
           calcPayback.textContent = hoursPay.toFixed(1) + ' hours';
@@ -175,7 +175,7 @@
       '<div class="founder-widget__panel" role="dialog" aria-label="Ask Nathan" hidden>' +
         '<button class="founder-widget__close" type="button" aria-label="Close">×</button>' +
         '<p class="kicker">Ask the founder.</p>' +
-        '<p class="founder-widget__lede">Replies within a day, usually within hours. No bots, no queue — it lands in my inbox.</p>' +
+        '<p class="founder-widget__lede">Replies within a day, usually within hours. No bots, no queue, it lands in my inbox.</p>' +
         '<form class="founder-widget__form" autocomplete="on">' +
           '<input class="founder-widget__email" name="email" type="email" placeholder="your@email.com" autocomplete="email" required />' +
           '<textarea class="founder-widget__msg" name="message" placeholder="What\'s on your mind?" rows="3" required></textarea>' +
@@ -244,7 +244,7 @@
   }
 
   // ─────────────────────────────────────────────────────────
-  // Origin proof — latest founders on homepage
+  // Origin proof, latest founders on homepage
   // ─────────────────────────────────────────────────────────
   const proofList = document.getElementById('origin-proof-list');
   const proofClaimed = document.getElementById('origin-proof-claimed');
@@ -323,7 +323,7 @@
     document.addEventListener('keydown', escClose);
     document.addEventListener('keydown', trapTab);
 
-    // Submit handler — splits the email into first/last placeholder and
+    // Submit handler, splits the email into first/last placeholder and
     // calls /api/free/signup. On success, redirect to /preview/.
     const form = modal.querySelector('form');
     form.addEventListener('submit', async e => {

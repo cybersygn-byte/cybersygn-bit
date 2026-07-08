@@ -45,7 +45,7 @@ coverings, garage door openers, attached shelving]**.
 removed by Seller before Closing: **[LIST EXCLUDED ITEMS, OR "none"]**.
 
 1.4 **Conveyance.** At Closing, Seller will convey marketable title to the Property
-to Buyer by **[GENERAL WARRANTY DEED / SPECIAL WARRANTY DEED / GRANT DEED — choose
+to Buyer by **[GENERAL WARRANTY DEED / SPECIAL WARRANTY DEED / GRANT DEED, choose
 per local practice]**, free of liens and encumbrances except the Permitted
 Exceptions defined in Section 6.
 

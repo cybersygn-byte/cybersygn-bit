@@ -49,7 +49,7 @@ otherwise.
 ## 2. The Punch List
 
 2.1 **Agreed list.** The remaining items of incomplete or non-conforming Work are
-listed in **[EXHIBIT A — Punch List]**, which is incorporated into this Agreement.
+listed in **[EXHIBIT A, Punch List]**, which is incorporated into this Agreement.
 Each item identifies the location, a description of the deficiency, and the
 corrective action required.
 

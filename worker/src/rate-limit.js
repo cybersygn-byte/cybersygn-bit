@@ -34,7 +34,7 @@ const PREFIX = 'ratelimit:';
  */
 export async function checkRateLimit(env, key, policies) {
   if (!env || !env.CYBERSYGN_DOCS) {
-    // No KV bound — fail-open. We log so the owner can spot it.
+    // No KV bound, fail-open. We log so the owner can spot it.
     console.warn('[rate-limit] KV unbound, allowing', key);
     return { ok: true, hits: [], headers: {} };
   }

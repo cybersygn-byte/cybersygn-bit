@@ -187,7 +187,7 @@ Date.
 
 ---
 
-### Exhibit A — Loaned Equipment
+### Exhibit A, Loaned Equipment
 
 | Item | Make / Model | Serial / Asset Tag | Replacement Value |
 | --- | --- | --- | --- |

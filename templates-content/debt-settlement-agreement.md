@@ -106,7 +106,7 @@ the full Outstanding Debt described in Section 1, less any amounts actually paid
 Debtor under this Agreement, plus interest and collection costs to the extent
 permitted by applicable law.
 
-5.3 **Confession of judgment.** **[OPTIONAL — many jurisdictions restrict or
+5.3 **Confession of judgment.** **[OPTIONAL, many jurisdictions restrict or
 prohibit confessions of judgment; discuss with counsel before including. If not
 used, delete this Section 5.3.]**
 

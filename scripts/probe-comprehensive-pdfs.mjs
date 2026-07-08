@@ -85,7 +85,7 @@ async function main() {
       } catch (err) {
         catSummary.errors += 1;
         results[cat][name] = { error: err.message };
-        console.log(`    ${pad(name, 38)}  ERROR — ${err.message.slice(0, 60)}`);
+        console.log(`    ${pad(name, 38)}  ERROR, ${err.message.slice(0, 60)}`);
       }
     }
     overall.totalPDFs += catSummary.pdfs;

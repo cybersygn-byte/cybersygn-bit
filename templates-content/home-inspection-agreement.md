@@ -158,7 +158,7 @@ STATE]**.
 
 7.4 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: mediation or arbitration clause — discuss with
+written notice. **[OPTIONAL: mediation or arbitration clause, discuss with
 counsel and confirm it is enforceable under applicable consumer-protection law.]**
 
 7.5 **Entire agreement; amendment.** This Agreement, with the applicable standards

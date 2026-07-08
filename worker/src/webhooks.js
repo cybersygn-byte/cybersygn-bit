@@ -4,9 +4,9 @@
  * Studio members configure a webhook URL + secret. The worker POSTs
  * signed JSON payloads on three events:
  *
- *   doc.created      — new doc minted; signers notified
- *   signer.completed — a single signer submitted their fills
- *   doc.completed    — every signer is done; signed PDF available
+ *   doc.created, new doc minted; signers notified
+ *   signer.completed, a single signer submitted their fills
+ *   doc.completed, every signer is done; signed PDF available
  *
  * Each delivery is signed with HMAC-SHA256 over the JSON body using
  * the sender's webhook secret. The signature is sent as

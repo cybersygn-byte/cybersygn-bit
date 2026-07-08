@@ -162,7 +162,7 @@ in effect. A Party's failure to enforce a provision is not a waiver.
 
 9.6 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute through discussion, and **[may pursue mediation or arbitration as the Parties
-agree — discuss with counsel]** before filing suit.
+agree, discuss with counsel]** before filing suit.
 
 9.7 **Counterparts and electronic signature.** This Agreement may be signed in
 counterparts and by electronic signature, each of which is an original and all of

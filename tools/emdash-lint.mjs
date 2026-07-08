@@ -2,15 +2,15 @@
 /**
  * Em-dash lint (brand rule enforcement).
  *
- * CyberSygn's own voice rule — inherited from the Vyan spine CONTRACT
- * (section 7.2) — is: NO em-dashes (U+2014, "—") on any customer-facing
+ * CyberSygn's own voice rule, inherited from the Vyan spine CONTRACT
+ * (section 7.2), is: NO em-dashes (U+2014, ", ") on any customer-facing
  * surface. En-dashes (U+2013) in numeric ranges are allowed; only the em-dash
  * is banned. The launch audit found em-dashes had shipped against this rule,
  * so this lint exists to catch them before they go out again.
  *
  * What it scans:
  *   1. Customer-facing HTML source under web/ (everything a visitor reads).
- *   2. The built static site under web/dist/ — HTML plus the shipped JS/CSS/
+ *   2. The built static site under web/dist/, HTML plus the shipped JS/CSS/
  *      text assets that render visible copy.
  *
  * What it skips:
@@ -21,7 +21,7 @@
  * Behavior:
  *   - Prints every offending file with its em-dash count and the first few
  *     line numbers, then a total.
- *   - Exits 0 if zero em-dashes are found, non-zero otherwise — so it can gate
+ *   - Exits 0 if zero em-dashes are found, non-zero otherwise, so it can gate
  *     `npm run lint` / `npm run deploy` the way css-check / smoke-check do.
  *
  * Flags:
@@ -39,7 +39,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const EM_DASH = '—'; // —
+const EM_DASH = ', '; //, 
 
 const args = new Set(process.argv.slice(2));
 const COUNT_ONLY = args.has('--count-only');
@@ -66,7 +66,7 @@ async function walk(absDir, out) {
   try {
     entries = await readdir(absDir);
   } catch {
-    return; // dir may not exist (e.g. dist before a build) — silently skip
+    return; // dir may not exist (e.g. dist before a build), silently skip
   }
   for (const name of entries) {
     if (SKIP_DIRS.has(name)) continue;
@@ -128,13 +128,13 @@ async function main() {
   }
 
   if (offenders.length === 0) {
-    console.log(`emdash-lint: clean — 0 em-dashes (U+2014) across ${files.length} customer-facing file(s).`);
+    console.log(`emdash-lint: clean, 0 em-dashes (U+2014) across ${files.length} customer-facing file(s).`);
     process.exit(0);
   }
 
-  console.error(`emdash-lint: FAIL — ${total} em-dash(es) (U+2014) in ${offenders.length} file(s).`);
+  console.error(`emdash-lint: FAIL, ${total} em-dash(es) (U+2014) in ${offenders.length} file(s).`);
   console.error('The brand rule (spine CONTRACT 7.2) bans the em-dash on customer-facing surfaces.');
-  console.error('Replace "—" with a comma, a colon, parentheses, two sentences, or an en-dash (numeric ranges only).\n');
+  console.error('Replace ", " with a comma, a colon, parentheses, two sentences, or an en-dash (numeric ranges only).\n');
   for (const o of offenders) {
     const where = QUIET || o.lines.length === 0 ? '' : `  (lines ${o.lines.join(', ')}${o.count > o.lines.length ? ', …' : ''})`;
     console.error(`  ${o.count.toString().padStart(5)}  ${o.file}${where}`);

@@ -212,7 +212,7 @@ Date.
 
 ---
 
-### Schedule 1 — Details of Processing
+### Schedule 1, Details of Processing
 
 - **Subject matter and duration:** **[DESCRIBE]**
 - **Nature and purpose of Processing:** **[DESCRIBE]**
@@ -221,9 +221,9 @@ Date.
 - **Applicable Data Protection Law:** **[IDENTIFY]**
 - **Permitted transfer locations:** **[IDENTIFY]**
 
-### Schedule 2 — Security Measures
+### Schedule 2, Security Measures
 
-- **[DESCRIBE TECHNICAL AND ORGANIZATIONAL MEASURES — access controls, encryption,
+- **[DESCRIBE TECHNICAL AND ORGANIZATIONAL MEASURES, access controls, encryption,
   logging, backup, personnel training, vendor management, incident response, etc.]**
 
 ---

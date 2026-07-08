@@ -242,7 +242,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Licensed Marks and Commercial Terms
+### Exhibit A, Licensed Marks and Commercial Terms
 
 | Item | Details |
 | --- | --- |

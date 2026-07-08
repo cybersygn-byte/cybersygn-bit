@@ -161,7 +161,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through discussion within **[NUMBER]** days of written
-notice. **[OPTIONAL: mediation or arbitration clause — discuss with counsel.]**
+notice. **[OPTIONAL: mediation or arbitration clause, discuss with counsel.]**
 
 8.4 **Entire agreement; amendment.** This Agreement, together with the applicable
 engagement and fee documents, is the entire agreement between the Parties on its

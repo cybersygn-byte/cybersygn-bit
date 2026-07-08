@@ -54,7 +54,7 @@ belongs to an individual Member under Section 4 or 5.
 
 2.2 **Splits.** After payment of Band Expenses, Band Income is divided among the
 Members in the following shares: **[e.g. equally / Member 1: __%, Member 2: __%,
-etc. — must total 100%]**.
+etc., must total 100%]**.
 
 2.3 **Band expenses.** "**Band Expenses**" means the Band's reasonable, documented
 business costs (such as rehearsal space, equipment, travel, promotion, commissions

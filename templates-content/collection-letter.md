@@ -46,8 +46,8 @@ RELATIONSHIP]**.
 THE AGREEMENT / THE STATEMENT]** with an original due date of **[ORIGINAL DUE
 DATE]**.
 
-1.3 **Account history.** **[OPTIONAL: Summarize the account — original amount,
-payments received, and current balance — or refer to an enclosed statement.]**
+1.3 **Account history.** **[OPTIONAL: Summarize the account, original amount,
+payments received, and current balance, or refer to an enclosed statement.]**
 
 ## 2. Amount Now Due
 
@@ -69,7 +69,7 @@ full.
 ## 3. Request for Payment
 
 3.1 **Demand.** The Creditor requests that the Debtor pay the total amount due of
-**[$TOTAL DUE]** on or before **[PAYMENT DEADLINE — e.g. [NUMBER] days from the
+**[$TOTAL DUE]** on or before **[PAYMENT DEADLINE, e.g. [NUMBER] days from the
 date of this Letter]** (the "**Payment Deadline**").
 
 3.2 **How to pay.** The Debtor may pay by **[check payable to [NAME], mailed to
@@ -109,7 +109,7 @@ court]**, consistent with applicable law.
 due plus **[interest, court costs, and, where a contract or statute allows,
 reasonable attorneys' fees]** as permitted by law.
 
-5.3 **Credit reporting.** **[OPTIONAL — INCLUDE ONLY IF ACCURATE AND PERMITTED: The
+5.3 **Credit reporting.** **[OPTIONAL, INCLUDE ONLY IF ACCURATE AND PERMITTED: The
 Creditor may report the status of this account to a consumer reporting agency as
 allowed by law.]** Any reporting will be accurate and made only as the law permits.
 
@@ -161,7 +161,7 @@ arrangement if needed.
 | Title: **[TITLE OR N/A]** |
 | Date: __________________________ |
 
-**Enclosures:** **[LIST ENCLOSED DOCUMENTS — e.g. invoice or statement, or
+**Enclosures:** **[LIST ENCLOSED DOCUMENTS, e.g. invoice or statement, or
 "None"]**
 
 ---

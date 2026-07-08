@@ -123,7 +123,7 @@ opportunities or recruiting Company personnel.
 spends on Garden Leave **[will / will not]** count toward and reduce the duration
 of any post-employment non-compete or non-solicitation restriction in the
 Employee's other agreements with the Company. **[Select one; jurisdictions treat
-this differently — confirm with counsel.]**
+this differently, confirm with counsel.]**
 
 5.2 **Survival of covenants.** The Employee's confidentiality, non-solicitation,
 non-competition, and invention-assignment obligations under any other agreement

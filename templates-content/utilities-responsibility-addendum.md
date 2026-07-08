@@ -75,7 +75,7 @@ Tenant-responsible Utility before the end of the tenancy without Landlord's cons
 
 3.1 **Shared utilities.** If any Utility serves the Premises together with other
 units or common areas and is not separately metered, the cost will be allocated as
-follows: **[DESCRIBE METHOD — e.g. by square footage; by number of occupants; a
+follows: **[DESCRIBE METHOD, e.g. by square footage; by number of occupants; a
 flat [AMOUNT] per month; equal shares among units]**.
 
 3.2 **Submetering / ratio billing.** If a Utility is submetered or billed by a

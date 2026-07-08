@@ -6,7 +6,7 @@ author: Nathan Vogt
 slug: cheapest-e-signature-for-solos-2026
 ---
 
-If you're running solo — freelancing, consulting, coaching, contracting — you don't need a $30/month subscription to send a contract. Here's what's actually available, sorted by cost.
+If you're running solo, freelancing, consulting, coaching, contracting, you don't need a $30/month subscription to send a contract. Here's what's actually available, sorted by cost.
 
 ## The ranking
 
@@ -26,7 +26,7 @@ If you're running solo — freelancing, consulting, coaching, contracting — yo
 
 ## The honest take
 
-If you sign one or two contracts a month, the free tiers work. CyberSygn's Demo gives you three lifetime (not per month — lifetime), which is enough to evaluate seriously. HelloSign and SignWell give you three per month but make your signer create an account, which is the worst part of DocuSign.
+If you sign one or two contracts a month, the free tiers work. CyberSygn's Demo gives you three lifetime (not per month, lifetime), which is enough to evaluate seriously. HelloSign and SignWell give you three per month but make your signer create an account, which is the worst part of DocuSign.
 
 If you sign five or more contracts a month, every option except the free tiers becomes worth it. The question is which one matches your workflow.
 

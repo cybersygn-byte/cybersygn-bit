@@ -41,7 +41,7 @@ motion picture currently titled **[FILM TITLE]**, of an approximate running time
 
 1.2 **Services.** Producer engages Provider to render the following services in
 connection with the Picture (the "**Services**): **[e.g. director / cinematographer
-/ producer-for-hire / department head / production-services package — describe the
+/ producer-for-hire / department head / production-services package, describe the
 specific role and responsibilities]**.
 
 1.3 **Standard of performance.** Provider will render the Services in a diligent,

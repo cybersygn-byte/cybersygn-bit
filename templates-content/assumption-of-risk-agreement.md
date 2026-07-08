@@ -103,7 +103,7 @@ the ordinary negligence of the Released Parties.
 Parties' gross negligence, recklessness, or willful or intentional misconduct, and it does not
 release any liability that applicable law does not allow to be released. **[NOTE: enforceability
 of pre-injury liability waivers, and of waivers covering negligence, varies significantly by
-state — have counsel confirm what is enforceable in your jurisdiction.]**
+state, have counsel confirm what is enforceable in your jurisdiction.]**
 
 5.3 **Covenant not to sue.** The Participant agrees not to bring any claim against the Released
 Parties for matters released in this Section, except to enforce this Agreement.

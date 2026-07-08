@@ -242,7 +242,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Software and License Scope
+### Exhibit A, Software and License Scope
 
 - **Software (name, version, edition):** **[DESCRIBE]**
 - **License type:** **[PERPETUAL / TERM / SUBSCRIPTION]**
@@ -250,7 +250,7 @@ Effective Date.
 - **Authorized equipment / environment:** **[DESCRIBE]**
 - **License fees and payment schedule:** **[DESCRIBE]**
 
-### Exhibit B — Maintenance and Support
+### Exhibit B, Maintenance and Support
 
 - **Support hours and channels:** **[DESCRIBE]**
 - **Response targets:** **[DESCRIBE]**

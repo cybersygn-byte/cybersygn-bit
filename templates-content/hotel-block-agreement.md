@@ -59,7 +59,7 @@ Section 2.3, each guest is individually responsible for that guest's room
 charges, incidentals, and applicable taxes, and will provide a valid form of
 payment at booking or check-in as the Hotel requires.
 
-2.3 **Master account (optional).** If checked here — **[ ] YES / [ ] NO** — the
+2.3 **Master account (optional).** If checked here, **[ ] YES / [ ] NO**, the
 Hotel will bill the following charges to a master account payable by the Group:
 **[DESCRIBE, e.g. room and tax only; incidentals to the guest]**. The Group will
 provide a credit authorization and remit the master-account balance within

@@ -21,7 +21,7 @@ business at **[SPONSOR ADDRESS]** (the "**Sponsor**").
 
 The Organization and the Sponsor are each a "**Party**" and together the "**Parties**."
 
-**Recitals.** The Organization is hosting or operating **[DESCRIBE — e.g. the
+**Recitals.** The Organization is hosting or operating **[DESCRIBE, e.g. the
 [EVENT NAME] event / the [PROGRAM NAME] program]** (the "**Event**") in furtherance
 of its charitable mission. The Sponsor wishes to support the Event and receive the
 acknowledgment and benefits described below, and the Organization wishes to accept
@@ -70,7 +70,7 @@ from the Sponsorship, except taxes based on the Organization's net income.
 
 3.1 **Acknowledgment.** In recognition of the Sponsorship, the Organization will
 acknowledge the Sponsor through the benefits listed in **Exhibit A** or as follows:
-**[DESCRIBE — e.g. logo on Event signage and website, named recognition in the
+**[DESCRIBE, e.g. logo on Event signage and website, named recognition in the
 program, social-media acknowledgment, a number of Event tickets, a booth or table]**.
 
 3.2 **Qualified sponsorship payments.** The Parties intend the Organization's

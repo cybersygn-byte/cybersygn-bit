@@ -118,8 +118,8 @@ after substantial completion, provided Customer follows the watering and care
 instructions Contractor furnishes. Contractor will replace covered plants that
 fail within the warranty period one time per plant.
 
-5.2 **Workmanship warranty.** Contractor warrants installation workmanship—such
-as hardscape, irrigation, and grading—for **[NUMBER, e.g. 12]** months after
+5.2 **Workmanship warranty.** Contractor warrants installation workmanship, such
+as hardscape, irrigation, and grading, for **[NUMBER, e.g. 12]** months after
 substantial completion and will correct covered defects reported within that
 period.
 
@@ -140,9 +140,9 @@ sign a written change order describing the change and its effect on the Contract
 Price and schedule. Contractor is not obligated to perform extra work until a
 change order is signed.
 
-6.2 **Concealed conditions.** If Contractor encounters concealed conditions—such
+6.2 **Concealed conditions.** If Contractor encounters concealed conditions, such
 as rock, buried utilities or debris, contaminated soil, or drainage
-deficiencies—that materially affect cost or schedule, Contractor will notify
+deficiencies, that materially affect cost or schedule, Contractor will notify
 Customer and proceed only after the Parties agree on a change order.
 
 ## 7. Walkthrough, Insurance, and Liability
@@ -194,7 +194,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 9.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 9.4 **Notices.** Notices must be in writing and delivered to the addresses above
 or as updated in writing, and are effective on receipt.

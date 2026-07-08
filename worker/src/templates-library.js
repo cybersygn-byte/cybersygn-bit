@@ -9,8 +9,8 @@
  * Email capture flows into the free-tier drip pipeline so every template
  * download converts into a tracked lead.
  *
- * The PDFs are STRUCTURAL templates — section headings + standard
- * boilerplate slots + signature fields — explicitly marked as templates
+ * The PDFs are STRUCTURAL templates, section headings + standard
+ * boilerplate slots + signature fields, explicitly marked as templates
  * and NOT legal advice. Each one includes the disclaimer:
  *   "Template provided by CyberSygn. Not legal advice. Consult a
  *    licensed attorney for your specific situation."
@@ -406,7 +406,7 @@ export async function sendTemplateByEmail(env, { templateSlug, email, firstName,
   const subject = `Your ${title} template, from CyberSygn.`;
   const body =
     `Hi ${firstName || 'there'},\n\n` +
-    `Attached is your ${title} template. It's a customizable starting draft — replace the bracketed placeholders, then send it for signature through CyberSygn (https://cybersygn.io/preview/) to get a fully-detected, signable version with audit certificate.\n\n` +
+    `Attached is your ${title} template. It's a customizable starting draft, replace the bracketed placeholders, then send it for signature through CyberSygn (https://cybersygn.io/preview/) to get a fully-detected, signable version with audit certificate.\n\n` +
     `Important: this template is a starting draft for general structure only. It is not legal advice. Have a licensed attorney in your jurisdiction review it for your specific situation.\n\n` +
     `CyberSygn. Built in Colorado.`;
 

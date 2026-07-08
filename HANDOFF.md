@@ -13,7 +13,7 @@ Snapshot of project state. If you (or a fresh AI session) come back to this repo
 | Health endpoint | https://cybersygn.io/api/health (all subsystems should report `ok: true` except possibly Analytics Engine optional) |
 | Owner workbench | https://cybersygn.io/control/ |
 | Owner username | `nathan@cybersygn.io` |
-| Owner password | (rotated via `node scripts/set-owner-password.mjs` — never write it here) |
+| Owner password | (rotated via `node scripts/set-owner-password.mjs`, never write it here) |
 
 ## All five subsystems
 
@@ -90,9 +90,9 @@ scripts/
 Use `git log --oneline` for the full list. Highlights:
 
 - **63** Rate limiting on public mutation endpoints. `worker/src/rate-limit.js` with bucket-per-window KV backing. `/api/free/signup` capped at 3/24h + 10/week, `/api/charter/profile` at 30/hour. Owner bypass via X-CyberSygn-Owner. Returns 429 with Retry-After + standard RateLimit-* headers. Fail-open on KV errors. Verified live (3 OK, then 4th-5th 429'd).
-- **62** Charter welcome email. Fires once per `foundingNumber` assignment via Stripe webhook (`onCheckoutCompleted` calls `maybeSendCharterWelcome`). KV idempotency marker at `meta:charter-welcomed:<senderId>` prevents dupe-send. Email resolution: session.customer_details.email → session.customer_email → fetched customer.email. Subject: `Welcome to the Charter — you are #NNN.` Body anchors with member number + two action items (set wall card, reply with use case).
+- **62** Charter welcome email. Fires once per `foundingNumber` assignment via Stripe webhook (`onCheckoutCompleted` calls `maybeSendCharterWelcome`). KV idempotency marker at `meta:charter-welcomed:<senderId>` prevents dupe-send. Email resolution: session.customer_details.email → session.customer_email → fetched customer.email. Subject: `Welcome to the Charter, you are #NNN.` Body anchors with member number + two action items (set wall card, reply with use case).
 - **61** Charter member onboarding. POST /api/charter/profile lets Charter members set their displayName + city on the public wall. Dashboard panel surfaces inline edit for tier=founding users. Two-column form with status feedback. Control-char strip on input. Trust model matches /api/billing/portal (senderId is the auth).
-- **60** Stripe Customer Portal — already shipped pre-session; portal session creation at `/api/billing/portal`, dashboard "Manage billing" button shown when `tier !== 'free'`.
+- **60** Stripe Customer Portal, already shipped pre-session; portal session creation at `/api/billing/portal`, dashboard "Manage billing" button shown when `tier !== 'free'`.
 - **59** Public Charter wall at /charter/. GET /api/charter/wall returns `{taken, cap, remaining, members[]}` from sub:* records filtered by tier='founding'. Grid of member cards with #NNN, optional name + city, join month. Empty-state "be #001" pitch. Cached at edge for 60s. Wired from homepage Charter tier card.
 - **58** Free-tier email drip campaign. Three brand-voice emails at day 1 (welcome + activation), day 3 (templates tip / lock-in), day 7 (Charter conversion ask). `runDripCampaign(env, event)` cron-fires daily at 14:00 UTC. Idempotent per-recipient per-stage via `drip-sent:<emailHash>:<stage>` KV markers. PER_RUN_CAP=200. Owner manual-fire endpoint POST /api/owner/drip/run with ?bypassLock=true for testing.
 - **57** Cinematic scroll-driven hero video. `web/cinematic-hero.js` drives video.currentTime from scroll position. CSS/SVG animated placeholder fills the canvas until a real MP4 is dropped at `web/brand/hero.mp4`. Higgsfield prompts + ffmpeg re-encode commands in docs/HIGGSFIELD-VIDEO-PROMPTS.md.
@@ -100,7 +100,7 @@ Use `git log --oneline` for the full list. Highlights:
 - **55** Owner workspace separation. ownerCreated flag enforced in templates (saves auto-downgrade to private), dataset stats + JSONL export (filtered with ownerSkipped count), reminder sweep (skip), analytics (`tier=owner` blob, excluded by default in summary endpoint).
 - **54** Phase 3 ML strategy committed in docs/ML.md. Defer build until corpus hits 5,000 examples. Threshold-crossed one-shot watchdog email after every public template save, idempotent via `phase3:alert:sent` KV key.
 - **53** Sitemap covered (9 URLs), schema.org WebPage added to /preview/, homepage SoftwareApplication offer fixed (free is 3-lifetime not per-month), dashboard masthead grew the free-pill with inline localStorage paint, email deliverability verified via /api/owner/test-email (Resend providerId `aa769a02…`).
-- **52** Field validation: signer-row emails flag malformed with warn-border; send-by-email pre-flight blocks bad addresses. Free-tier counter pill in /preview/ + /dashboard/ mastheads. Empty state no longer hides upload behind the free-gate form — detection runs in-browser, gate moves to the actual send point.
+- **52** Field validation: signer-row emails flag malformed with warn-border; send-by-email pre-flight blocks bad addresses. Free-tier counter pill in /preview/ + /dashboard/ mastheads. Empty state no longer hides upload behind the free-gate form, detection runs in-browser, gate moves to the actual send point.
 - **51** Signer-side completeness. POST /api/docs/:docId/signer/:token/decline + 'Decline to sign' link in signer mode; declined signers skipped by reminder sweep. POST /api/snapshot/email for direct PDF-to-CC sending with Resend attachments; daily rate-limited (30/day free, 200/day owner). 'Email a copy' modal in single-signer Tools.
 - **50** Save/restore editable draft. 'Save resumable draft' button writes a `.cybersygn-draft.json` with PDF base64 + fields + sender edits + fills + signers + assignments. handleFiles detects on upload, restoreDraft rehydrates. bytesToBase64/base64ToBytes promoted to api.js exports. Single-signer CC deferred to slice 51.
 - **49** Verification + signer-mode UX fixes + mobile polish + owner password rotation. Worker 141/141, real PDF 37/37, synthetic 10/10, stripe 34/34. Sender-only controls hidden in signer mode (is-signer-mode class). Mobile sidebar/toolbar tightened at <=640 and <=380. Owner password rotated, new credentials in .owner-password.txt (gitignored, mode 600).
@@ -135,7 +135,7 @@ Use `git log --oneline` for the full list. Highlights:
 |---|---|---|
 | Real card test of Stripe live | Charge yourself $9, then refund via Stripe API | Safety rule prevents me from charging cards on your behalf |
 | Rotate `STRIPE_SECRET_KEY` | Stripe dashboard → API keys → Roll key → expire immediately, then `wrangler secret put STRIPE_SECRET_KEY`, then `wrangler deploy` | The key in chat history is still live; you decide when to rotate |
-| Rotate `ANTHROPIC_API_KEY` | Anthropic console → API Keys → delete → create new → `wrangler secret put` | Same — key was in chat |
+| Rotate `ANTHROPIC_API_KEY` | Anthropic console → API Keys → delete → create new → `wrangler secret put` | Same, key was in chat |
 | Rotate `OWNER_PASSWORD_HASH` | `node scripts/set-owner-password.mjs` | `CyberFounder15` was in chat history |
 | Native Roofing template publicly saved | Done (slice 43-era manual promotion) | docId `80cc1a28...` → 79 fields, public scope |
 | Phase 3 ML model | Multi-month: collect 5K labeled examples, train custom CV model | Heuristic detection works at 100% on regression set, vision API is the bridge |
@@ -174,7 +174,7 @@ curl https://cybersygn.io/api/health | python3 -m json.tool
 **Trigger the monthly owner report on demand:**
 1. Sign into /control/
 2. Open browser devtools console
-3. `localStorage.getItem('cybersygn.owner.token')` — copy that value
+3. `localStorage.getItem('cybersygn.owner.token')`, copy that value
 4. `curl https://cybersygn.io/api/owner/report/preview?send=true -H "X-CyberSygn-Owner: <token>"`
 
 **View live Analytics Engine data:**

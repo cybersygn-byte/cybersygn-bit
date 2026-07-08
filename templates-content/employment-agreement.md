@@ -172,7 +172,7 @@ extent not preempted by applicable federal law. The Parties submit to the
 jurisdiction of the courts located in **[COUNTY, STATE]**.
 
 8.2 **Dispute resolution.** The Parties will attempt in good faith to resolve any
-dispute informally before pursuing other remedies. **[OPTIONAL: arbitration clause —
+dispute informally before pursuing other remedies. **[OPTIONAL: arbitration clause, 
 discuss enforceability with counsel, as rules vary by jurisdiction and claim type.]**
 
 8.3 **Assignment.** Employee may not assign this Agreement. Employer may assign it to

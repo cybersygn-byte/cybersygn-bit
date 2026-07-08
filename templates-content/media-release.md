@@ -19,8 +19,8 @@ its principal place of business or residence at **[ADDRESS]** (the
 
 Subject and Organization are each a "**Party**" and together the "**Parties**."
 
-**Recitals.** The Organization has recorded, or intends to record, the Subject —
-including the Subject's image, voice, statements, and performance — in connection
+**Recitals.** The Organization has recorded, or intends to record, the Subject, 
+including the Subject's image, voice, statements, and performance, in connection
 with **[PROGRAM / CAMPAIGN / EVENT / PRODUCTION DESCRIPTION]** (the "**Project**").
 The Subject wishes to grant the Organization permission to use the resulting
 media on the terms set out below. In consideration of the mutual promises below,

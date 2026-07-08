@@ -146,7 +146,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 8.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through discussion within **[NUMBER]** days of written
-notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 8.3 **Notices.** Notices must be in writing and sent to the addresses above (or as
 updated in writing) and are effective on receipt.

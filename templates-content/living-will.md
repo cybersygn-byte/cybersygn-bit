@@ -51,15 +51,15 @@ physician determines, to a reasonable degree of medical certainty, that I am in
 any of the following conditions (initial each that reflects my wishes; leave
 blank to exclude):
 
-   (a) **____ Terminal condition** — an incurable and irreversible condition that,
+   (a) **____ Terminal condition**, an incurable and irreversible condition that,
    without life-sustaining treatment, will result in death within a relatively
    short time.
 
-   (b) **____ Permanent unconsciousness** — a persistent vegetative state or
+   (b) **____ Permanent unconsciousness**, a persistent vegetative state or
    irreversible coma from which, to a reasonable degree of medical certainty, I
    will not regain consciousness.
 
-   (c) **____ End-stage condition** — an advanced, progressive, and irreversible
+   (c) **____ End-stage condition**, an advanced, progressive, and irreversible
    condition that has resulted in severe and permanent deterioration with no
    reasonable expectation of recovery.
 

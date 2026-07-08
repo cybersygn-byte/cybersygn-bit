@@ -44,8 +44,8 @@ but, unless expressly stated, contracts with vendors are between Client and each
 vendor. Client is responsible for vendor fees and for reviewing and signing vendor
 contracts.
 
-1.4 **Out of scope.** Services not listed in Exhibit A — including catering, floral,
-photography, venue rental, and similar third-party services — are not included
+1.4 **Out of scope.** Services not listed in Exhibit A, including catering, floral,
+photography, venue rental, and similar third-party services, are not included
 unless Planner expressly agrees to provide or subcontract them.
 
 ## 2. Client Responsibilities
@@ -176,7 +176,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 9.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: mediation or arbitration clause — discuss with
+written notice. **[OPTIONAL: mediation or arbitration clause, discuss with
 counsel.]**
 
 9.4 **Notices.** Notices must be in writing and sent to the addresses above (or as

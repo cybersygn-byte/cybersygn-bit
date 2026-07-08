@@ -98,7 +98,7 @@ Associated Asset for Buyer's personal, non-commercial use and to display ownersh
 of the NFT, subject to the limits in Section 4.4.
 
 4.3 **Optional commercial rights.** **[OPTIONAL: If the Parties intend commercial
-rights, describe them precisely here — e.g. the scope, products, territory, and any
+rights, describe them precisely here, e.g. the scope, products, territory, and any
 royalty. Do not assume commercial rights transfer with the token.]**
 
 4.4 **Restrictions.** Buyer will not use the Associated Asset in connection with
@@ -169,7 +169,7 @@ submit to the exclusive jurisdiction of the courts located in **[COUNTY, STATE]*
 
 9.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+written notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 9.3 **Assignment.** Buyer may resell or transfer the NFT subject to any surviving
 license terms and resale royalty in Section 4. This Agreement otherwise may not be

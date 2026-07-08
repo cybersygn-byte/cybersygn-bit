@@ -41,7 +41,7 @@ serve, the Principal agrees as follows.
 1.1 **Limited purpose.** The Principal grants the Agent authority to act for the
 Principal only with respect to the following specific matter(s) (the
 "**Authorized Purpose**"): **[DESCRIBE THE SPECIFIC TASK OR TRANSACTION IN
-DETAIL — e.g. "to sell the real property located at [PROPERTY ADDRESS] and to
+DETAIL, e.g. "to sell the real property located at [PROPERTY ADDRESS] and to
 sign all documents necessary to complete that sale," or "to manage the bank
 account ending in [LAST 4] at [BANK] while I am abroad."]**
 

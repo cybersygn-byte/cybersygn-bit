@@ -70,15 +70,15 @@ entities have an ownership, lien, lease, or option interest in the Property:
 
 3.1 **Structure.** To the Seller's knowledge, are there any past or present
 problems with the foundation, slab, basement, walls, floors, roof structure, or
-other structural components? **[YES / NO]** — If yes, explain: **[EXPLANATION]**.
+other structural components? **[YES / NO]**, If yes, explain: **[EXPLANATION]**.
 
 3.2 **Roof.** Approximate age of the roof: **[YEARS]**. To the Seller's knowledge,
-has the roof leaked during the Seller's ownership? **[YES / NO]** — explain:
+has the roof leaked during the Seller's ownership? **[YES / NO]**, explain:
 **[EXPLANATION]**.
 
 3.3 **Systems.** To the Seller's knowledge, are there any past or present problems
 with the plumbing, electrical, heating, cooling, or water-heating systems? **[YES
-/ NO]** — explain: **[EXPLANATION]**.
+/ NO]**, explain: **[EXPLANATION]**.
 
 3.4 **Appliances and fixtures.** Which built-in appliances and fixtures are
 included and in what condition? **[LIST AND CONDITION]**.
@@ -87,14 +87,14 @@ included and in what condition? **[LIST AND CONDITION]**.
 
 4.1 **Water and drainage.** To the Seller's knowledge, has the Property
 experienced flooding, drainage, grading, or standing-water problems? **[YES /
-NO]** — explain: **[EXPLANATION]**.
+NO]**, explain: **[EXPLANATION]**.
 
 4.2 **Moisture and mold.** To the Seller's knowledge, is there any past or present
-water intrusion, dampness, or mold? **[YES / NO]** — explain: **[EXPLANATION]**.
+water intrusion, dampness, or mold? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 4.3 **Environmental hazards.** To the Seller's knowledge, are there any hazardous
 or regulated materials on the Property, such as asbestos, radon, underground
-storage tanks, or contaminated soil or water? **[YES / NO]** — explain:
+storage tanks, or contaminated soil or water? **[YES / NO]**, explain:
 **[EXPLANATION]**.
 
 4.4 **Lead-based paint.** If the Property includes a residential dwelling built
@@ -106,33 +106,33 @@ NOT APPLICABLE]**.
 
 5.1 **Wood-destroying organisms.** To the Seller's knowledge, is there any past or
 present damage from termites or other wood-destroying organisms, or any treatment
-history? **[YES / NO]** — explain: **[EXPLANATION]**.
+history? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 5.2 **Water supply.** The Property's water supply is **[PUBLIC / WELL / OTHER]**.
 To the Seller's knowledge, are there any problems with quantity or quality?
-**[YES / NO]** — explain: **[EXPLANATION]**.
+**[YES / NO]**, explain: **[EXPLANATION]**.
 
 5.3 **Sewer/septic.** The Property's wastewater system is **[PUBLIC SEWER / SEPTIC
 / OTHER]**. To the Seller's knowledge, are there any problems or recent service?
-**[YES / NO]** — explain: **[EXPLANATION]**.
+**[YES / NO]**, explain: **[EXPLANATION]**.
 
 ## 6. Legal, Title, and Neighborhood Matters
 
 6.1 **Boundary and easements.** To the Seller's knowledge, are there any boundary
 disputes, encroachments, easements, or shared features (such as driveways, walls,
-or wells)? **[YES / NO]** — explain: **[EXPLANATION]**.
+or wells)? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 6.2 **Association and assessments.** Is the Property subject to a homeowners or
 condominium association, or to any special assessments, transfer fees, or
-restrictions? **[YES / NO]** — explain: **[EXPLANATION]**.
+restrictions? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 6.3 **Legal proceedings.** To the Seller's knowledge, are there any pending legal
 actions, code violations, unpermitted improvements, or insurance claims affecting
-the Property? **[YES / NO]** — explain: **[EXPLANATION]**.
+the Property? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 6.4 **Other material facts.** Is the Seller aware of any other condition or fact
 that materially affects the value or desirability of the Property and that is not
-disclosed elsewhere in this Statement? **[YES / NO]** — explain: **[EXPLANATION]**.
+disclosed elsewhere in this Statement? **[YES / NO]**, explain: **[EXPLANATION]**.
 
 ## 7. Buyer Acknowledgment and General Terms
 

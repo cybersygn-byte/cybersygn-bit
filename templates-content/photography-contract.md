@@ -29,7 +29,7 @@ below, the Parties agree as follows.
 ## 1. The Session and Services
 
 1.1 **Description.** Photographer will provide professional photography services for
-the following session or event (the "**Session**"): **[DESCRIBE — e.g., portrait,
+the following session or event (the "**Session**"): **[DESCRIBE, e.g., portrait,
 product, event, real estate]**.
 
 1.2 **Date, time, and location.** The Session will take place on **[DATE]** beginning

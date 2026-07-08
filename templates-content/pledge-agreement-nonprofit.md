@@ -72,7 +72,7 @@ installment due date, but failure to send a reminder does not excuse payment.
 ## 3. Use of the Pledge
 
 3.1 **Designated purpose.** The Donor designates the Pledge for the following purpose
-(the "**Designated Purpose**"): **[DESCRIBE — e.g. unrestricted support; the
+(the "**Designated Purpose**"): **[DESCRIBE, e.g. unrestricted support; the
 [CAMPAIGN OR PROGRAM] campaign; an endowment; a named fund]**.
 
 3.2 **Restricted use.** If the Pledge is restricted, the Organization will use

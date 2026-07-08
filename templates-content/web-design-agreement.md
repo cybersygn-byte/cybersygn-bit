@@ -222,7 +222,7 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Project Specification**
+**Schedule A, Project Specification**
 
 - **Project description:** [DESCRIPTION]
 - **Pages / sitemap:** [LIST]

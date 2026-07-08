@@ -108,7 +108,7 @@ space below or by posted signage, and the Participant acknowledges reading it.
 
 4.2 **Required warning.** **[INSERT THE EXACT WARNING LANGUAGE REQUIRED BY THE
 EQUINE ACTIVITY STATUTE OF [STATE], OR STATE THAT NO STATUTORY WARNING IS REQUIRED
-IN [STATE]. Do not paraphrase a statutory warning — use the exact wording your
+IN [STATE]. Do not paraphrase a statutory warning, use the exact wording your
 jurisdiction requires, confirmed with counsel.]**
 
 4.3 **No statute relief.** Nothing in this Waiver expands or limits the protections

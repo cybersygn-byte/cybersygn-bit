@@ -14,13 +14,13 @@ You really don't. Here are the actual ways to sign a PDF in 2026, ranked by how 
 
 ### 1. CyberSygn (yes, this is a sales post, but stay with me)
 
-Drop a PDF, watch every signature line, initial, date, and checkbox appear automatically. Send it to anyone with a magic link. They sign in their browser — no account, no app. The signed PDF comes back to you with a SHA-256 audit certificate.
+Drop a PDF, watch every signature line, initial, date, and checkbox appear automatically. Send it to anyone with a magic link. They sign in their browser, no account, no app. The signed PDF comes back to you with a SHA-256 audit certificate.
 
 Free for three documents lifetime. Origin tier is $9/month locked for life if you're one of the first hundred founders.
 
 ### 2. Adobe Acrobat Reader (free, but slow)
 
-Open the PDF, Tools → Fill & Sign → Sign Yourself → draw or type your signature, drag it onto the page, save. Works fine for one-off self-signing. The friction shows up when you need someone else to sign — Adobe pushes you toward Adobe Sign at $24.99/month.
+Open the PDF, Tools → Fill & Sign → Sign Yourself → draw or type your signature, drag it onto the page, save. Works fine for one-off self-signing. The friction shows up when you need someone else to sign, Adobe pushes you toward Adobe Sign at $24.99/month.
 
 Best for: a contract you need to sign once for yourself.
 
@@ -38,7 +38,7 @@ Best for: enterprise legal teams who need integrations the others don't offer.
 
 ## What "ESIGN-compliant" actually means
 
-Every option above produces a legally binding signature under the U.S. ESIGN Act and UETA in most states. The legal framework was deliberately written to be tool-agnostic — what matters is the intent to sign and the audit trail, not which company captured the signature.
+Every option above produces a legally binding signature under the U.S. ESIGN Act and UETA in most states. The legal framework was deliberately written to be tool-agnostic, what matters is the intent to sign and the audit trail, not which company captured the signature.
 
 If anyone tells you "you have to use DocuSign because of compliance," they're either misinformed or selling you something. Audit certificates from CyberSygn (and Adobe Sign, and DocuSign) all satisfy the same legal standards.
 
@@ -51,4 +51,4 @@ If anyone tells you "you have to use DocuSign because of compliance," they're ei
 
 The signing-software market lost the plot. The slowest part of signing should never have been the part where you tell the software where the obviously-marked signature lines are. We fixed that.
 
-[Try the demo](/preview/) — drop a PDF, watch it work.
+[Try the demo](/preview/), drop a PDF, watch it work.

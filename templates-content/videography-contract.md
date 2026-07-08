@@ -146,7 +146,7 @@ Deliverables as the author of the works, subject to the license granted below.
 non-exclusive, royalty-free, worldwide, perpetual license to use the final
 Deliverables for the purpose described in Section 1, including **[e.g. marketing,
 social media, broadcast, internal use]**. **[OPTIONAL: a full assignment or
-exclusive license may be substituted for an additional fee — discuss with
+exclusive license may be substituted for an additional fee, discuss with
 counsel.]**
 
 6.3 **Raw footage.** Unless this Agreement states otherwise, Videographer retains

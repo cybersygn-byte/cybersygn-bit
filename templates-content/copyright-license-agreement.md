@@ -244,7 +244,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Licensed Work and Terms
+### Exhibit A, Licensed Work and Terms
 
 - **Description of the Licensed Work:** **[DETAILED DESCRIPTION; attach copies or
   links]**

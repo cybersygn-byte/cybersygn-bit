@@ -32,7 +32,7 @@ following matter (the "**Matter**"): **[DESCRIBE THE MATTER OR ENGAGEMENT]**.
 
 1.2 **Nature of the conflict.** The Professional has disclosed the following actual
 or potential conflict of interest (the "**Conflict**"): **[DESCRIBE THE CONFLICT
-PLAINLY — e.g., the Professional also represents or has a relationship with another
+PLAINLY, e.g., the Professional also represents or has a relationship with another
 client, party, or interest that is, or may become, adverse to or in tension with
 the Client's interests in the Matter]**.
 
@@ -113,7 +113,7 @@ Professional's ability to continue for any of them.
 ## 5. Conditions and Limitations on the Engagement
 
 5.1 **Conditions.** The Client's consent is subject to the following conditions:
-**[LIST ANY CONDITIONS — e.g., the Professional will not advise the Client on
+**[LIST ANY CONDITIONS, e.g., the Professional will not advise the Client on
 matters directly adverse to the Other Party, or the Professional will withdraw on
 [EVENT], OR STATE "NONE"]**.
 

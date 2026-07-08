@@ -34,7 +34,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 // Clamp a post's publish date to today for anything CRAWLABLE or human-visible.
 // The index still gates the grid on the raw publishDate (reveal-on-schedule),
 // but no crawlable page should ever advertise a future datePublished /
-// dateModified / byline — Google distrusts future-dated structured data.
+// dateModified / byline, Google distrusts future-dated structured data.
 function displayDate(iso) {
   return iso && iso > TODAY ? TODAY : iso;
 }
@@ -161,7 +161,7 @@ function renderPrevNext(post, published) {
 }
 
 // Share actions: X/Twitter, LinkedIn share intents + a copy-link button.
-// No external SDKs — intent URLs open in a new tab, copy uses the
+// No external SDKs, intent URLs open in a new tab, copy uses the
 // clipboard script wired up at the bottom of the page.
 function renderShare(post, canonical) {
   const url = encodeURIComponent(canonical);
@@ -194,7 +194,7 @@ function renderPost(post, published) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${esc(post.title)} — CyberSygn</title>
+  <title>${esc(post.title)}, CyberSygn</title>
   <meta name="description" content="${esc(post.metaDescription)}" />
   <meta name="keywords" content="${esc([post.primaryKeyword, ...(post.secondaryKeywords || [])].join(', '))}" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -311,7 +311,7 @@ ${JSON.stringify({
 
   <script>
     (function () {
-      // Copy-link buttons — uses navigator.clipboard, no external SDK.
+      // Copy-link buttons, uses navigator.clipboard, no external SDK.
       document.querySelectorAll('.post__share-copy').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var url = btn.getAttribute('data-copy-url') || window.location.href;
@@ -377,7 +377,7 @@ function searchBlob(p) {
   return esc((p.title + ' ' + p.metaDescription + ' ' + p.primaryKeyword).toLowerCase());
 }
 
-// Featured card — the most recent published post, rendered large with a
+// Featured card, the most recent published post, rendered large with a
 // "Latest" ribbon and a category + date + reading-time meta row. It carries
 // the same data-cat / data-search hooks as the grid cards so the existing
 // filter logic hides it when it stops matching.
@@ -466,7 +466,7 @@ function renderIndex(published) {
       <div class="container">
         <p class="kicker hero__kicker">CyberSygn blog.</p>
         <h1 class="h-display hero__title">Sharper signatures. Faster contracts. <em>Fewer surprises.</em></h1>
-        <p class="lede hero__lede">Field guides, compliance deep-dives, and workflow playbooks for the people who actually send the contract — independents, photographers, coaches, founders, small studios. Read it, ship the contract, get back to work.</p>
+        <p class="lede hero__lede">Field guides, compliance deep-dives, and workflow playbooks for the people who actually send the contract, independents, photographers, coaches, founders, small studios. Read it, ship the contract, get back to work.</p>
         <p class="lede hero__lede" style="font-size: var(--t-sm); color: var(--muted); margin-top: var(--s-3);">New post every Tuesday and Thursday. Built by an operator, written for operators.</p>
       </div>
     </section>
@@ -572,11 +572,11 @@ async function main() {
     .filter(p => p.slug && p.publishDate)
     .sort((a, b) => b.publishDate.localeCompare(a.publishDate));
 
-  // Clean blog directory but keep the index — we rebuild it.
+  // Clean blog directory but keep the index, we rebuild it.
   try { await rm(BLOG_OUT, { recursive: true, force: true }); } catch (e) {}
   await mkdir(BLOG_OUT, { recursive: true });
 
-  // Per-post pages — EVERY post, so the full corpus is crawlable now.
+  // Per-post pages, EVERY post, so the full corpus is crawlable now.
   // Prev/next + related only reference the PUBLISHED set so humans never
   // get linked to a page the index doesn't yet surface.
   for (const post of crawlable) {
@@ -585,7 +585,7 @@ async function main() {
     await writeFile(join(dir, 'index.html'), renderPost(post, published), 'utf8');
   }
 
-  // Blog index — only past-dated posts in the grid (human drip preserved).
+  // Blog index, only past-dated posts in the grid (human drip preserved).
   await writeFile(join(BLOG_OUT, 'index.html'), renderIndex(published), 'utf8');
 
   console.log(`Wrote ${crawlable.length} crawlable post pages (full corpus).`);
@@ -602,10 +602,10 @@ async function updateSitemap(posts) {
   const openIdx = raw.indexOf(MARK_OPEN);
   const closeIdx = raw.indexOf(MARK_CLOSE);
   if (openIdx < 0 || closeIdx <= openIdx) {
-    console.warn('sitemap.xml missing BLOG_OPEN/CLOSE markers — skipping sitemap update');
+    console.warn('sitemap.xml missing BLOG_OPEN/CLOSE markers, skipping sitemap update');
     return;
   }
-  // lastmod is clamped to today for not-yet-dated posts — never emit a future
+  // lastmod is clamped to today for not-yet-dated posts, never emit a future
   // lastmod (invalid per the sitemap spec). The content is live as of today.
   const lastmod = (p) => (p.publishDate <= TODAY ? p.publishDate : TODAY);
   const entries = [

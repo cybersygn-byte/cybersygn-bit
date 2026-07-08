@@ -62,7 +62,7 @@ SECTION 2.3]** by **[CHECK / WIRE / ACH]** to **[PAYEE / ACCOUNT DETAILS]**.
 2.3 **Installments (if applicable).** If paid in installments, the Respondent will pay
 **[INSTALLMENT AMOUNT]** on **[SCHEDULE, e.g. the first of each month]** beginning
 **[FIRST PAYMENT DATE]** until paid in full. **[OPTIONAL: describe acceleration on
-missed payment and any stipulated judgment — discuss with counsel.]**
+missed payment and any stipulated judgment, discuss with counsel.]**
 
 2.4 **Non-monetary terms.** In addition to or instead of payment, the Parties also
 agree to the following: **[DESCRIBE ANY NON-MONETARY TERMS, e.g. return of property,
@@ -86,7 +86,7 @@ Claimant does not know or suspect to exist as of the Effective Date and that, ha
 been known, might have affected the decision to settle. The Claimant knowingly waives,
 to the fullest extent permitted by applicable law, any statute or rule that would limit
 a release to known claims. **[NOTE: some states require specific waiver language to
-release unknown claims — confirm with counsel for your jurisdiction.]**
+release unknown claims, confirm with counsel for your jurisdiction.]**
 
 3.4 **Scope.** This release applies only to the Released Claims and does not release
 obligations created by this Agreement or claims that arise after the Effective Date.

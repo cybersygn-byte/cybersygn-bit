@@ -3,7 +3,7 @@
  * Minimal, cwd-independent static file server for local preview / screenshot QA.
  *
  * The Preview MCP launches this via .claude/launch.json. It must NOT depend on
- * process.cwd() (the sandbox can deny getcwd in some spawn contexts — which is
+ * process.cwd() (the sandbox can deny getcwd in some spawn contexts, which is
  * exactly why the default `python -m http.server` config crashed). The document
  * root is passed as an absolute argument and every path is resolved against it.
  *

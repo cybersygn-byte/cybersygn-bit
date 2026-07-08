@@ -205,7 +205,7 @@ exclusive jurisdiction of the state and federal courts located in **[COUNTY, STA
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good faith to
 resolve any dispute through senior-management discussion within **[NUMBER]** days of
-written notice of the dispute. **[OPTIONAL: arbitration or mediation clause — discuss with
+written notice of the dispute. **[OPTIONAL: arbitration or mediation clause, discuss with
 counsel.]**
 
 8.4 **Assignment.** Neither Party may assign this Agreement without the other's prior

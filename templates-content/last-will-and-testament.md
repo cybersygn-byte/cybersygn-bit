@@ -21,8 +21,8 @@ I have previously made.
 death, to name the person who will administer my estate, and, if applicable, to name
 a guardian for my minor children. I intend that this Will dispose of all property I
 am entitled to dispose of by will. **Important:** the formalities required for a
-valid will — including the number of witnesses, their qualifications, signing
-procedure, and any self-proving affidavit or notarization — vary by jurisdiction.
+valid will, including the number of witnesses, their qualifications, signing
+procedure, and any self-proving affidavit or notarization, vary by jurisdiction.
 The execution provisions below are general; conform them to the law of the state
 where you sign and reside before executing this Will.
 
@@ -142,7 +142,7 @@ beneficiary's share in trust, use it for the beneficiary's health, education,
 maintenance, and support, and distribute the remainder when the beneficiary reaches
 **[AGE]**.
 
-7.2 **No-contest clause.** **[OPTIONAL — enforceability varies by state: If any
+7.2 **No-contest clause.** **[OPTIONAL, enforceability varies by state: If any
 beneficiary contests this Will or any of its provisions without probable cause, that
 beneficiary forfeits any gift under this Will. Discuss with counsel.]**
 
@@ -193,7 +193,7 @@ Testator's Last Will in our presence, and we, at the Testator's request and in t
 Testator's presence and in the presence of each other, subscribe our names as
 witnesses. The Testator appeared to us to be of sound mind and of legal age, and not
 acting under duress or undue influence. **[Use the number of witnesses required by
-your state — commonly two. Witnesses generally should not be beneficiaries. Confirm
+your state, commonly two. Witnesses generally should not be beneficiaries. Confirm
 the rule with counsel.]**
 
 | **WITNESS 1** | **WITNESS 2** |
@@ -203,7 +203,7 @@ the rule with counsel.]**
 | Address: **[ADDRESS]** | Address: **[ADDRESS]** |
 | Date: __________________________ | Date: __________________________ |
 
-### Self-Proving Affidavit (Optional — where recognized)
+### Self-Proving Affidavit (Optional, where recognized)
 
 **[Many states allow a notarized self-proving affidavit so the Will can be admitted
 to probate without locating the witnesses later. The exact wording is set by state

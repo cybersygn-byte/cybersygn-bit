@@ -149,7 +149,7 @@ complied with its return and deletion obligations.
 8.1 **Liability.** Each Party is responsible for its own compliance with Applicable
 Data Protection Law in relation to the Shared Data and for any failure to meet its
 obligations under this Agreement. **[OPTIONAL: liability cap and exclusion of
-indirect damages — discuss with counsel.]**
+indirect damages, discuss with counsel.]**
 
 8.2 **Indemnity.** Each Party will indemnify the other against losses arising from
 that Party's breach of this Agreement or of Applicable Data Protection Law in
@@ -183,7 +183,7 @@ Effective Date.
 
 ---
 
-### Schedule A — Description of Data Sharing
+### Schedule A, Description of Data Sharing
 
 - **Shared Data (categories):** **[DESCRIBE]**
 - **Permitted Purpose:** **[DESCRIBE]**

@@ -49,12 +49,12 @@ full ownership, possession, and control of the Property at all times.
 ## 2. Access Area and Permitted Purpose
 
 2.1 **Access Area.** Entrant's right of entry is limited to the following portion of
-the Property: **[DESCRIBE AREA — e.g. the rear yard; the parking lot; the entire
+the Property: **[DESCRIBE AREA, e.g. the rear yard; the parking lot; the entire
 parcel]** (the "**Access Area**"). Entrant will not enter any other part of the
 Property without Owner's prior consent.
 
 2.2 **Permitted Purpose.** Entrant may enter the Access Area only for the following
-purpose: **[DESCRIBE — e.g. surveying and inspection; environmental testing;
+purpose: **[DESCRIBE, e.g. surveying and inspection; environmental testing;
 equipment staging; making repairs to adjoining property; appraisal]** (the
 "**Permitted Purpose**").
 

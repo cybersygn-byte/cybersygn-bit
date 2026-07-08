@@ -1110,7 +1110,7 @@ function markPrimarySignatureBlock(fields, pageCount) {
   //   2. Quality: the field's confidence is at or above the primary
   //      threshold. Without this, anonymous "no label nearby" signature
   //      lines that happen to fall in the band drag the displayed
-  //      confidence average down — even though they're not the fields
+  //      confidence average down, even though they're not the fields
   //      the signer actually relies on. Below the threshold, fields still
   //      render in the overlay (so the user can confirm or correct), but
   //      they're classified as secondary so the headline number reflects

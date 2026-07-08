@@ -63,7 +63,7 @@ these Resolutions and is reserved accordingly.
 ## 3. Authorized Transactions
 
 3.1 **Approved transaction.** The Board approves the following transaction (the
-"**Transaction**"): **[DESCRIBE TRANSACTION — counterparty, subject matter,
+"**Transaction**"): **[DESCRIBE TRANSACTION, counterparty, subject matter,
 amount, and key terms]**.
 
 3.2 **Scope.** The Authorized Signatories (defined below) may negotiate, execute,

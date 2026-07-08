@@ -47,8 +47,8 @@ on any change to the fee arrangement before the additional work begins.
 
 - **Fixed fee.** A flat fee of **[AMOUNT]** for the Services described in Section
   1.1, payable **[ON SIGNING / IN INSTALLMENTS AS STATED IN SECTION 4]**.
-- **Hourly fee.** Time charged at the following rates: **[NAME/ROLE — RATE per
-  hour]**; **[NAME/ROLE — RATE per hour]**. Time is recorded in increments of
+- **Hourly fee.** Time charged at the following rates: **[NAME/ROLE, RATE per
+  hour]**; **[NAME/ROLE, RATE per hour]**. Time is recorded in increments of
   **[e.g. one-tenth of an hour]**.
 - **Recurring fee.** A recurring fee of **[AMOUNT]** per **[MONTH / QUARTER]** for
   ongoing Services.

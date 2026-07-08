@@ -53,12 +53,12 @@ consideration being the mutual covenants in this License]**.
 ## 2. Licensed Area and Permitted Use
 
 2.1 **Licensed Area.** The license covers the following portion of the Property:
-**[DESCRIBE — e.g. the rooftop; the courtyard; Suite [NUMBER]; the gravel lot at
+**[DESCRIBE, e.g. the rooftop; the courtyard; Suite [NUMBER]; the gravel lot at
 the north end]** (the "**Licensed Area**"). Licensee will not access other portions
 of the Property without Licensor's prior consent.
 
 2.2 **Permitted Use.** Licensee may use the Licensed Area only for the following
-purpose: **[DESCRIBE — e.g. photography and filming; placing and operating
+purpose: **[DESCRIBE, e.g. photography and filming; placing and operating
 [EQUIPMENT]; hosting the event described in Exhibit A; temporary parking; storage]**
 (the "**Permitted Use**").
 

@@ -201,14 +201,14 @@ the fiduciary duties described above.
 | Printed name: **[AGENT NAME]** |
 | Date: __________________________ |
 
-**[WITNESSES — many jurisdictions require one or two disinterested adult
+**[WITNESSES, many jurisdictions require one or two disinterested adult
 witnesses. Add or remove lines to match local law.]**
 
 Witness 1 signature: __________________________  Printed name: **[NAME]**  Date: ________
 
 Witness 2 signature: __________________________  Printed name: **[NAME]**  Date: ________
 
-**[NOTARY ACKNOWLEDGMENT — most jurisdictions require notarization for a financial
+**[NOTARY ACKNOWLEDGMENT, most jurisdictions require notarization for a financial
 power of attorney. Use the acknowledgment form your jurisdiction prescribes.]**
 
 State of **[STATE]**, County of **[COUNTY]**.

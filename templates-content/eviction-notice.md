@@ -41,7 +41,7 @@ Premises.
 Quit / Notice of Non-Renewal]** notice, selected because of the default or
 circumstance described in Section 1.2.
 
-1.2 **Grounds.** The grounds for this Notice are: **[DESCRIBE SPECIFICALLY — e.g.
+1.2 **Grounds.** The grounds for this Notice are: **[DESCRIBE SPECIFICALLY, e.g.
 nonpayment of rent; a specific lease violation with the section and facts;
 unauthorized occupants or pets; nuisance or illegal activity; or end of tenancy
 where permitted]**. The facts supporting the default are: **[STATE DATES, AMOUNTS,

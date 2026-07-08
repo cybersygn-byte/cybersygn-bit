@@ -36,10 +36,10 @@ and electronic communications and platforms used for work, regardless of whether
 the conduct occurs during normal working hours.
 
 1.3 **Protected characteristics.** Harassment based on a characteristic protected
-by applicable law—including race, color, national origin, ancestry, religion,
+by applicable law, including race, color, national origin, ancestry, religion,
 sex, pregnancy, gender, gender identity or expression, sexual orientation, age,
 disability, medical condition, marital status, genetic information, veteran or
-military status, and any other status protected by applicable law—is prohibited.
+military status, and any other status protected by applicable law, is prohibited.
 
 ## 2. Prohibited Conduct
 

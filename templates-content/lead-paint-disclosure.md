@@ -103,7 +103,7 @@ connection with a purchase, the Receiving Party has (check one):
   lead-based paint and/or lead-based paint hazards; or
 - [ ] (b) Waived the opportunity to conduct a risk assessment or inspection.
 
-4.3 **Leases — no inspection period required.** For a lease, federal law does not
+4.3 **Leases, no inspection period required.** For a lease, federal law does not
 require an inspection period, and none is granted by this Disclosure unless the
 Parties separately agree in writing.
 

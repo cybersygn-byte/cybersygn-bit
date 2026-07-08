@@ -46,7 +46,7 @@ to the Company-to-be as provided in Section 5.
 ## 2. Equity Ownership
 
 2.1 **Initial equity split.** The Founders' initial ownership of the Company's equity
-is as follows: **[FOUNDER 1]** — **[%]**; **[FOUNDER 2]** — **[%]**; **[FOUNDER 3]** —
+is as follows: **[FOUNDER 1]**, **[%]**; **[FOUNDER 2]**, **[%]**; **[FOUNDER 3]**, 
 **[%]** (the "**Founder Equity**"). These percentages reflect the Founders' relative
 contributions and commitments as of the Effective Date.
 

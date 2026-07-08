@@ -80,9 +80,9 @@ personal property.
 ## 4. Medical Information and Authorization
 
 4.1 **Medical information.** The Parent/Guardian provides the following medical
-information for the Student: allergies — **[LIST OR "NONE"]**; medications and
-dosing during the trip — **[LIST OR "NONE"]**; medical conditions or limitations —
-**[LIST OR "NONE"]**; dietary needs — **[LIST OR "NONE"]**.
+information for the Student: allergies, **[LIST OR "NONE"]**; medications and
+dosing during the trip, **[LIST OR "NONE"]**; medical conditions or limitations, 
+**[LIST OR "NONE"]**; dietary needs, **[LIST OR "NONE"]**.
 
 4.2 **Consent to emergency treatment.** If the Parent/Guardian cannot be reached
 in an emergency, the Parent/Guardian authorizes supervising staff to consent to,

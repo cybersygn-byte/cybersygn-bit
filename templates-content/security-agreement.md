@@ -52,7 +52,7 @@ Debtor acquires rights in it.
 
 2.1 **Collateral.** "**Collateral**" means the following property of the Debtor,
 whether now owned or later acquired, and all proceeds and products of it:
-**[DESCRIBE COLLATERAL — e.g., all equipment, inventory, accounts, instruments,
+**[DESCRIBE COLLATERAL, e.g., all equipment, inventory, accounts, instruments,
 general intangibles, and specifically identified assets such as [SERIAL NUMBER /
 VIN / DESCRIPTION]]**.
 

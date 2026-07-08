@@ -196,7 +196,7 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Scope and Rules of Engagement.** In-scope targets (IPs, domains,
+**Schedule A, Scope and Rules of Engagement.** In-scope targets (IPs, domains,
 apps, accounts): **[LIST]**. Authorized test types: **[LIST]**. Exclusions:
 **[LIST]**. Testing Window and time zone: **[LIST]**. Authorized prohibited
 techniques (if any): **[LIST]**. Client point of contact: **[NAME, PHONE,

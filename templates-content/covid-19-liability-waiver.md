@@ -170,7 +170,7 @@ which together form one agreement.
 | Title: **N/A** | Title: **[TITLE]** |
 | Date: __________________________ | Date: __________________________ |
 
-**IF PARTICIPANT IS A MINOR — PARENT OR LEGAL GUARDIAN**
+**IF PARTICIPANT IS A MINOR, PARENT OR LEGAL GUARDIAN**
 
 | **PARENT / GUARDIAN** |
 | --- |

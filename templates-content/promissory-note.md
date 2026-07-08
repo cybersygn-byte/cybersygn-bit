@@ -93,7 +93,7 @@ otherwise in writing.
 **[PERCENTAGE, e.g. 20%]** of the original Principal in any **[12-month]** period,
 the Borrower will pay a prepayment charge equal to **[AMOUNT OR FORMULA]**.
 **[Delete this Section if no prepayment penalty applies. Prepayment penalties are
-restricted or prohibited in some jurisdictions and for some loan types — confirm
+restricted or prohibited in some jurisdictions and for some loan types, confirm
 with counsel.]**
 
 ## 4. Late Payment and Default Interest
@@ -127,7 +127,7 @@ creditors, or has a bankruptcy or similar proceeding commenced by or against it
 that is not dismissed within **[NUMBER, e.g. 60]** days; or
 
 (e) **[OTHER EVENT OF DEFAULT, e.g. death or dissolution of the Borrower; sale of
-collateral without consent — or delete].**
+collateral without consent, or delete].**
 
 ## 6. Acceleration and Remedies
 

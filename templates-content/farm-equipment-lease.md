@@ -31,7 +31,7 @@ mutual promises below, the Parties agree as follows.
 
 1.1 **Equipment.** Lessor leases to Lessee, and Lessee leases from Lessor, the
 following machinery and equipment (collectively, the "**Equipment**"): **[DESCRIBE
-EACH ITEM — make, model, year, serial/VIN/PIN, hours, attachments]**. A detailed
+EACH ITEM, make, model, year, serial/VIN/PIN, hours, attachments]**. A detailed
 list may be attached as Schedule A and is incorporated by reference.
 
 1.2 **Condition at delivery.** Lessee acknowledges that it has inspected the

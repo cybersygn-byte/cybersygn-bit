@@ -7,7 +7,7 @@
  *
  *   Day 1 (24h after signup):
  *     Welcome + "Drop your first contract." Establishes the
- *     reciprocity primer — we already gave you 3 free, here's how
+ *     reciprocity primer, we already gave you 3 free, here's how
  *     to extract maximum value from the first one. No selling.
  *
  *   Day 3 (72h after signup):
@@ -71,7 +71,7 @@ export async function runDripCampaign(env, event) {
   const nowMs = now.getTime();
 
   // Lock so multiple invocations in the same hour can't both fire the
-  // sweep. Day-level lock — drip:lock:YYYY-MM-DD.
+  // sweep. Day-level lock, drip:lock:YYYY-MM-DD.
   const dayKey = now.toISOString().slice(0, 10);
   const lockKey = `meta:drip-lock:${dayKey}`;
   try {

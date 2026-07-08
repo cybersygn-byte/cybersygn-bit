@@ -5,7 +5,7 @@
  *
  * What it does:
  *   1. Pulls metadata for a sample of SEC EDGAR 10-K Exhibit 10 filings
- *      (material contracts — NDAs, MSAs, employment agreements).
+ *      (material contracts, NDAs, MSAs, employment agreements).
  *   2. Records candidate URLs into corpus/index.json with full source
  *      attribution.
  *   3. Does NOT auto-download the PDFs to keep this script light. A
@@ -38,9 +38,9 @@ const OUT_DIR = join(ROOT, 'corpus');
 const OUT_FILE = join(OUT_DIR, 'index.json');
 
 // Curated sources. Each entry is a (source, license, type, url) record.
-// This is a STARTING POINT — Nathan reviews and expands manually.
+// This is a STARTING POINT, Nathan reviews and expands manually.
 const CURATED = [
-  // SEC EDGAR — material-contract exhibits. Public domain.
+  // SEC EDGAR, material-contract exhibits. Public domain.
   {
     source: 'SEC EDGAR',
     license: 'Public Domain (US Gov)',
@@ -59,7 +59,7 @@ const CURATED = [
     url: 'https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=tesla&type=10-K&dateb=&owner=include&count=40',
     note: 'Search root. Specific exhibit 10s to be selected.',
   },
-  // Y Combinator SAFE templates — startup investor agreements. Public.
+  // Y Combinator SAFE templates, startup investor agreements. Public.
   {
     source: 'Y Combinator',
     license: 'Public, freely usable',
@@ -68,7 +68,7 @@ const CURATED = [
     url: 'https://www.ycombinator.com/documents',
     note: 'Multiple variants: post-money cap, post-money discount, post-money MFN, no cap.',
   },
-  // Common Paper — open-source business contract templates. CC-BY.
+  // Common Paper, open-source business contract templates. CC-BY.
   {
     source: 'Common Paper',
     license: 'CC-BY 4.0',
@@ -91,7 +91,7 @@ const CURATED = [
     title: 'GitLab Subscription Agreement',
     url: 'https://about.gitlab.com/handbook/legal/subscription-agreement',
   },
-  // Plain Language Legal — open contract templates. CC0.
+  // Plain Language Legal, open contract templates. CC0.
   {
     source: 'Plain Language Legal',
     license: 'CC0 (Public Domain)',

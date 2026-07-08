@@ -38,7 +38,7 @@ TITLE]**, dated **[CONTRACT DATE]**, between the Non-Breaching Party and the
 Breaching Party **[and any other parties]**.
 
 1.2 **Relevant obligations.** Under the Contract, the Breaching Party agreed to
-**[DESCRIBE THE OBLIGATION(S) AT ISSUE — e.g. deliver goods or services by a
+**[DESCRIBE THE OBLIGATION(S) AT ISSUE, e.g. deliver goods or services by a
 date, pay a stated amount, maintain a standard of performance, refrain from a
 described act]**, as set out in **[SECTION OR PARAGRAPH NUMBER(S) OF THE
 CONTRACT]**.
@@ -51,12 +51,12 @@ the Breaching Party's breach.
 ## 2. The Breach
 
 2.1 **Description of the breach.** The Breaching Party has breached the Contract in
-the following way: **[DESCRIBE THE BREACH SPECIFICALLY — what was required, what
+the following way: **[DESCRIBE THE BREACH SPECIFICALLY, what was required, what
 the Breaching Party did or failed to do, and the relevant dates]**.
 
 2.2 **Materiality.** The Non-Breaching Party considers this breach to be
 **[material / a default entitling the Non-Breaching Party to the remedies
-described below]** because **[EXPLAIN WHY — e.g. it defeats the purpose of the
+described below]** because **[EXPLAIN WHY, e.g. it defeats the purpose of the
 Contract, causes loss, or violates an express condition]**.
 
 2.3 **Supporting facts and records.** The breach is supported by **[INVOICES /
@@ -67,7 +67,7 @@ reserves the right to rely on additional evidence.
 ## 3. Effect of the Breach
 
 3.1 **Harm caused.** As a result of the breach, the Non-Breaching Party has
-suffered or is likely to suffer **[DESCRIBE — e.g. financial loss, delay, lost
+suffered or is likely to suffer **[DESCRIBE, e.g. financial loss, delay, lost
 business, additional cost to cover, or other harm]**.
 
 3.2 **Amounts at issue (if any).** To the extent the breach involves money, the
@@ -82,11 +82,11 @@ not described in this Notice.
 ## 4. Demand to Cure
 
 4.1 **Demand.** The Non-Breaching Party demands that the Breaching Party cure the
-breach by **[DESCRIBE THE CURE — e.g. completing performance, paying the amount
+breach by **[DESCRIBE THE CURE, e.g. completing performance, paying the amount
 owed, correcting the defective work, or ceasing the prohibited act]**.
 
 4.2 **Cure period.** The Breaching Party must complete the cure on or before
-**[DEADLINE DATE — e.g. [NUMBER] days from the date of this Notice, or the cure
+**[DEADLINE DATE, e.g. [NUMBER] days from the date of this Notice, or the cure
 period stated in the Contract if longer]** (the "**Cure Period**").
 
 4.3 **Contractual cure provisions control.** If the Contract specifies a different

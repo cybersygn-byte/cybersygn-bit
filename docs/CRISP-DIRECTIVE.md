@@ -54,9 +54,9 @@ disclosure until asked for.
 ## Dashboard information architecture (top to bottom)
 
 1. Header: page title + ONE primary button ("Send a document").
-2. Your documents (the table/list) — the whole screen for returning users.
+2. Your documents (the table/list), the whole screen for returning users.
    Empty state = the 3-step checklist (already good, keep, restyle).
-3. "Account and settings" — collapsed rows, in this order:
+3. "Account and settings", collapsed rows, in this order:
    how you appear to signers (identity), brand your signing pages (brand),
    your plan and usage (stats + upgrade), invite and earn (affiliate),
    notify your other tools (webhooks), workspace members, Origin wall card

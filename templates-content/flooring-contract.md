@@ -112,15 +112,15 @@ with local law as payments are made.
 
 ## 5. Changes and Concealed Conditions
 
-5.1 **Change orders.** Any change to the Work—including product substitutions,
-added areas, or added subfloor repair—takes effect only when both Parties sign a
+5.1 **Change orders.** Any change to the Work, including product substitutions,
+added areas, or added subfloor repair, takes effect only when both Parties sign a
 written change order describing the change and its effect on the Contract Price
 and schedule. Contractor is not obligated to perform extra work until a change
 order is signed.
 
 5.2 **Concealed conditions.** If removal of existing flooring reveals concealed
-conditions—such as water damage, rot, asbestos-containing materials, or subfloor
-deficiencies—Contractor will stop the affected Work, notify Customer, and
+conditions, such as water damage, rot, asbestos-containing materials, or subfloor
+deficiencies, Contractor will stop the affected Work, notify Customer, and
 proceed only after the Parties agree on a change order, except where emergency
 action is required to prevent damage.
 
@@ -190,7 +190,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 9.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 9.4 **Notices.** Notices must be in writing and delivered to the addresses above
 or as updated in writing, and are effective on receipt.

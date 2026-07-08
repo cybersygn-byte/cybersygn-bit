@@ -109,7 +109,7 @@ property.
 
 6.1 **Risk of loss.** While the Consigned Goods are in Consignee's possession,
 **[Consignee bears the risk of loss, theft, or damage / risk of loss remains with
-Consignor — choose and confirm with counsel]**, except for ordinary wear from
+Consignor, choose and confirm with counsel]**, except for ordinary wear from
 permitted display.
 
 6.2 **Insurance.** **[Consignee will maintain insurance covering the Consigned

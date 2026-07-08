@@ -24,7 +24,7 @@ parent or legal guardian (the "**Guardian**").
 The Provider and the Participant are each a "**Party**" and together the
 "**Parties**."
 
-**Recitals.** The Participant wishes to take part in **[DESCRIBE ACTIVITY — e.g.
+**Recitals.** The Participant wishes to take part in **[DESCRIBE ACTIVITY, e.g.
 fitness classes, a recreational sport, an obstacle course, a guided excursion,
 equipment use]** (the "**Activity**") offered or operated by the Provider. The
 Activity involves inherent risks. As a condition of being permitted to participate,
@@ -53,7 +53,7 @@ participation in the same type of Activity with the Provider.
 2.1 **Inherent risks.** The Participant understands that the Activity involves
 inherent and other risks that can cause property damage, bodily injury, illness,
 permanent disability, or death. These risks include, without limitation:
-**[describe specific risks — e.g. falls, collisions, equipment failure, strenuous
+**[describe specific risks, e.g. falls, collisions, equipment failure, strenuous
 exertion, weather, terrain, contact with others, and the negligence of other
 participants]**.
 
@@ -85,7 +85,7 @@ against the Released Parties for any matter released under Section 3.1.
 3.3 **Limits required by law.** This Waiver does not release any Released Party from
 liability for gross negligence, recklessness, willful or wanton misconduct, or any
 liability that applicable law does not permit to be waived. Where local law limits
-or prohibits pre-injury releases — including releases by or on behalf of minors —
+or prohibits pre-injury releases, including releases by or on behalf of minors, 
 those limits control, and the remainder of this Waiver remains in effect.
 
 3.4 **No reliance.** The Participant has not relied on any oral or written

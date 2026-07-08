@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-// Known-valid CSS property names. Not exhaustive — covers everything
+// Known-valid CSS property names. Not exhaustive, covers everything
 // the codebase actually uses today, plus the most common future
 // additions. Extend as needed when a real new property gets used.
 // Vendor-prefixed properties auto-pass via the regex check below.
@@ -171,7 +171,7 @@ function stripComments(src) {
  * time of the rule, joined by '||' so identical selectors under
  * different media queries are NOT considered duplicates.
  *
- * This is not a full CSS parser — it's a brace counter that tracks
+ * This is not a full CSS parser, it's a brace counter that tracks
  * @at-rule blocks. Sufficient for our purposes (every selector we
  * write uses standard CSS; no preprocessor syntax in this codebase).
  */
@@ -191,7 +191,7 @@ function parseRules(src) {
       const head = buf.trim();
       buf = '';
       if (head.startsWith('@')) {
-        // @media / @supports / @container / @keyframes — descend.
+        // @media / @supports / @container / @keyframes, descend.
         scopeStack.push(head);
         i += 1;
         continue;
@@ -211,7 +211,7 @@ function parseRules(src) {
         if (depth > 0) declBuf += cc;
         j += 1;
       }
-      // Parse declarations from declBuf — split on ; that are NOT inside
+      // Parse declarations from declBuf, split on ; that are NOT inside
       // parentheses (so values like color-mix(in srgb, #000, transparent)
       // don't get clipped).
       const decls = [];
@@ -229,7 +229,7 @@ function parseRules(src) {
       }
       if (pBuf.trim()) decls.push(pBuf);
       // Extract property names from each declaration.
-      // Compute the line each declaration is on (rough — based on \n
+      // Compute the line each declaration is on (rough, based on \n
       // count in declBuf up to that point).
       let cursor = 0;
       const declLineBase = ruleStartLine;
@@ -320,14 +320,14 @@ async function checkFile(path) {
         line: r.line,
         message: overlap.length >= 1
           ? `Duplicate "${sel}" at lines ${prev.line} and ${r.line} both declare: ${overlap.slice(0, 5).join(', ')}${overlap.length > 5 ? ', …' : ''}`
-          : `Duplicate "${sel}" at lines ${prev.line} and ${r.line} (no property overlap — intentional cascade)`,
+          : `Duplicate "${sel}" at lines ${prev.line} and ${r.line} (no property overlap, intentional cascade)`,
       });
     } else {
       seen.set(key, r);
     }
   }
 
-  // Unknown / misspelled properties — these always fail.
+  // Unknown / misspelled properties, these always fail.
   for (const p of props) {
     if (!isValidProp(p.name)) {
       findings.push({
@@ -373,7 +373,7 @@ async function main() {
     warns += warnings.length;
   }
   if (warns > 0) {
-    console.warn(`[css-check] ${warns} warning(s) — see above`);
+    console.warn(`[css-check] ${warns} warning(s), see above`);
   }
   if (buildFails > 0) {
     console.error(`[css-check] ${buildFails} build-failure(s)`);

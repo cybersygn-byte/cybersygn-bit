@@ -63,7 +63,7 @@ PAYROLL PERIODS]** beginning after the Effective Date.
 
 2.2 **Additional benefits.** The Company will also provide: **[e.g. continued
 health-premium contributions for [NUMBER] months, outplacement services, prorated
-bonus — LIST OR "None"]**.
+bonus, LIST OR "None"]**.
 
 2.3 **Adequate consideration.** The Employee acknowledges that the severance
 benefits are good and valuable consideration that the Employee is not otherwise

@@ -248,7 +248,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Licensed Patents and Deal Terms
+### Exhibit A, Licensed Patents and Deal Terms
 
 - **Licensed Patents (number, title, jurisdiction, status):** **[LIST]**
 - **Field of Use:** **[DESCRIBE]**
@@ -256,7 +256,7 @@ Effective Date.
 - **Exclusivity:** **[EXCLUSIVE / NON-EXCLUSIVE]**
 - **Enforcement control and recovery split:** **[DESCRIBE]**
 
-### Exhibit B — Royalty Calculation
+### Exhibit B, Royalty Calculation
 
 - **Royalty rate:** **[PERCENTAGE]**
 - **Net Sales deductions allowed:** **[LIST]**

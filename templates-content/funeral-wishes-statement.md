@@ -71,7 +71,7 @@ honored to the fullest extent the law allows.
 
 3.1 **My preference.** I prefer the following method for the disposition of my
 remains: **[BURIAL / CREMATION / GREEN OR NATURAL BURIAL / ENTOMBMENT / DONATION
-TO SCIENCE / OTHER — SPECIFY]**.
+TO SCIENCE / OTHER, SPECIFY]**.
 
 3.2 **Burial details (if applicable).** If I am buried, I would like to be buried
 at **[CEMETERY NAME AND LOCATION]**, in plot **[PLOT / SPACE, if known]**. I
@@ -132,7 +132,7 @@ prepaid or preneed funeral contract. If I have, it is with **[PROVIDER]** and th
 documents are located at **[LOCATION]**.
 
 6.2 **Insurance and funds.** Funds that may be available to cover costs include:
-**[FINAL EXPENSE / LIFE INSURANCE / PAYABLE-ON-DEATH ACCOUNT / SAVINGS —
+**[FINAL EXPENSE / LIFE INSURANCE / PAYABLE-ON-DEATH ACCOUNT / SAVINGS, 
 SPECIFY]**, with details located at **[LOCATION]**.
 
 6.3 **Budget guidance.** I would like the arrangements to be **[modest / moderate

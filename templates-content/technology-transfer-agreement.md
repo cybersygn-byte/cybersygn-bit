@@ -257,7 +257,7 @@ Effective Date.
 
 ---
 
-### Exhibit A — Technology, Licensed IP, and Improvements
+### Exhibit A, Technology, Licensed IP, and Improvements
 
 - **Description of the Technology:** **[DESCRIBE]**
 - **Technical Information and materials to be transferred:** **[LIST]**
@@ -265,13 +265,13 @@ Effective Date.
 - **Field of Use and Territory:** **[DESCRIBE]**
 - **Improvements cross-license terms:** **[DESCRIBE]**
 
-### Exhibit B — Transfer Plan, Assistance, and Acceptance
+### Exhibit B, Transfer Plan, Assistance, and Acceptance
 
 - **Delivery milestones and formats:** **[DESCRIBE]**
 - **Training and technical assistance:** **[DESCRIBE]**
 - **Acceptance criteria and period:** **[DESCRIBE]**
 
-### Exhibit C — Fees and Rates
+### Exhibit C, Fees and Rates
 
 - **Transfer fee and schedule:** **[DESCRIBE]**
 - **Royalty rate and basis:** **[DESCRIBE]**

@@ -50,14 +50,14 @@ drawings, reports, specifications, and other documents prepared under this Agree
 (the "**Deliverables**" or "**Instruments of Service**"), which Engineer will sign
 and seal to the extent required by law.
 
-1.4 **Phasing.** Where applicable, the Services proceed in phases — for example,
-preliminary engineering, detailed design, and construction-phase support — as set
+1.4 **Phasing.** Where applicable, the Services proceed in phases, for example,
+preliminary engineering, detailed design, and construction-phase support, as set
 out in Exhibit A. Engineer is not obligated to begin a later phase until Client
 approves the prior phase in writing and pays amounts then due.
 
-1.5 **Additional services.** Services beyond those in Exhibit A — including redesign
+1.5 **Additional services.** Services beyond those in Exhibit A, including redesign
 caused by a change in Client's program, services made necessary by inaccurate
-information furnished to Engineer, or expert testimony — are "**Additional
+information furnished to Engineer, or expert testimony, are "**Additional
 Services**" compensated under Section 3.4 only when authorized in writing before
 performance.
 
@@ -210,7 +210,7 @@ the exclusive jurisdiction of the state and federal courts located in
 9.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion and, if unresolved within
 **[NUMBER]** days, through mediation with a mutually agreed mediator, the cost shared
-equally. **[OPTIONAL: binding arbitration — discuss with counsel.]**
+equally. **[OPTIONAL: binding arbitration, discuss with counsel.]**
 
 9.4 **Independent contractor.** Engineer is an independent contractor. Nothing
 creates a partnership, joint venture, or employment relationship.

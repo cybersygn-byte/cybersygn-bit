@@ -30,7 +30,7 @@ promises below, the Parties agree as follows.
 ## 1. The Tour
 
 1.1 **Tour.** "**Tour**" means the series of live performances by Artist titled
-**"[TOUR NAME]"** at the dates, cities, and venues listed in **[EXHIBIT A — the tour
+**"[TOUR NAME]"** at the dates, cities, and venues listed in **[EXHIBIT A, the tour
 routing]**, comprising approximately **[NUMBER]** shows between **[START DATE]** and
 **[END DATE]**.
 
@@ -66,8 +66,8 @@ Promoter will make settlement records available for Artist's reasonable inspecti
 of presenting a show (venue rent, local production, marketing, ticketing fees, and
 similar). Allocation of Show Expenses and any profit split are set in **[EXHIBIT B]**.
 
-2.5 **Tour costs.** Responsibility for tour-wide costs — transportation, lodging,
-crew, equipment rental, and per diems — is allocated as set out in **[EXHIBIT B]**.
+2.5 **Tour costs.** Responsibility for tour-wide costs, transportation, lodging,
+crew, equipment rental, and per diems, is allocated as set out in **[EXHIBIT B]**.
 
 2.6 **Late payment.** Undisputed amounts not paid when due accrue interest at the
 lesser of **[e.g. 1.5%]** per month or the maximum rate permitted by applicable law.
@@ -151,8 +151,8 @@ recordings of its performances.
 7.2 **Merchandise.** Artist (or its designee) controls the sale of Artist merchandise
 at shows. Any venue merchandising fee or hall-fee split is set in **[EXHIBIT B]**.
 
-7.3 **Reservation.** All rights not expressly granted — including recording, streaming,
-publishing, and merchandising rights — are reserved to Artist.
+7.3 **Reservation.** All rights not expressly granted, including recording, streaming,
+publishing, and merchandising rights, are reserved to Artist.
 
 ## 8. Term, Termination, and Default
 

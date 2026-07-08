@@ -20,9 +20,9 @@ custom-domain:sign.theirfirm.com → { senderId, addedAt, verifiedAt }
 ```
 
 **Endpoint stubs (not yet wired):**
-- POST `/api/sender/:id/custom-domain` — add a domain
-- GET  `/api/sender/:id/custom-domain` — list configured
-- DELETE `/api/sender/:id/custom-domain/:host` — remove
+- POST `/api/sender/:id/custom-domain`, add a domain
+- GET  `/api/sender/:id/custom-domain`, list configured
+- DELETE `/api/sender/:id/custom-domain/:host`, remove
 
 ## 2. Templates marketplace
 
@@ -68,7 +68,7 @@ agency:<agencyId> → { name, members[], hideViralFooter: true, ... }
 - Google + Microsoft OAuth via Cloudflare Workers OAuth helper or raw OAuth flow.
 - Customer enters their Workspace domain → we redirect to Google with `hd=<domain>` parameter.
 - Returning users skip the magic-link email; their email is verified via OIDC instead.
-- Existing senderId-localStorage model degrades gracefully — SSO returns the same senderId.
+- Existing senderId-localStorage model degrades gracefully, SSO returns the same senderId.
 
 **Library:** `cloudflare-oauth` or hand-rolled with PKCE.
 
@@ -80,11 +80,11 @@ agency:<agencyId> → { name, members[], hideViralFooter: true, ... }
 
 **Approach:**
 - When a sender uploads a contract they've sent before (matching SHA-256), check the historical signer list and pre-fill the signers panel.
-- For first-time uploads, run a Vision pass: "this looks like the kind of contract usually signed by [client + lawyer + witness] — should I add those slots?"
+- For first-time uploads, run a Vision pass: "this looks like the kind of contract usually signed by [client + lawyer + witness], should I add those slots?"
 - LLM call is expensive (~$0.01 per analysis); gate by tier and by usage cap.
 
 **Endpoints (stubbed):**
-- POST `/api/detect-signers` — accepts PDF, returns suggested signer roles + counts
+- POST `/api/detect-signers`, accepts PDF, returns suggested signer roles + counts
 - Backs to `worker/src/vision.js` with a different prompt template
 
 ---

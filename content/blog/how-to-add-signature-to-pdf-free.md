@@ -6,19 +6,19 @@ author: Nathan Vogt
 slug: how-to-add-signature-to-pdf-free
 ---
 
-If you just need to sign a PDF — once, today, for free — here are the four fastest paths. No subscription required.
+If you just need to sign a PDF, once, today, for free, here are the four fastest paths. No subscription required.
 
 ## Path 1: Use CyberSygn's free tier (recommended)
 
 1. Go to **cybersygn.io/preview/**.
 2. Drag a PDF onto the page, or click to select one.
-3. Watch the signature line appear automatically — usually about three seconds.
+3. Watch the signature line appear automatically, usually about three seconds.
 4. Click the signature box and either type your name, upload a PNG of your signature, or draw with your mouse.
 5. Click **Download PDF**. The signed file goes straight to your downloads folder.
 
 Time: about 90 seconds.
 
-This works for any PDF, even ones with multiple signature lines, initials, dates, or checkboxes. The free tier gives you three documents lifetime — enough to evaluate seriously.
+This works for any PDF, even ones with multiple signature lines, initials, dates, or checkboxes. The free tier gives you three documents lifetime, enough to evaluate seriously.
 
 ## Path 2: macOS Preview (Mac only)
 
@@ -66,6 +66,6 @@ The macOS Preview equivalent on iPhone is to open the PDF in **Files → Markup 
 
 If you're signing more than 3 documents a month, the math changes. CyberSygn Origin tier is **$9/month locked for life** (first 100 founders only). At that rate, the time savings from automatic field detection covers the cost in the first contract.
 
-Compare to DocuSign Personal at $25/month for 5 documents/month — that's $5 per signature, which adds up.
+Compare to DocuSign Personal at $25/month for 5 documents/month, that's $5 per signature, which adds up.
 
-[Try the demo](/preview/) — drop a PDF, see how fast field detection actually is.
+[Try the demo](/preview/), drop a PDF, see how fast field detection actually is.

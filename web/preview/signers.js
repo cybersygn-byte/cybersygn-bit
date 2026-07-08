@@ -301,9 +301,9 @@ export function initialsFor(name) {
   // ("YO" from "You", "AL" from "Alex") read like duplicates next to
   // the name field on the signer card. Two-word names get the
   // conventional first-last initials.
-  if (!name) return '—';
+  if (!name) return ', ';
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '—';
+  if (parts.length === 0) return ', ';
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }

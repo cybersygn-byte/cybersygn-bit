@@ -123,8 +123,8 @@ support described in Section 5.
 the Guardian for the Ward's support, payable by **[METHOD]** on **[SCHEDULE]**.
 
 5.2 **Additional expenses.** The Parties will share, or the Parent will reimburse,
-the Ward's reasonable additional expenses — including medical, educational, and
-extracurricular costs — as follows: **[ALLOCATION]**.
+the Ward's reasonable additional expenses, including medical, educational, and
+extracurricular costs, as follows: **[ALLOCATION]**.
 
 5.3 **Insurance and benefits.** **[PARTY]** will maintain health insurance for the
 Ward. The Parties will cooperate to ensure the Ward continues to receive any

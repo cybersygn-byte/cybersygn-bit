@@ -184,7 +184,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 9.2 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through senior-level discussion within **[NUMBER]**
-days of written notice. **[OPTIONAL: arbitration clause — discuss with counsel.]**
+days of written notice. **[OPTIONAL: arbitration clause, discuss with counsel.]**
 
 9.3 **Specific performance.** The Parties agree that money damages may be
 inadequate for a breach of the transfer and voting provisions, and that the

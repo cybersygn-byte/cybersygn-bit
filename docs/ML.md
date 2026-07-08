@@ -1,4 +1,4 @@
-# Phase 3 ML — strategic deferral, with explicit trigger
+# Phase 3 ML, strategic deferral, with explicit trigger
 
 This document is the official record of the CyberSygn ML decision. If you (or a future AI session) are wondering "should we build the ML pipeline now?", the answer is below.
 
@@ -11,13 +11,13 @@ Until that threshold is crossed, the production detection stack stays exactly wh
 1. **Heuristic detection** (`worker/src/detect.js`): text-pattern signature-line detection. 37 of 37 real-world PDFs at 100%, 10 of 10 synthetic at 100%.
 2. **Claude Vision API** (`worker/src/vision.js`): opt-in escalation for hard pages. ~$0.01 per page, per-sender monthly cap, off by default.
 
-These two together cover the cases we see today. Adding a custom CV model on top would be slower to ship, more expensive to operate, and harder to debug — for marginal accuracy gain we can't yet measure.
+These two together cover the cases we see today. Adding a custom CV model on top would be slower to ship, more expensive to operate, and harder to debug, for marginal accuracy gain we can't yet measure.
 
 ## Why 5,000 examples
 
 It's the threshold where supervised fine-tuning of a vision-language model starts to outperform a hand-tuned heuristic + foundation-model fallback. Below that, the model overfits to whichever PDFs happened to enter the corpus first. Above that, the per-call cost and latency of a fine-tuned model become competitive with what we're paying Claude.
 
-The number isn't arbitrary — it's the floor at which the math shifts. Below 5k, the right answer is "keep paying for vision." Above 5k, the right answer is "train and serve our own."
+The number isn't arbitrary, it's the floor at which the math shifts. Below 5k, the right answer is "keep paying for vision." Above 5k, the right answer is "train and serve our own."
 
 ## How we know when we hit it
 
@@ -27,7 +27,7 @@ Three independent signals:
 
 2. **GET /api/owner/dataset/stats** (any time, owner token required). Returns the same `trainingReadiness` payload as the monthly report.
 
-3. **Threshold-crossed alert** (one-shot). When the corpus crosses the threshold mid-month — even just once — a dedicated email fires immediately so we don't miss the moment by waiting for the next report. The alert is idempotent: once sent, it does not re-fire even if the count dips and recovers.
+3. **Threshold-crossed alert** (one-shot). When the corpus crosses the threshold mid-month, even just once, a dedicated email fires immediately so we don't miss the moment by waiting for the next report. The alert is idempotent: once sent, it does not re-fire even if the count dips and recovers.
 
 ## What we do when the trigger fires
 
@@ -54,7 +54,7 @@ The deferral is conditional. If any of these hit, revisit before the 5k trigger:
 ## What this means for the present
 
 - **Stop debating ML in chat**. The decision is documented. Future asks of "should we build the model?" route to this file.
-- **Marketing copy stays honest**: "text-pattern heuristics + Claude Vision on opt-in" — exactly what we ship today. No claims of custom ML.
+- **Marketing copy stays honest**: "text-pattern heuristics + Claude Vision on opt-in", exactly what we ship today. No claims of custom ML.
 - **The dataset endpoint stays maintained**: `/api/owner/dataset/export` is the eventual training input, not a dead feature.
 
 CONSTITUTION 1.3 ("push back when scope is wrong") and 1.7 ("truth before completion") both honored: we're not building infrastructure we can't use, and we're not claiming capability we don't have.

@@ -31,13 +31,13 @@ which vary by jurisdiction and which the Provider will follow.
 ## 1. Limited Scope of Services
 
 1.1 **Included tasks.** The Provider will perform only the following specific tasks
-(the "**Included Services**): **[LIST THE EXACT TASKS — e.g., review and revise the
+(the "**Included Services**): **[LIST THE EXACT TASKS, e.g., review and revise the
 draft [DOCUMENT]; advise on [SPECIFIC QUESTION]; prepare [SPECIFIC FILING];
 attend [SPECIFIC MEETING OR HEARING]].**
 
 1.2 **Excluded tasks.** The Provider will NOT perform any task that is not listed in
 Section 1.1. Without limiting the foregoing, the engagement does not include
-**[LIST KEY EXCLUSIONS — e.g., ongoing representation, follow-up after the Included
+**[LIST KEY EXCLUSIONS, e.g., ongoing representation, follow-up after the Included
 Services are delivered, court appearances, deadline monitoring, or any matter not
 listed]**. The Client is solely responsible for all excluded tasks.
 
@@ -168,7 +168,7 @@ STATE]**.
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good faith
 to resolve any dispute through discussion within **[NUMBER]** days of written notice.
-**[OPTIONAL: mediation or arbitration clause — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration clause, discuss with counsel.]**
 
 8.4 **Notices.** Notices must be in writing and sent to the addresses above (or as
 updated in writing) and are effective on receipt.

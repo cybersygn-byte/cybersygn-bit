@@ -2,15 +2,15 @@
 /**
  * Build the CyberSygn template catalog spine.
  *
- * Emits scripts/templates-catalog.json — the master list of every template
+ * Emits scripts/templates-catalog.json, the master list of every template
  * CyberSygn will author and own. The catalog holds metadata only
  * (slug, title, category, subtitle, sensitivity). The full clause-by-clause
  * body of each template is authored separately into templates-content/<slug>.md
  * at the gold-standard bar (see templates-content/master-services-agreement.md).
  *
  * sensitivity:
- *   'normal' — routine commercial/personal doc, standard attorney-review framing
- *   'high'   — touches wills, health, custody, securities, or rights that vary
+ *   'normal', routine commercial/personal doc, standard attorney-review framing
+ *   'high', touches wills, health, custody, securities, or rights that vary
  *              heavily by jurisdiction; gets stronger "strongly recommend an
  *              attorney" framing on top of the standard disclaimer
  *

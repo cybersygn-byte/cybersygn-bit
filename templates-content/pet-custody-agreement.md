@@ -96,8 +96,8 @@ or boarding facility used.
 
 ## 4. Expenses
 
-4.1 **Routine expenses.** The Parties will share the Pet's routine expenses —
-including food, licensing, preventive care, grooming, and supplies — as follows:
+4.1 **Routine expenses.** The Parties will share the Pet's routine expenses, 
+including food, licensing, preventive care, grooming, and supplies, as follows:
 **[ALLOCATION, e.g. equally / Party A 60% / each pays during own possession]**.
 
 4.2 **Major expenses.** Major or unexpected expenses, such as surgery or

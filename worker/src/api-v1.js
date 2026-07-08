@@ -17,9 +17,9 @@
  * senderId; every document is created and read as that account, so plan limits,
  * branding, and webhook config all apply. Completion events are delivered via
  * the account's existing webhook config (doc.created / signer.completed /
- * doc.completed) — configure it in the dashboard or via the worker webhook API.
+ * doc.completed), configure it in the dashboard or via the worker webhook API.
  *
- * This module owns NO storage schema of its own — it composes the existing
+ * This module owns NO storage schema of its own, it composes the existing
  * doc/signing/detection/template machinery, injected as `deps` from index.js
  * so there is one source of truth for how a document is created and served.
  */
@@ -343,7 +343,7 @@ async function provisionTenantKey(request, env, auth) {
     account: senderId,
     unmetered: true,
     created_at: made.createdAt,
-    warning: 'Store this key now — it is shown only once.',
+    warning: 'Store this key now, it is shown only once.',
   });
 }
 

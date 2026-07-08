@@ -29,7 +29,7 @@ the payment described below, the Parties agree as follows.
 
 1.1 **Property sold.** The Seller sells, transfers, and conveys to the Buyer the
 following personal property (the "**Property**): **[DESCRIBE THE ITEM(S) IN
-DETAIL — make, model, year, serial or VIN, color, condition, quantity, and any
+DETAIL, make, model, year, serial or VIN, color, condition, quantity, and any
 identifying marks]**.
 
 1.2 **Included items.** The sale includes the following accessories or related
@@ -152,7 +152,7 @@ the amount of **[$ AMOUNT]** on **[DATE]**.
 
 Seller signature: __________________________  Date: ________
 
-**[OPTIONAL — Notary acknowledgment. Some jurisdictions require notarization for
+**[OPTIONAL, Notary acknowledgment. Some jurisdictions require notarization for
 certain transfers, such as vehicles. Add the notary block your jurisdiction uses
 if applicable.]**
 

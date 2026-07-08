@@ -92,7 +92,7 @@ const COMPETITORS = [
     fieldPlacement: 'Manual drag-and-drop in Acrobat',
     auditCert: 'Included in higher tiers',
     freeTier: '7-day trial only',
-    weakness: 'Lives inside Acrobat Pro. If you don\'t need the full Acrobat editing suite, you\'re paying for a lot you won\'t use. Field placement is the same drag-and-drop as Adobe Sign — they\'re the same product.',
+    weakness: 'Lives inside Acrobat Pro. If you don\'t need the full Acrobat editing suite, you\'re paying for a lot you won\'t use. Field placement is the same drag-and-drop as Adobe Sign, they\'re the same product.',
     keyword: 'Acrobat Sign alternative, Adobe Sign alternative',
   },
   {
@@ -106,7 +106,7 @@ const COMPETITORS = [
     fieldPlacement: 'Manual drag-and-drop with template library',
     auditCert: 'Included',
     freeTier: '3 documents/month',
-    weakness: 'Modern UI, transparent pricing. The detection step is missing — same drag-and-drop wall as the others. SignWell\'s receivers also have to create accounts, which is the universal complaint about DocuSign-style flows.',
+    weakness: 'Modern UI, transparent pricing. The detection step is missing, same drag-and-drop wall as the others. SignWell\'s receivers also have to create accounts, which is the universal complaint about DocuSign-style flows.',
     keyword: 'SignWell alternative, DocSketch alternative',
   },
 ];
@@ -175,7 +175,7 @@ function renderPage(c) {
       },
       {
         "@type": "Article",
-        "headline": ${JSON.stringify(`CyberSygn vs ${c.name} — side-by-side comparison`)},
+        "headline": ${JSON.stringify(`CyberSygn vs ${c.name}, side-by-side comparison`)},
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
         "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
@@ -248,7 +248,7 @@ function renderPage(c) {
             <h2 class="h-section section__title">Pick the one that <em>respects your time.</em></h2>
           </div>
           <p class="lede section__lede">
-            CyberSygn is the wedge — built around automatic field detection. ${esc(c.name)} sits in
+            CyberSygn is the wedge, built around automatic field detection. ${esc(c.name)} sits in
             the same incumbents' category that all the dragging-boxes tools share.
           </p>
         </header>
@@ -335,7 +335,7 @@ function renderPage(c) {
             </h2>
           </div>
           <p class="lede section__lede">
-            Past signed PDFs from ${esc(c.name)} keep their legal weight — they're signed bytes, the
+            Past signed PDFs from ${esc(c.name)} keep their legal weight, they're signed bytes, the
             audit attached to the document, not to the platform. Your new contracts run through
             CyberSygn from now on, faster and cheaper.
           </p>

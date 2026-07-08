@@ -4,7 +4,7 @@
  * Why server-side: lets us keep the analytics IDs out of the static
  * source tree (they're secrets in wrangler) and toggle them per-env
  * without rebuilds. HTMLRewriter is Cloudflare's streaming HTML parser
- * — zero-copy, runs at the edge.
+ *, zero-copy, runs at the edge.
  *
  * Two integrations:
  *
@@ -19,7 +19,7 @@
  *
  * Privacy: GA4 is loaded with anonymize_ip and respects do_not_track.
  * No PII is sent. We do NOT inject the script on /preview/ pages while
- * a doc is loaded — that surface handles its own internal telemetry.
+ * a doc is loaded, that surface handles its own internal telemetry.
  */
 
 const NO_INJECT_PATHS = [
@@ -37,7 +37,7 @@ export function maybeInjectAnalytics(response, env) {
   const gsc = env && typeof env.CYBERSYGN_GSC_TOKEN === 'string' ? env.CYBERSYGN_GSC_TOKEN.trim() : '';
   if (!ga4 && !gsc) return response;
 
-  // Path-based opt-out — keep PDF-handling routes out of analytics.
+  // Path-based opt-out, keep PDF-handling routes out of analytics.
   try {
     const url = new URL(response.url || 'https://cybersygn.io/');
     if (NO_INJECT_PATHS.some(p => url.pathname.startsWith(p))) return response;

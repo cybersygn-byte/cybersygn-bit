@@ -69,4 +69,4 @@ That's the entire useful feature set. Everything else is enterprise theater.
 
 CyberSygn does these five things. Origin tier is $9/month locked for life if you're one of the first 100 founders.
 
-[Try the demo](/preview/) — drop any PDF, three free signs, lifetime, no card.
+[Try the demo](/preview/), drop any PDF, three free signs, lifetime, no card.

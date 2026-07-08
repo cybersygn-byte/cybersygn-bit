@@ -103,7 +103,7 @@ law, from the due date until paid. Coach may suspend Services on **[NUMBER]**
 days' written notice if an undisputed amount remains unpaid.
 
 4.4 **Refunds.** Except as required by applicable consumer-protection law,
-**[REFUND POLICY — e.g. fees are non-refundable once the coaching term begins, or
+**[REFUND POLICY, e.g. fees are non-refundable once the coaching term begins, or
 a pro-rata refund applies for unused, unscheduled sessions]**.
 
 ## 5. Cancellation, Rescheduling, and No-Shows
@@ -175,7 +175,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice of the dispute. **[OPTIONAL: mediation or arbitration clause —
+written notice of the dispute. **[OPTIONAL: mediation or arbitration clause, 
 discuss with counsel.]**
 
 8.4 **Notices.** Notices must be in writing and sent to the addresses above (or as

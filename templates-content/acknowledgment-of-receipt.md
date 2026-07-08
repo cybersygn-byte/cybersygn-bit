@@ -45,7 +45,7 @@ authority to sign this Acknowledgment on behalf of the Party for whom they sign.
 ## 2. Description of the Received Items
 
 2.1 **Items received.** The Recipient acknowledges receiving the following:
-**[DESCRIBE EACH ITEM — quantity, model, serial or VIN, document title, amount of
+**[DESCRIBE EACH ITEM, quantity, model, serial or VIN, document title, amount of
 funds, or attach Exhibit A with an itemized list]**.
 
 2.2 **Date and place of receipt.** The Received Items were received on
@@ -62,8 +62,8 @@ reference **[NUMBER]**.
 ## 3. Condition of the Received Items
 
 3.1 **Condition at receipt.** The Recipient acknowledges that the Received Items
-were received in the following condition: **[NEW / USED — GOOD CONDITION /
-DAMAGED AS NOTED / NOT INSPECTED — SEE SECTION 3.3]**.
+were received in the following condition: **[NEW / USED, GOOD CONDITION /
+DAMAGED AS NOTED / NOT INSPECTED, SEE SECTION 3.3]**.
 
 3.2 **Exceptions and damage.** The Recipient notes the following exceptions,
 shortages, or visible damage at the time of receipt: **[LIST EXCEPTIONS OR
@@ -93,7 +93,7 @@ full force.
 
 4.3 **Acceptance (optional).** If the Parties intend this Acknowledgment to also
 constitute acceptance of the Received Items, the following applies:
-**[STRIKE IF NOT APPLICABLE — "The Recipient accepts the Received Items as
+**[STRIKE IF NOT APPLICABLE, "The Recipient accepts the Received Items as
 conforming to the requirements of the Underlying Matter, subject to the
 exceptions noted in Section 3.2."]**.
 

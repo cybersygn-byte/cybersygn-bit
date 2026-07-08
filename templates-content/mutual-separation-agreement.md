@@ -115,7 +115,7 @@ Employee's fraud, theft, or willful misconduct.
 4.3 **Waiver of unknown claims.** To the extent permitted by applicable law, each
 Party waives any statutory or common-law protection that would otherwise preserve
 claims unknown to that Party at the time of release. **[Some jurisdictions require
-specific language to waive unknown claims — confirm with counsel.]**
+specific language to waive unknown claims, confirm with counsel.]**
 
 4.4 **Excluded Claims.** This release does not waive: (a) claims that cannot be
 released as a matter of law; (b) the right to enforce this Agreement; (c) vested
@@ -160,7 +160,7 @@ investigating a suspected violation of law, or in a sealed court filing.
 attorney before signing. The Employee has **[NUMBER, e.g. 21]** days from receipt
 to consider this Agreement and may sign before that period ends if the Employee
 chooses. **[Time periods for review and revocation are set by applicable law and
-the Employee's age — confirm with counsel.]**
+the Employee's age, confirm with counsel.]**
 
 7.2 **Revocation.** The Employee may revoke this Agreement within **[NUMBER, e.g.
 7]** days after signing by delivering written notice of revocation to **[CONTACT

@@ -82,7 +82,7 @@ Carrier's acceptance of the Goods at pickup and passes back to Shipper or the
 consignee upon delivery and acceptance at the destination, except to the extent a
 loss results from Carrier's negligence or breach. The Parties may modify this
 allocation in a Delivery Order using recognized delivery terms (for example,
-**[FOB / EXW / DAP — confirm meaning with counsel]**).
+**[FOB / EXW / DAP, confirm meaning with counsel]**).
 
 3.3 **Title.** This Agreement does not transfer title to the Goods. Carrier
 acquires no ownership interest in the Goods and holds them solely as a transporter

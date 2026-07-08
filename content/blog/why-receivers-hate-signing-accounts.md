@@ -14,11 +14,11 @@ This isn't a one-off complaint. It's the universal receiver experience.
 
 You sent them a contract. They were going to sign it in 90 seconds. They open your DocuSign email and see:
 
-1. **"Create a DocuSign account"** — wait, why?
-2. **Verify your email** — okay, fine, click the link.
-3. **Set a password** — and the password requirements are different from their password manager's default.
-4. **Two-factor enrollment** — nope, hard pass, they're going to close the tab.
-5. **Actually open the document** — and now drag-and-place their signature like they're learning Photoshop.
+1. **"Create a DocuSign account"**, wait, why?
+2. **Verify your email**, okay, fine, click the link.
+3. **Set a password**, and the password requirements are different from their password manager's default.
+4. **Two-factor enrollment**, nope, hard pass, they're going to close the tab.
+5. **Actually open the document**, and now drag-and-place their signature like they're learning Photoshop.
 
 What started as a 90-second favor became a 10-minute account-creation chore. Some percentage of receivers just don't finish. You're back to chasing them down on Slack three days later.
 
@@ -30,7 +30,7 @@ This is good business for DocuSign. It's bad business for you.
 
 ## What "no account required" actually means
 
-CyberSygn sends your receiver a unique magic link. They click it. They see the document. They draw their signature in the browser. They click submit. Done — about 30 seconds.
+CyberSygn sends your receiver a unique magic link. They click it. They see the document. They draw their signature in the browser. They click submit. Done, about 30 seconds.
 
 The link is:
 

@@ -74,7 +74,7 @@ Production.
 
 3.1 **Media.** The license covers the following media (the "**Media**"): **[e.g.
 theatrical, broadcast television, streaming/VOD, online/social, festival, in-context
-promotion, and home video — list those that apply]**. Uses outside the listed Media
+promotion, and home video, list those that apply]**. Uses outside the listed Media
 require a separate license or a written amendment.
 
 3.2 **Territory.** The "**Territory**" is **[e.g. the United States / worldwide /

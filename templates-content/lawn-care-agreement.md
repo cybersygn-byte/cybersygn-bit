@@ -175,7 +175,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 8.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 8.4 **Assignment.** Neither Party may assign this Agreement without the other's
 prior written consent, except Provider may assign to a successor in connection

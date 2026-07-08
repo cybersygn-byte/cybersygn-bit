@@ -38,7 +38,7 @@ death, so that my Will or Trust can give effect to those wishes without listing
 each item in the governing document itself.
 
 1.2 **Tangible personal property only.** This Memorandum covers only **tangible
-personal property** — physical, movable items such as jewelry, furniture,
+personal property**, physical, movable items such as jewelry, furniture,
 artwork, collections, tools, vehicles, household goods, and keepsakes. It does
 **not** cover money, bank or investment accounts, securities, business interests,
 real estate, intellectual property, or items used primarily in a trade or
@@ -86,7 +86,7 @@ reference, serial number, or location.
 | 4 | **[ITEM DESCRIPTION]** | **[NAME]** | **[RELATIONSHIP]** | **[ALTERNATE]** |
 | 5 | **[ITEM DESCRIPTION]** | **[NAME]** | **[RELATIONSHIP]** | **[ALTERNATE]** |
 
-*(Add or remove rows as needed. Keep descriptions specific — for example, "my
+*(Add or remove rows as needed. Keep descriptions specific, for example, "my
 grandmother's diamond engagement ring with the engraving 'M to E, 1948'" rather
 than "a ring.")*
 

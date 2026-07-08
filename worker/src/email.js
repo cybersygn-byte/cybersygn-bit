@@ -56,7 +56,7 @@ export async function sendCompletion(env, { to, name, docTitle, downloadUrl, aud
   // below the download link so it never competes with the primary action.
   const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
   const selfSendUrl = `${appUrl.replace(/\/+$/, '')}/?src=signer-viral`;
-  // `notice: true` means this recipient was CC'd by the sender — they
+  // `notice: true` means this recipient was CC'd by the sender, they
   // didn't sign anything, they're notice-only. Copy adjusts to make
   // that distinction clear so the CC doesn't think someone forged their
   // signature on a document they never saw before.
@@ -132,7 +132,7 @@ export async function sendReminder(env, { to, name, docTitle, magicLink, senderN
 
 /**
  * Notify the sender that a signer has declined to sign. Plain text +
- * optional reason; no signing link (nothing to nudge them with — the
+ * optional reason; no signing link (nothing to nudge them with, the
  * sender has to issue a fresh doc to a different signer).
  */
 export async function deliverDeclineNotice(env, { to, senderName, signerName, signerEmail, docTitle, reason, dashUrl }) {
@@ -181,14 +181,14 @@ export async function deliverSnapshot(env, { to, senderName, senderEmailDisplay,
 }
 
 /**
- * Drip day 1 — welcome + activation nudge.
+ * Drip day 1, welcome + activation nudge.
  * Sent 24 hours after free signup. No selling, pure value: show the
  * one thing they need to do first to unlock the magic moment. The
  * reciprocity primer for later asks.
  */
 export async function sendDripDay1(env, { to, name, appUrl }) {
   const url = appUrl || 'https://cybersygn.io';
-  const subject = `${name || 'Welcome'} — your first contract in 3 seconds.`;
+  const subject = `${name || 'Welcome'}, your first contract in 3 seconds.`;
   const text = [
     `${name || 'Hello'},`,
     '',
@@ -212,9 +212,9 @@ export async function sendDripDay1(env, { to, name, appUrl }) {
 }
 
 /**
- * Drip day 3 — templates tip. The lock-in mechanic.
+ * Drip day 3, templates tip. The lock-in mechanic.
  * Sent 72 hours after signup. The user has probably tried the product
- * once by now. Teach them the lock-in feature (templates) — it gives
+ * once by now. Teach them the lock-in feature (templates), it gives
  * them a reason to come back, and creates switching cost over time.
  */
 export async function sendDripDay3(env, { to, name, appUrl }) {
@@ -223,8 +223,8 @@ export async function sendDripDay3(env, { to, name, appUrl }) {
   const text = [
     `${name || 'Hello'},`,
     '',
-    'If you sign the same kind of contract every week — NDAs, intake forms,',
-    'invoices, vendor agreements, retainers — there is a tip that pays for',
+    'If you sign the same kind of contract every week, NDAs, intake forms,',
+    'invoices, vendor agreements, retainers, there is a tip that pays for',
     'itself the second time you upload one.',
     '',
     'After CyberSygn detects the fields, click "Save as template" in the',
@@ -245,7 +245,7 @@ export async function sendDripDay3(env, { to, name, appUrl }) {
 }
 
 /**
- * Drip day 7 — conversion ask.
+ * Drip day 7, conversion ask.
  * Sent 168 hours after signup. By now they have seen the product, used
  * it, maybe saved a template. They know what they are choosing between.
  * Origin is the FOMO play; Solo is the soft-sell secondary.
@@ -289,12 +289,12 @@ export async function sendDripDay7(env, { to, name, appUrl }) {
  * the foundingNumber gets assigned (via Stripe webhook). Calibrated to
  * the magnitude of what just happened: someone made a 5-year+ economic
  * commitment to the product. The email should feel earned, personal,
- * and confident — not promotional.
+ * and confident, not promotional.
  */
 export async function sendOriginWelcome(env, { to, name, foundingNumber, appUrl }) {
   const url = appUrl || 'https://cybersygn.io';
   const numLabel = String(foundingNumber).padStart(3, '0');
-  const subject = `Welcome to the Origin — you are #${numLabel}.`;
+  const subject = `Welcome to the Origin, you are #${numLabel}.`;
   const text = [
     `${name || 'Hello'},`,
     '',
@@ -307,13 +307,13 @@ export async function sendOriginWelcome(env, { to, name, foundingNumber, appUrl 
     'Two things to do in the next minute, if you want them:',
     '',
     `1. Open your dashboard at ${url}/dashboard/ and find the Origin card.`,
-    '   You can set how your name and city appear on the wall — or leave it',
+    '   You can set how your name and city appear on the wall, or leave it',
     '   minimal. Whatever you prefer.',
     '',
     `2. Reply to this email and tell me what you sign and how often. Even one`,
     '   sentence helps me build the product around your actual use case.',
     '',
-    `Either way, you are set. Sign documents at ${url}/preview/ — unlimited,`,
+    `Either way, you are set. Sign documents at ${url}/preview/, unlimited,`,
     'no friction, no upsell. The product is yours now.',
     '',
     'Nathan',
@@ -345,7 +345,7 @@ export async function deliver(env, { to, subject, text, html, attachments }) {
   if (Array.isArray(attachments) && attachments.length > 0) {
     // Resend attachments shape: [{ filename, content }] where content is
     // a base64 string (their API decodes it server-side). Cap at 20 MB
-    // each — Resend's documented limit is 40 MB total per request and
+    // each, Resend's documented limit is 40 MB total per request and
     // single-attachment failures fall back to plain text.
     resendBody.attachments = attachments
       .filter(a => a && typeof a.filename === 'string' && typeof a.content === 'string')

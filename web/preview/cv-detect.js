@@ -28,7 +28,7 @@
  *
  * Safety: every loop has an explicit upper bound. Pixel reads are
  * try/catched; if getImageData throws (canvas tainted from cross-origin
- * draws — should not happen in our flow, but defensive), the detector
+ * draws, should not happen in our flow, but defensive), the detector
  * returns an empty array and logs.
  */
 

@@ -75,7 +75,7 @@ export function purchasableTiers(env) {
   return out;
 }
 
-// Cap for Lifetime tier — only the first N customers can claim it.
+// Cap for Lifetime tier, only the first N customers can claim it.
 export const LIFETIME_CAP = 50;
 
 // ---- Public API surface called from index.js ------------------------------
@@ -424,7 +424,7 @@ async function onCheckoutCompleted(env, session) {
   }
 
   // Affiliate attribution. Credit the conversion exactly once per
-  // (code, customer) pair. Done lazily — if the import fails for any
+  // (code, customer) pair. Done lazily, if the import fails for any
   // reason (cycle, missing module in test env), we don't block the
   // main subscription record write.
   if (ref) {
@@ -499,7 +499,7 @@ async function onCheckoutCompleted(env, session) {
   }
 
   // Lifetime ($299 one-time, capped at LIFETIME_CAP). One-time payment has no
-  // subscription to gate on, so idempotency rides a per-sender KV marker — webhook
+  // subscription to gate on, so idempotency rides a per-sender KV marker, webhook
   // retries / duplicate checkout.session.completed events must never double-count.
   // Without this the public "50 of 50 spots left" counter stays frozen at 0 and
   // the cap is unenforced (the counter + cap gate READ meta:lifetime-count, which
@@ -527,7 +527,7 @@ async function onCheckoutCompleted(env, session) {
   // Origin welcome email. Fires exactly once per founding number
   // assignment, gated by a KV marker so webhook retries don't dupe.
   // Failure of the email send doesn't block the rest of the checkout
-  // pipeline — webhook returns 200 either way.
+  // pipeline, webhook returns 200 either way.
   if (tier === 'founding' && typeof record.foundingNumber === 'number' && record.foundingNumber > 0) {
     try {
       await maybeSendOriginWelcome(env, {
@@ -548,7 +548,7 @@ async function onCheckoutCompleted(env, session) {
 /**
  * Send the welcome-to-Origin email exactly once per founding number.
  * Idempotency lives in a KV marker at meta:origin-welcomed:<senderId>
- * so webhook retries — or multiple checkout-completed events — never
+ * so webhook retries, or multiple checkout-completed events, never
  * dupe-send.
  *
  * Email destination resolution priority:
@@ -588,7 +588,7 @@ async function maybeSendOriginWelcome(env, { senderId, customerId, foundingNumbe
     appUrl,
   });
 
-  // Mark as sent regardless of Resend success — a retry on a real send
+  // Mark as sent regardless of Resend success, a retry on a real send
   // failure could spam, and the dashboard surfaces the Origin card
   // already so the member can still find their wall edit.
   await storage.put(markerKey, new Date().toISOString(), {

@@ -5,7 +5,7 @@
  * Walks every .js file under web/ and worker/src/ (excluding vendor/
  * and dist/) and runs `node --check` on each. Fails the build on any
  * SyntaxError so a parse-time regression can't reach production
- * silently — the way the slice-86 duplicate `escapeHtml` did before
+ * silently, the way the slice-86 duplicate `escapeHtml` did before
  * the audit caught it.
  *
  * Runs as the first step of `npm run build` and `npm run build:web`.
@@ -29,7 +29,7 @@ const ROOT = join(__dirname, '..');
 // Directories to scan, relative to ROOT.
 const SCAN_ROOTS = ['web', 'worker/src', 'scripts'];
 
-// Skip these — third-party code we don't author + build output.
+// Skip these, third-party code we don't author + build output.
 const SKIP_DIRS = new Set(['vendor', 'dist', 'node_modules', '.git', 'fonts']);
 
 // Skip files matching these patterns.
@@ -123,7 +123,7 @@ async function checkTemplatesLibrary() {
     if (templates.length !== pdfFiles.length) {
       errors.push(
         `templates-data.json has ${templates.length} templates but web/templates-pdf/ ` +
-        `has ${pdfFiles.length} PDFs — they must match`,
+        `has ${pdfFiles.length} PDFs, they must match`,
       );
     }
     if (templates.length !== 502) {
@@ -158,13 +158,13 @@ async function checkTemplatesLibrary() {
   }
 
   if (errors.length > 0) {
-    console.error('\n[smoke] FAIL — templates library integrity:');
+    console.error('\n[smoke] FAIL, templates library integrity:');
     for (const e of errors) console.error(`  - ${e}`);
     console.error('');
     process.exit(1);
   }
 
-  console.log(`[smoke] OK — templates library: ${templates.length} templates, ${pdfFiles.length} PDFs, zip present`);
+  console.log(`[smoke] OK, templates library: ${templates.length} templates, ${pdfFiles.length} PDFs, zip present`);
 }
 
 async function main() {
@@ -176,7 +176,7 @@ async function main() {
   }
 
   if (files.length === 0) {
-    console.warn('[smoke] no JS files found — that\'s suspicious');
+    console.warn('[smoke] no JS files found, that\'s suspicious');
     process.exit(2);
   }
 
@@ -195,7 +195,7 @@ async function main() {
 
   const failed = results.filter(r => !r.ok);
   if (failed.length > 0) {
-    console.error(`\n[smoke] FAIL — ${failed.length} of ${results.length} JS files have parse errors:\n`);
+    console.error(`\n[smoke] FAIL, ${failed.length} of ${results.length} JS files have parse errors:\n`);
     for (const r of failed) {
       // Trim node's verbose error output to the salient SyntaxError line.
       const lines = r.stderr.split('\n');
@@ -207,7 +207,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`[smoke] OK — ${results.length} JS files parse cleanly`);
+  console.log(`[smoke] OK, ${results.length} JS files parse cleanly`);
 
   // Templates library integrity (audit-blocker #3): assert the owned library is
   // present and internally consistent before build-web.js copies it into dist.

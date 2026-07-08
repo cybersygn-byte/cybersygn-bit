@@ -88,7 +88,7 @@ export async function runDailyKvBackup(env) {
 }
 
 /**
- * Should we run the backup right now? Fire at 03:00 UTC daily — off-peak
+ * Should we run the backup right now? Fire at 03:00 UTC daily, off-peak
  * for all US/EU timezones, won't compete with the drip campaign (14:00)
  * or the monthly owner report (1st @ 00:00).
  */

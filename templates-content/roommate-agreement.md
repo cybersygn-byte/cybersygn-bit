@@ -12,7 +12,7 @@ This Roommate Agreement (this "**Agreement**") is entered into as of
 **[EFFECTIVE DATE]** (the "**Effective Date**") by and among the following
 individuals, each a "**Roommate**" and together the "**Roommates**":
 
-**[ROOMMATE 1 NAME]**, **[ROOMMATE 2 NAME]**, **[ROOMMATE 3 NAME — ADD OR REMOVE
+**[ROOMMATE 1 NAME]**, **[ROOMMATE 2 NAME]**, **[ROOMMATE 3 NAME, ADD OR REMOVE
 AS NEEDED]**.
 
 **Recitals.** The Roommates share, or intend to share, the residence described

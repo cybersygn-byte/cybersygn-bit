@@ -172,8 +172,8 @@ notice, if you violate these Terms, if required by law, or if we discontinue the
 Service.
 
 9.3 **Effect of termination.** On termination, your right to use the Service ends.
-Sections that by their nature should survive — including Sections 3.4, 4, 7, 8, and 10
-— survive termination.
+Sections that by their nature should survive, including Sections 3.4, 4, 7, 8, and 10
+, survive termination.
 
 ## 10. Governing Law and Dispute Resolution
 

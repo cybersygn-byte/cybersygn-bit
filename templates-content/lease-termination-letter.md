@@ -46,7 +46,7 @@ that satisfies that requirement.
 
 ## 2. Basis for Termination
 
-2.1 **Reason.** This termination is given because: **[SELECT/DESCRIBE — e.g.
+2.1 **Reason.** This termination is given because: **[SELECT/DESCRIBE, e.g.
 expiration of a fixed term and election not to renew; ordinary termination of a
 month-to-month tenancy; mutual agreement; or another lawful basis]**.
 

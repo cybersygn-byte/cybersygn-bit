@@ -166,7 +166,7 @@ its terms and accept the risks of the Services.
 | Title: N/A | Title: **[TITLE]** |
 | Date: __________________________ | Date: __________________________ |
 
-**If the Client is a minor — Parent/Guardian:**
+**If the Client is a minor, Parent/Guardian:**
 
 | **PARENT / LEGAL GUARDIAN** |
 | --- |

@@ -2,7 +2,7 @@
 /**
  * Probe the 10 vision-fallback synthetic PDFs against the text-based detector.
  * Vision-fallback PDFs are SUPPOSED to confuse the text detector. We want them
- * to return few or zero high-confidence signature/date fields — that is what
+ * to return few or zero high-confidence signature/date fields, that is what
  * forces the vision pipeline to fire in production.
  *
  * Pass criterion: each PDF returns at most 1 detected SIGNATURE field via
@@ -45,7 +45,7 @@ async function main() {
 
   console.log('');
   console.log(`Vision-fallback gate: ${visionRequired} of ${all.length} PDFs would trigger vision in production.`);
-  console.log(visionRequired === all.length ? 'All vision-fallback cases gated correctly.' : 'WARNING — some text detection succeeded where vision was expected.');
+  console.log(visionRequired === all.length ? 'All vision-fallback cases gated correctly.' : 'WARNING, some text detection succeeded where vision was expected.');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

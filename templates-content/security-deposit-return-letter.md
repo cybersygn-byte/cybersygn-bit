@@ -145,8 +145,8 @@ charging the full replacement cost.
 
 7.1 **Governing law.** This letter and the underlying security-deposit obligations are
 governed by the Lease and by the laws of the State of **[STATE]** and any applicable
-local ordinance. Security-deposit rules — including deadlines, interest, permitted
-deductions, and penalties for noncompliance — vary by jurisdiction and control over
+local ordinance. Security-deposit rules, including deadlines, interest, permitted
+deductions, and penalties for noncompliance, vary by jurisdiction and control over
 any inconsistent term here.
 
 7.2 **Entire accounting.** This letter, together with its enclosures, is Landlord's

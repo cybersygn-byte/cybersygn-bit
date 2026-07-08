@@ -214,10 +214,10 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Project Brief**
+**Schedule A, Project Brief**
 
 - **Project description:** [DESCRIPTION]
-- **Deliverables:** [LIST — e.g. brand mark, social templates, brochure]
+- **Deliverables:** [LIST, e.g. brand mark, social templates, brochure]
 - **Formats / specifications:** [e.g. AI, PDF, PNG; dimensions]
 - **Concepts presented:** [NUMBER]
 - **Revision rounds included:** [NUMBER]

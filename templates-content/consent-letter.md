@@ -44,7 +44,7 @@ described in Exhibit A"]**.
 
 1.4 **Subject matter and identifiers.** The Consented Action relates to the
 following subject matter, property, account, or person: **[DESCRIBE OR ATTACH AS
-EXHIBIT A — include any account numbers, parcel or VIN, file references, or other
+EXHIBIT A, include any account numbers, parcel or VIN, file references, or other
 identifiers]**.
 
 ## 2. Grant of Consent
@@ -179,7 +179,7 @@ and accept the conditions of this consent.
 | Title: **[TITLE OR N/A]** | Title: **[TITLE OR N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**[OPTIONAL — NOTARY ACKNOWLEDGMENT]**
+**[OPTIONAL, NOTARY ACKNOWLEDGMENT]**
 
 State of **[STATE]**, County of **[COUNTY]**. Subscribed and sworn to before me on
 **[DATE]** by **[NAME OF CONSENTING PARTY]**, proved to me on the basis of

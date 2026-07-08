@@ -205,7 +205,7 @@ updated in writing) and are effective on receipt.
 
 10.5 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion and, if unresolved, through
-**[MEDIATION / ARBITRATION — discuss with counsel]**.
+**[MEDIATION / ARBITRATION, discuss with counsel]**.
 
 10.6 **Entire agreement; amendment.** This Agreement, together with its Exhibits
 and signed change orders, is the entire agreement between the Parties on its

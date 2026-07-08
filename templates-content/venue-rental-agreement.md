@@ -171,7 +171,7 @@ State of **[STATE]**, without regard to its conflict-of-laws rules, and the
 Parties submit to the courts located in **[COUNTY, STATE]**.
 
 10.2 **Dispute resolution.** The Parties will attempt in good faith to resolve any
-dispute through discussion before filing suit. **[OPTIONAL: mediation clause —
+dispute through discussion before filing suit. **[OPTIONAL: mediation clause, 
 discuss with counsel.]**
 
 10.3 **Notices.** Notices must be in writing and sent to the addresses above and

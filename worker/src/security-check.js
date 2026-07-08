@@ -1,20 +1,20 @@
 /**
  * Automated security self-check.
  *
- * Runs twice daily from the hourly cron in index.js scheduled() — gated to
+ * Runs twice daily from the hourly cron in index.js scheduled(), gated to
  * 12:00 and 00:00 UTC, which is 06:00 and 18:00 America/Denver during MDT
  * (UTC-6). It verifies deployment posture in three ways:
  *
- *   1. Config / secrets   — the critical secrets are set, Stripe is a LIVE key,
+ *   1. Config / secrets, the critical secrets are set, Stripe is a LIVE key,
  *                           owner login is configured, the dev backdoor is closed.
- *   2. KV reachability     — the doc store answers.
- *   3. Live auth behavior  — self-probes the running site: protected endpoints
+ *   2. KV reachability, the doc store answers.
+ *   3. Live auth behavior, self-probes the running site: protected endpoints
  *                            must reject unauthenticated callers (401/403), and
  *                            responses must carry the baseline security headers.
  *
  * The result is stored at meta:security-check:latest (readable by the owner
  * panel via GET /api/owner/security-check) and the owner is emailed ONLY when a
- * check fails — a green run is silent, so there is no twice-daily inbox noise.
+ * check fails, a green run is silent, so there is no twice-daily inbox noise.
  *
  * Every branch is wrapped so this can never throw into the cron handler.
  */
@@ -42,8 +42,8 @@ export async function runSecurityCheck(env, opts = {}) {
     !has('STRIPE_SECRET_KEY') || env.STRIPE_SECRET_KEY.startsWith('sk_live'),
     'a TEST Stripe key is deployed to production', 'critical');
   add('stripe_webhook_secret_set', has('STRIPE_WEBHOOK_SECRET'),
-    'STRIPE_WEBHOOK_SECRET missing — webhooks cannot be verified', 'critical');
-  add('resend_key_set', has('RESEND_API_KEY'), 'RESEND_API_KEY missing — email disabled', 'medium');
+    'STRIPE_WEBHOOK_SECRET missing, webhooks cannot be verified', 'critical');
+  add('resend_key_set', has('RESEND_API_KEY'), 'RESEND_API_KEY missing, email disabled', 'medium');
 
   let ownerConfigured = has('OWNER_USERNAME') && has('OWNER_PASSWORD_HASH');
   if (!ownerConfigured) {
@@ -55,7 +55,7 @@ export async function runSecurityCheck(env, opts = {}) {
   add('owner_login_configured', ownerConfigured,
     'owner login not configured (no username/hash and no KV credential)', 'critical');
   add('owner_backdoor_closed', has('CYBERSYGN_OWNER_HASH'),
-    'CYBERSYGN_OWNER_HASH unset — the publicly-documented dev phrase can claim owner', 'high');
+    'CYBERSYGN_OWNER_HASH unset, the publicly-documented dev phrase can claim owner', 'high');
 
   // ---- 2. KV reachability ---------------------------------------------------
   let kvOk = false;

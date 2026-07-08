@@ -50,7 +50,7 @@ counsel.
 ## 2. Description of Services
 
 2.1 **Services.** Provider will perform the following services (the "**Services**")
-for Client: **[DESCRIBE THE SERVICES IN PLAIN, SPECIFIC LANGUAGE — what Provider
+for Client: **[DESCRIBE THE SERVICES IN PLAIN, SPECIFIC LANGUAGE, what Provider
 will do, the approach, and the standards that apply]**.
 
 2.2 **In scope.** The following are expressly within the scope of this SOW:

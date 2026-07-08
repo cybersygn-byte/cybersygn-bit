@@ -11,7 +11,7 @@
  * Data sources combined:
  *
  *   1. Templates KV (slice 32): tpl:<docId>  records with full field
- *      sets that users have explicitly saved. Highest signal — these
+ *      sets that users have explicitly saved. Highest signal, these
  *      ARE the ground truth.
  *
  *   2. Drip records (slice 38): drip:<emailHash>  free-tier signups.
@@ -161,7 +161,7 @@ export async function getDatasetStats(env) {
         // Owner-test templates: persisted with ownerCreated:true so
         // demo work cannot inflate the customer-facing corpus stats.
         // Tracked separately so the stats payload can report what
-        // was skipped — useful debugging if the count looks off.
+        // was skipped, useful debugging if the count looks off.
         if (tpl.ownerCreated) { ownerSkipped++; continue; }
         templates++;
         if (tpl.savedBy) contributors.add(tpl.savedBy);
@@ -264,7 +264,7 @@ export async function maybeFirePhase3Alert(env, deliverFn) {
     const text = [
       'CyberSygn ML watchdog.',
       '',
-      `The labeled-data corpus has crossed ${ready.threshold.toLocaleString()} examples — the documented Phase 3 trigger.`,
+      `The labeled-data corpus has crossed ${ready.threshold.toLocaleString()} examples, the documented Phase 3 trigger.`,
       `Current count: ${ready.current.toLocaleString()}.`,
       '',
       'The deferred decision in docs/ML.md is now actionable.',
@@ -288,7 +288,7 @@ export async function maybeFirePhase3Alert(env, deliverFn) {
         await env.CYBERSYGN_DOCS.put(PHASE3_ALERT_KV_KEY, new Date().toISOString());
       }
     } else {
-      // No delivery function bound — log the trigger so it's still
+      // No delivery function bound, log the trigger so it's still
       // observable in worker tail logs, and mark sent so we don't
       // spam the log on every subsequent template save.
       console.log('[phase3:trigger]', JSON.stringify({ to, subject, current: ready.current, threshold: ready.threshold }));

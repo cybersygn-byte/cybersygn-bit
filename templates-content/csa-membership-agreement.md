@@ -135,10 +135,10 @@ own dietary and allergy needs.
 ## 6. Withdrawal, Cancellation, and Refunds
 
 6.1 **Member withdrawal.** The Member may withdraw before the season begins for a
-refund of **[FULL / PARTIAL — SPECIFY]** of the Share Price, less any non-refundable
+refund of **[FULL / PARTIAL, SPECIFY]** of the Share Price, less any non-refundable
 deposit of **[$ AMOUNT]**. After the season begins, refunds are **[available on a
 prorated basis for distributions not yet provided, less costs / not available
-because the Share funds the season's costs — choose and state clearly]**.
+because the Share funds the season's costs, choose and state clearly]**.
 
 6.2 **Farm cancellation.** If the Farm cancels a Member's enrollment for reasons
 other than the Member's breach, the Farm will refund the unused portion of the

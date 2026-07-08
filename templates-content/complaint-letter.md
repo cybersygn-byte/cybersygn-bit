@@ -52,7 +52,7 @@ contracted for / received]** the following goods or services from the Recipient:
 **[PAYMENT METHOD]**.
 
 2.2 **What went wrong.** The problem the Complainant experienced is as follows:
-**[DESCRIBE THE PROBLEM IN PLAIN, FACTUAL TERMS — what happened, when, where, and
+**[DESCRIBE THE PROBLEM IN PLAIN, FACTUAL TERMS, what happened, when, where, and
 who was involved]**. The Complainant has described the events accurately and to
 the best of the Complainant's knowledge.
 
@@ -80,7 +80,7 @@ records relevant to the Matter on reasonable request.
 ## 4. Requested Resolution
 
 4.1 **Specific remedy sought.** The Complainant requests the following resolution:
-**[DESCRIBE — e.g. a full refund of $[AMOUNT], replacement of the item, repair at
+**[DESCRIBE, e.g. a full refund of $[AMOUNT], replacement of the item, repair at
 no cost, a credit, a written apology, or correction of the account]**.
 
 4.2 **Why this remedy is appropriate.** The requested remedy is appropriate

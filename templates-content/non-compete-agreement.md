@@ -36,7 +36,7 @@ as follows.
 > income thresholds, require advance notice, mandate garden-leave or paid
 > consideration, or refuse to "blue-pencil" overbroad terms. Federal rules may
 > also apply. Do not use this template without confirming with a licensed
-> attorney in the governing jurisdiction whether — and how — a non-compete is
+> attorney in the governing jurisdiction whether, and how, a non-compete is
 > enforceable there.
 
 ---

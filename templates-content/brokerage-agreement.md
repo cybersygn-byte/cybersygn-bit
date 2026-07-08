@@ -183,7 +183,7 @@ the exclusive jurisdiction of the courts located in **[COUNTY, STATE]**.
 
 9.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion within **[NUMBER]** days of
-written notice of the dispute. **[OPTIONAL: mediation or arbitration clause — discuss
+written notice of the dispute. **[OPTIONAL: mediation or arbitration clause, discuss
 with counsel.]**
 
 9.4 **Assignment.** Neither Party may assign this Agreement without the other's prior

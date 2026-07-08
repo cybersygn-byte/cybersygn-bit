@@ -53,7 +53,7 @@ contact the Agency for information about its privacy practices.
 1.3 **Standalone disclosure.** The Applicant acknowledges receiving this
 disclosure and understands it is intended to be clear and conspicuous. **[Where
 required by law, this disclosure must be provided as a separate, standalone
-document — confirm with counsel and adjust packaging accordingly.]**
+document, confirm with counsel and adjust packaging accordingly.]**
 
 ## 2. Scope of the Background Check
 
@@ -78,8 +78,8 @@ will provide as required by law.
 
 3.1 **Authorization.** The Applicant authorizes the Company and the Agency to
 obtain and prepare the Report described above, and authorizes any person or entity
-that has information about the Applicant — including former employers, schools,
-licensing bodies, courts, and government agencies — to release that information to
+that has information about the Applicant, including former employers, schools,
+licensing bodies, courts, and government agencies, to release that information to
 the Company or the Agency.
 
 3.2 **Duration.** To the extent permitted by applicable law, this Authorization
@@ -90,7 +90,7 @@ prospectively by written notice, subject to applicable law.
 
 3.3 **Copy of report.** The Applicant **[requests / does not request]** a copy of
 any Report obtained, where the Applicant is entitled to one under applicable law.
-**[Some states require an option for the Applicant to receive a free copy —
+**[Some states require an option for the Applicant to receive a free copy, 
 include the required checkbox.]**
 
 ## 4. Applicant Rights
@@ -122,7 +122,7 @@ engagement without the information the Report would provide.
 5.3 **No waiver of statutory rights.** Nothing in this Authorization waives any
 right the Applicant has under applicable law, and any provision that would do so is
 unenforceable to that extent. **[Do not include a broad liability release in the
-standalone disclosure — many jurisdictions prohibit it.]**
+standalone disclosure, many jurisdictions prohibit it.]**
 
 ## 6. Data Handling and Privacy
 

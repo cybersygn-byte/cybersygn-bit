@@ -122,7 +122,7 @@ async function main() {
   const out = {
     _meta: {
       purpose: 'CyberSygn owned template library. Generated from templates-catalog.json + authored content.',
-      bar: 'Constitution 1.13/1.14 — every entry is a complete, professionally drafted, customizable starting draft with attorney-review framing.',
+      bar: 'Constitution 1.13/1.14, every entry is a complete, professionally drafted, customizable starting draft with attorney-review framing.',
       disclaimer: 'Every template carries a top callout and footer: not legal advice, CyberSygn is not a law firm, consult a licensed attorney.',
       ownedCount: entries.length,
     },

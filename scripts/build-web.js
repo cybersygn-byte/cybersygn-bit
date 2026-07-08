@@ -402,7 +402,7 @@ async function main() {
   // ASSETS binding. The worker's GET /api/templates/download/<slug> and the email
   // path fetch env.ASSETS('/templates-pdf/<slug>.pdf'); if these aren't in dist the
   // worker 404s and falls back to a generated wireframe for every template. Flat
-  // directory of *.pdf — copy each file. A missing directory or zero PDFs must
+  // directory of *.pdf, copy each file. A missing directory or zero PDFs must
   // FAIL the build rather than ship a library with no downloadable templates.
   const pdfSrc = join(SRC, 'templates-pdf');
   if (!(await exists(pdfSrc))) {
@@ -437,7 +437,7 @@ async function main() {
     await copyFile(tmplZipSrc, join(OUT, 'templates-all.zip'));
     console.log('  wrote dist/templates-all.zip');
   } else {
-    console.warn('  WARN: web/templates-all.zip missing — "download all" bundle will be unavailable');
+    console.warn('  WARN: web/templates-all.zip missing, "download all" bundle will be unavailable');
   }
 
   // /control/: hidden owner workbench (login + analytics + demo + tools).

@@ -163,7 +163,7 @@ federal law and regulations also apply.
 
 8.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute within **[NUMBER]** days of written notice.
-**[OPTIONAL: arbitration program — discuss with counsel.]**
+**[OPTIONAL: arbitration program, discuss with counsel.]**
 
 8.4 **Force majeure.** Neither Party is liable for delay or failure caused by
 events beyond its reasonable control, provided it gives prompt notice and mitigates.

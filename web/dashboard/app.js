@@ -572,7 +572,7 @@ async function maybeShowWhitelabelUpsell() {
 /**
  * Brand panel (slice 90). Reads the sender's current brand record,
  * paints the form + preview, wires save. Only paid-tier senders see
- * this panel — the worker returns 402 on POST for free senders, and
+ * this panel, the worker returns 402 on POST for free senders, and
  * the panel hides itself if subscription says 'free'.
  */
 async function ensureBrandPanel() {
@@ -696,7 +696,7 @@ function escapeHtml(s) {
 
 /**
  * Affiliate auto-register. Every sender gets a referral code on first
- * dashboard visit — idempotent on senderId so repeat visits return
+ * dashboard visit, idempotent on senderId so repeat visits return
  * the same code. Cached in localStorage so the next visit doesn't
  * round-trip. Slice 83.
  *
@@ -793,7 +793,7 @@ function paintAffiliatePanel(record) {
 }
 
 /**
- * Founder's home — the four-card KPI strip + sparkline at the top of
+ * Founder's home, the four-card KPI strip + sparkline at the top of
  * the dashboard. Derived entirely from the docs[] we already have, so
  * no extra fetch. Slice 81.
  */
@@ -835,7 +835,7 @@ function paintFounderHome(docs) {
   set('fh-pending', pendingSigners);
   set('fh-saved-mins', minutesSaved.toLocaleString());
   set('fh-saved-dollars', '≈ $' + dollarsSaved.toLocaleString() + ' at $60/hr');
-  // Templates — fetched async; updates the tile when it lands. The
+  // Templates, fetched async; updates the tile when it lands. The
   // count comes from /api/sender/:id/templates which lists tpl-priv:
   // KV keys for this sender.
   set('fh-templates', '…');

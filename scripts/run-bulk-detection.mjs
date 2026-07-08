@@ -9,9 +9,9 @@
  *
  * "Successfully processed" means detection ran without throwing and
  * returned at least one field. Documents that returned zero fields are
- * still counted in the total — they just did not have detectable
+ * still counted in the total, they just did not have detectable
  * signature/date/checkbox patterns in the text layer. Vision-fallback
- * is not invoked here (intentionally — this is the text-layer pass).
+ * is not invoked here (intentionally, this is the text-layer pass).
  */
 
 import { readFile, readdir, writeFile } from 'node:fs/promises';

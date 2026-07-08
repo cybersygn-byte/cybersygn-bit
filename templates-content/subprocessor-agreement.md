@@ -215,12 +215,12 @@ which together form one agreement.
 
 ---
 
-**Schedule 1 — Details of Processing.** Subject matter: **[DESCRIBE]**. Duration:
+**Schedule 1, Details of Processing.** Subject matter: **[DESCRIBE]**. Duration:
 **[DESCRIBE]**. Nature and purpose: **[DESCRIBE]**. Categories of Data Subjects:
 **[DESCRIBE]**. Categories of Personal Data: **[DESCRIBE]**. Special categories
 (if any): **[DESCRIBE]**.
 
-**Schedule 2 — Security Measures.** **[LIST TECHNICAL AND ORGANIZATIONAL MEASURES:
+**Schedule 2, Security Measures.** **[LIST TECHNICAL AND ORGANIZATIONAL MEASURES:
 access control, encryption in transit and at rest, logging, backup, vulnerability
 management, incident response, physical security, etc.]**
 

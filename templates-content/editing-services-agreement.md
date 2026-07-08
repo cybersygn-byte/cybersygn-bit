@@ -35,15 +35,15 @@ OR PAGE COUNT]** in **[FILE FORMAT, e.g. Microsoft Word]**.
 1.2 **Type of editing.** The Editor will provide the level of editing selected
 below, as defined in Exhibit A:
 
-(a) **Developmental editing** — structure, organization, narrative or
+(a) **Developmental editing**, structure, organization, narrative or
 argumentative flow, and high-level content guidance;
 
-(b) **Line editing** — sentence-level style, tone, clarity, and word choice;
+(b) **Line editing**, sentence-level style, tone, clarity, and word choice;
 
-(c) **Copyediting** — grammar, spelling, punctuation, consistency, and
+(c) **Copyediting**, grammar, spelling, punctuation, consistency, and
 adherence to a style guide; and/or
 
-(d) **Proofreading** — a final pass to catch surface errors before publication.
+(d) **Proofreading**, a final pass to catch surface errors before publication.
 
 1.3 **Style guide.** Unless Exhibit A states otherwise, Editor will follow
 **[STYLE GUIDE, e.g. The Chicago Manual of Style]** and **[DICTIONARY /

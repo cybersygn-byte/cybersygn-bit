@@ -828,7 +828,7 @@ async function main() {
     else env.ASSETS = savedAssets;
   }
 
-  // ---- Public API v1 (API-key authed) — full lifecycle -----------------
+  // ---- Public API v1 (API-key authed), full lifecycle -----------------
   console.log('\n33. /api/v1 public API + API keys');
   {
     const apiPdf = (await readFile(resolve(ROOT, 'test-pdfs', '01-simple-signature.pdf'))).toString('base64');

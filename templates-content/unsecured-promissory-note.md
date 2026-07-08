@@ -136,7 +136,7 @@ right to require strict performance.
 6.1 **Borrower representations.** Borrower represents that: (a) it has full power
 and authority to enter into this Note; (b) this Note is a valid and binding
 obligation enforceable against Borrower; and (c) the loan proceeds will be used
-for **[PURPOSE, e.g. business / personal — note consumer-credit rules differ]**.
+for **[PURPOSE, e.g. business / personal, note consumer-credit rules differ]**.
 
 6.2 **Affirmative covenants.** Borrower will pay the Obligations when due, comply
 with applicable law, and promptly notify Lender of any event that could become an

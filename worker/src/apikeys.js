@@ -3,13 +3,13 @@
  *
  * Three kinds of key, distinguished by flags on the record:
  *
- *   - metered (default)  — standalone cybersygn.io customers. Document creation
+ *   - metered (default), standalone cybersygn.io customers. Document creation
  *                          is gated by the bound account's plan (free cap, etc.).
- *   - unmetered          — issued to a customer who builds on a partner platform
+ *   - unmetered, issued to a customer who builds on a partner platform
  *                          (e.g. Vyan). Full open access, no free-tier roadblock.
  *                          Individualized: one key per tenant, independently
  *                          attributable + revocable. NOT a shared master key.
- *   - partner master     — `canProvision: true`. Held server-side by the partner
+ *   - partner master, `canProvision: true`. Held server-side by the partner
  *                          (Vyan) only. Used to mint the individualized unmetered
  *                          tenant keys above via POST /api/v1/keys. Never shared
  *                          with end users.
@@ -18,7 +18,7 @@
  * its SHA-256, so a store dump can't reconstruct a key. Each key is bound to a
  * senderId (the account it acts as), so v1 requests inherit that identity.
  *
- * Storage (getStorage(env).docs — real KV in prod, memory in tests):
+ * Storage (getStorage(env).docs, real KV in prod, memory in tests):
  *   apikey:<sha256hex(key)>  -> full record (incl. flags)
  *   apikeys:<senderId>       -> [ public index entries (+hash) ]
  *   apikeys:partner:<pid>    -> [ public index entries for a partner's tenant keys (+hash) ]
@@ -60,10 +60,10 @@ async function hashKey(key) {
 /**
  * Mint a key for `senderId`. The RAW key is returned exactly once (never
  * persisted in plaintext). Flags:
- *   unmetered    — bypass the free-tier gate on document creation.
- *   canProvision — may mint individualized tenant keys (partner master only).
- *   partnerId    — provenance (e.g. 'vyan'); indexes the key under the partner.
- *   tenantId     — the partner's end-customer; individualizes the key.
+ *   unmetered, bypass the free-tier gate on document creation.
+ *   canProvision, may mint individualized tenant keys (partner master only).
+ *   partnerId, provenance (e.g. 'vyan'); indexes the key under the partner.
+ *   tenantId, the partner's end-customer; individualizes the key.
  */
 export async function createApiKey(env, senderId, opts = {}) {
   const store = docs(env);

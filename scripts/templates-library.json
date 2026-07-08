@@ -1,7 +1,7 @@
 {
   "_meta": {
     "purpose": "CyberSygn owned template library. Generated from templates-catalog.json + authored content.",
-    "bar": "Constitution 1.13/1.14 — every entry is a complete, professionally drafted, customizable starting draft with attorney-review framing.",
+    "bar": "Constitution 1.13/1.14, every entry is a complete, professionally drafted, customizable starting draft with attorney-review framing.",
     "disclaimer": "Every template carries a top callout and footer: not legal advice, CyberSygn is not a law firm, consult a licensed attorney.",
     "ownedCount": 502
   },
@@ -10354,7 +10354,7 @@
         "6. Representations of the Departing Person",
         "7. Remedies",
         "8. General Provisions",
-        "Exhibit A — Inventory of Returned Company Materials"
+        "Exhibit A, Inventory of Returned Company Materials"
       ],
       "staticPdf": true
     },
@@ -10591,7 +10591,7 @@
         "1. Incorporation and Purpose",
         "2. Insurance Requirement",
         "3. Proof of Coverage",
-        "4. Scope and Limits of Coverage — Acknowledgments by Tenant",
+        "4. Scope and Limits of Coverage, Acknowledgments by Tenant",
         "5. Consequences of Non-Compliance",
         "6. No Reduction of Tenant Obligations",
         "7. General Provisions"

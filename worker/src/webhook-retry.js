@@ -27,7 +27,7 @@ export async function enqueueWebhookRetry(env, payload, attemptNum) {
   if (!env || !env.CYBERSYGN_DOCS) return;
   const delayMin = RETRY_SCHEDULE_MIN[Math.min(attemptNum, RETRY_SCHEDULE_MIN.length - 1)];
   if (attemptNum >= RETRY_SCHEDULE_MIN.length) {
-    // Out of retries — dead-letter.
+    // Out of retries, dead-letter.
     try {
       await env.CYBERSYGN_DOCS.put(
         `${DEAD_PREFIX}${payload.senderId || 'unknown'}:${payload.deliveryId}`,

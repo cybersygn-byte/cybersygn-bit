@@ -6,7 +6,7 @@
 > governing jurisdiction review it before you or anyone else signs. CyberSygn
 > is not a law firm and this template is not legal advice. Residential tenancy
 > is heavily regulated and rules on deposits, notice, entry, and eviction differ
-> by state and city — local landlord-tenant law controls and may override terms
+> by state and city, local landlord-tenant law controls and may override terms
 > in this template.
 
 ---
@@ -33,7 +33,7 @@ Parties agree as follows.
 1.1 **Leased premises.** Landlord leases to Tenant, and Tenant leases from
 Landlord, the residential premises located at **[FULL PROPERTY ADDRESS, INCLUDING
 UNIT NUMBER]** (the "**Premises**"), together with **[parking space(s), storage,
-appliances, or other items included — or "no additional items"]**.
+appliances, or other items included, or "no additional items"]**.
 
 1.2 **Use.** The Premises will be used only as a private residence for the Tenant
 and the authorized occupants listed in Section 1.3, and for no business or
@@ -202,7 +202,7 @@ by law]** and are effective as provided by applicable law.
 11.4 **Disclosures.** Tenant acknowledges receipt of all disclosures required by
 applicable law, including, where applicable, the federal lead-based paint
 disclosure for housing built before 1978 and **[ANY OTHER REQUIRED LOCAL
-DISCLOSURES, e.g. mold, bed bug, or flood disclosures — confirm with counsel]**.
+DISCLOSURES, e.g. mold, bed bug, or flood disclosures, confirm with counsel]**.
 
 11.5 **Entire agreement; amendment.** This Lease, together with any attached
 rules, addenda, and the move-in inspection, is the entire agreement between the

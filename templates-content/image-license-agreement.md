@@ -69,8 +69,8 @@ deliver them.
 ## 3. Restrictions on Use
 
 3.1 **Within scope only.** Licensee will use the Images only for the Permitted Use.
-Any use beyond the Permitted Use — including new media, territories, products, or a
-longer duration — requires Licensor's prior written consent and may require an
+Any use beyond the Permitted Use, including new media, territories, products, or a
+longer duration, requires Licensor's prior written consent and may require an
 additional fee.
 
 3.2 **Prohibited uses.** Licensee will not: (a) resell, sublicense, or redistribute

@@ -31,7 +31,7 @@ agree as follows.
 ## 1. Remote Work Arrangement
 
 1.1 **Approved arrangement.** The Employer approves the Employee to work remotely
-on the following basis: **[FULLY REMOTE / HYBRID — e.g. 3 days remote, 2 days in
+on the following basis: **[FULLY REMOTE / HYBRID, e.g. 3 days remote, 2 days in
 office]**, effective **[START DATE]**.
 
 1.2 **Approved remote location.** The Employee's approved primary remote work

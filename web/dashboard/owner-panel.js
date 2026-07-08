@@ -52,8 +52,8 @@ function tableRows(rows, primaryKey, valueKey, emptyLabel) {
   if (!rows.length) return `<p class="owner-panel__empty">${escapeHtml(emptyLabel || 'No data yet.')}</p>`;
   return `<ul class="owner-panel__list">${rows.map(r => `
     <li class="owner-panel__list-row">
-      <span class="owner-panel__list-key">${escapeHtml(r[primaryKey] || '—')}</span>
-      <span class="owner-panel__list-val">${escapeHtml(r[valueKey] != null ? r[valueKey] : '—')}</span>
+      <span class="owner-panel__list-key">${escapeHtml(r[primaryKey] || '-')}</span>
+      <span class="owner-panel__list-val">${escapeHtml(r[valueKey] != null ? r[valueKey] : '-')}</span>
     </li>`).join('')}</ul>`;
 }
 

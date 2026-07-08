@@ -223,7 +223,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 **[COUNTY, STATE]**.
 
 9.2 **Dispute resolution.** The Parties will first attempt to resolve any dispute
-informally. **[OPTIONAL: arbitration clause — discuss enforceability and required
+informally. **[OPTIONAL: arbitration clause, discuss enforceability and required
 carve-outs with counsel.]**
 
 9.3 **Tax compliance.** The Parties intend that payments under this Agreement

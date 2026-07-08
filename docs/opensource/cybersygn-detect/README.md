@@ -27,7 +27,7 @@ detected fields:
 | `text`      | Generic underscore runs that don't match the above |
 
 Detection is heuristic, not ML. It runs on the PDF's actual text +
-geometry, not on rasterized pixels — fast (about 50 ms for a 5-page
+geometry, not on rasterized pixels, fast (about 50 ms for a 5-page
 contract on a Cloudflare Worker), deterministic, no API calls.
 
 ## Install

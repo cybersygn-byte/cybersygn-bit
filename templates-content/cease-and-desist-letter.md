@@ -56,7 +56,7 @@ provide further evidence of ownership, priority, and validity.
 ## 2. The Objectionable Conduct
 
 2.1 **Description of the Conduct.** The Sender has become aware that the Recipient
-is engaged in the following Conduct: **[DESCRIBE SPECIFICALLY — e.g. use of a
+is engaged in the following Conduct: **[DESCRIBE SPECIFICALLY, e.g. use of a
 confusingly similar mark; reproduction or distribution of a copyrighted work;
 publication of false statements; contact that constitutes harassment; breach of a
 restrictive covenant; or other unlawful conduct]**.
@@ -113,7 +113,7 @@ records may have legal consequences.
 ## 5. Deadline and Consequences
 
 5.1 **Deadline.** The Recipient must comply with this Notice and provide the
-written confirmation required by **Section 4.3** on or before **[DEADLINE DATE —
+written confirmation required by **Section 4.3** on or before **[DEADLINE DATE, 
 e.g. [NUMBER] days from the date of this letter]** (the "**Deadline**").
 
 5.2 **Consequences of non-compliance.** If the Recipient does not comply by the

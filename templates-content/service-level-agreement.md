@@ -87,14 +87,14 @@ counted against the Uptime Commitment.
 9:00 a.m.–6:00 p.m. [TIME ZONE], Monday–Friday]**.
 
 4.2 **Severity levels.** Each request is assigned a severity:
-(a) **Severity 1 (Critical)** — the Service is unavailable or a core function is
-unusable with no workaround; (b) **Severity 2 (High)** — a major function is impaired
-but a workaround exists; (c) **Severity 3 (Normal)** — a minor or non-critical issue;
-(d) **Severity 4 (Low)** — a question or cosmetic issue.
+(a) **Severity 1 (Critical)**, the Service is unavailable or a core function is
+unusable with no workaround; (b) **Severity 2 (High)**, a major function is impaired
+but a workaround exists; (c) **Severity 3 (Normal)**, a minor or non-critical issue;
+(d) **Severity 4 (Low)**, a question or cosmetic issue.
 
 4.3 **Target response times.** Provider will use commercially reasonable efforts to
-acknowledge requests within: Severity 1 — **[e.g. 1 hour]**; Severity 2 —
-**[e.g. 4 hours]**; Severity 3 — **[e.g. 1 business day]**; Severity 4 —
+acknowledge requests within: Severity 1, **[e.g. 1 hour]**; Severity 2, 
+**[e.g. 4 hours]**; Severity 3, **[e.g. 1 business day]**; Severity 4, 
 **[e.g. 2 business days]**. Response times measure acknowledgment, not resolution.
 
 4.4 **Customer cooperation.** Customer will provide reasonable detail, access, and

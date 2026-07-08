@@ -91,7 +91,7 @@ each invoice.
 
 ## 4. Delivery, Title, and Risk of Loss
 
-4.1 **Delivery terms.** Delivery terms are **[e.g. FOB Destination / FOB Origin —
+4.1 **Delivery terms.** Delivery terms are **[e.g. FOB Destination / FOB Origin, 
 confirm and define the shipping term or Incoterm]**. Title and risk of loss pass
 to Buyer in accordance with that term.
 

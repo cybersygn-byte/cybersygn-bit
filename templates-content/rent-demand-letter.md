@@ -55,7 +55,7 @@ due under the Lease:
 | Rent for **[MONTH/PERIOD]** | **[AMOUNT]** |
 | Rent for **[MONTH/PERIOD]** | **[AMOUNT]** |
 | Late fee(s) (if permitted by the Lease and law) | **[AMOUNT]** |
-| Other charges: **[DESCRIBE — e.g. utilities, NSF fee]** | **[AMOUNT]** |
+| Other charges: **[DESCRIBE, e.g. utilities, NSF fee]** | **[AMOUNT]** |
 | **Total now due** | **[TOTAL]** |
 
 2.2 **Late fees and charges.** Late fees and other charges are included only to the
@@ -79,7 +79,7 @@ Section 2.1, plus any rent that becomes due before payment, in full.
 3.2 **Deadline.** Payment must be received within **[NUMBER]** days after this
 Demand is served (or by **[SPECIFIC DATE]**), which the Landlord believes meets
 the minimum cure or notice period required by applicable law. **[CONFIRM THE
-REQUIRED NUMBER OF DAYS UNDER LOCAL LAW — THIS VARIES.]**
+REQUIRED NUMBER OF DAYS UNDER LOCAL LAW, THIS VARIES.]**
 
 3.3 **How to pay.** Payment must be made by **[CASH / CERTIFIED CHECK / MONEY
 ORDER / ELECTRONIC PAYMENT TO [DETAILS]]** and delivered to **[NAME AND ADDRESS OR
@@ -166,7 +166,7 @@ Letter as of the date first written above.
 | --- |
 | Signature: __________________________ |
 | Printed name: **[NAME]** |
-| Title: **[LANDLORD / PROPERTY MANAGER / AGENT — OR N/A]** |
+| Title: **[LANDLORD / PROPERTY MANAGER / AGENT, OR N/A]** |
 | Date: __________________________ |
 
 **Proof of Service.** I served this Demand on the Tenant by the method stated in

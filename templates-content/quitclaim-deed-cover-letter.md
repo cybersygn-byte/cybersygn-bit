@@ -16,7 +16,7 @@
 **From (Grantor):** **[GRANTOR LEGAL NAME]**, **[GRANTOR ADDRESS]**
 ("**Grantor**").
 
-**To (Recipient):** **[RECIPIENT NAME — e.g., GRANTEE, RECORDING OFFICE, TITLE
+**To (Recipient):** **[RECIPIENT NAME, e.g., GRANTEE, RECORDING OFFICE, TITLE
 COMPANY, OR ATTORNEY]**, **[RECIPIENT ADDRESS]** ("**Recipient**").
 
 **Re:** Transmittal of an executed Quitclaim Deed conveying the Grantor's interest

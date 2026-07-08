@@ -116,7 +116,7 @@ def parse_blocks(md):
             yield ("section", stripped[3:].strip())
             i += 1
             continue
-        # Any other heading level (###, ####, or a stray leading #) — render as a
+        # Any other heading level (###, ####, or a stray leading #), render as a
         # sub-section so the line is CONSUMED. Without this, a '### ' line matches
         # none of the handlers above and falls into the paragraph branch below,
         # whose while-loop refuses lines starting with '#', so i never advances
@@ -148,7 +148,7 @@ def parse_blocks(md):
             continue
         # Paragraph (collect until a blank line or the start of another block).
         # Always consume the current line FIRST so i advances by at least one no
-        # matter what — a hard guarantee that this loop can never stall.
+        # matter what, a hard guarantee that this loop can never stall.
         buf = [stripped]
         i += 1
         while i < n and lines[i].strip() and not lines[i].strip().startswith(("#", ">", "|")) and lines[i].strip() != "---":
@@ -262,7 +262,7 @@ def render_canvas_plain(md_path, pdf_path):
     """Guaranteed-terminating fallback renderer.
 
     A tiny subset of templates make reportlab's Paragraph line-breaker spin for
-    30s+ (not markup, not tables — confirmed by bisecting against a same-shape
+    30s+ (not markup, not tables, confirmed by bisecting against a same-shape
     file that renders in 0.1s). The full render runs each file in a forked
     subprocess with a hard kill; when that kill fires, we fall back to here.
 

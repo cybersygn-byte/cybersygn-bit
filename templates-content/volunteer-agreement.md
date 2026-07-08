@@ -209,7 +209,7 @@ Effective Date.
 | Title: **[TITLE]** | Title: N/A |
 | Date: __________________________ | Date: __________________________ |
 
-**[IF THE VOLUNTEER IS A MINOR — PARENT/GUARDIAN CONSENT]**
+**[IF THE VOLUNTEER IS A MINOR, PARENT/GUARDIAN CONSENT]**
 
 | **PARENT / LEGAL GUARDIAN** |
 | --- |

@@ -170,7 +170,7 @@
    form controls and scrollbars natively. */
 
 /* ========================================================================
-   2b. FORCED THEMES (slice 95 — embed widget)
+   2b. FORCED THEMES (slice 95, embed widget)
    Embeds set <html data-theme="dark|light"> via URL params. We re-apply
    the relevant variable block so the iframe matches the embedder's
    chrome regardless of the visitor's OS preference. data-theme="auto"
@@ -612,7 +612,7 @@ button { font: inherit; cursor: pointer; }
    ======================================================================== */
 
 /* ============================================================================
-   CINEMATIC HERO — Apple-style scroll-driven video background.
+   CINEMATIC HERO, Apple-style scroll-driven video background.
    The <video> plays scrubbed by scroll position over a full-bleed
    container. If no MP4 is present, the CSS/SVG placeholder fills the
    canvas with an animated detect-fields-on-PDF scene that conveys the
@@ -1408,7 +1408,7 @@ button { font: inherit; cursor: pointer; }
   .billing-toggle__opt { padding: 6px 12px; font-size: 13px; }
 }
 
-/* Container has the toggle centered — wrap section__head accordingly. */
+/* Container has the toggle centered, wrap section__head accordingly. */
 .section[id="pricing"] .section__head + .billing-toggle {
   display: flex;
   justify-content: center;
@@ -1645,7 +1645,7 @@ button { font: inherit; cursor: pointer; }
   background:
     radial-gradient(60% 60% at 50% 40%, rgba(1,20,52,0) 0%, rgba(1,20,52,0.14) 60%, rgba(1,20,52,0.48) 100%),
     /* Stronger bottom-to-bg gradient so the bottom of the cinematic
-       fully dissolves into the hero text section underneath — no
+       fully dissolves into the hero text section underneath, no
        visible band, just a soft handoff. */
     linear-gradient(180deg, rgba(1,20,52,0) 55%, var(--bg) 92%);
   pointer-events: none;
@@ -1653,7 +1653,7 @@ button { font: inherit; cursor: pointer; }
 
 /* CyberSygn logo overlay over the cinematic. JS drives the opacity from
    video.currentTime so the logo fades out at the start of every loop
-   iteration and fades back in at the end — a soft brand bookend on each
+   iteration and fades back in at the end, a soft brand bookend on each
    replay. Centered, scaled to read at any viewport. */
 .cinematic-hero__logo {
   position: absolute;
@@ -1677,8 +1677,8 @@ button { font: inherit; cursor: pointer; }
 
 /* Glassy haze: a frosted-glass sheen behind the logo, in front of the video.
    Lives between the video/placeholder (z 0) and the logo (z 2). It settles in
-   instantly, holds for a beat, then fades out by ~1.4s — a touch faster than
-   the logo's ~1.6s opening fade — leaving the crisp video behind. */
+   instantly, holds for a beat, then fades out by ~1.4s, a touch faster than
+   the logo's ~1.6s opening fade, leaving the crisp video behind. */
 .cinematic-hero__haze {
   position: absolute;
   inset: 0;
@@ -1696,7 +1696,7 @@ button { font: inherit; cursor: pointer; }
 }
 @keyframes ci-haze-out {
   0%   { opacity: 0; }
-  9%   { opacity: 1; }   /* settle in fast — reads as already present */
+  9%   { opacity: 1; }   /* settle in fast, reads as already present */
   40%  { opacity: 1; }   /* hold the frost a beat */
   100% { opacity: 0; }   /* fade away, a touch ahead of the logo */
 }
@@ -1732,7 +1732,7 @@ button { font: inherit; cursor: pointer; }
 
 .hero {
   /* Tighter top padding so the hero copy sits closer to the bottom
-     of the cinematic — they should read as one composition, not two
+     of the cinematic, they should read as one composition, not two
      stacked sections. Bottom padding unchanged. */
   padding-block: clamp(20px, 4vh, 60px) clamp(48px, 8vh, 96px);
   position: relative;
@@ -2722,7 +2722,7 @@ button { font: inherit; cursor: pointer; }
 .compare .cross {
   color: var(--text-3);
 }
-.compare .cross::before { content: "— "; }
+.compare .cross::before { content: ", "; }
 
 /* ========================================================================
    13d. TOAST + STICKY CTA
@@ -5430,7 +5430,7 @@ button { font: inherit; cursor: pointer; }
 .field-box__handle--se { bottom: -5px; right: -5px; cursor: nwse-resize; }
 
 /* Touch: hover-revealed controls (handles, edit pencil, remove x, reassign
-   chip) are invisible/unreachable on coarse pointers — show + enlarge them. */
+   chip) are invisible/unreachable on coarse pointers, show + enlarge them. */
 @media (pointer: coarse) {
   .field-box.is-focused .field-box__handle { opacity: 1; width: 24px; height: 24px; }
   .field-box.is-focused .field-box__handle--nw { top: -12px; left: -12px; }
@@ -6296,7 +6296,7 @@ details[open] > .field-list__group--toggle::after {
 /* Dark mode adjustments: navy-tinted shadows go invisible against navy
    backgrounds, so swap to neutral/cyan-tinted elevation cues. Atmosphere
    glow brightens slightly so the scene reads in dim conditions. The
-   page-shell carries the most weight here — it's the "document on a
+   page-shell carries the most weight here, it's the "document on a
    desk" metaphor and needs honest separation from the navy background. */
 @media (prefers-color-scheme: dark) {
   .layout--apple .dropzone-card {
@@ -7255,7 +7255,7 @@ details[open] > .field-list__group--toggle::after {
   color: var(--ok);
 }
 
-/* Inline hint for "add a field, click on the page" — moved
+/* Inline hint for "add a field, click on the page", moved
    here so it lives next to the primary action and the user
    sees it without scrolling to the tools disclosure. */
 .add-field-hint {
@@ -7288,7 +7288,7 @@ details[open] > .field-list__group--toggle::after {
 
 /* ── Tools & templates disclosure ───────────────────────
    Collapsed by default. Holds the "add missed field"
-   panel, save-template, and load-another buttons —
+   panel, save-template, and load-another buttons, 
    secondary actions that don't need to compete with the
    primary CTA for visual real estate. */
 .sidebar__tools {
@@ -7357,7 +7357,7 @@ details[open] > .field-list__group--toggle::after {
   display: none !important;
 }
 
-/* Decline-to-sign link. Visible ONLY in signer mode — sender-mode
+/* Decline-to-sign link. Visible ONLY in signer mode, sender-mode
    has nothing to decline. Styled as a quiet link, not a button:
    destructive actions should feel deliberate, not loud. */
 .decline-link {
@@ -7386,7 +7386,7 @@ details[open] > .field-list__group--toggle::after {
 }
 .is-signer-mode .decline-link { display: block; }
 /* Drop the "Tools & templates" disclosure altogether when only the
-   snapshot button remains inside — the lone button gets promoted to
+   snapshot button remains inside, the lone button gets promoted to
    the sidebar action zone via specific JS, but for safety hide an
    empty disclosure rather than show an empty body. */
 .is-signer-mode .sidebar__tools-body {
@@ -7425,7 +7425,7 @@ details[open] > .field-list__group--toggle::after {
   font-size: var(--t-sm);
   line-height: 1.55;
 }
-/* Actionable empty state — embeds a CTA so the surface isn't inert. */
+/* Actionable empty state, embeds a CTA so the surface isn't inert. */
 .field-list__empty--actionable {
   background: var(--bg-2);
   border-left: 3px solid var(--accent);
@@ -8356,7 +8356,7 @@ details[open] > .field-list__group--toggle::after {
 .free-status__cap a { color: var(--accent-text); }
 
 /* Free-gated state (no signup yet): the upload buttons and hints HIDE
-   completely. The free-gate becomes the only path forward — the
+   completely. The free-gate becomes the only path forward, the
    conversion paywall. Once signup succeeds the data-free-gated flips
    to "false" and the upload buttons reveal. Three uploads counted by
    email (server-side) so cookie clears can't reset the count. */

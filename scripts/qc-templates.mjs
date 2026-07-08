@@ -28,7 +28,7 @@ const MIN_WORDS = 850;          // body substance floor
 const MIN_SECTIONS = 7;          // numbered sections floor
 // Stub markers indicate lazy, unfinished prose. NOTE: bracketed guidance like
 // "[INSERT YOUR STATE'S STATUTORY WARNING]" or "[FFL NAME / TBD]" is a VALID
-// fill-in placeholder (same convention as [STATE]), not a stub — so we strip all
+// fill-in placeholder (same convention as [STATE]), not a stub, so we strip all
 // [BRACKETED] tokens before checking. Only bare stubs left in real prose fail.
 const STUB_MARKERS = [
   'todo', 'lorem ipsum', 'insert clause here', 'placeholder text',
@@ -74,7 +74,7 @@ function check(md, t) {
                  (/printed name/i.test(md) || /\bdate\s*:/i.test(md));
   if (!hasSig) reasons.push('no signature block');
 
-  // Stub junk — strip [BRACKETED] placeholders first (those are valid fill-ins).
+  // Stub junk, strip [BRACKETED] placeholders first (those are valid fill-ins).
   const deBracketed = lower.replace(/\[[^\]]*\]/g, ' ');
   for (const m of STUB_MARKERS) {
     if (deBracketed.includes(m)) { reasons.push(`contains stub marker "${m}"`); break; }

@@ -110,7 +110,7 @@ close or separate joint accounts.
 
 ## 5. Spousal Support
 
-5.1 **Support terms.** Spousal support is resolved as follows: **[NO SUPPORT — BOTH
+5.1 **Support terms.** Spousal support is resolved as follows: **[NO SUPPORT, BOTH
 PARTIES WAIVE / SPOUSE [1/2] WILL PAY SPOUSE [2/1] $[AMOUNT] PER [MONTH] FOR
 [DURATION] / OTHER]**.
 

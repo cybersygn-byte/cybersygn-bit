@@ -229,7 +229,7 @@ function renderCoSigningPill(data) {
     '</div>';
   }).join('');
 }
-// (escapeHtml is declared lower in the module — see the marketing
+// (escapeHtml is declared lower in the module, see the marketing
 //  block. Removed the duplicate here so the file parses.)
 
 /**
@@ -288,7 +288,7 @@ function applySenderBrand(brand) {
       if (window.innerWidth > 768) return;
       toggle();
     });
-    // Drag handle (the ::before pseudo) — listen at the top edge.
+    // Drag handle (the ::before pseudo), listen at the top edge.
     sidebar.addEventListener('touchstart', e => {
       if (window.innerWidth > 768) return;
       const rect = sidebar.getBoundingClientRect();
@@ -343,7 +343,7 @@ const documentStrip = $('document-strip');
 const filenameEl = $('result-filename');
 const statPages = $('stat-pages');
 const statFields = $('stat-fields');
-const statConfidence = $('stat-confidence');  // legacy — not in DOM after sidebar rebuild
+const statConfidence = $('stat-confidence');  // legacy, not in DOM after sidebar rebuild
 const fillProgress = $('fill-progress');
 const fillProgressFill = $('fill-progress-fill');
 const fillProgressText = $('fill-progress-text');
@@ -412,7 +412,7 @@ function paintFreeStatus() {
   const token = readFreeToken();
   if (!token) {
     // No signup yet. Gate form stays visible but it's no longer the
-    // wall in front of upload — it's a "sign up to send" prompt below.
+    // wall in front of upload, it's a "sign up to send" prompt below.
     // The upload buttons + hints remain interactive.
     gate.hidden = false;
     status.hidden = true;
@@ -1133,9 +1133,9 @@ function focusFieldAtIndex(idx) {
 
 function updateNavCounter() {
   const total = docState.fields.length;
-  if (fieldTotalEl) fieldTotalEl.textContent = total > 0 ? String(total) : '—';
+  if (fieldTotalEl) fieldTotalEl.textContent = total > 0 ? String(total) : '-';
   if (fieldPosEl) {
-    fieldPosEl.textContent = total > 0 && _navIndex >= 0 ? String(_navIndex + 1) : (total > 0 ? '1' : '—');
+    fieldPosEl.textContent = total > 0 && _navIndex >= 0 ? String(_navIndex + 1) : (total > 0 ? '1' : '-');
   }
   if (prevFieldBtn) prevFieldBtn.disabled = total === 0;
   if (nextFieldBtn) nextFieldBtn.disabled = total === 0;
@@ -1150,7 +1150,7 @@ function resetNavCursor() {
 // Sticky add-field mode. Click one of the 5 type buttons to enter
 // add-mode pinned to that type. While active, every click on a page
 // drops a new field of that type and STAYS in add-mode for the next
-// click — Photoshop brush behavior. Click the same type button again
+// click, Photoshop brush behavior. Click the same type button again
 // to exit, click a different type button to switch, or press Esc.
 const AI_CONSENT_KEY = 'cybersygn.aiTrainingConsent';
 let _addModeType = null;   // 'signature' | 'initial' | 'date' | 'checkbox' | 'text' | null
@@ -1466,7 +1466,7 @@ async function handleFiles(files) {
   hideError();
 
   // Resume-from-draft. A .cybersygn-draft.json file means the user is
-  // returning to work they saved earlier — rehydrate instead of routing
+  // returning to work they saved earlier, rehydrate instead of routing
   // through detection. Single-file only; mixed selections fall through
   // to the normal error path.
   const drafts = files.filter(f =>
@@ -1476,7 +1476,7 @@ async function handleFiles(files) {
     const ok = await restoreDraft(drafts[0]);
     if (ok) return;
     // If restore failed (bad schema etc.), restoreDraft already showed
-    // an error. Don't fall through to PDF parsing — JSON isn't a PDF.
+    // an error. Don't fall through to PDF parsing, JSON isn't a PDF.
     if (/\.json$/i.test(drafts[0].name)) return;
   }
 
@@ -1706,7 +1706,7 @@ async function handleFile(file) {
 
   // Document template lookup. If anyone previously saved labels for a
   // PDF with this exact SHA-256, those labels become the starting point
-  // (replacing the heuristic detection) — the saved set is human-
+  // (replacing the heuristic detection), the saved set is human-
   // verified and therefore strictly better. Heuristic fields the
   // template doesn't cover are kept; template fields the heuristic
   // missed are added.
@@ -2014,7 +2014,7 @@ async function renderDocument(data, detection, opts = {}) {
       // Responsive fit (mobile/tablet): the desktop RENDER_SCALE makes the page
       // wider than a phone/tablet container, which then CSS-shrinks the canvas
       // while the absolutely-positioned field overlays keep their unscaled pixel
-      // coordinates — so taps land off-target and tap-to-sign is impossible.
+      // coordinates, so taps land off-target and tap-to-sign is impossible.
       // Instead render the page to FIT the real, measured container width so the
       // canvas AND the field boxes (both derived from this viewport via
       // convertToViewportRectangle) live in ONE coordinate space. Only ever
@@ -2549,7 +2549,7 @@ function populateSidebar(detection, filename) {
   // The reliability story lives in the template-state pill now.
   if (statConfidence) statConfidence.textContent = meanConfidencePct(detection.fields);
 
-  // Reset nav cursor on every doc load. Counter goes from "— / —" to
+  // Reset nav cursor on every doc load. Counter goes from ", /, " to
   // "1 / N", prev/next become enabled, reading-order cache invalidates.
   resetNavCursor();
 
@@ -2867,7 +2867,7 @@ function paintSignButton(filledCount, totalCount) {
   //   partial      → "Download draft (X of Y)" (snapshot with current work baked in)
   //   complete     → "Download signed PDF"
   // The point: every state is a valid download. The button never locks
-  // the user out — they elect when to save.
+  // the user out, they elect when to save.
   let label;
   if (filledCount === 0) label = 'Download PDF';
   else if (filledCount >= totalCount) label = 'Download signed PDF';
@@ -2918,7 +2918,7 @@ function paintProgress(filledCount, totalCount) {
 
 /**
  * Free-tier signup gate (slice 104). User clicked Download PDF without
- * a freeToken — bring the gate form into view and focus the first
+ * a freeToken, bring the gate form into view and focus the first
  * input. If the dropzone is hidden because they're mid-doc, surface
  * a modal instead so the experience stays in context.
  */
@@ -2993,7 +2993,7 @@ function showFreeSignupGate(message) {
       try { localStorage.setItem('cybersygn.freeUsed', JSON.stringify({ used: data.used || 0, remaining: data.remaining })); } catch (e) {}
       close();
       try { paintFreeStatus(); } catch (e) {}
-      // Now retry the download — the user expected one click.
+      // Now retry the download, the user expected one click.
       onSignClick();
     } catch (err) {
       status.textContent = 'Network error. Try again.';
@@ -3223,7 +3223,7 @@ async function onSignClick() {
     // Post-download anchoring toast. Computes the time saved vs.
     // dragging each field by hand in DocuSign (industry average ~20s
     // per field for manual placement; we cite a conservative 15s).
-    // This is the moment the buyer feels the value most acutely —
+    // This is the moment the buyer feels the value most acutely, 
     // reciprocity primer for the upgrade ask later.
     showSavedTimeToast(docState.fields.length);
   } catch (err) {
@@ -3239,7 +3239,7 @@ async function onSignClick() {
  * Conversion choreography: when the user finishes a download, surface
  * how much time CyberSygn just saved them vs. dragging boxes in
  * DocuSign. Anchored time savings + dollar value at $60/hr makes the
- * Origin/Solo price feel cheap by comparison. Pure psychology — the
+ * Origin/Solo price feel cheap by comparison. Pure psychology, the
  * actual download is identical to what we shipped before this nudge.
  */
 function showSavedTimeToast(fieldCount) {
@@ -3251,7 +3251,7 @@ function showSavedTimeToast(fieldCount) {
   const minutesLabel = minutes === 1 ? 'minute' : 'minutes';
   showToast(
     `Saved you about ${minutes} ${minutesLabel} of manual field placement` +
-    (dollarsAt60 >= 5 ? ` — roughly $${dollarsAt60} of your time at $60/hr.` : '.'),
+    (dollarsAt60 >= 5 ? `, roughly $${dollarsAt60} of your time at $60/hr.` : '.'),
     { action: { href: '/#founding', label: 'Lock $9 for life →' } },
   );
 }
@@ -3259,7 +3259,7 @@ function showSavedTimeToast(fieldCount) {
 /**
  * Save a snapshot of the current work as a PDF. Same flatten flow as
  * the primary Download button, but the filename is timestamped so the
- * user can keep iterative snapshots — "draft 1, draft 2, signed" — and
+ * user can keep iterative snapshots, "draft 1, draft 2, signed", and
  * the button never gates them on completion.
  *
  * Available the moment any field exists. Works at any state: zero
@@ -3275,7 +3275,7 @@ async function onSaveSnapshotClick() {
   const totalCount = docState.fields.length;
   // ISO timestamp, condensed: 2026-06-02T15-04-22 → file-safe.
   // Date.now() / new Date() aren't available in the workflow runner,
-  // but they're fine here in the browser — this is interactive code.
+  // but they're fine here in the browser, this is interactive code.
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const baseFilename = (docState.filename || 'document.pdf').replace(/\.pdf$/i, '');
   const tag = filledCount >= totalCount && totalCount > 0 ? 'signed' : `draft-${filledCount}-of-${totalCount}`;
@@ -3310,7 +3310,7 @@ async function onSaveSnapshotClick() {
  * Save the current EDITABLE work state as a JSON file the user can
  * drop back into the app later to resume exactly where they left off.
  *
- * The snapshot button (slice 48) saves a flattened PDF — good for
+ * The snapshot button (slice 48) saves a flattened PDF, good for
  * sharing, useless for editing. This saves everything: the original
  * PDF bytes (base64), the field set, every sender edit (move/resize/
  * type-change), every fill, the signer roster, CC recipients. Drop
@@ -3384,7 +3384,7 @@ async function onSaveDraftClick() {
  * document exactly as if the user had just been working on it.
  *
  * Errors fall through to the normal upload path so the user can still
- * try opening the file as a regular PDF if it's actually that — we
+ * try opening the file as a regular PDF if it's actually that, we
  * don't want a malformed draft to silently strand them.
  */
 async function restoreDraft(file) {
@@ -3481,7 +3481,7 @@ async function restoreDraft(file) {
 }
 
 /**
- * Single-signer "Email a copy" — opens a small inline prompt for
+ * Single-signer "Email a copy", opens a small inline prompt for
  * recipients + an optional note, flattens the PDF with current fills
  * baked in, POSTs to /api/snapshot/email which sends the PDF as an
  * attachment to each recipient via Resend.
@@ -3605,7 +3605,7 @@ function openEmailCopyModal() {
     sendBtn.textContent = 'Preparing and sending…';
     try {
       // Flatten the PDF in browser. flattenAndDownload normally triggers
-      // a download — we want the bytes, so use the underlying flatten()
+      // a download, we want the bytes, so use the underlying flatten()
       // by re-rendering. Simpler approach: do a hidden flatten via the
       // same path but capture before download. flattenAndDownload doesn't
       // return bytes today, so for this slice we use the original PDF
@@ -3653,7 +3653,7 @@ function openEmailCopyModal() {
 /**
  * Signer declines to sign. Confirms intent (with optional reason) then
  * POSTs to the decline endpoint. On success, freezes the UI and shows
- * a "declined" toast — no more fills can be submitted.
+ * a "declined" toast, no more fills can be submitted.
  */
 async function onDeclineClick() {
   const session = currentSignerSession();
@@ -3679,7 +3679,7 @@ async function onDeclineClick() {
     }
     declineButton.textContent = 'Declined.';
     signButton.disabled = true;
-    signButton.innerHTML = '<span class="sign-btn__label">Declined — session closed</span>';
+    signButton.innerHTML = '<span class="sign-btn__label">Declined, session closed</span>';
     showToast('You declined. The sender has been notified.');
     track('preview_declined', { reasonGiven: Boolean(reason) });
   } catch (err) {
@@ -3717,7 +3717,7 @@ async function submitSignerFills() {
       signButton.textContent = res.data.docComplete
         ? 'All signed.'
         : 'Your part is done.';
-      // Show the post-submit signer microsite — single biggest viral
+      // Show the post-submit signer microsite, single biggest viral
       // loop in the funnel. The signer just used CyberSygn (didn't
       // need an account) and is therefore the warmest possible lead.
       // We let them claim an account in one click.
@@ -4067,7 +4067,7 @@ function updateSignersUI(list) {
 
 /**
  * Build one signer row. Called only when a new signer appears in the
- * list — existing rows are updated in place by updateSignersUI to
+ * list, existing rows are updated in place by updateSignersUI to
  * preserve input focus while the user is typing.
  */
 function buildSignerRow(signer) {
@@ -4452,7 +4452,7 @@ function openSendModal() {
 
   // CC recipients. Anyone listed here gets emailed the signed PDF the
   // moment the last signer completes. They do NOT receive a signing link
-  // and cannot sign — they're notice-only. Useful for legal review,
+  // and cannot sign, they're notice-only. Useful for legal review,
   // executive assistants, anyone who needs a copy for their records.
   const ccSection = document.createElement('div');
   ccSection.className = 'cc-section';

@@ -58,7 +58,7 @@ extent permitted by applicable law.
 
 3.1 **Prior related actions.** The following prior warnings or actions relate to
 this or similar conduct: **[List prior verbal or written warnings, coaching, or
-prior forms with dates, or state "none — this is the first documented action."]**
+prior forms with dates, or state "none, this is the first documented action."]**
 
 3.2 **Progressive discipline.** Where the Company uses progressive discipline, this
 action reflects the next appropriate step in light of the history above. The
@@ -134,7 +134,7 @@ except on a need-to-know basis or as required by law.
 | Title: **[TITLE]** (or N/A) |
 | Date: __________________________ |
 
-**Employee declined to sign:** **[ ] Yes   [ ] No** — Date: ______________
+**Employee declined to sign:** **[ ] Yes   [ ] No**, Date: ______________
 
 ---
 

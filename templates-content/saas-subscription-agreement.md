@@ -264,18 +264,18 @@ Effective Date.
 
 ---
 
-### Exhibit A — Service Level Agreement (SLA)
+### Exhibit A, Service Level Agreement (SLA)
 
 - **Uptime commitment:** **[e.g. 99.9% monthly]**
 - **Measurement and exclusions:** **[DESCRIBE]**
 - **Service credits:** **[DESCRIBE CREDIT SCHEDULE]**
 
-### Exhibit B — Support
+### Exhibit B, Support
 
 - **Support channels and hours:** **[DESCRIBE]**
 - **Severity levels and target response times:** **[DESCRIBE]**
 
-### Exhibit C — Security
+### Exhibit C, Security
 
 - **Safeguards and certifications:** **[DESCRIBE]**
 - **Subprocessors:** **[LIST OR LINK]**

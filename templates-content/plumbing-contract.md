@@ -192,7 +192,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 9.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 9.4 **Notices.** Notices must be in writing and delivered to the addresses above
 or as updated in writing, and are effective on receipt.

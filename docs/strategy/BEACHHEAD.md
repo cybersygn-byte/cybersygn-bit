@@ -12,10 +12,10 @@ You cannot win every vertical at once. Solo founder, no sales team. Marketing do
 
 | Audience | Volume | LTV | CAC | Community access | Sales cycle | My recommendation |
 |---|---|---|---|---|---|---|
-| **Freelance creatives** (designers, photographers, writers) | High (millions US) | Mid ($12–144/yr) | Low — active communities | Reddit r/Freelance, Indie Designers Slack, photographer FB groups | Days | ⭐ Strong fit |
-| **Real estate agents** | High (~2M US) | High ($29/mo Studio) | Medium — gatekept | Local boards, BiggerPockets, Inman | Weeks | Strong fit, harder access |
-| **Small law firms** (solo + 2–5 attorney) | Mid | Highest ($29–lifetime) | High — referral-based | Bar associations, ABA TECHSHOW | Months | Defer |
-| **Indie founders** (peers) | Mid | Low ($9 Origin or free) | Lowest — you ARE one | Indie Hackers, Twitter/X | Hours | Use as launch fuel |
+| **Freelance creatives** (designers, photographers, writers) | High (millions US) | Mid ($12–144/yr) | Low, active communities | Reddit r/Freelance, Indie Designers Slack, photographer FB groups | Days | ⭐ Strong fit |
+| **Real estate agents** | High (~2M US) | High ($29/mo Studio) | Medium, gatekept | Local boards, BiggerPockets, Inman | Weeks | Strong fit, harder access |
+| **Small law firms** (solo + 2–5 attorney) | Mid | Highest ($29–lifetime) | High, referral-based | Bar associations, ABA TECHSHOW | Months | Defer |
+| **Indie founders** (peers) | Mid | Low ($9 Origin or free) | Lowest, you ARE one | Indie Hackers, Twitter/X | Hours | Use as launch fuel |
 | **Coaches + consultants** | High | Mid | Low | Twitter, Substack | Days | Strong fit |
 
 ## The recommendation
@@ -23,7 +23,7 @@ You cannot win every vertical at once. Solo founder, no sales team. Marketing do
 **Primary beachhead: solo creative freelancers + photographers.**
 
 Reasons:
-1. **Active, accessible communities.** Subreddits, Discords, Facebook groups, Slack channels — all free to participate in. You can be in 10 of them by tomorrow.
+1. **Active, accessible communities.** Subreddits, Discords, Facebook groups, Slack channels, all free to participate in. You can be in 10 of them by tomorrow.
 2. **High doc volume per customer.** A working photographer signs 3-10 contracts/month (shoot agreements, model releases). High touch with CyberSygn = lock-in.
 3. **They share tools.** Photographer A tells photographer B. Designer A tells the designer Slack. Word-of-mouth coefficient is high.
 4. **CyberSygn's Apple-aesthetic site language resonates.** Visual professionals notice good visual design. Lawyers don't.
@@ -32,7 +32,7 @@ Reasons:
 
 **Secondary beachhead (use as launch fuel only): indie founders.**
 
-Use Twitter/X, Indie Hackers, Product Hunt, Hacker News to amass attention. Convert some, retain few — most indie founders don't sign enough contracts to be high-LTV customers. They're megaphones, not market.
+Use Twitter/X, Indie Hackers, Product Hunt, Hacker News to amass attention. Convert some, retain few, most indie founders don't sign enough contracts to be high-LTV customers. They're megaphones, not market.
 
 **Defer until quarter 2: real estate, law, B2B.**
 
@@ -45,7 +45,7 @@ Use Twitter/X, Indie Hackers, Product Hunt, Hacker News to amass attention. Conv
 
 ### Days 15–30: Help, don't pitch
 - Answer 20 unrelated questions in those communities. Build standing.
-- When someone asks "what e-signature tool do you use?" → reply with a non-promotional comparison: "DocuSign $25/mo for what you'd actually use. Lots of cheaper options. I built one — cybersygn.io — because field detection was the part I always hated."
+- When someone asks "what e-signature tool do you use?" → reply with a non-promotional comparison: "DocuSign $25/mo for what you'd actually use. Lots of cheaper options. I built one, cybersygn.io, because field detection was the part I always hated."
 - Track which forum-posts drive signups via ?ref=reddit, ?ref=indiehackers, ?ref=designerslack.
 
 ### Days 31–60: Earned media
@@ -54,15 +54,15 @@ Use Twitter/X, Indie Hackers, Product Hunt, Hacker News to amass attention. Conv
 - Topic: "How I built an e-signature tool in 60 days on Cloudflare Workers" or "Why DocuSign sucks for photographers (and what to do about it)."
 
 ### Days 61–90: Cohort + program
-- Launch a "Freelancer Pack" — 12 months Lifetime at $199 (instead of $299) for the first 25 freelancers who sign up via a freelancer-specific URL.
+- Launch a "Freelancer Pack", 12 months Lifetime at $199 (instead of $299) for the first 25 freelancers who sign up via a freelancer-specific URL.
 - Promote it through the communities you built standing in.
-- Post results publicly on Twitter/X for credibility — "Day 73: 8 freelancers on Lifetime, $1,592 in revenue."
+- Post results publicly on Twitter/X for credibility, "Day 73: 8 freelancers on Lifetime, $1,592 in revenue."
 
 ## What doesn't work
 
 - **Don't run paid ads** until you have organic signal. Paid amplifies what works; if nothing works yet, paid amplifies nothing.
 - **Don't waste time on TikTok** unless you're personally there. Founder presence matters.
-- **Don't pivot beachhead** without 60 days of effort. Two weeks of no traction is not a signal — most beachheads take a month to warm up.
+- **Don't pivot beachhead** without 60 days of effort. Two weeks of no traction is not a signal, most beachheads take a month to warm up.
 
 ## How to know if it's working
 

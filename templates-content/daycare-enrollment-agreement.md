@@ -41,7 +41,7 @@ Center's operating hours are **[OPERATING HOURS]**.
 
 1.3 **Program.** The Services include age-appropriate care, supervision, and
 activities consistent with Provider's program and applicable licensing
-requirements. Meals and snacks are **[PROVIDED / NOT PROVIDED — PARENT SUPPLIES]**.
+requirements. Meals and snacks are **[PROVIDED / NOT PROVIDED, PARENT SUPPLIES]**.
 
 1.4 **Required documents.** Before the start date, Parent will provide all
 documents required by Provider and by applicable licensing rules, including

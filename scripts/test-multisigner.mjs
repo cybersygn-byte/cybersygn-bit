@@ -103,5 +103,5 @@ console.log('Multi-signer adversarial tests:\n');
 }
 
 console.log(`\n${ok} ok, ${breaks} BREAK, of ${ok + breaks}.`);
-console.log(breaks === 0 ? 'MULTI-SIGNER SURVIVED EVERY CASE.' : `MULTI-SIGNER BROKE on ${breaks} case(s) — diagnose and harden.`);
+console.log(breaks === 0 ? 'MULTI-SIGNER SURVIVED EVERY CASE.' : `MULTI-SIGNER BROKE on ${breaks} case(s), diagnose and harden.`);
 process.exit(breaks === 0 ? 0 : 1);

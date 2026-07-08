@@ -116,7 +116,7 @@ const DETECTION_TIMEOUT_MS = 15000;
 const MAX_JSON_BYTES = 256 * 1024; // default for small JSON endpoints
 // Doc-creation / bulk-send / snapshot-email carry a base64 PDF in the body. A
 // 25MB PDF base64-encodes to ~34MB; add headroom for fields/signers/assignments.
-// (This cap must be a NUMBER — readJsonBody(request, maxBytes) ignores objects.)
+// (This cap must be a NUMBER, readJsonBody(request, maxBytes) ignores objects.)
 const MAX_DOC_JSON_BYTES = 36 * 1024 * 1024;
 const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
@@ -268,7 +268,7 @@ const worker = {
       return handleEvent(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/error') {
-      // Tight rate limit on client-error reports — bug-spam is a real
+      // Tight rate limit on client-error reports, bug-spam is a real
       // failure mode and we don't want it to hot-spot Resend.
       const rl = await checkRateLimit(env, `err:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/error' });
@@ -345,7 +345,7 @@ const worker = {
           partnerId: (b.value && b.value.partnerId) || null,
         });
         if (!made) return jsonResponse(500, { error: 'mint_failed', message: 'Could not mint key.' });
-        return jsonResponse(201, { ok: true, ...made, warning: 'Store this key now — it is shown only once.' });
+        return jsonResponse(201, { ok: true, ...made, warning: 'Store this key now, it is shown only once.' });
       }
       if (request.method === 'GET') {
         return jsonResponse(200, { keys: await listApiKeys(env, url.searchParams.get('senderId') || '') });
@@ -453,7 +453,7 @@ const worker = {
       return handleBulkSend(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/docs') {
-      // Generous rate limit on doc creation — paid customers send
+      // Generous rate limit on doc creation, paid customers send
       // dozens a day, but a flood-loop should still be capped.
       const rl = await checkRateLimit(env, `docs:${ipKey(request)}`, [{ windowSec: 600, max: 60 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs' });
@@ -546,7 +546,7 @@ const worker = {
     }
 
     // Sender dashboard: list every doc this sender has created.
-    // GET /api/docs/:docId/live?t=<signerToken> — co-signing presence.
+    // GET /api/docs/:docId/live?t=<signerToken>, co-signing presence.
     {
       const m = url.pathname.match(/^\/api\/docs\/([a-f0-9]{32,64})\/live$/);
       if (request.method === 'GET' && m) {
@@ -557,7 +557,7 @@ const worker = {
       }
     }
 
-    // GET /api/sender/:senderId/templates — count of templates this sender saved.
+    // GET /api/sender/:senderId/templates, count of templates this sender saved.
     {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/templates$/);
       if (request.method === 'GET' && m) {
@@ -566,8 +566,8 @@ const worker = {
     }
 
     // Custom branding for paid tiers (slice 90).
-    // GET  /api/sender/:senderId/brand        — public read of brand
-    // POST /api/sender/:senderId/brand        — paid-only write
+    // GET  /api/sender/:senderId/brand, public read of brand
+    // POST /api/sender/:senderId/brand, paid-only write
     {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/brand$/);
       if (m && request.method === 'GET') {
@@ -640,7 +640,7 @@ const worker = {
     // In local dev without `env.ASSETS` (e.g. node-based test harness),
     // we still need to return *something* for API misses, so we 404 only
     // for /api/* paths and surface a clear message for everything else.
-    // Public API v1 — API-key authenticated, server-to-server. Handled before
+    // Public API v1, API-key authenticated, server-to-server. Handled before
     // the /api/ 404 fallthrough; routeApiV1 returns null for non-v1 paths so
     // nothing else is affected.
     if (url.pathname.startsWith('/api/v1')) {
@@ -704,13 +704,13 @@ const worker = {
     if (shouldRunKvBackup(event)) {
       ctx.waitUntil(runDailyKvBackup(env));
     }
-    // Automated security self-check twice daily — 00:00 and 12:00 UTC
+    // Automated security self-check twice daily, 00:00 and 12:00 UTC
     // (06:00 / 18:00 America/Denver during MDT). Emails the owner only on
     // failure; a passing run is silent. Wrapped so it can never break the cron.
     if (shouldRunSecurityCheck(event)) {
       ctx.waitUntil(runSecurityCheck(env, { trigger: 'cron', dispatch: selfDispatch(env, ctx) }).catch(() => {}));
     }
-    // Uptime self-probe (slice 99). Synchronous KV check is enough — if
+    // Uptime self-probe (slice 99). Synchronous KV check is enough, if
     // the binding is up the worker can respond; if it isn't, we record
     // a failure for the day.
     ctx.waitUntil((async () => {
@@ -1037,15 +1037,15 @@ async function handleOwnerResetRequest(request, env, url) {
   const generic = jsonResponse(200, { ok: true, message: 'If that address is on file, a reset link is on its way. Check your inbox (and spam).' });
   if (!configured || !email || email !== String(configured).trim().toLowerCase()) return generic;
   const token = await createResetToken(env);
-  if (!token) return generic; // KV unavailable (e.g. daily write quota) — fail closed, no leak
+  if (!token) return generic; // KV unavailable (e.g. daily write quota), fail closed, no leak
   const appUrl = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
   const link = `${appUrl}/control/?reset=${token}`;
   try {
     await deliverEmail(env, {
       to: configured,
       subject: 'Reset your CyberSygn owner password',
-      text: `Someone asked to reset the CyberSygn owner password.\n\nReset it here (expires in 30 minutes, one use):\n${link}\n\nIf this wasn't you, ignore this email — nothing changes.`,
-      html: `<p>Someone asked to reset the CyberSygn owner password.</p>\n<p><a href="${link}">Reset your password</a> — expires in 30 minutes, single use.</p>\n<p>If this wasn't you, ignore this email. Nothing changes.</p>`,
+      text: `Someone asked to reset the CyberSygn owner password.\n\nReset it here (expires in 30 minutes, one use):\n${link}\n\nIf this wasn't you, ignore this email, nothing changes.`,
+      html: `<p>Someone asked to reset the CyberSygn owner password.</p>\n<p><a href="${link}">Reset your password</a>, expires in 30 minutes, single use.</p>\n<p>If this wasn't you, ignore this email. Nothing changes.</p>`,
     });
   } catch (e) {
     report(e, 'owner-reset-email');
@@ -1066,7 +1066,7 @@ async function handleOwnerResetConfirm(request, env) {
   if (!res.ok) {
     const msg = res.error === 'weak_password' ? 'Password must be at least 8 characters.'
       : res.error === 'invalid_username' ? 'Enter a username.'
-      : res.error === 'write_failed' ? 'Could not save — the daily storage write limit may be exhausted. Try again after 00:00 UTC, or upgrade the Cloudflare Workers plan.'
+      : res.error === 'write_failed' ? 'Could not save, the daily storage write limit may be exhausted. Try again after 00:00 UTC, or upgrade the Cloudflare Workers plan.'
       : 'Could not set the new password.';
     return jsonResponse(res.error === 'write_failed' ? 503 : 400, { error: res.error, message: msg });
   }
@@ -1175,7 +1175,7 @@ async function handleStripeWebhook(request, env) {
     // Return 5xx so Stripe RETRIES. applyStripeEvent marks the event seen only
     // AFTER it fully applies, so a mid-apply failure (e.g. a transient KV write
     // error writing sub:<senderId>) was NOT marked seen. Returning 200 here would
-    // tell Stripe the webhook succeeded and it would never retry — the customer
+    // tell Stripe the webhook succeeded and it would never retry, the customer
     // pays but never gets their tier/entitlement. The pre-apply duplicate check +
     // idempotent handlers make Stripe's retries safe.
     return jsonResponse(500, { received: false, error: err && err.message });
@@ -1271,7 +1271,7 @@ async function handleLifetimeCount(env) {
  * GDPR data subject export (slice 100). Returns the requesting
  * sender's full data inventory:
  *   - sub record (subscription state)
- *   - docs created (titles, dates, no PDF bytes — those are at /api/docs/:id/pdf with a token)
+ *   - docs created (titles, dates, no PDF bytes, those are at /api/docs/:id/pdf with a token)
  *   - templates saved
  *   - free-tier signup data
  *   - affiliate stats
@@ -1280,7 +1280,7 @@ async function handleLifetimeCount(env) {
  *   - origin profile if applicable
  *
  * Authenticated by the senderId itself (same trust model as
- * /api/billing/portal — if you know your senderId, you can request
+ * /api/billing/portal, if you know your senderId, you can request
  * your export). For tighter auth, this endpoint could require an
  * owner token + signed email link.
  *
@@ -1329,7 +1329,7 @@ async function handleTemplateDownload(request, env, url, slug) {
   ]);
   if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/templates/download' });
 
-  // Sanitize first — never allow path traversal into the asset path.
+  // Sanitize first, never allow path traversal into the asset path.
   const clean = sanitizeSlug(slug);
   if (!clean) return jsonResponse(404, { error: 'unknown_template' });
 
@@ -1788,7 +1788,7 @@ async function handleOriginWall(env) {
   const cap = foundingCap();
   const members = [];
   // List sub:* records on the raw KV binding (the storage abstraction
-  // wraps get/put but not list). Small list — cap is 100 — so a single
+  // wraps get/put but not list). Small list, cap is 100, so a single
   // page suffices; if Origin ever grows past 1000 we'll add a
   // denormalized index.
   const docsBinding = env && env.CYBERSYGN_DOCS;
@@ -1835,7 +1835,7 @@ async function handleOriginWall(env) {
 
 /**
  * Origin member self-edit: update displayName + city for the public
- * wall. Mirrors the auth pattern of /api/billing/portal — caller passes
+ * wall. Mirrors the auth pattern of /api/billing/portal, caller passes
  * senderId in the body, and the server only updates if a sub:senderId
  * record exists AND the record is an Origin member with a foundingNumber.
  * Owner override via X-CyberSygn-Owner is also accepted.
@@ -1864,7 +1864,7 @@ async function handleOriginProfile(request, env, url) {
   // /api/billing/portal is "if you know the senderId, you can edit"
   // (clients store it in localStorage). This endpoint inherits that.
   // PII risk is bounded: the fields update only the Origin wall
-  // display name + city — no email, no billing, no auth state.
+  // display name + city, no email, no billing, no auth state.
   const displayName = typeof payload.displayName === 'string' ? payload.displayName : '';
   const city = typeof payload.city === 'string' ? payload.city : '';
 
@@ -1980,7 +1980,7 @@ async function handleHealth(env) {
       return { ok: false, mode: 'unconfigured', detail: 'ANTHROPIC_API_KEY not set' };
     }
     try {
-      // /v1/models is a listing endpoint — auth required, no token usage.
+      // /v1/models is a listing endpoint, auth required, no token usage.
       // Returns { data: [...models] } on success, 401 on bad key.
       const res = await withTimeout(
         fetch('https://api.anthropic.com/v1/models', {
@@ -2228,9 +2228,9 @@ async function handleSaveTemplate(request, env, url) {
   if (!result.ok) return jsonResponse(400, { error: result.error || 'save_failed' });
 
   // Fire-and-forget Phase 3 trigger check. Only customer-public
-  // templates grow the shared corpus — owner-saved templates are
+  // templates grow the shared corpus, owner-saved templates are
   // forced to private inside saveTemplate so they never reach this
-  // branch. Watchdog is idempotent — one-shot alert per cluster lifetime.
+  // branch. Watchdog is idempotent, one-shot alert per cluster lifetime.
   // We don't await: the user's save response shouldn't wait on a
   // stats walk + maybe-email round-trip.
   if (result.template.scope === 'public' && !result.template.ownerCreated) {
@@ -2324,7 +2324,7 @@ async function handleFreeConsume(request, env) {
  * Body: { pdfBase64: string, filename: string }
  * Header: X-CyberSygn-Free: <freeToken>
  *
- * Failures are tolerated (no surface error to the user) — the download
+ * Failures are tolerated (no surface error to the user), the download
  * already worked client-side; this is a best-effort copy.
  */
 async function handleEmailSignedPdf(request, env) {
@@ -2628,7 +2628,7 @@ async function handleStatus(request, env, url) {
 
 /**
  * Mint (or look up) an affiliate code for the current senderId.
- * Idempotent — calling it twice returns the same code.
+ * Idempotent, calling it twice returns the same code.
  *
  * Body: { senderId, email? }
  * Returns: { ok, code, record, isNew, shareUrl }
@@ -2660,7 +2660,7 @@ async function handleAffiliateRegister(request, env, url) {
 
 /**
  * Public click-counter. Called by client-side script when a visitor
- * lands with ?ref=<code> in the URL. Cheap, no auth — just bumps.
+ * lands with ?ref=<code> in the URL. Cheap, no auth, just bumps.
  */
 async function handleAffiliateClick(request, env, url) {
   const body = await readJsonBody(request);
@@ -2705,12 +2705,12 @@ async function handleAffiliateStats(request, env, url, code) {
  *       }]
  *     }
  *   Used by signer-side clients to poll every 2s and render presence
- *   pills (e.g. "Jane is signing — page 2, 5 of 8 fields filled").
+ *   pills (e.g. "Jane is signing, page 2, 5 of 8 fields filled").
  *
  * POST /api/docs/:docId/live?t=<signerToken>
  *   Body: { currentPage }
  *   Updates the calling signer's presence on the doc record. Cheap,
- *   no event log entry — we keep this off the audit trail because
+ *   no event log entry, we keep this off the audit trail because
  *   it's UI state, not legally meaningful.
  *
  * Auth: same magic-link signing token used elsewhere. The presence
@@ -3054,7 +3054,7 @@ async function handleSenderTemplatesCount(request, env, url, senderId) {
   if (!safeId) return jsonResponse(400, { error: 'invalid_sender' });
   if (!env || !env.CYBERSYGN_DOCS) return jsonResponse(200, { count: 0, source: 'memory' });
   try {
-    // List bounded — for very prolific senders we cap at 1000.
+    // List bounded, for very prolific senders we cap at 1000.
     const r = await env.CYBERSYGN_DOCS.list({
       prefix: `tpl-priv:${safeId}:`,
       limit: 1000,
@@ -3242,7 +3242,7 @@ async function handleAnalyticsSummary(request, env, url) {
     : "INTERVAL '7' DAY";
   // By default, exclude owner test traffic so the dashboard reads as
   // real-customer signal. ?includeOwner=1 brings owner events back in
-  // — useful when the owner wants to confirm their own clicks landed.
+  //, useful when the owner wants to confirm their own clicks landed.
   const includeOwner = url.searchParams.get('includeOwner') === '1';
   const data = await analyticsSummary(env, { window: safeWindow, excludeOwner: !includeOwner });
   return jsonResponse(200, { ok: true, ...data });
@@ -3728,7 +3728,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   // actually invited, which sequential routing reads on each completion).
   await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
 
-  // Fire doc.created webhook (slice 91). Studio-only — fireWebhook
+  // Fire doc.created webhook (slice 91). Studio-only, fireWebhook
   // returns early if the sender has no config. waitUntil hands the
   // delivery off to the runtime so the API response doesn't block.
   const waitUntil = ctx && typeof ctx.waitUntil === 'function'
@@ -3822,7 +3822,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   if (signerIdx < 0) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });
   const signer = doc.signers[signerIdx];
 
-  // Once the document is fully executed the record is legally final — no signer
+  // Once the document is fully executed the record is legally final, no signer
   // may add or change anything. (Void/decline are the only post-signing moves.)
   if (doc.completedAt) {
     return jsonResponse(409, { error: 'already_completed', message: 'This document is already fully signed and can no longer be changed.' });
@@ -4105,7 +4105,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     completionEmails,
     // Surfaced for the signer-microsite (slice 75). Returning name +
     // email lets the post-submit modal greet the signer by name and
-    // prefill the free-tier signup form with their email — one-click
+    // prefill the free-tier signup form with their email, one-click
     // conversion.
     signerName: signer.name || '',
     signerEmail: signer.email || '',
@@ -4280,7 +4280,7 @@ const REMINDER_LOCK_STALE_MS = REMINDER_LOCK_TTL_SECONDS * 1000;
  * one manual reminder per hour, regardless of the cron schedule.
  */
 async function handleRemind(request, env, docId, signerId, url) {
-  // Unauthenticated email-sending endpoint — IP-limit to blunt abuse by anyone
+  // Unauthenticated email-sending endpoint, IP-limit to blunt abuse by anyone
   // who learns a docId. (Full sender-token auth is a tracked follow-up.)
   const rl = await checkRateLimit(env, `remind:${ipKey(request)}`, [{ windowSec: 3600, max: 20 }]);
   if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs/remind' });
@@ -4423,7 +4423,7 @@ async function handleDeclineSign(request, env, docId, token, url) {
 }
 
 /**
- * Direct PDF-to-CC email send. Bypasses the signing flow entirely —
+ * Direct PDF-to-CC email send. Bypasses the signing flow entirely, 
  * used by single-signer users who flatten their PDF in the browser and
  * just want to email finished copies to legal / assistants / records.
  *
@@ -4444,7 +4444,7 @@ async function handleDeclineSign(request, env, docId, token, url) {
  */
 async function handleSnapshotEmail(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
-  // Non-owner callers can attach a PDF to arbitrary recipients — IP-limit so a
+  // Non-owner callers can attach a PDF to arbitrary recipients, IP-limit so a
   // rotated senderId can't turn this into an open email relay off our domain.
   if (!owner) {
     const rl = await checkRateLimit(env, `snapshot:${ipKey(request)}`, [{ windowSec: 3600, max: 8 }, { windowSec: 86400, max: 30 }]);
@@ -5229,7 +5229,7 @@ function randomId(byteLength) {
  * Constant-time equality compare for lowercase hex strings (signer,
  * sender, and workspace tokens are all 64-char hex from randomId(32)).
  *
- * The length-mismatch early return leaks length only — fine here because
+ * The length-mismatch early return leaks length only, fine here because
  * the expected length is fixed and known. Past the length check, the XOR
  * accumulator runs the full string and returns based on the OR'd diff,
  * so the time taken does not depend on where the first mismatching byte

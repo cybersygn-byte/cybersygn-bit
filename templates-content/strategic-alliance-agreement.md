@@ -222,7 +222,7 @@ STATE]**.
 
 11.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through escalation to senior executives within
-**[NUMBER]** days of written notice. **[OPTIONAL: arbitration clause — discuss with
+**[NUMBER]** days of written notice. **[OPTIONAL: arbitration clause, discuss with
 counsel.]**
 
 11.4 **Assignment.** Neither Party may assign this Agreement without the other's

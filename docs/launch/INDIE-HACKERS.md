@@ -1,4 +1,4 @@
-# Indie Hackers launch — CyberSygn
+# Indie Hackers launch, CyberSygn
 
 IH rewards substantive posts. "I shipped a thing" gets ignored. "I
 shipped a thing and here's the indie-founder story / numbers / lessons"
@@ -22,7 +22,7 @@ Alternates:
 ```markdown
 👋 IH,
 
-I'm Nathan, and yesterday I shipped CyberSygn — an e-signature service
+I'm Nathan, and yesterday I shipped CyberSygn, an e-signature service
 that automatically finds every signature line, initial, date, and
 checkbox in your PDFs. No drag-and-drop, no signer accounts.
 
@@ -81,7 +81,7 @@ heuristics. Now passes 37/37 on regression.
 
 DocuSign hostility-trains its users to expect signing to suck. I had
 to make the receiver flow so frictionless that the receiver doesn't
-realize it's CyberSygn — they just click and sign. Magic-link tokens,
+realize it's CyberSygn, they just click and sign. Magic-link tokens,
 zero account creation, browser-side signing pad.
 
 **3. Trust signals when you have no customers yet.**
@@ -92,16 +92,16 @@ A live Origin Wall page surfaces real signups as they happen.
 
 ## What I'd love your help with
 
-1. **Try the demo**: https://cybersygn.io/preview/ — drop a PDF, watch
+1. **Try the demo**: https://cybersygn.io/preview/, drop a PDF, watch
    the fields appear. No signup, 3 docs free, lifetime.
 2. **Honest feedback**: what's confusing? what's broken? where did you
-   bounce? Email nathan@cybersygn.io — I read everything.
+   bounce? Email nathan@cybersygn.io, I read everything.
 3. **Origin spots**: $9/mo locked for the life of your account, capped
    at 100 founders. I'll keep an IH-flagged count if anyone here claims one.
 
 Happy to answer anything in the comments. Thanks IH 🚀
 
-— Nathan
+, Nathan
 ```
 
 ## When to post
@@ -112,5 +112,5 @@ US-holiday weeks.
 ## Engagement playbook
 
 - Reply to every comment within an hour for the first 6 hours
-- Don't get defensive about feedback — IH culture rewards humility
+- Don't get defensive about feedback, IH culture rewards humility
 - Have a follow-up post planned for day 7 ("week-1 numbers from the launch")

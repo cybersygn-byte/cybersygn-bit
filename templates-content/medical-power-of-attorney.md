@@ -49,7 +49,7 @@ Principal has given or later gives.
 Principal's attending physician (or another qualified clinician as required by
 applicable law) determines in writing that the Principal lacks the capacity to
 make or communicate health-care decisions. **[OPTIONAL: state that the
-authority is effective immediately upon signing — discuss with counsel, as this
+authority is effective immediately upon signing, discuss with counsel, as this
 varies by jurisdiction.]**
 
 1.3 **When authority ends.** The Agent's authority continues during any period
@@ -108,7 +108,7 @@ TO AGENT].**
 
 3.5 **Relationship to other directives.** If the Principal has also signed a
 living will or other advance directive, the Agent will follow the instructions
-in that document. If a conflict exists, **[STATE WHICH CONTROLS — e.g. "the
+in that document. If a conflict exists, **[STATE WHICH CONTROLS, e.g. "the
 living will controls on the specific matters it addresses"].**
 
 ## 4. Duties and Standard of Decision

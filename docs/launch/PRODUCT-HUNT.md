@@ -1,4 +1,4 @@
-# Product Hunt launch — CyberSygn
+# Product Hunt launch, CyberSygn
 
 Launch target: a Tuesday or Wednesday, 12:01 am Pacific. Avoid Mondays
 (low traffic) and Fridays (people checking out). PH ranks the daily
@@ -31,7 +31,7 @@ audit certificate. Built solo on Cloudflare. Free for 3 documents.
 Hey Hunters,
 
 I'm Nathan, the solo founder of CyberSygn. I built it because the slowest
-part of signing a contract isn't reading it or signing it — it's telling
+part of signing a contract isn't reading it or signing it, it's telling
 the tool where the fields are that you can already see with your eyes.
 
 Twenty minutes of dragging signature boxes onto every page. Every time.
@@ -40,14 +40,14 @@ For every contract. That broke me.
 So I shipped the thing I wanted:
 
 → Drop a PDF, watch every field appear in about 3 seconds
-→ Send it to anyone — they click a link and sign in their browser, no
+→ Send it to anyone, they click a link and sign in their browser, no
   account or app
 → Get the signed PDF back, plus a SHA-256 audit certificate that holds
   up legally same as DocuSign
 
 What makes CyberSygn different from the dozen DocuSign alternatives:
 
-• Field detection is automatic. None of the others do this — they all
+• Field detection is automatic. None of the others do this, they all
   still make you drag boxes.
 • Detection runs in YOUR browser. Your PDF doesn't leave the page until
   you choose to send it. Privacy by architecture.
@@ -58,24 +58,24 @@ What makes CyberSygn different from the dozen DocuSign alternatives:
   nathan@cybersygn.io.
 
 What I'd love your help with:
-1. Try it: https://cybersygn.io/preview/ — 3 docs free, no card.
+1. Try it: https://cybersygn.io/preview/, 3 docs free, no card.
 2. Tell me what breaks. I read everything.
 3. If you've got a "DocuSign alternative" comparison post, I'd love a
   spot.
 
 Thanks for being here.
-— Nathan
+, Nathan
 ```
 
 ## Gallery (visual assets, in order)
 
-1. **Hero**: the cinematic loop (`brand/hero.mp4`) — 12 seconds, autoplay.
+1. **Hero**: the cinematic loop (`brand/hero.mp4`), 12 seconds, autoplay.
    Loops cleanly. Logo bookends.
 2. **Field detection in action**: animated GIF of dropping a PDF and
    watching field overlays bloom (record from the live demo on /preview/).
 3. **Sidebar review screenshot**: full /preview/ post-detection state,
    sidebar showing detection report + filled fields.
-4. **Comparison table**: from /alternatives/cybersygn-vs-docusign/ — the
+4. **Comparison table**: from /alternatives/cybersygn-vs-docusign/, the
    11-row CyberSygn vs DocuSign grid.
 5. **Pricing**: the Origin/Solo/Studio cards from /#pricing.
 6. **Founder portrait or workspace**: Nathan + the Colorado backdrop.
@@ -95,7 +95,7 @@ Thanks for being here.
 - [ ] Cinematic + 5 supporting images uploaded
 - [ ] Founder profile filled out, links to /about/
 - [ ] Twitter/X account warmed up (any indie following helps the early-hour spike)
-- [ ] Email list (free-tier signups + Charter waitlist) pre-warmed: "Launching CyberSygn on PH on Tuesday. Could use your support — vote and a comment helps a lot. Here's the link."
+- [ ] Email list (free-tier signups + Charter waitlist) pre-warmed: "Launching CyberSygn on PH on Tuesday. Could use your support, vote and a comment helps a lot. Here's the link."
 - [ ] Friends list: 20-50 people you can DM at launch time
 - [ ] Schedule the launch on PH ahead of time (they let you queue it)
 
@@ -107,8 +107,8 @@ Thanks for being here.
 | 12:05 am | Tweet "I just launched CyberSygn on Product Hunt → [link]". Pin it. |
 | 12:30 am | Reply to every comment that comes in. Speed of reply is itself a signal. |
 | 6:00 am EST | Push to Indie Hackers (separate post). |
-| 9:00 am EST | Push to Hacker News (separate post — Show HN). |
-| 12:00 pm PT | Mid-day check — if rank ≤ 10, push harder. If ≥ 15, accept and keep the founder responses going. |
+| 9:00 am EST | Push to Hacker News (separate post, Show HN). |
+| 12:00 pm PT | Mid-day check, if rank ≤ 10, push harder. If ≥ 15, accept and keep the founder responses going. |
 | 9:00 pm PT | Final summary: total upvotes, comments, signups. Thank the audience publicly. |
 
 ## Post-launch (the week after)

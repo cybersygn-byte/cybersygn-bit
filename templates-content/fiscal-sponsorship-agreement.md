@@ -28,7 +28,7 @@ furthers the Sponsor's exempt purposes but does not have its own recognition of
 tax-exempt status. The Project wishes to receive the benefits of the Sponsor's
 tax-exempt status, fiscal administration, and oversight so that it may solicit
 and receive tax-deductible contributions and grants. The Sponsor is willing to
-sponsor the Project as a **[MODEL A — DIRECT (COMPREHENSIVE) / MODEL C —
+sponsor the Project as a **[MODEL A, DIRECT (COMPREHENSIVE) / MODEL C, 
 PRE-APPROVED GRANT RELATIONSHIP]** fiscal sponsorship, on the terms below. In
 consideration of the mutual promises below, the Parties agree as follows.
 

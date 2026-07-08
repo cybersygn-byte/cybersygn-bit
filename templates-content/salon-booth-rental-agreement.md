@@ -155,7 +155,7 @@ renters or Salon staff to leave the Salon.
 claim ownership of Renter's client list, and the Parties acknowledge that
 enforceability of any post-term restriction on soliciting clients varies by
 jurisdiction and may be limited or unenforceable under local law. **[OPTIONAL
-POST-TERM NON-SOLICIT — DISCUSS WITH COUNSEL, as such restraints are narrowly
+POST-TERM NON-SOLICIT, DISCUSS WITH COUNSEL, as such restraints are narrowly
 construed or barred in many jurisdictions.]**
 
 7.3 **Confidentiality.** Each Party will keep the other's non-public business

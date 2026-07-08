@@ -43,7 +43,7 @@ will not solicit Products outside the Territory without the Company's prior
 written consent.
 
 1.3 **Accounts.** The Representative is responsible for the customer accounts in
-the Territory, except for the house or national accounts listed in **[Schedule A —
+the Territory, except for the house or national accounts listed in **[Schedule A, 
 House Accounts]**, which the Company reserves to itself.
 
 1.4 **Exclusivity terms.** If the appointment is exclusive, the Company will not
@@ -131,7 +131,7 @@ Company except as expressly authorized in writing.
 ## 6. Confidentiality and Restrictive Covenants
 
 6.1 **Confidentiality.** The Representative will hold the Company's non-public
-information — including customer lists, pricing, and business plans — in
+information, including customer lists, pricing, and business plans, in
 confidence, use it only to perform under this Agreement, and return it on
 termination.
 
@@ -142,7 +142,7 @@ Account by virtue of this Agreement.
 6.3 **Non-solicitation (optional).** **[OPTIONAL: To the extent permitted by
 applicable law, for [NUMBER] months after termination the Representative will not
 solicit the Company's Accounts for competing products. Post-engagement restraints
-vary widely by jurisdiction — have counsel confirm enforceability, then keep or
+vary widely by jurisdiction, have counsel confirm enforceability, then keep or
 delete this clause.]**
 
 ## 7. Term and Termination

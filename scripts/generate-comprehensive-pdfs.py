@@ -1,5 +1,5 @@
 """
-generate-comprehensive-pdfs.py — the full synthetic test suite for CyberSygn.
+generate-comprehensive-pdfs.py, the full synthetic test suite for CyberSygn.
 
 Produces 100 PDFs organized into 10 detection categories under test-pdfs/.
 Each category isolates one detection concern, with 10 variations covering
@@ -249,7 +249,7 @@ def ini_02_initials_plural():
 
 def ini_03_corner_initial():
     c, p = new_doc("initials", "03-page-corner-initial.pdf")
-    y = header(c, "Multi-Page Contract — Page Initial Required")
+    y = header(c, "Multi-Page Contract, Page Initial Required")
     y = para(c, y, ["Initial bottom-right of each page.", ""])
     # bottom-right initial line
     c.setFont(*BODY_FONT)
@@ -261,7 +261,7 @@ def ini_03_corner_initial():
 
 def ini_04_center_initial():
     c, p = new_doc("initials", "04-page-center-initial.pdf")
-    y = header(c, "Multi-Page — Center Initial")
+    y = header(c, "Multi-Page, Center Initial")
     y = para(c, y, ["Initial center bottom of each page.", ""])
     cx = PAGE_W / 2 - 50
     c.setFont(*BODY_FONT)
@@ -763,7 +763,7 @@ def tx_10_account_number():
 
 def ms_01_two_parties_side_by_side():
     c, p = new_doc("multi-signer", "01-two-parties-side-by-side.pdf")
-    y = header(c, "Mutual NDA — Two Parties")
+    y = header(c, "Mutual NDA, Two Parties")
     y = para(c, y, ["Each party signs in the column for that party.", ""])
     y -= LINE_H * 2
     c.setFont(*BODY_FONT)
@@ -785,7 +785,7 @@ def ms_02_three_parties_stacked():
     y = header(c, "Three-Party Agreement")
     y = para(c, y, ["Each party signs below in sequence.", ""])
     y -= LINE_H
-    for party in ["Party A — Consultant:", "Party B — Client:", "Party C — Witness:"]:
+    for party in ["Party A, Consultant:", "Party B, Client:", "Party C, Witness:"]:
         y = para(c, y, [party])
         y = sig_line(c, y, "Signature:")
         y = sig_line(c, y, "Date:")
@@ -796,7 +796,7 @@ def ms_02_three_parties_stacked():
 
 def ms_03_buyer_seller_witness():
     c, p = new_doc("multi-signer", "03-buyer-seller-witness.pdf")
-    y = header(c, "Asset Purchase — Buyer, Seller, Witness")
+    y = header(c, "Asset Purchase, Buyer, Seller, Witness")
     y = para(c, y, ["Sale closes when all three sign.", ""])
     y -= LINE_H
     for party in ["Buyer:", "Seller:", "Witness:"]:
@@ -811,10 +811,10 @@ def ms_03_buyer_seller_witness():
 
 def ms_04_cofounders_safe():
     c, p = new_doc("multi-signer", "04-cofounders-safe.pdf")
-    y = header(c, "SAFE — Co-Founder + Investor")
+    y = header(c, "SAFE, Co-Founder + Investor")
     y = para(c, y, ["Both co-founders countersign the SAFE.", ""])
     y -= LINE_H
-    for party in ["Investor:", "Co-Founder 1 — Company representative:", "Co-Founder 2 — Company representative:"]:
+    for party in ["Investor:", "Co-Founder 1, Company representative:", "Co-Founder 2, Company representative:"]:
         y = para(c, y, [party])
         y = sig_line(c, y, "Signature:")
         y = sig_line(c, y, "Date:")
@@ -825,7 +825,7 @@ def ms_04_cofounders_safe():
 
 def ms_05_co_tenants():
     c, p = new_doc("multi-signer", "05-co-tenants.pdf")
-    y = header(c, "Residential Lease — Co-Tenants")
+    y = header(c, "Residential Lease, Co-Tenants")
     y = para(c, y, ["All tenants and landlord sign below.", ""])
     y -= LINE_H
     for party in ["Tenant 1:", "Tenant 2:", "Tenant 3:", "Landlord:"]:
@@ -839,7 +839,7 @@ def ms_05_co_tenants():
 
 def ms_06_board_officers():
     c, p = new_doc("multi-signer", "06-board-officers.pdf")
-    y = header(c, "Board Resolution — Officer Signatures")
+    y = header(c, "Board Resolution, Officer Signatures")
     y = para(c, y, ["Officers sign in their capacities.", ""])
     y -= LINE_H
     for party in ["Chairman of the Board:", "Chief Executive Officer:", "Chief Financial Officer:", "Corporate Secretary:"]:
@@ -853,7 +853,7 @@ def ms_06_board_officers():
 
 def ms_07_husband_wife():
     c, p = new_doc("multi-signer", "07-husband-wife.pdf")
-    y = header(c, "Joint Filing — Spousal Signatures")
+    y = header(c, "Joint Filing, Spousal Signatures")
     y = para(c, y, ["Both spouses must sign jointly.", ""])
     y -= LINE_H * 2
     for party in ["Spouse A:", "Spouse B:"]:
@@ -871,7 +871,7 @@ def ms_08_employer_employee():
     y = header(c, "Employment Agreement")
     y = para(c, y, ["Employer and employee both sign.", ""])
     y -= LINE_H * 2
-    y = para(c, y, ["Employer — Acme Corp, Inc.:"])
+    y = para(c, y, ["Employer, Acme Corp, Inc.:"])
     y = sig_line(c, y, "By:")
     y = sig_line(c, y, "Title:")
     y = sig_line(c, y, "Date:")
@@ -1033,7 +1033,7 @@ def af_09_required_fields():
 
 def af_10_large_form():
     c, p = new_doc("acroforms", "10-large-form.pdf")
-    y = header(c, "Large AcroForm — Many Fields")
+    y = header(c, "Large AcroForm, Many Fields")
     y = para(c, y, ["Comprehensive intake form with many fields.", ""])
     y -= LINE_H * 2
     fields = [
@@ -1311,12 +1311,12 @@ def pos_09_floating_overlay():
 
 def pos_10_near_page_break():
     c, p = new_doc("positioning", "10-near-page-break.pdf")
-    y = header(c, "Page 1 — Signature Spans Page Break")
+    y = header(c, "Page 1, Signature Spans Page Break")
     y = para(c, y, ["Signature partway down page 1, continues on page 2.", ""])
     y -= LINE_H * 25
     y = sig_line(c, y, "Signature:")
     c.showPage()
-    y = header(c, "Page 2 — Continuation")
+    y = header(c, "Page 2, Continuation")
     y = sig_line(c, y, "Date:")
     c.save()
     return p
@@ -1328,7 +1328,7 @@ def pos_10_near_page_break():
 
 def adv_01_signature_in_body():
     c, p = new_doc("adversarial", "01-signature-in-body-text.pdf")
-    y = header(c, "Adversarial — Signature Word in Body")
+    y = header(c, "Adversarial, Signature Word in Body")
     y = para(c, y, [
         "The word Signature appears in this paragraph as part",
         "of the narrative description, not as a label for a field.",
@@ -1344,7 +1344,7 @@ def adv_01_signature_in_body():
 
 def adv_02_date_in_clause():
     c, p = new_doc("adversarial", "02-date-in-clause.pdf")
-    y = header(c, "Adversarial — Date Word in Clauses")
+    y = header(c, "Adversarial, Date Word in Clauses")
     y = para(c, y, [
         "The Effective Date and the Termination Date are determined",
         "as described in Section 4. The Date of execution will be",
@@ -1360,12 +1360,12 @@ def adv_02_date_in_clause():
 
 def adv_03_fake_checkboxes():
     c, p = new_doc("adversarial", "03-fake-checkboxes.pdf")
-    y = header(c, "Adversarial — Decorative Box Bullets")
+    y = header(c, "Adversarial, Decorative Box Bullets")
     y = para(c, y, ["The boxes below are decorative bullets, not checkboxes.", ""])
     y -= LINE_H
     c.setFont(*BODY_FONT)
     for label in ["Bullet point one", "Bullet point two", "Bullet point three"]:
-        c.rect(LEFT, y - 2, 10, 10, fill=1)  # filled — clearly decorative
+        c.rect(LEFT, y - 2, 10, 10, fill=1)  # filled, clearly decorative
         c.drawString(LEFT + 18, y, label)
         y -= LINE_H
     y -= LINE_H
@@ -1377,7 +1377,7 @@ def adv_03_fake_checkboxes():
 
 def adv_04_horizontal_rule():
     c, p = new_doc("adversarial", "04-horizontal-rule.pdf")
-    y = header(c, "Adversarial — Horizontal Rule Decoy")
+    y = header(c, "Adversarial, Horizontal Rule Decoy")
     y = para(c, y, ["The rule below is a section divider, not a signature line.", ""])
     y -= LINE_H
     # Full-width horizontal rule
@@ -1391,7 +1391,7 @@ def adv_04_horizontal_rule():
 
 def adv_05_toc_dotted_leaders():
     c, p = new_doc("adversarial", "05-toc-dotted-leaders.pdf")
-    y = header(c, "Adversarial — Table of Contents")
+    y = header(c, "Adversarial, Table of Contents")
     y = para(c, y, ["The dotted leaders below are TOC, not blank lines.", ""])
     y -= LINE_H
     sections = [("Section 1. Definitions", "3"), ("Section 2. Services", "5"), ("Section 3. Payment", "8")]
@@ -1413,7 +1413,7 @@ def adv_05_toc_dotted_leaders():
 
 def adv_06_page_number_line():
     c, p = new_doc("adversarial", "06-page-number-line.pdf")
-    y = header(c, "Adversarial — Page Number Underline")
+    y = header(c, "Adversarial, Page Number Underline")
     y = para(c, y, ["Page number underline at bottom, not a signature line.", ""])
     y -= LINE_H * 2
     y = sig_line(c, y, "Signature:")
@@ -1427,7 +1427,7 @@ def adv_06_page_number_line():
 
 def adv_07_quote_block_frame():
     c, p = new_doc("adversarial", "07-quote-block-frame.pdf")
-    y = header(c, "Adversarial — Decorative Quote Frame")
+    y = header(c, "Adversarial, Decorative Quote Frame")
     y = para(c, y, ["The frame below is a stylized quote, not a signature box.", ""])
     y -= LINE_H
     # Decorative frame with text inside
@@ -1435,7 +1435,7 @@ def adv_07_quote_block_frame():
     c.rect(fx, fy, fw, fh)
     c.setFont("Helvetica-Oblique", 11)
     c.drawString(fx + 10, fy + fh - 18, "An ounce of prevention is worth")
-    c.drawString(fx + 10, fy + fh - 32, "a pound of cure. — Benjamin Franklin")
+    c.drawString(fx + 10, fy + fh - 32, "a pound of cure., Benjamin Franklin")
     c.setFont(*BODY_FONT)
     y -= 70
     y = para(c, y, ["Real signature below."])
@@ -1446,7 +1446,7 @@ def adv_07_quote_block_frame():
 
 def adv_08_list_bullets_as_checkbox():
     c, p = new_doc("adversarial", "08-list-bullets-as-checkbox.pdf")
-    y = header(c, "Adversarial — Bullets That Look Like Checkboxes")
+    y = header(c, "Adversarial, Bullets That Look Like Checkboxes")
     y = para(c, y, ["The hollow circles are bullets, not radio buttons.", ""])
     y -= LINE_H
     c.setFont(*BODY_FONT)
@@ -1462,7 +1462,7 @@ def adv_08_list_bullets_as_checkbox():
 
 def adv_09_footnote_line():
     c, p = new_doc("adversarial", "09-footnote-line.pdf")
-    y = header(c, "Adversarial — Footnote Separator Line")
+    y = header(c, "Adversarial, Footnote Separator Line")
     y = para(c, y, ["Footnote separator at bottom, not a signature line.", ""])
     y -= LINE_H * 3
     y = sig_line(c, y, "Signature:")
@@ -1476,7 +1476,7 @@ def adv_09_footnote_line():
 
 def adv_10_already_signed():
     c, p = new_doc("adversarial", "10-already-signed.pdf")
-    y = header(c, "Adversarial — Looks Pre-Signed")
+    y = header(c, "Adversarial, Looks Pre-Signed")
     y = para(c, y, ["A cursive squiggle is on the line below, looking like a signature.", ""])
     y -= LINE_H * 2
     # Draw a fake cursive signature (just decorative curves)
@@ -1490,7 +1490,7 @@ def adv_10_already_signed():
     c.setFont(*BODY_FONT)
     c.drawString(LEFT, y - 22, "Signature:")
     y -= LINE_H * 3
-    y = para(c, y, ["The squiggle above is decorative — the real expected", "signature would be added by the actual signer."])
+    y = para(c, y, ["The squiggle above is decorative, the real expected", "signature would be added by the actual signer."])
     c.save()
     return p
 

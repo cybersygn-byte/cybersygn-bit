@@ -43,22 +43,22 @@ performed with the degree of skill and care ordinarily exercised by qualified
 architects practicing under similar conditions in the same locality.
 
 1.2 **Phases.** Unless a phase is expressly excluded in Exhibit A, the Basic
-Services consist of the following phases: (a) **Schematic Design** — preparing
+Services consist of the following phases: (a) **Schematic Design**, preparing
 conceptual design documents that illustrate the scale and relationship of Project
-components; (b) **Design Development** — refining the approved schematic design and
-fixing the size and character of the Project; (c) **Construction Documents** —
+components; (b) **Design Development**, refining the approved schematic design and
+fixing the size and character of the Project; (c) **Construction Documents**, 
 preparing drawings and specifications setting forth requirements for construction;
-(d) **Bidding or Negotiation** — assisting Client in obtaining and evaluating bids
-or proposals; and (e) **Construction Administration** — periodic Site visits and
+(d) **Bidding or Negotiation**, assisting Client in obtaining and evaluating bids
+or proposals; and (e) **Construction Administration**, periodic Site visits and
 review of the contractor's work as further described in Section 6.
 
 1.3 **Deliverables.** The drawings, specifications, models, and other documents
 Architect prepares under this Agreement are the "**Instruments of Service**."
 
-1.4 **Additional Services.** Services not described in Section 1.2 or Exhibit A —
+1.4 **Additional Services.** Services not described in Section 1.2 or Exhibit A, 
 including, by way of example, revisions caused by changes in Client's program after
 a phase is approved, services made necessary by the default of a contractor, or
-preparation of measured drawings of existing conditions — are "**Additional
+preparation of measured drawings of existing conditions, are "**Additional
 Services**" and are compensated under Section 3.5 only when authorized in writing
 by Client before performance.
 
@@ -226,7 +226,7 @@ submit to the exclusive jurisdiction of the state and federal courts located in
 9.3 **Dispute resolution.** Before filing suit, the Parties will attempt in good
 faith to resolve any dispute through direct discussion and, if unresolved within
 **[NUMBER]** days, through mediation administered by a mutually agreed mediator,
-with the cost shared equally. **[OPTIONAL: binding arbitration — discuss with
+with the cost shared equally. **[OPTIONAL: binding arbitration, discuss with
 counsel.]**
 
 9.4 **Independent contractor.** Architect is an independent contractor. Nothing

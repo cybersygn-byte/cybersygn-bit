@@ -68,7 +68,7 @@ investment in the Securities.
 2.3 **Foreign investors.** If the Investor is not a resident of the United States,
 the Investor confirms that the offer and sale to it comply with the laws of the
 Investor's jurisdiction and that any required governmental consents have been
-obtained. **[Cross-border offerings raise additional requirements — consult
+obtained. **[Cross-border offerings raise additional requirements, consult
 counsel.]**
 
 ## 3. Access to Information

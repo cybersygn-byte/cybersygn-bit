@@ -223,7 +223,7 @@ Effective Date.
 | Title: **[TITLE / N/A]** |
 | Date: __________________________ |
 
-**[NOTARY ACKNOWLEDGMENT — if required for recording in [COUNTY, STATE], attach
+**[NOTARY ACKNOWLEDGMENT, if required for recording in [COUNTY, STATE], attach
 the form of acknowledgment required by local law.]**
 
 ---

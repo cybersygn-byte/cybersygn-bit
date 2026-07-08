@@ -201,16 +201,16 @@ which together form one agreement.
 
 ---
 
-**Schedule A — Commission Brief**
+**Schedule A, Commission Brief**
 
 - **Project description / subject:** [DESCRIPTION]
 - **Style / medium:** [e.g. digital, watercolor, vector]
 - **Number of illustrations:** [NUMBER]
 - **Dimensions / resolution / formats:** [SPECIFICATIONS]
 - **Intended use:** [e.g. book cover, packaging, editorial]
-- **Rights model:** [license (exclusive / non-exclusive) — use/media/territory/term, OR full assignment]
+- **Rights model:** [license (exclusive / non-exclusive), use/media/territory/term, OR full assignment]
 - **Original physical artwork:** [retained by Illustrator / delivered to Client]
-- **Credit required:** [yes — form / no]
+- **Credit required:** [yes, form / no]
 - **Sketches presented:** [NUMBER]
 - **Revision rounds included:** [NUMBER]
 - **Kill Fee terms:** [DESCRIBE]

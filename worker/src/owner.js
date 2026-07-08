@@ -174,7 +174,7 @@ function ownerDocs(env) {
 }
 
 /** The configured owner email. Reset links are sent ONLY here, never to a
- *  requester-supplied address — that is what keeps the reset from being a
+ *  requester-supplied address, that is what keeps the reset from being a
  *  takeover vector. */
 export function ownerEmail(env) {
   return (env && (env.OWNER_EMAIL || env.CYBERSYGN_OWNER_EMAIL)) || null;

@@ -199,7 +199,7 @@ together form one agreement.
 | Title: **[TITLE OR N/A]** | Title: **[TITLE]** |
 | Date: __________________________ | Date: __________________________ |
 
-**IF A PARTICIPANT IS A MINOR — PARENT OR LEGAL GUARDIAN**
+**IF A PARTICIPANT IS A MINOR, PARENT OR LEGAL GUARDIAN**
 
 | **PARENT / GUARDIAN** |
 | --- |

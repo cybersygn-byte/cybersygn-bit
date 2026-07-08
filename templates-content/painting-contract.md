@@ -113,8 +113,8 @@ Work together and prepare a punch list of items to be corrected. Contractor will
 complete reasonable punch-list touch-ups before final payment.
 
 5.2 **Workmanship warranty.** Contractor warrants that the Work will be free from
-defects in workmanship—such as peeling, blistering, or excessive flaking
-attributable to improper application—for **[NUMBER, e.g. 24]** months after
+defects in workmanship, such as peeling, blistering, or excessive flaking
+attributable to improper application, for **[NUMBER, e.g. 24]** months after
 substantial completion. Contractor will repair covered defects reported within
 the warranty period at no additional labor charge.
 
@@ -128,8 +128,8 @@ intrusion, settlement cracks, abuse, or damage by others.
 
 ## 6. Changes
 
-6.1 **Change orders.** Any change to the Work—including added rooms, color
-changes after application, or extra coats—takes effect only when both Parties
+6.1 **Change orders.** Any change to the Work, including added rooms, color
+changes after application, or extra coats, takes effect only when both Parties
 sign a written change order describing the change and its effect on the Contract
 Price and schedule. Contractor is not obligated to perform extra work until a
 change order is signed.
@@ -188,7 +188,7 @@ State of **[STATE]**. The Parties submit to the courts located in
 
 9.3 **Dispute resolution.** The Parties will attempt in good faith to resolve any
 dispute by direct discussion before filing suit.
-**[OPTIONAL: mediation or arbitration — discuss with counsel.]**
+**[OPTIONAL: mediation or arbitration, discuss with counsel.]**
 
 9.4 **Notices.** Notices must be in writing and delivered to the addresses above
 or as updated in writing, and are effective on receipt.

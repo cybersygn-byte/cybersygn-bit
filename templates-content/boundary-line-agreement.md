@@ -193,11 +193,11 @@ Effective Date.
 | Title: **[N/A]** | Title: **[N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**Exhibit A — Legal description of Parcel A**
-**Exhibit B — Legal description of Parcel B**
-**Exhibit C — Survey depicting the Agreed Boundary**
+**Exhibit A, Legal description of Parcel A**
+**Exhibit B, Legal description of Parcel B**
+**Exhibit C, Survey depicting the Agreed Boundary**
 
-**[NOTARY ACKNOWLEDGMENT — attach the form of acknowledgment required for
+**[NOTARY ACKNOWLEDGMENT, attach the form of acknowledgment required for
 recording in [COUNTY, STATE] for each signing party.]**
 
 ---

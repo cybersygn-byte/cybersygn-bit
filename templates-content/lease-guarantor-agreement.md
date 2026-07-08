@@ -54,7 +54,7 @@ perform that obligation.
 
 2.1 **Monetary limit (optional).** **[OPTIONAL: The Guarantor's total liability
 under this Guaranty is limited to [AMOUNT]. Delete this Section to make the guaranty
-unlimited — discuss with counsel, as enforceability of caps varies by
+unlimited, discuss with counsel, as enforceability of caps varies by
 jurisdiction.]**
 
 2.2 **Duration.** This Guaranty remains in effect for the full term of the Lease and

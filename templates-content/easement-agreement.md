@@ -64,7 +64,7 @@ not materially impair the Easement.
 ## 2. Purpose and Permitted Use
 
 2.1 **Permitted purpose.** The Easement is granted solely for the following
-purpose: **[DESCRIBE PURPOSE — e.g. ingress and egress for pedestrian and vehicular
+purpose: **[DESCRIBE PURPOSE, e.g. ingress and egress for pedestrian and vehicular
 travel; installation, operation, and maintenance of underground utilities;
 drainage]** (the "**Permitted Use**").
 
@@ -200,7 +200,7 @@ Date.
 | Title: **[TITLE OR N/A]** | Title: **[TITLE OR N/A]** |
 | Date: __________________________ | Date: __________________________ |
 
-**[NOTARY ACKNOWLEDGMENT — required in most jurisdictions for recording. Attach the
+**[NOTARY ACKNOWLEDGMENT, required in most jurisdictions for recording. Attach the
 acknowledgment form prescribed by [STATE] law.]**
 
 ---
