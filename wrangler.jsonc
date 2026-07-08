@@ -86,7 +86,7 @@
     "  CYBERSYGN_OWNER_HASH    SHA-256 hex of your owner backdoor phrase.",
     "  RESEND_API_KEY          Resend API key.",
     "",
-    "Vyan Control (spine CONTRACT section 6 — GET /api/metrics):",
+    "Vyan Control (spine CONTRACT section 6 · GET /api/metrics):",
     "  VYAN_METRICS_KEY        House key Vyan Control sends as a Bearer token to",
     "                          read GET /api/metrics. Falls back to VYAN_HOUSE_KEY",
     "                          if unset. With neither set, /api/metrics returns 401",
