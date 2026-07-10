@@ -31,6 +31,15 @@ The new Pro / Business tiers and the two add-ons are live on the site but show
 The moment you create these and set the env vars, the buttons become real
 checkout automatically. Nothing else changes.
 
+FASTEST PATH (one command, idempotent, no dashboard clicking):
+```
+STRIPE_SECRET_KEY=sk_live_... node scripts/setup-stripe-prices.mjs
+```
+It creates all six products/prices and prints ready-to-run `wrangler secret put`
+commands (piped, no manual paste), then `npx wrangler deploy`. Safe to re-run;
+it reuses any price that already exists and never charges anyone. If you would
+rather click through the dashboard, the manual table is below.
+
 In the Stripe Dashboard (Products, Live mode), create these products + prices.
 Use recurring prices; monthly interval for the *_MONTHLY, yearly for *_ANNUAL.
 
