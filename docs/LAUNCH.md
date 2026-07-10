@@ -2,9 +2,16 @@
 
 Everything I can build is built, committed, and deployed. This is the list of
 things only you can do (Stripe dashboard, secrets, verification, announce).
-Ordered by priority. Times are rough. Commands assume you run them from the
-repo root; secrets are set with `npx wrangler secret put <NAME>` then a
-`npx wrangler deploy`.
+Ordered by priority. Times are rough.
+
+BEFORE ANY COMMAND: open Terminal and run this first, every session:
+
+```
+cd ~/Downloads/Claude/cybersygn
+```
+
+Wrangler only works from inside the repo folder. Paste commands ONE LINE AT A
+TIME; never paste a line that contains a # comment.
 
 ## Current status (already done, no action needed)
 
@@ -58,15 +65,21 @@ Notes:
   single per-seat price is all you need.
 - Copy each price id (starts with `price_`) into the matching secret:
 
+Run each line ALONE, from the repo folder (cd ~/Downloads/Claude/cybersygn
+first). Each `secret put` waits with "Enter a secret value:"; paste the
+matching price id there (input is hidden) and press Enter.
+
 ```
-npx wrangler secret put STRIPE_PRICE_PRO            # paste the $19/mo price id
-npx wrangler secret put STRIPE_PRICE_PRO_ANNUAL     # paste the $180/yr price id
-npx wrangler secret put STRIPE_PRICE_BUSINESS       # paste the $79/mo price id
-npx wrangler secret put STRIPE_PRICE_BUSINESS_ANNUAL# paste the $780/yr price id
-npx wrangler secret put STRIPE_PRICE_SEAT           # paste the $9/mo price id
-npx wrangler secret put STRIPE_PRICE_WHITELABEL     # paste the $19/mo price id
+npx wrangler secret put STRIPE_PRICE_PRO
+npx wrangler secret put STRIPE_PRICE_PRO_ANNUAL
+npx wrangler secret put STRIPE_PRICE_BUSINESS
+npx wrangler secret put STRIPE_PRICE_BUSINESS_ANNUAL
+npx wrangler secret put STRIPE_PRICE_SEAT
+npx wrangler secret put STRIPE_PRICE_WHITELABEL
 npx wrangler deploy
 ```
+(the $19/mo id goes to PRO, $180/yr to PRO_ANNUAL, $79/mo to BUSINESS,
+$780/yr to BUSINESS_ANNUAL, $9/mo to SEAT, $19/mo white-label to WHITELABEL)
 
 Verify (should now show all true):
 ```
@@ -146,11 +159,35 @@ mail lands in inboxes, not spam:
 
 ## Appendix: how to set or rotate any secret
 
+ALWAYS run wrangler from the repo folder first:
+
 ```
-npx wrangler secret list                 # see what is set (names only)
-npx wrangler secret put <NAME>           # set or rotate, paste value when prompted
-node scripts/set-owner-password.mjs      # change the /control/ password
-npx wrangler deploy                      # apply
+cd ~/Downloads/Claude/cybersygn
+```
+
+See what is set (names only):
+
+```
+npx wrangler secret list
+```
+
+Set or rotate one (it prompts "Enter a secret value:", paste there; the input
+is hidden):
+
+```
+npx wrangler secret put NAME_HERE
+```
+
+Change the /control/ password:
+
+```
+node scripts/set-owner-password.mjs
+```
+
+Apply changes:
+
+```
+npx wrangler deploy
 ```
 
 ## Appendix: what is intentionally NOT blocking launch
