@@ -443,6 +443,13 @@ function renderIndex(published) {
   <meta property="og:description" content="Field guides, compliance deep-dives, and workflow playbooks for the people who actually send the contract." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/blog/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="CyberSygn blog" />
+  <meta name="twitter:description" content="Field guides, compliance deep-dives, and workflow playbooks for the people who actually send the contract." />
+  <meta name="twitter:image" content="https://cybersygn.io/brand/og-image.png" />
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"CollectionPage","name":"CyberSygn blog","url":"https://cybersygn.io/blog/","description":"Field guides, compliance deep-dives, and workflow playbooks for e-signature.","isPartOf":{"@type":"WebSite","name":"CyberSygn","url":"https://cybersygn.io/"},"publisher":{"@type":"Organization","name":"CyberSygn","url":"https://cybersygn.io/"}}
+  </script>
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
   <script src="/telemetry.js"></script>

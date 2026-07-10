@@ -271,7 +271,9 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   body.set('success_url', successUrl || `${origin}/dashboard/?checkout=success&session_id={CHECKOUT_SESSION_ID}`);
   body.set('cancel_url', cancelUrl || `${origin}/?checkout=canceled`);
   body.set('client_reference_id', senderId || '');
-  body.set('allow_promotion_codes', 'true');
+  // No open promo-code field: no codes exist, and an empty coupon box at the
+  // pay button invites discount-hunting and erodes the price anchor. Re-enable
+  // per-session behind a flag if a real coupon campaign ever runs.
   body.set('billing_address_collection', 'auto');
   body.set('metadata[tier]', tier);
   body.set('metadata[senderId]', senderId || '');
@@ -279,6 +281,10 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   if (!isOneTime) {
     body.set('subscription_data[metadata][tier]', tier);
     body.set('subscription_data[metadata][senderId]', senderId || '');
+  } else {
+    // One-time payments have no subscription label, so name the charge on the
+    // PaymentIntent so the Stripe receipt and dashboard show the plan.
+    body.set('payment_intent_data[description]', `CyberSygn ${tierConf.label || tier}`);
   }
   // Affiliate ref: only set if the client supplied a real code shape.
   // The webhook reads subscription.metadata.ref to credit the affiliate.
@@ -605,6 +611,25 @@ async function onSubscriptionUpserted(env, sub) {
 
   const existing = await getSubscription(env, senderId);
   const tier = (sub.metadata && sub.metadata.tier) || existing.tier || 'free';
+
+  // Add-on subscriptions (seat, white-label) live under one Stripe customer
+  // alongside the base plan. Their lifecycle events must NEVER touch
+  // sub:<senderId>, or the add-on's event overwrites the buyer's real plan
+  // (same guard onCheckoutCompleted applies at purchase time). Update the
+  // add-on's own record and stop.
+  if (TIERS[tier] && TIERS[tier].addon) {
+    let addons = {};
+    try { addons = JSON.parse((await storage.get(`addons:${senderId}`)) || '{}') || {}; } catch (e) {}
+    addons[tier] = {
+      ...(addons[tier] || {}),
+      stripeSubscriptionId: sub.id,
+      status: sub.status,
+      qty: sub.items?.data?.[0]?.quantity || (addons[tier] && addons[tier].qty) || 1,
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.put(`addons:${senderId}`, JSON.stringify(addons));
+    return { applied: true, addon: tier, status: sub.status };
+  }
   const next = {
     ...existing,
     senderId,
@@ -631,6 +656,18 @@ async function onSubscriptionDeleted(env, sub) {
   const customerId = sub.customer;
   const senderId = await senderIdForCustomer(env, customerId);
   if (!senderId) return { applied: false, reason: 'no_sender_for_customer' };
+
+  // Canceling ONLY an add-on must not downgrade the base plan to free.
+  // Remove the add-on's own record and leave sub:<senderId> untouched.
+  const deletedTier = sub.metadata && sub.metadata.tier;
+  if (deletedTier && TIERS[deletedTier] && TIERS[deletedTier].addon) {
+    let addons = {};
+    try { addons = JSON.parse((await storage.get(`addons:${senderId}`)) || '{}') || {}; } catch (e) {}
+    delete addons[deletedTier];
+    await storage.put(`addons:${senderId}`, JSON.stringify(addons));
+    return { applied: true, addon: deletedTier, removed: true };
+  }
+
   const existing = await getSubscription(env, senderId);
   const next = {
     ...existing,

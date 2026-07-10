@@ -2722,7 +2722,7 @@ button { font: inherit; cursor: pointer; }
 .compare .cross {
   color: var(--text-3);
 }
-.compare .cross::before { content: ", "; }
+.compare .cross::before { content: "\2717  "; }
 
 /* ========================================================================
    13d. TOAST + STICKY CTA

@@ -31,6 +31,8 @@
  *     re-creating the webhook config.
  */
 
+import { enqueueWebhookRetry } from './webhook-retry.js';
+
 const KV_PREFIX = 'webhook:';
 const KV_LOG_PREFIX = 'webhook-log:';
 const TTL_SECONDS = 60 * 60 * 24 * 365 * 5;  // 5y, matches all sender records
@@ -182,7 +184,52 @@ export async function fireWebhook(env, senderId, event, payload) {
     url: cfg.url,
   });
 
+  // If both inline attempts failed, hand the delivery to the durable retry
+  // queue (swept hourly from scheduled()) instead of dropping it.
+  if (!deliveredAt) {
+    await enqueueWebhookRetry(env, { senderId, event, data: payload }, 1);
+  }
+
   return { ok: lastStatus >= 200 && lastStatus < 300, status: lastStatus, attempts };
+}
+
+/**
+ * Single-attempt redelivery of a queued webhook payload. Re-reads the current
+ * config and re-signs (the secret may have rotated since it was queued).
+ * Returns true only on a 2xx. Used by sweepWebhookQueue.
+ */
+export async function redeliverWebhook(env, queued) {
+  const senderId = queued && queued.senderId;
+  const event = queued && queued.event;
+  if (!senderId || !event) return true; // malformed, drop it
+  const cfg = await getWebhookConfig(env, senderId);
+  if (!cfg || !cfg.url || !cfg.events.includes(event)) return true; // config gone, stop retrying
+  const body = JSON.stringify({
+    id: 'evt_' + randomHex(16),
+    event,
+    senderId,
+    createdAt: new Date().toISOString(),
+    data: queued.data,
+    redelivery: true,
+  });
+  const t = Math.floor(Date.now() / 1000);
+  const sig = await hmacHex(cfg.secret, t + '.' + body);
+  try {
+    const res = await fetch(cfg.url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-cybersygn-signature': `t=${t},v1=${sig}`,
+        'x-cybersygn-event': event,
+        'user-agent': 'CyberSygn-Webhook/1.0',
+      },
+      body,
+    });
+    if (res.ok) { await logDelivery(env, senderId, { event, deliveredAt: new Date().toISOString(), status: res.status, attempts: 1, url: cfg.url, redelivery: true }); return true; }
+    return false;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function logDelivery(env, senderId, entry) {

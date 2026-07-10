@@ -60,7 +60,8 @@ import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry } from './sentry.js';
 import { runDailyKvBackup, shouldRunKvBackup } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
-import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS } from './webhooks.js';
+import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
+import { sweepWebhookQueue } from './webhook-retry.js';
 import { routeApiV1 } from './api-v1.js';
 import { createApiKey, listApiKeys, revokeApiKey } from './apikeys.js';
 import { registerAffiliate, bumpClick, bumpSignup, recordConversion, getCodeStats } from './affiliate.js';
@@ -702,11 +703,15 @@ const worker = {
     if (shouldRunDripCampaign(event)) {
       ctx.waitUntil(runDripCampaign(env, event));
     }
-    // Daily KV → R2 backup at 03:00 UTC (slice 100). No-op if R2
+    // Daily KV to R2 backup at 03:00 UTC (slice 100). No-op if R2
     // binding isn't configured.
     if (shouldRunKvBackup(event)) {
       ctx.waitUntil(runDailyKvBackup(env));
     }
+    // Sweep the durable webhook retry queue every hour: any Studio delivery
+    // that failed both inline attempts gets redelivered with exponential
+    // backoff until it succeeds or dead-letters.
+    ctx.waitUntil(sweepWebhookQueue(env, redeliverWebhook).catch(() => {}));
     // Automated security self-check twice daily, 00:00 and 12:00 UTC
     // (06:00 / 18:00 America/Denver during MDT). Emails the owner only on
     // failure; a passing run is silent. Wrapped so it can never break the cron.
@@ -1130,9 +1135,9 @@ async function handleCheckoutCreateSession(request, env, url) {
     return jsonResponse(200, { url: session.url, sessionId: session.sessionId });
   } catch (err) {
     const code = err && err.code || 'checkout_failed';
-    const status = code === 'founding_full' ? 409
+    const status = code === 'founding_full' || code === 'lifetime_full' ? 409
                  : code === 'not_configured' || code === 'missing_price' ? 503
-                 : code === 'invalid_tier' ? 400
+                 : code === 'invalid_tier' || code === 'addon_needs_plan' ? 400
                  : 502;
     return jsonResponse(status, {
       error: code,

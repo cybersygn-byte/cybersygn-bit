@@ -284,7 +284,10 @@
   const path = (location.pathname || '/').toLowerCase();
   const skipPaths = ['/preview/', '/control/', '/dashboard/', '/origin/', '/charter/'];
   const blocked = skipPaths.some(p => path.startsWith(p));
-  if (seenRecently || isTouch || blocked) return;
+  // Guard ONLY the exit-intent block. A bare `return` here exits the whole
+  // module and silently kills everything below it (the homepage template
+  // gallery) for all touch devices and returning visitors.
+  if (!(seenRecently || isTouch || blocked)) {
 
   // Modal element. Built lazily on first trigger.
   let modal = null;
@@ -430,6 +433,8 @@
       trigger();
     }
   });
+
+  } // end exit-intent guard
 
   // ─────────────────────────────────────────────────────────────
   // 3. Free-template tile randomizer.
