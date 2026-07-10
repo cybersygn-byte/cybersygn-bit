@@ -115,6 +115,14 @@ async function main() {
     console.log('  wrote dist/404.html');
   }
 
+  // _headers applies security headers (nosniff, HSTS, referrer, CSP) to every
+  // statically-served response including 404s. Workers Static Assets honors it.
+  const headersSrc = join(SRC, '_headers');
+  if (await exists(headersSrc)) {
+    await copyFile(headersSrc, join(OUT, '_headers'));
+    console.log('  wrote dist/_headers');
+  }
+
   // 2a. .assetsignore tells Workers Static Assets which files to skip when
   // uploading. Without it, .DS_Store and similar noise files would be served.
   const ignoreSrc = join(SRC, '.assetsignore');

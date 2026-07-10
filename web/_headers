@@ -1,0 +1,17 @@
+# Security headers for statically-served responses (pages + 404s that do not
+# pass through the Worker). API responses set their own headers in the Worker.
+# NOTE: framing is intentionally NOT denied globally, because the /preview/
+# signing page is embedded on customer sites via embed.js. Framing is denied
+# only on the sensitive owner/dashboard surfaces below.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; upgrade-insecure-requests
+
+/dashboard/*
+  X-Frame-Options: SAMEORIGIN
+
+/control/*
+  X-Frame-Options: DENY

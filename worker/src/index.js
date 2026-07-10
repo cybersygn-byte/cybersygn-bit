@@ -102,7 +102,7 @@ const TIER_MRR_CENTS = {
   founding: 900,
   founding_annual: 750, // $90/yr ~ $7.50/mo
   team: 2900,
-  team_annual: 2417, // $290/yr ~ $24.17/mo
+  team_annual: 2300, // $276/yr = $23/mo (Studio annual, two months free)
   business: 7900,
   business_annual: 6500, // $780/yr ~ $65/mo
   whitelabel: 1900, // recurring add-on
@@ -151,16 +151,9 @@ const worker = {
       }
     }
 
-    if (request.method === 'GET' && url.pathname === '/api/status') {
-      const storage = getStorage(env);
-      return jsonResponse(200, {
-        ok: true,
-        service: 'cybersygn',
-        version: VERSION,
-        storage: storage.mode,
-        email: env && env.RESEND_API_KEY ? 'resend' : 'console',
-      });
-    }
+    // /api/status is handled by handleStatus (subsystem shape + liveness
+    // fields). A second registration below routes it; do not add a shadowing
+    // handler here or the status page shows a false "degraded".
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
       return handleHealth(env);
@@ -187,6 +180,8 @@ const worker = {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/templates') {
+      const rl = await checkRateLimit(env, `tpl-save:${ipKey(request)}`, [{ windowSec: 600, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/templates' });
       return handleSaveTemplate(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/templates') {
@@ -288,6 +283,8 @@ const worker = {
       return jsonResponse(200, data);
     }
     if (request.method === 'POST' && url.pathname === '/api/roadmap/vote') {
+      const rl = await checkRateLimit(env, `roadmap-vote:${ipKey(request)}`, [{ windowSec: 3600, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/roadmap/vote' });
       const body = await readJsonBody(request);
       if (body.error) return jsonResponse(400, body.error);
       const { itemId, voter } = body.value || {};
@@ -297,9 +294,13 @@ const worker = {
 
     // Affiliate program endpoints.
     if (request.method === 'POST' && url.pathname === '/api/affiliate/register') {
+      const rl = await checkRateLimit(env, `aff-reg:${ipKey(request)}`, [{ windowSec: 3600, max: 10 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/register' });
       return handleAffiliateRegister(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/affiliate/click') {
+      const rl = await checkRateLimit(env, `aff-click:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/click' });
       return handleAffiliateClick(request, env, url);
     }
     {
@@ -508,6 +509,8 @@ const worker = {
 
     // Create a workspace. POST /api/workspaces  -> { workspaceId, workspaceToken, adminMemberId }
     if (request.method === 'POST' && url.pathname === '/api/workspaces') {
+      const rl = await checkRateLimit(env, `ws-create:${ipKey(request)}`, [{ windowSec: 3600, max: 10 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/workspaces' });
       return handleCreateWorkspace(request, env);
     }
 
@@ -935,9 +938,14 @@ async function handleSignup(request, env) {
   // SIGNUPS = kv_namespace). If not, log and continue. We never block the
   // user on storage we have not yet provisioned.
   try {
+    const key = `${record.receivedAt}-${record.email}`;
     if (env && env.SIGNUPS && typeof env.SIGNUPS.put === 'function') {
-      const key = `${record.receivedAt}-${record.email}`;
       await env.SIGNUPS.put(key, JSON.stringify(record));
+    } else if (env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.put === 'function') {
+      // No dedicated SIGNUPS namespace is bound, so store founding-list
+      // captures in the main docs KV under a signup: prefix. Without this
+      // fallback every signup is silently dropped to the console.
+      await env.CYBERSYGN_DOCS.put(`signup:${key}`, JSON.stringify(record));
     } else {
       console.log('[signup]', JSON.stringify(record));
     }
@@ -2611,9 +2619,15 @@ async function handleStatus(request, env, url) {
     vision: { ok: Boolean(env && env.ANTHROPIC_API_KEY), label: 'Vision API (optional)' },
   };
   const allOk = Object.values(subsystems).every(s => s.ok || s.label.includes('optional'));
+  const storage = getStorage(env);
   return new Response(JSON.stringify({
     ok: allOk,
     status: allOk ? 'operational' : 'degraded',
+    // Liveness fields kept so the light /api/status contract still holds.
+    service: 'cybersygn',
+    version: VERSION,
+    storage: storage.mode,
+    email: env && env.RESEND_API_KEY ? 'resend' : 'console',
     subsystems,
     asOf: new Date().toISOString(),
   }), {

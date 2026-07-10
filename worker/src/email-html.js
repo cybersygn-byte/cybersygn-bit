@@ -370,7 +370,7 @@ export function renderDripDay7Html({ name, url }) {
         The first 100 accounts only, with a live count on the page, and it never
         re-opens. Same product as Solo, $3 less every month for as long as you
         stay, a direct line to me, a vote on what we build next, and your name on
-        the Origin wall when we ship it. If the counter still shows spots, this is
+        the live Origin wall. If the counter still shows spots, this is
         the best rate CyberSygn will ever offer.
       </p>
       ${ctaButton({ url: founding, label: 'Claim an Origin spot →' })}

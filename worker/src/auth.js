@@ -244,6 +244,8 @@ function jsonResponse(status, body) {
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
       'referrer-policy': 'strict-origin-when-cross-origin',
+      'x-frame-options': 'DENY',
+      'strict-transport-security': 'max-age=31536000; includeSubDomains',
     },
   });
 }
