@@ -53,12 +53,43 @@ export async function getWebhookConfig(env, senderId) {
   } catch (e) { return null; }
 }
 
+// Defense in depth against SSRF: reject webhook targets that point at
+// loopback, private, link-local, or internal hosts (including IPv6 and
+// IPv6-mapped IPv4 forms). Cloudflare Workers cannot reach a cloud metadata
+// endpoint or a private LAN, but validating here keeps the product from being
+// pointed at anything internal and blocks the obvious abuse shapes.
+function isPublicWebhookHost(url) {
+  let host;
+  try { host = new URL(url).hostname.toLowerCase(); } catch (e) { return false; }
+  if (!host) return false;
+  host = host.replace(/^\[|\]$/g, ''); // strip any IPv6 brackets
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return false;
+  if (host === '::1' || host === '::' || host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return false;
+  const mapped = host.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  const v4 = mapped ? mapped[1] : (/^\d+\.\d+\.\d+\.\d+$/.test(host) ? host : null);
+  if (v4) {
+    const p = v4.split('.').map(Number);
+    if (p.length !== 4 || p.some(n => !Number.isInteger(n) || n < 0 || n > 255)) return false;
+    const [a, b] = p;
+    if (a === 0 || a === 127 || a === 10) return false;          // this-network, loopback, private
+    if (a === 169 && b === 254) return false;                    // link-local (cloud metadata)
+    if (a === 172 && b >= 16 && b <= 31) return false;           // private
+    if (a === 192 && b === 168) return false;                    // private
+    if (a === 100 && b >= 64 && b <= 127) return false;          // CGNAT
+    return true;
+  }
+  // Require a dotted FQDN for named hosts (blocks bare internal names).
+  if (!host.includes('.')) return false;
+  return true;
+}
+
 export async function saveWebhookConfig(env, senderId, opts) {
   const safe = sanitizeId(senderId);
   if (!safe) return { ok: false, error: 'invalid_sender' };
   const url = String((opts && opts.url) || '').trim();
   if (!/^https:\/\//i.test(url)) return { ok: false, error: 'invalid_url' };
   if (url.length > 500) return { ok: false, error: 'url_too_long' };
+  if (!isPublicWebhookHost(url)) return { ok: false, error: 'private_url_blocked' };
   let events = Array.isArray(opts && opts.events) ? opts.events : WEBHOOK_EVENTS.slice();
   events = events.filter(e => WEBHOOK_EVENTS.includes(e));
   if (events.length === 0) events = WEBHOOK_EVENTS.slice();
