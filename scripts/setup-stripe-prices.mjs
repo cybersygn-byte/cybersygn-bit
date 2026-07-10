@@ -103,13 +103,39 @@ async function main() {
     results.push({ env: p.env, id: price.id });
   }
 
-  console.log('\nDone. Set these Worker secrets, then redeploy:\n');
+  // Set the Worker secrets automatically (no copy-pasting six commands).
+  // Falls back to printing the manual commands if wrangler is unavailable.
+  console.log('\nSetting Worker secrets via wrangler...\n');
+  const { execSync } = await import('node:child_process');
+  let allSet = true;
   for (const r of results) {
-    // Pipe the value straight into wrangler so no manual paste is needed.
-    console.log(`  echo ${r.id} | npx wrangler secret put ${r.env}`);
+    try {
+      execSync(`npx wrangler secret put ${r.env}`, {
+        input: r.id,
+        stdio: ['pipe', 'ignore', 'pipe'],
+        cwd: new URL('..', import.meta.url).pathname,
+      });
+      console.log(`  set    ${r.env.padEnd(28)} ${r.id}`);
+    } catch (e) {
+      allSet = false;
+      console.log(`  FAILED ${r.env.padEnd(28)} run manually: echo ${r.id} | npx wrangler secret put ${r.env}`);
+    }
   }
-  console.log('  npx wrangler deploy');
-  console.log('\nThen confirm all tiers flip to purchasable:');
+  if (allSet) {
+    console.log('\nDeploying so the new secrets take effect...');
+    try {
+      execSync('npx wrangler deploy', {
+        stdio: ['ignore', 'ignore', 'pipe'],
+        cwd: new URL('..', import.meta.url).pathname,
+      });
+      console.log('Deployed.');
+    } catch (e) {
+      console.log('Deploy failed; run manually: npx wrangler deploy');
+    }
+  } else {
+    console.log('\nSome secrets failed; run the printed commands, then: npx wrangler deploy');
+  }
+  console.log('\nConfirm all tiers flip to purchasable:');
   console.log('  curl -s https://cybersygn.io/api/billing/config\n');
   if (MODE === 'TEST') {
     console.log('NOTE: these are TEST-mode prices. Re-run with a sk_live_ key for production.\n');
