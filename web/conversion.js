@@ -253,7 +253,11 @@
     fetch('/api/origin/wall?limit=6').then(r => r.ok ? r.json() : null).then(d => {
       if (!d) return;
       if (proofCap && d.cap) proofCap.textContent = String(d.cap);
-      if (proofClaimed && typeof d.claimed === 'number') proofClaimed.textContent = String(d.claimed);
+      // The wall endpoint returns the count as `taken` (older code read the
+      // wrong key `claimed`, leaving the number stuck on its "-" placeholder).
+      const claimedN = typeof d.taken === 'number' ? d.taken
+        : (typeof d.claimed === 'number' ? d.claimed : null);
+      if (proofClaimed && claimedN !== null) proofClaimed.textContent = String(claimedN);
       if (Array.isArray(d.members) && d.members.length > 0) {
         proofList.innerHTML = d.members.map((m, i) => (
           '<li class="origin-proof__item">' +
