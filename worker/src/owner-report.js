@@ -77,7 +77,8 @@ export async function runMonthlyOwnerReport(env, event) {
       text,
       html,
     });
-    console.log(`[monthly-report] ${monthKey} sent to ${recipient}`);
+    // Log that the report went out, not the recipient address.
+    console.log(`[monthly-report] ${monthKey} sent`);
   } catch (e) {
     console.error('[monthly-report] send failed', e && e.message ? e.message : e);
   }

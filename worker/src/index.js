@@ -984,7 +984,9 @@ async function handleSignup(request, env) {
       // fallback every signup is silently dropped to the console.
       await env.CYBERSYGN_DOCS.put(`signup:${key}`, JSON.stringify(record));
     } else {
-      console.log('[signup]', JSON.stringify(record));
+      // No signup store is bound. Log that a capture happened WITHOUT the
+      // email/name PII in the record; the full record is not persisted here.
+      console.log('[signup]', JSON.stringify({ receivedAt: record.receivedAt, hasEmail: !!record.email, captured: false }));
     }
   } catch (err) {
     console.error('[signup] persist failed:', err);

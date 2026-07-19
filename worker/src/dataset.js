@@ -291,7 +291,8 @@ export async function maybeFirePhase3Alert(env, deliverFn) {
       // No delivery function bound, log the trigger so it's still
       // observable in worker tail logs, and mark sent so we don't
       // spam the log on every subsequent template save.
-      console.log('[phase3:trigger]', JSON.stringify({ to, subject, current: ready.current, threshold: ready.threshold }));
+      // Log the trigger without the recipient address (owner alert email).
+      console.log('[phase3:trigger]', JSON.stringify({ subject, current: ready.current, threshold: ready.threshold }));
       await env.CYBERSYGN_DOCS.put(PHASE3_ALERT_KV_KEY, new Date().toISOString());
     }
   } catch (e) {

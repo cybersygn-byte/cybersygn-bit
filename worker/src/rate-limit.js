@@ -34,8 +34,10 @@ const PREFIX = 'ratelimit:';
  */
 export async function checkRateLimit(env, key, policies) {
   if (!env || !env.CYBERSYGN_DOCS) {
-    // No KV bound, fail-open. We log so the owner can spot it.
-    console.warn('[rate-limit] KV unbound, allowing', key);
+    // No KV bound, fail-open. Log only the limiter family (the part before the
+    // subject), never the full key: keys embed the client IP or an email hash,
+    // which must not land in logs.
+    console.warn('[rate-limit] KV unbound, allowing', String(key || '').split(':')[0] || 'unknown');
     return { ok: true, hits: [], headers: {} };
   }
   if (!Array.isArray(policies) || policies.length === 0) {

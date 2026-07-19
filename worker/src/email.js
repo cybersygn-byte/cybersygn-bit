@@ -30,6 +30,20 @@ import {
 const FROM_DEFAULT = 'CyberSygn <hello@cybersygn.io>';
 const REPLY_TO_DEFAULT = 'hello@cybersygn.io';
 
+/**
+ * Mask an email for logs: keep the first character and the domain, redact the
+ * rest of the local part. "jane.doe@acme.com" -> "j***@acme.com". Never log a
+ * full recipient address, even in the dev/no-key console fallback.
+ */
+function maskEmail(addr) {
+  const s = String(addr == null ? '' : addr);
+  const at = s.lastIndexOf('@');
+  if (at <= 0) return s ? '***' : '';
+  const local = s.slice(0, at);
+  const domain = s.slice(at);
+  return (local[0] || '') + '***' + domain;
+}
+
 export async function sendInvite(env, { to, name, docTitle, magicLink, senderName, brand }) {
   const subject = `${senderName || 'A CyberSygn sender'} needs your signature on ${docTitle || 'a document'}.`;
   const text = [
@@ -326,8 +340,16 @@ export async function sendOriginWelcome(env, { to, name, foundingNumber, appUrl 
 export async function deliver(env, { to, subject, text, html, attachments }) {
   const apiKey = env && env.RESEND_API_KEY;
   if (!apiKey) {
-    // Console fallback: print the would-have-sent message.
-    console.log('[cybersygn:email:dev]', JSON.stringify({ to, subject, text, hasHtml: !!html }, null, 2));
+    // Console fallback: log only that a send WOULD have happened, never the
+    // recipient address or the body text (magic links, one-time codes, and
+    // personal content live in there). Recipient is masked; body is reduced
+    // to a length so a developer can still see a message was built.
+    console.log('[cybersygn:email:dev]', JSON.stringify({
+      to: maskEmail(to),
+      subject,
+      textChars: typeof text === 'string' ? text.length : 0,
+      hasHtml: !!html,
+    }));
     return { delivered: true, mode: 'console' };
   }
 
