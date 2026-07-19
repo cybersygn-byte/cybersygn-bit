@@ -3740,6 +3740,7 @@ async function submitSignerFills() {
       showSignerMicrosite({
         docComplete: !!res.data.docComplete,
         auditUrl: res.data.auditUrl,
+        verifyHash: res.data.verifyHash || '',
         signerName,
         signerEmail,
         docTitle,
@@ -3780,7 +3781,7 @@ function currentSignerSession() {
  * On a phone the screen is the whole viewport, and the CTA is a
  * full-width tap target. Styling lives in signer-share.css.
  */
-function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, docTitle }) {
+function showSignerMicrosite({ docComplete, auditUrl, verifyHash, signerName, signerEmail, docTitle }) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay signer-done';
   const card = document.createElement('div');
@@ -3815,10 +3816,13 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
   confirm.className = 'signer-done__confirm';
   const safeName = signerName ? escapeHtml(String(signerName).trim()) : '';
   confirm.innerHTML =
-    '<span class="signer-done__check" aria-hidden="true">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
-        '<polyline points="20 6 9 17 4 12"/>' +
-      '</svg>' +
+    '<span class="signer-done__checkwrap" aria-hidden="true">' +
+      '<span class="signer-done__burst"></span>' +
+      '<span class="signer-done__check">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+          '<polyline points="20 6 9 17 4 12"/>' +
+        '</svg>' +
+      '</span>' +
     '</span>' +
     '<h2 id="signer-done-title" class="signer-done__title">You are done. Your signature is recorded.</h2>' +
     '<p class="signer-done__sub">' +
@@ -3829,17 +3833,75 @@ function showSignerMicrosite({ docComplete, auditUrl, signerName, signerEmail, d
     '</p>';
   card.appendChild(confirm);
 
+  // Celebratory peak: a short confetti burst behind the check and a soft
+  // haptic tap. Purely presentational, and only when the user has not asked
+  // to reduce motion. The CSS ray-burst is auto-neutralized under
+  // reduced-motion by the global animation cap; confetti + vibrate are
+  // guarded here so nothing moves or buzzes when motion is reduced.
+  try {
+    var wantsMotion = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (wantsMotion) {
+      var wrap = confirm.querySelector('.signer-done__checkwrap');
+      if (wrap) {
+        var COLORS = ['var(--accent)', 'var(--accent-2, #B644E6)', 'var(--accent-text)'];
+        for (var i = 0; i < 14; i++) {
+          var piece = document.createElement('i');
+          piece.className = 'signer-done__confetti';
+          var angle = (i / 14) * 360 + (i % 3) * 7;
+          var dist = 46 + (i % 5) * 12;
+          piece.style.setProperty('--cx', (Math.cos(angle * Math.PI / 180) * dist).toFixed(1) + 'px');
+          piece.style.setProperty('--cy', (Math.sin(angle * Math.PI / 180) * dist).toFixed(1) + 'px');
+          piece.style.setProperty('--cd', (90 + (i % 6) * 60) + 'ms');
+          piece.style.background = COLORS[i % COLORS.length];
+          wrap.appendChild(piece);
+        }
+      }
+      var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      if (coarse && navigator.vibrate) { navigator.vibrate([10, 40, 14]); }
+    }
+  } catch (e) { /* delight is never load-bearing */ }
+
   // The record they already receive: the audit certificate link, when
   // the document is fully complete and the Worker returned a URL.
-  if (docComplete && auditUrl) {
+  if (docComplete && (auditUrl || verifyHash)) {
     const record = document.createElement('div');
     record.className = 'signer-done__record';
-    const link = document.createElement('a');
-    link.className = 'btn btn--ghost btn--block signer-done__audit';
-    link.href = auditUrl;
-    link.rel = 'noopener';
-    link.textContent = 'Download audit certificate';
-    record.appendChild(link);
+    if (auditUrl) {
+      const link = document.createElement('a');
+      link.className = 'btn btn--ghost btn--block signer-done__audit';
+      link.href = auditUrl;
+      link.rel = 'noopener';
+      link.textContent = 'Download audit certificate';
+      record.appendChild(link);
+    }
+    // A shareable public certificate: the /verify page for this document's
+    // fingerprint. PII-free, so it is safe to hand to anyone (a counterparty,
+    // a bank, a court clerk) as proof the document was completed on CyberSygn.
+    if (verifyHash) {
+      const shareUrl = location.origin + '/verify/?h=' + encodeURIComponent(verifyHash);
+      const share = document.createElement('button');
+      share.type = 'button';
+      share.className = 'btn btn--ghost btn--block signer-done__share';
+      share.textContent = 'Share signed certificate';
+      share.addEventListener('click', async () => {
+        track('signer_share_certificate', {});
+        const data = {
+          title: 'Signed and verified on CyberSygn',
+          text: 'This document was signed and verified on CyberSygn. Confirm its integrity here.',
+          url: shareUrl,
+        };
+        try { if (navigator.share) { await navigator.share(data); return; } }
+        catch (e) { if (e && e.name === 'AbortError') return; }
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          const prior = share.textContent;
+          share.textContent = 'Certificate link copied';
+          share.disabled = true;
+          setTimeout(() => { share.textContent = prior; share.disabled = false; }, 1800);
+        } catch (e) { window.prompt('Copy this certificate link:', shareUrl); }
+      });
+      record.appendChild(share);
+    }
     card.appendChild(record);
   }
 

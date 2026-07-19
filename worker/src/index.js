@@ -4121,6 +4121,10 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     signerComplete: Boolean(signer.completedAt),
     docComplete: Boolean(final.completedAt),
     auditUrl,
+    // The public, PII-free fingerprint of the completed document, so the
+    // signer-completion screen can offer a shareable /verify certificate link.
+    // Only meaningful once the document is fully complete.
+    verifyHash: final.completedAt ? (final.pdfSha256 || '') : '',
     completionEmails,
     // Surfaced for the signer-microsite (slice 75). Returning name +
     // email lets the post-submit modal greet the signer by name and

@@ -122,8 +122,39 @@ function renderFound(data) {
         '</li>' +
       '</ul>' +
       '<p class="verify-scope">This confirms integrity: the document reached completion on CyberSygn and its fingerprint still matches. It is not a legal opinion on the agreement.</p>' +
+      '<div class="verify-card__actions">' +
+        '<button type="button" class="btn btn--primary" id="verify-share">Share this certificate</button>' +
+        '<a class="btn btn--ghost" href="/preview/?src=verify-share" rel="noopener">Sign your own document</a>' +
+      '</div>' +
     '</div>'
   );
+
+  // Make the verified record a shareable certificate: native share sheet where
+  // available, clipboard copy everywhere else. The shared link is the canonical
+  // public verify URL for this fingerprint, which carries no PII.
+  const shareBtn = document.getElementById('verify-share');
+  if (shareBtn && fingerprint) {
+    const shareUrl = location.origin + '/verify/?h=' + encodeURIComponent(fingerprint);
+    const shareData = {
+      title: 'Signed and verified on CyberSygn',
+      text: 'This document was signed and verified on CyberSygn. Confirm its integrity here.',
+      url: shareUrl,
+    };
+    shareBtn.addEventListener('click', async () => {
+      try {
+        if (navigator.share) { await navigator.share(shareData); return; }
+      } catch (e) { if (e && e.name === 'AbortError') return; }
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        const original = shareBtn.textContent;
+        shareBtn.textContent = 'Link copied';
+        shareBtn.disabled = true;
+        setTimeout(() => { shareBtn.textContent = original; shareBtn.disabled = false; }, 1800);
+      } catch (e) {
+        window.prompt('Copy this certificate link:', shareUrl);
+      }
+    });
+  }
 }
 
 /** No record: a calm, non-alarming state with practical guidance. */

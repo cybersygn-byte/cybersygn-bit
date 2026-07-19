@@ -92,9 +92,58 @@
     all.forEach(el => io.observe(el));
   }
 
+  // Cursor-reactive card motion: a subtle tilt toward the pointer plus a
+  // directional accent glow. Additive and inline-only: the transform and
+  // box-shadow are set while the pointer is over the card and CLEARED on leave,
+  // so the card always rests at its natural CSS state (never gates visibility).
+  // Desktop fine-pointers only; unreachable under reduced motion because that
+  // path already returned above.
+  function wireCardMotion() {
+    const fine = window.matchMedia && window.matchMedia('(pointer: fine)').matches;
+    if (!fine) return;
+    const SEL = [
+      '.tier', '.alt-card', '.doc-card', '.origin-card',
+      '.founder-card', '.founder-home__card', '.trust-tile',
+      '.tmpl-card', '.blog-card',
+    ].join(',');
+    const MAX_TILT = 3.2;  // degrees, kept small so text stays crisp
+    const LIFT = 6;        // px, matches the featured tier's resting lift
+
+    document.querySelectorAll(SEL).forEach((card) => {
+      let raf = 0;
+      card.addEventListener('pointerenter', () => {
+        card.style.transition = 'transform 120ms linear, box-shadow 200ms var(--ease, ease)';
+      });
+      card.addEventListener('pointermove', (e) => {
+        const r = card.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        const px = (e.clientX - r.left) / r.width - 0.5;   // -0.5 .. 0.5
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const rotY = (px * 2 * MAX_TILT).toFixed(2);
+          const rotX = (-py * 2 * MAX_TILT).toFixed(2);
+          card.style.transform =
+            `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-${LIFT}px)`;
+          const ox = Math.round(px * 24);
+          const oy = Math.round(16 + py * 8);
+          card.style.boxShadow =
+            `${ox}px ${oy}px 48px -22px var(--accent-glow), 0 0 0 1px var(--accent-line)`;
+        });
+      });
+      card.addEventListener('pointerleave', () => {
+        cancelAnimationFrame(raf);
+        card.style.transition = 'transform 340ms var(--ease, ease), box-shadow 340ms var(--ease, ease)';
+        card.style.transform = '';
+        card.style.boxShadow = '';
+      });
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', paintTargets);
+    document.addEventListener('DOMContentLoaded', () => { paintTargets(); wireCardMotion(); });
   } else {
     paintTargets();
+    wireCardMotion();
   }
 })();

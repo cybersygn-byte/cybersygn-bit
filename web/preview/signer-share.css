@@ -115,6 +115,54 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* Celebratory layer behind the check: a single ray-burst ring and a short
+   confetti spray (pieces positioned by JS via --cx/--cy/--cd). All of it is
+   presentational, and the global reduced-motion cap in styles.css neutralizes
+   these animations to a near-instant static end-state automatically. */
+.signer-done__checkwrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.signer-done__burst {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-pill);
+  background:
+    radial-gradient(circle, transparent 54%, var(--accent-soft) 55%, transparent 72%);
+  box-shadow: 0 0 0 0 var(--accent-line);
+  pointer-events: none;
+  z-index: 0;
+  animation: signer-done-burst 0.72s cubic-bezier(0.22, 1, 0.36, 1) 0.06s both;
+}
+@keyframes signer-done-burst {
+  0%   { opacity: 0.9; transform: scale(0.4); }
+  70%  { opacity: 0.5; transform: scale(1.5); }
+  100% { opacity: 0;   transform: scale(1.9); }
+}
+.signer-done__check { position: relative; z-index: 1; }
+.signer-done__confetti {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 1.5px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  animation: signer-done-confetti 0.72s cubic-bezier(0.22, 1, 0.36, 1) var(--cd, 0ms) forwards;
+}
+@keyframes signer-done-confetti {
+  0%   { opacity: 1; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--cx, 0), var(--cy, 0)) scale(1) rotate(140deg); }
+}
+
 .signer-done__title {
   margin: 0;
   font-family: var(--serif);
