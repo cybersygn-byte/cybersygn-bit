@@ -61,46 +61,57 @@ def make_square(img, size, padding=0.12):
 
 
 def make_og_image(lockup_path, out_path):
-    """1200x630 social-sharing card. Lockup centered with a thin
-    accent rule below."""
+    """1200x630 social-sharing card: the cinematic key visual (a contract in
+    navy space with a cyan light sweep, og-bg.jpg) with the white wordmark and
+    a tagline set into the lower-left over a soft scrim so it stays legible."""
     W, H = 1200, 630
-    canvas = Image.new('RGBA', (W, H), (1, 20, 52, 255))   # solid navy background
+    ACCENT = (0, 203, 246)
+    NAVY = (1, 20, 52)
 
-    # Place the white lockup centered with a max width of 720px.
+    bg_path = BRAND_DIR / 'og-bg.jpg'
+    if bg_path.exists():
+        card = Image.open(bg_path).convert('RGBA').resize((W, H), Image.LANCZOS)
+    else:
+        # Fallback to a solid navy field if the key visual is missing.
+        card = Image.new('RGBA', (W, H), NAVY + (255,))
+
+    # Vertical navy scrim, darkest toward the bottom, to seat the wordmark.
+    scrim = Image.new('L', (W, H), 0)
+    sd = ImageDraw.Draw(scrim)
+    for i in range(H):
+        sd.line([(0, i), (W, i)], fill=int(150 * (i / H) ** 1.6))
+    card = Image.composite(Image.new('RGBA', (W, H), NAVY + (255,)), card, scrim)
+
+    draw = ImageDraw.Draw(card)
+
+    # White wordmark, lower-left.
     lockup = Image.open(BRAND_DIR / 'lockup-white.png').convert('RGBA')
-    max_w = 720
+    target_w = 430
     lw, lh = lockup.size
-    scale = max_w / lw
-    new_w = max_w
-    new_h = int(round(lh * scale))
-    resized = lockup.resize((new_w, new_h), Image.LANCZOS)
-    x = (W - new_w) // 2
-    y = (H - new_h) // 2 - 30
-    canvas.paste(resized, (x, y), resized)
+    new_h = int(round(lh * target_w / lw))
+    lockup = lockup.resize((target_w, new_h), Image.LANCZOS)
+    lx = 70
+    ly = H - new_h - 132
+    card.paste(lockup, (lx, ly), lockup)
 
-    # Accent rule beneath
-    rule_y = y + new_h + 40
-    rule_w = 240
-    rule_x = (W - rule_w) // 2
-    draw = ImageDraw.Draw(canvas)
-    draw.rectangle([rule_x, rule_y, rule_x + rule_w, rule_y + 3],
-                   fill=(0, 203, 246, 255))
-
-    # Tagline below the rule. Use the default PIL font (small but
-    # readable); the OG card is for social previews so finesse is
-    # secondary to "the wordmark is recognizable at thumbnail size."
-    tagline = 'Sign documents.  Faster.'
-    try:
-        # Try to use a system font for a nicer rendering
-        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 28)
-    except Exception:
+    # Cyan accent rule + tagline beneath the wordmark.
+    ry = ly + new_h + 34
+    draw.rectangle([lx, ry, lx + 190, ry + 4], fill=ACCENT + (255,))
+    tagline = 'AI finds every field. You just hit send.'
+    font = None
+    for path in ['/System/Library/Fonts/Supplemental/Arial.ttf',
+                 '/System/Library/Fonts/Helvetica.ttc',
+                 '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf']:
+        try:
+            font = ImageFont.truetype(path, 30)
+            break
+        except Exception:
+            pass
+    if font is None:
         font = ImageFont.load_default()
-    bbox = draw.textbbox((0, 0), tagline, font=font)
-    text_w = bbox[2] - bbox[0]
-    draw.text(((W - text_w) // 2, rule_y + 24), tagline,
-              fill=(254, 254, 254, 220), font=font)
+    draw.text((lx, ry + 22), tagline, fill=(235, 245, 255, 240), font=font)
 
-    canvas.save(out_path, 'PNG', optimize=True)
+    card.convert('RGB').save(out_path, 'PNG', optimize=True)
 
 
 def main():

@@ -80,6 +80,8 @@ async function main() {
   console.log('  wrote dist/telemetry.js');
   await copyFile(join(SRC, 'polish.js'), join(OUT, 'polish.js'));
   console.log('  wrote dist/polish.js');
+  await copyFile(join(SRC, 'motion.js'), join(OUT, 'motion.js'));
+  console.log('  wrote dist/motion.js');
   await copyFile(join(SRC, 'cinematic-hero.js'), join(OUT, 'cinematic-hero.js'));
   console.log('  wrote dist/cinematic-hero.js');
   await copyFile(join(SRC, 'embed.js'), join(OUT, 'embed.js'));

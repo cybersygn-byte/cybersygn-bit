@@ -45,6 +45,7 @@
     '.demo-doc',
     '.section__head',
     '.section__lede',
+    '.scanshow',
     '.steps .step',
     '.tier',
     '.compare-table-wrap',

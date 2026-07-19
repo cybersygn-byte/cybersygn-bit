@@ -429,6 +429,16 @@ button { font: inherit; cursor: pointer; }
   white-space: nowrap;
 }
 .btn:active { transform: translateY(1px); }
+/* Magnetic CTAs (motion.js, desktop only): the button follows the cursor a
+   little, then springs back. A gentle spring transition smooths the follow and
+   the return without fighting the per-frame updates. */
+.btn.is-magnetic {
+  transition: transform 220ms var(--ease-spring),
+              background-color 160ms var(--ease),
+              border-color 160ms var(--ease),
+              color 160ms var(--ease);
+  will-change: transform;
+}
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn:disabled:active { transform: none; }
 
@@ -2260,6 +2270,68 @@ button { font: inherit; cursor: pointer; }
 }
 .step__title { margin: 0 0 var(--s-3); }
 .step__body { color: var(--text-2); font-size: var(--t-s); line-height: 1.6; margin: 0; }
+
+/* Field-detection showcase: the cinematic key visual of the product finding
+   the fields, framed like a screen. A cyan beam sweeps down the frame once
+   when it scrolls into view, so "detection" reads as a live moment. The image
+   is fully visible on its own; the beam is decorative and reduced-motion safe. */
+.scanshow {
+  max-width: 940px;
+  margin: 0 auto var(--s-8);
+}
+.scanshow__frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 203, 246, 0.28);
+  background: #011434;
+  line-height: 0;
+  box-shadow: 0 30px 80px -34px rgba(1, 20, 52, 0.72),
+              0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+.scanshow__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.scanshow__beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -32%;
+  height: 32%;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: linear-gradient(180deg,
+    rgba(0, 203, 246, 0) 0%,
+    rgba(0, 203, 246, 0.32) 45%,
+    rgba(190, 244, 255, 0.9) 50%,
+    rgba(0, 203, 246, 0.32) 55%,
+    rgba(0, 203, 246, 0) 100%);
+}
+@keyframes scan-sweep {
+  0%   { transform: translateY(-40%); opacity: 0; }
+  14%  { opacity: 1; }
+  86%  { opacity: 1; }
+  100% { transform: translateY(360%); opacity: 0; }
+}
+.scanshow[data-reveal="visible"] .scanshow__beam {
+  animation: scan-sweep 2.3s var(--ease) 220ms 2 both;
+}
+.scanshow__cap {
+  margin: var(--s-4) auto 0;
+  max-width: 620px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: var(--t-s);
+  line-height: 1.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scanshow[data-reveal="visible"] .scanshow__beam { animation: none; }
+}
 
 /* ========================================================================
    12. PRICING
@@ -7551,13 +7623,16 @@ details[open] > .field-list__group--toggle::after {
 /* Staggered detection reveal: each box has a per-element delay set via
    CSS custom property --reveal-delay; the keyframe runs once on first
    paint and lands the box in place. Reduced-motion users skip it. */
+/* Each field "ignites" as the AI finds it: a cyan glow flares as the box
+   snaps in, then settles. The stagger (--reveal-delay) makes them light up
+   one after another, so detection reads as an active, alive moment. */
 @keyframes field-box-reveal {
-  0%   { opacity: 0; transform: scale(0.82); }
-  60%  { opacity: 1; transform: scale(1.04); }
-  100% { opacity: 1; transform: scale(1); }
+  0%   { opacity: 0; transform: scale(0.8);  box-shadow: 0 0 0 0 rgba(0,203,246,0); }
+  45%  { opacity: 1; transform: scale(1.08); box-shadow: 0 0 26px 3px var(--accent-glow); }
+  100% { opacity: 1; transform: scale(1);    box-shadow: 0 0 0 0 rgba(0,203,246,0); }
 }
 .field-box[data-reveal="true"] {
-  animation: field-box-reveal 360ms var(--ease-spring) backwards;
+  animation: field-box-reveal 460ms var(--ease-spring) backwards;
   animation-delay: var(--reveal-delay, 0ms);
 }
 @media (prefers-reduced-motion: reduce) {

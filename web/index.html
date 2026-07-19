@@ -260,6 +260,7 @@
   
   <script src="/telemetry.js"></script>
   <script src="/polish.js" defer></script>
+  <script src="/motion.js" defer></script>
   <script src="/cinematic-hero.js" defer></script>
   <script src="/conversion.js" defer></script>
   <!-- Standalone app layer: bottom shell + app-first home (marketing DOM stays
@@ -629,6 +630,18 @@
           You get the signed PDF and a tamper-evident audit certificate the moment the last signer completes.
         </p>
       </header>
+
+      <figure class="scanshow" data-reveal>
+        <div class="scanshow__frame">
+          <img class="scanshow__img" src="/brand/scan-detect.jpg" width="1600" height="900"
+               loading="lazy" decoding="async"
+               alt="CyberSygn detecting the signature line, date, and initials fields on a contract." />
+          <span class="scanshow__beam" aria-hidden="true"></span>
+        </div>
+        <figcaption class="scanshow__cap">
+          The moment you upload, detection sweeps the page and lights up every field it finds. No dragging boxes. No setup.
+        </figcaption>
+      </figure>
 
       <ol class="steps">
         <li class="step">
