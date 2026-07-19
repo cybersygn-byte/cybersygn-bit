@@ -28,7 +28,12 @@ const NO_INJECT_PATHS = [
   '/preview/',
 ];
 
-export function maybeInjectAnalytics(response, env) {
+// CSP note: the site's script-src is hash-locked (no 'unsafe-inline'). When GA4
+// is enabled this function injects gtag.js (an external script) plus an inline
+// config snippet, so it also RELAXES the CSP on that one response to allow the
+// Google tag hosts and the exact inline snippet (by hash). When GA4/GSC are
+// unset (the default) the function early-returns and touches nothing.
+export async function maybeInjectAnalytics(response, env) {
   if (!response || !(response instanceof Response)) return response;
   const ct = response.headers.get('content-type') || '';
   if (!ct.includes('text/html')) return response;
@@ -43,6 +48,12 @@ export function maybeInjectAnalytics(response, env) {
     if (NO_INJECT_PATHS.some(p => url.pathname.startsWith(p))) return response;
   } catch (e) {}
 
+  const id = escapeAttr(ga4);
+  // The exact inline config snippet, built once so the CSP hash matches it byte for byte.
+  const gaInline = ga4
+    ? `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}',{anonymize_ip:true,send_page_view:true});`
+    : '';
+
   // HTMLRewriter is available in the Worker runtime globally.
   const rewriter = new HTMLRewriter();
   rewriter.on('head', {
@@ -54,23 +65,36 @@ export function maybeInjectAnalytics(response, env) {
         );
       }
       if (ga4) {
-        // Loader + minimal config. anonymize_ip is on by default in GA4 but
-        // we set it explicitly for clarity.
-        const id = escapeAttr(ga4);
         el.append(
           `<script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>` +
-          `<script>` +
-            `window.dataLayer=window.dataLayer||[];` +
-            `function gtag(){dataLayer.push(arguments);}` +
-            `gtag('js',new Date());` +
-            `gtag('config','${id}',{anonymize_ip:true,send_page_view:true});` +
-          `</script>`,
+          `<script>${gaInline}</script>`,
           { html: true },
         );
       }
     },
   });
-  return rewriter.transform(response);
+  const out = rewriter.transform(response);
+  if (!ga4) return out;
+
+  // Relax the hash-locked CSP for the injected Google tag on this response only.
+  const csp = out.headers.get('content-security-policy');
+  if (!csp) return out;
+  try {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(gaInline));
+    const bytes = new Uint8Array(digest);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    const hash = `'sha256-${btoa(bin)}'`;
+    const relaxed = csp
+      .replace(/script-src ([^;]*)/, `script-src $1 https://www.googletagmanager.com ${hash}`)
+      .replace(/connect-src ([^;]*)/, `connect-src $1 https://www.google-analytics.com https://www.googletagmanager.com`)
+      .replace(/img-src ([^;]*)/, `img-src $1 https://www.google-analytics.com`);
+    const headers = new Headers(out.headers);
+    headers.set('content-security-policy', relaxed);
+    return new Response(out.body, { status: out.status, statusText: out.statusText, headers });
+  } catch (e) {
+    return out;
+  }
 }
 
 function escapeAttr(s) {

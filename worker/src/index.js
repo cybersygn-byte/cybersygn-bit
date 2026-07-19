@@ -679,7 +679,7 @@ const worker = {
     }
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
       const upstream = await env.ASSETS.fetch(request);
-      const hardened = hardenAssetHeaders(maybeInjectAnalytics(upstream, env), url.pathname);
+      const hardened = hardenAssetHeaders(await maybeInjectAnalytics(upstream, env), url.pathname);
       // Preview host (workers.dev): mirror content for debugging, but keep it
       // out of the index so the apex stays the only crawlable origin.
       if (isPreviewHost) {

@@ -33,7 +33,8 @@
     <img class="wordmark" src="/brand/lockup-navy@2x.png" alt="CyberSygn" />
     <h1>You are offline</h1>
     <p>CyberSygn needs a connection to load documents. Check your network and try again.</p>
-    <button onclick="location.reload()">Try again</button>
+    <button id="retryBtn">Try again</button>
   </div>
+  <script>document.getElementById("retryBtn").addEventListener("click",function(){location.reload();});</script>
 </body>
 </html>
