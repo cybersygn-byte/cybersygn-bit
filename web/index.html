@@ -316,7 +316,7 @@
       <video class="cinematic-hero__video"
              id="cinematic-hero-video"
              muted playsinline preload="auto" disablepictureinpicture
-             autoplay
+             autoplay aria-hidden="true"
              poster="brand/og-image.png">
         <source src="brand/hero.mp4" type="video/mp4" />
       </video>
@@ -422,7 +422,7 @@
               <!-- Hand-drawn signature stroke. Renders inside the landlord box
                    during the sign phase. SVG path: a short signature flourish.
                    Stroke-dasharray + offset animate it drawing left-to-right. -->
-              <svg class="demo-field__ink" viewBox="0 0 240 60" preserveAspectRatio="none">
+              <svg class="demo-field__ink" viewBox="0 0 240 60" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M8 38 C 28 8, 50 50, 72 28 S 110 8, 130 38 C 152 14, 178 42, 200 26 C 218 14, 226 30, 232 28"
                       fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
