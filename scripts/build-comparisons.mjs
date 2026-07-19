@@ -114,6 +114,216 @@ const COMPETITORS = [
     weakness: 'Modern UI, transparent pricing. The detection step is missing, same drag-and-drop wall as the others. SignWell\'s receivers also have to create accounts, which is the universal complaint about DocuSign-style flows.',
     keyword: 'SignWell alternative, DocSketch alternative',
   },
+  {
+    slug: "zoho-sign",
+    name: "Zoho Sign",
+    fullName: "Zoho Sign",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Standard plan, per user, billed annually (about $12 month-to-month); price current as of 2026, verify on Zoho's site",
+    accountsRequired: "Signers can sign from an email link without creating an account",
+    fieldPlacement: "Fields are dragged and dropped onto the document by hand, roughly 1 to 3 minutes per document",
+    auditCert: "Yes, provides a completion certificate and audit trail on finished documents",
+    freeTier: "Yes, a free plan capped at a small number of requests per month",
+    weakness: "The entry plan carries monthly request limits and delivers most of its value once you already work inside the Zoho ecosystem. Every field is placed manually.",
+    keyword: "cybersygn vs zoho sign",
+  },
+  {
+    slug: "signeasy",
+    name: "SignEasy",
+    fullName: "SignEasy",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly $10 on the Essential plan billed annually; exact figure varies by region, verify on SignEasy's pricing page",
+    accountsRequired: "Signers can sign via a link without an account",
+    fieldPlacement: "Signature and date fields are positioned manually on each document, roughly 1 to 3 minutes",
+    auditCert: "Yes, includes an audit trail on completed documents",
+    freeTier: "No permanent free plan, only a time-limited free trial",
+    weakness: "With no ongoing free tier, a solo user who signs only occasionally pays a subscription from day one, and every field is positioned by hand.",
+    keyword: "cybersygn vs signeasy",
+  },
+  {
+    slug: "xodo-sign",
+    name: "Xodo Sign",
+    fullName: "Xodo Sign (formerly eversign)",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at approximately $10 on the entry paid plan; verify current pricing on Xodo Sign's site",
+    accountsRequired: "Signers can sign from an email link without an account",
+    fieldPlacement: "Fields are dragged onto documents manually, roughly 1 to 3 minutes each",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a free plan limited to a few documents per month",
+    weakness: "Field placement is fully manual, and rising document volume pushes a solo user up through the paid tiers quickly.",
+    keyword: "cybersygn vs xodo sign",
+  },
+  {
+    slug: "foxit-esign",
+    name: "Foxit eSign",
+    fullName: "Foxit eSign (formerly eSign Genie)",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly $10 per user on the entry plan billed annually; verify current pricing on Foxit's site",
+    accountsRequired: "Signers can sign via a link without creating an account",
+    fieldPlacement: "Every field is dropped onto the document by hand, roughly 1 to 3 minutes per document",
+    auditCert: "Yes, includes an audit trail on completed documents",
+    freeTier: "No standing free plan, a free trial is offered",
+    weakness: "The interface leans toward multi-party business document workflows and manual field setup, which is more overhead than a solo user typically needs.",
+    keyword: "cybersygn vs foxit esign",
+  },
+  {
+    slug: "getaccept",
+    name: "GetAccept",
+    fullName: "GetAccept",
+    soloPrice: "$15",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at approximately $15 per user on the e-signing entry plan billed annually; verify current pricing on GetAccept's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Fields are placed manually within the document editor, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "A limited free e-signing tier has been offered at times; verify current availability on GetAccept's site",
+    weakness: "It is built as a sales engagement and proposal platform, so a solo user who only needs signatures pays for deal-room features they may not use.",
+    keyword: "cybersygn vs getaccept",
+  },
+  {
+    slug: "jotform-sign",
+    name: "Jotform Sign",
+    fullName: "Jotform Sign",
+    soloPrice: "$34",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Signing is bundled into Jotform plans starting around $34 on the Bronze tier billed annually; verify current pricing on Jotform's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Fields are added through the form and document builder by hand, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on signed documents",
+    freeTier: "Yes, a free plan with limited monthly signed documents",
+    weakness: "It works best paired with Jotform forms, and standalone signing sits behind bundled plans with monthly signature limits.",
+    keyword: "cybersygn vs jotform sign",
+  },
+  {
+    slug: "dochub",
+    name: "DocHub",
+    fullName: "DocHub",
+    soloPrice: "$14",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Pro plan around $14 month-to-month, closer to $10 per month billed annually; verify current pricing on DocHub's site",
+    accountsRequired: "Signers can sign via a shared link without an account",
+    fieldPlacement: "Signature fields are drawn and positioned by hand, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a comparatively generous free plan",
+    weakness: "It is primarily a PDF editor with signing added on, so there is no automatic field detection and multi-signer flows feel more manual.",
+    keyword: "cybersygn vs dochub",
+  },
+  {
+    slug: "signaturely",
+    name: "Signaturely",
+    fullName: "Signaturely",
+    soloPrice: "$20",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Personal plan around $20 month-to-month, lower billed annually; verify current pricing on Signaturely's site",
+    accountsRequired: "Signers can sign from an email link without an account",
+    fieldPlacement: "Fields are dragged onto the document manually, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a free plan limited to a few documents per month",
+    weakness: "Field placement is manual and the free plan caps you at a handful of documents per month, so regular use quickly requires a paid tier.",
+    keyword: "cybersygn vs signaturely",
+  },
+  {
+    slug: "docsketch",
+    name: "Docsketch",
+    fullName: "Docsketch",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Personal plan around $10 month-to-month, closer to $8 billed annually; verify current pricing on Docsketch's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Signature fields are placed by hand, roughly 1 to 3 minutes per document",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a free plan limited to a few documents per month",
+    weakness: "It doubles as a document tracking tool, but signature fields are positioned manually and the free plan allows only a few documents per month.",
+    keyword: "cybersygn vs docsketch",
+  },
+  {
+    slug: "yousign",
+    name: "Yousign",
+    fullName: "Yousign",
+    soloPrice: "$9",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly the euro equivalent of $9 per user on the entry plan billed annually; billed in euros, verify current pricing on Yousign's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Fields are dropped onto the document manually, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "No standing free plan, a free trial is offered",
+    weakness: "It is a European eIDAS-focused provider billed in euros, which adds currency conversion and setup friction for a US-based solo user.",
+    keyword: "cybersygn vs yousign",
+  },
+  {
+    slug: "skribble",
+    name: "Skribble",
+    fullName: "Skribble",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Per-signature pricing (a few dollars per signature) alongside subscription business plans; billed in euros or Swiss francs, verify current pricing on Skribble's site",
+    accountsRequired: "Signers may need identity verification to sign, which can require an account or extra step for higher signature levels",
+    fieldPlacement: "Signature positions are set manually, roughly 1 to 3 minutes per document",
+    auditCert: "Yes, provides an audit trail and signature evidence on completed documents",
+    freeTier: "Free to create an account, with paid per-signature or plan costs to send",
+    weakness: "It is oriented to EU and Swiss qualified signatures with per-signature costs and identity steps, which is more process and expense than a simple US agreement needs.",
+    keyword: "cybersygn vs skribble",
+  },
+  {
+    slug: "boldsign",
+    name: "BoldSign",
+    fullName: "BoldSign",
+    soloPrice: "$15",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly $15 per user on the entry paid plan; verify current pricing on BoldSign's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Fields are placed onto the document manually, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a free plan with limited monthly documents",
+    weakness: "Its strongest fit is as a developer-friendly API, so a non-technical solo user taps less of its value and still places every field by hand.",
+    keyword: "cybersygn vs boldsign",
+  },
+  {
+    slug: "rightsignature",
+    name: "RightSignature",
+    fullName: "RightSignature",
+    soloPrice: "$12",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly $12 on the entry plan; increasingly sold alongside ShareFile, verify current standalone pricing on RightSignature's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Fields are dragged onto documents by hand, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "No standing free plan, a free trial is offered",
+    weakness: "It is now positioned mainly as an add-on to ShareFile, so the standalone offering gets less focus for a solo user and fields are placed manually.",
+    keyword: "cybersygn vs rightsignature",
+  },
+  {
+    slug: "signable",
+    name: "Signable",
+    fullName: "Signable",
+    soloPrice: "$30",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Entry plan is priced in GBP at roughly the equivalent of $30 per month for a set document allowance, with pay-as-you-go also offered; verify current pricing on Signable's site",
+    accountsRequired: "Signers can sign from an email link without an account",
+    fieldPlacement: "Fields are positioned onto the document manually, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "No standing free plan, a free trial is offered",
+    weakness: "It is UK-based with GBP billing and a document-allowance model that can surprise a solo user who sends in occasional bursts.",
+    keyword: "cybersygn vs signable",
+  },
+  {
+    slug: "fill",
+    name: "Fill",
+    fullName: "Fill",
+    soloPrice: "$10",
+    soloPriceUnit: "/mo",
+    soloPriceNotes: "Starts at roughly $10 on the entry paid plan; verify current pricing on Fill's site",
+    accountsRequired: "Signers can sign from a link without an account",
+    fieldPlacement: "Signature fields are placed onto the document by hand, roughly 1 to 3 minutes",
+    auditCert: "Yes, provides an audit trail on completed documents",
+    freeTier: "Yes, a free plan with limited monthly documents",
+    weakness: "Lower tiers cap the number of documents per month and every signature field is positioned manually, adding setup time per document.",
+    keyword: "cybersygn vs fill",
+  },
 ];
 
 function renderPage(c) {
@@ -369,6 +579,36 @@ ${faqs.map(f => `          <details class="faq__item">
             <summary class="faq__q">${esc(f.q)}</summary>
             <div class="faq__a"><p>${esc(f.a)}</p></div>
           </details>`).join('\n')}
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--alt">
+      <div class="container">
+        <header class="section__head">
+          <div>
+            <p class="kicker kicker--muted">Keep exploring.</p>
+            <h2 class="h-section section__title">More ways CyberSygn fits your work.</h2>
+          </div>
+        </header>
+        <div class="best-related">
+          <div class="best-related__col">
+            <h3 class="best-related__title">Best e-signature by profession</h3>
+            <ul class="best-related__list">
+              <li><a href="/alternatives/best-e-signature-for-real-estate-agents/">Real estate agents</a></li>
+              <li><a href="/alternatives/best-e-signature-for-lawyers/">Lawyers</a></li>
+              <li><a href="/alternatives/best-e-signature-for-accountants/">Accountants</a></li>
+              <li><a href="/alternatives/">All alternatives and guides</a></li>
+            </ul>
+          </div>
+          <div class="best-related__col">
+            <h3 class="best-related__title">The basics</h3>
+            <ul class="best-related__list">
+              <li><a href="/blog/are-electronic-signatures-legally-binding/">Are e-signatures legally binding?</a></li>
+              <li><a href="/blog/what-is-an-electronic-signature/">What is an electronic signature?</a></li>
+              <li><a href="/blog/audit-certificates-explained/">Audit certificates explained</a></li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

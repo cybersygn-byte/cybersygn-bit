@@ -1,0 +1,643 @@
+{
+  "_comment": "Data for scripts/build-best-for.mjs. One \"best e-signature for <vertical>\" landing page per entry at web/alternatives/best-e-signature-for-<slug>/. Keep claims defensible; no em-dashes.",
+  "verticals": [
+    {
+      "slug": "real-estate-agents",
+      "name": "real estate agents",
+      "singular": "a real estate agent",
+      "keyword": "e-signature for real estate agents",
+      "painLine": "Listings and offers move on nights and weekends, and a buyer who has to create an account just to sign a disclosure is a buyer you might lose to the next agent.",
+      "headline": "The e-signature tool built for how real estate agents actually close",
+      "whyPoints": [
+        {
+          "title": "Get a signature before the buyer cools off",
+          "body": "CyberSygn's AI finds the signature, date, and initial fields on a listing agreement or offer in about three seconds, so you send the document from the showing instead of back at the office. No manual dragging of fields onto every page."
+        },
+        {
+          "title": "Your clients sign, they do not sign up",
+          "body": "Buyers and sellers open the link, sign on their phone, and they are done. There is no account to create and no app to install, which matters when you need a disclosure initialed tonight, not next week."
+        },
+        {
+          "title": "A tamper-evident record for every deal",
+          "body": "Each completed document carries a SHA-256 audit certificate showing who signed, when, and that the file has not been altered since. When a transaction gets questioned months later, you have a clean, tamper-evident audit trail on file."
+        },
+        {
+          "title": "Priced for an agent, not a brokerage IT budget",
+          "body": "Plans run from one dollar to nineteen dollars a month with a genuinely useful free tier, so a solo agent can send disclosures without a per-envelope meter running in the background."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can my buyers sign an offer from their phone without downloading anything?",
+          "a": "Yes. You send a link, they open it in their phone browser, and they sign. There is no account to create and no app to install, which is why it works well for signatures you need the same evening."
+        },
+        {
+          "q": "Does CyberSygn detect the signature fields on a standard listing agreement automatically?",
+          "a": "It does. The AI scans the document and places signature, date, and initial fields where they belong in about three seconds. You can move or add any field before sending if you want to adjust it."
+        },
+        {
+          "q": "Will a signed disclosure hold up if a transaction is disputed later?",
+          "a": "Every completed document gets a tamper-evident SHA-256 audit certificate recording who signed and when, so you can show the file has not changed since signing. We are not a law firm, so confirm your state and brokerage requirements for specific forms."
+        }
+      ],
+      "docExamples": [
+        "Listing Agreement",
+        "Buyer Representation Agreement",
+        "Seller Disclosure",
+        "Purchase Offer"
+      ]
+    },
+    {
+      "slug": "wedding-photographers",
+      "name": "wedding photographers",
+      "singular": "a wedding photographer",
+      "keyword": "e-signature for wedding photographers",
+      "painLine": "A couple decides on you at a venue walkthrough or over a late-night email, and if signing the contract and paying the deposit takes more than a couple of taps, the excitement fades before the booking is locked.",
+      "headline": "The e-signature tool that locks wedding bookings before the moment passes",
+      "whyPoints": [
+        {
+          "title": "Send the contract the second they say yes",
+          "body": "CyberSygn reads your photography contract and drops the signature and date fields in about three seconds, so you can send it from your phone at the venue instead of promising to email it later and hoping they still book."
+        },
+        {
+          "title": "Couples sign on their phones, no account needed",
+          "body": "The bride, groom, or parent opens the link and signs on whatever device they have, with no login and no app. That is the difference between a booking confirmed tonight and a follow-up you have to chase all week."
+        },
+        {
+          "title": "A clean record for the deposit and the release",
+          "body": "Every signed contract and model release comes with a tamper-evident SHA-256 audit certificate showing exactly who agreed and when, so your terms, usage rights, and deposit are all documented if anyone forgets what was agreed."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a couple sign my contract at the venue on their phone?",
+          "a": "Yes. You send the link and they sign right there in their phone browser, with no account to create and no app to download. It is built for exactly the moment a couple decides to book."
+        },
+        {
+          "q": "Does it handle both the contract and the model release in one flow?",
+          "a": "You can send each document for signature and the AI detects the fields on both automatically. Each one gets its own tamper-evident audit certificate when completed."
+        },
+        {
+          "q": "How much does it cost for a solo photographer?",
+          "a": "Plans range from one dollar to nineteen dollars a month and there is a free tier, so a solo shooter can send booking contracts without a per-document fee eating into the deposit."
+        }
+      ],
+      "docExamples": [
+        "Wedding Photography Contract",
+        "Model Release",
+        "Print Release",
+        "Deposit Agreement"
+      ]
+    },
+    {
+      "slug": "lawyers",
+      "name": "lawyers",
+      "singular": "a lawyer",
+      "keyword": "e-signature for lawyers",
+      "painLine": "An engagement letter that sits unsigned is work you cannot start and revenue you cannot recognize, and clients balk when signing means creating yet another account.",
+      "headline": "The e-signature tool for lawyers who need the engagement letter signed today",
+      "whyPoints": [
+        {
+          "title": "Turn a new matter around in minutes",
+          "body": "CyberSygn detects the signature and date fields on an engagement letter or retainer agreement in about three seconds, so a prospective client can sign the same day they call instead of the following week."
+        },
+        {
+          "title": "Clients sign without another login to manage",
+          "body": "Your client opens the link and signs, with no account and no app. For a first-time client who is already anxious about hiring counsel, removing the sign-up friction gets the retainer signed and the work started."
+        },
+        {
+          "title": "A tamper-evident audit trail on every signature",
+          "body": "Each completed document carries a SHA-256 audit certificate recording the signer, the timestamp, and proof the file is unchanged since signing. That is the kind of clean record you want on file for engagement letters and fee agreements."
+        },
+        {
+          "title": "No per-envelope pricing to explain to the firm",
+          "body": "Plans run from one dollar to nineteen dollars a month with a real free tier, so a solo or small practice can send retainers and waivers without a metered envelope count."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Does CyberSygn produce a record I can keep in the client file?",
+          "a": "Yes. Every completed document includes a tamper-evident SHA-256 audit certificate showing who signed and when. You can download and archive it with the matter file."
+        },
+        {
+          "q": "Do my clients need to create an account to sign a retainer?",
+          "a": "No. They open the link and sign in their browser with no login and no app, which removes a common point of friction for new clients."
+        },
+        {
+          "q": "Are electronic signatures acceptable for engagement letters?",
+          "a": "Electronic signatures are widely recognized under laws such as the US ESIGN Act and UETA, and CyberSygn provides a tamper-evident audit trail for each one. We are not a law firm, so apply your own professional judgment to specific documents."
+        }
+      ],
+      "docExamples": [
+        "Engagement Letter",
+        "Retainer Agreement",
+        "Fee Agreement",
+        "Conflict Waiver"
+      ]
+    },
+    {
+      "slug": "accountants",
+      "name": "accountants",
+      "singular": "an accountant",
+      "keyword": "e-signature for accountants",
+      "painLine": "During tax season you are chasing dozens of engagement letters and e-file authorizations at once, and every client who cannot figure out a signing portal becomes a phone call you do not have time for.",
+      "headline": "The e-signature tool that clears your tax-season signature backlog",
+      "whyPoints": [
+        {
+          "title": "Send an engagement letter in seconds, not minutes",
+          "body": "CyberSygn's AI places the signature and date fields on an engagement letter or e-file authorization in about three seconds, so you can push out a whole batch of clients in the time it used to take to prep one."
+        },
+        {
+          "title": "Clients sign without a portal login",
+          "body": "Your client opens the link and signs, no account and no app. That eliminates the single most common tax-season support call, the one where a client cannot get into the signing system."
+        },
+        {
+          "title": "A documented record for every authorization",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who signed and when, giving you a tamper-evident audit trail for engagement letters, e-file authorizations, and disclosure consents."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can I send the same engagement letter to many clients quickly?",
+          "a": "Yes. Because the AI detects the signature fields automatically in about three seconds, prepping and sending each document is fast, which is what you need when the whole client list needs to sign at once."
+        },
+        {
+          "q": "Do clients need an account to sign an e-file authorization?",
+          "a": "No. They sign from the link in their browser with no login and no app, which cuts down on the support calls that pile up during filing season."
+        },
+        {
+          "q": "Is there a record I can keep for compliance?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording the signer and timestamp, which you can download and retain in the client file."
+        }
+      ],
+      "docExamples": [
+        "Engagement Letter",
+        "E-File Authorization Form",
+        "Tax Preparation Agreement",
+        "Disclosure Consent"
+      ]
+    },
+    {
+      "slug": "therapists",
+      "name": "therapists",
+      "singular": "a therapist",
+      "keyword": "e-signature for therapists",
+      "painLine": "New clients arrive already vulnerable, and asking them to create an account and wade through a clunky portal before their first session adds friction exactly where you want none.",
+      "headline": "The e-signature tool that makes intake gentle for therapy clients",
+      "whyPoints": [
+        {
+          "title": "Intake paperwork ready before the first session",
+          "body": "CyberSygn detects the signature and date fields on informed consent and intake forms in about three seconds, so you can send everything the moment a client books and have it signed before they walk in."
+        },
+        {
+          "title": "No account for someone who is already anxious",
+          "body": "Clients open the link and sign, with no login and no app to figure out. Removing sign-up friction is a small kindness at a moment when your client may already feel overwhelmed."
+        },
+        {
+          "title": "A private, tamper-evident record of consent",
+          "body": "Every signed consent form carries a SHA-256 audit certificate showing who signed and when, so your informed consent and practice-policy acknowledgments are documented with a tamper-evident audit trail."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can clients sign intake forms before their first appointment?",
+          "a": "Yes. You send the link when they book, and they sign consent and intake forms on their own device with no account and no app, so everything is ready before the session begins."
+        },
+        {
+          "q": "Is the signed consent stored securely with a record?",
+          "a": "Each completed form includes a tamper-evident SHA-256 audit certificate showing the signer and timestamp. You can download and retain it in the client record."
+        },
+        {
+          "q": "Does signing work on a phone?",
+          "a": "Yes. Clients can sign from a phone browser with no download, which is often the easiest option for someone completing paperwork before their first visit."
+        }
+      ],
+      "docExamples": [
+        "Informed Consent Form",
+        "Client Intake Form",
+        "Telehealth Consent",
+        "Practice Policies Acknowledgment"
+      ]
+    },
+    {
+      "slug": "personal-trainers",
+      "name": "personal trainers",
+      "singular": "a personal trainer",
+      "keyword": "e-signature for personal trainers",
+      "painLine": "A new client is standing in front of you ready to start, but you should not put them through a workout until the liability waiver is signed, and nobody wants to make an account at the gym door.",
+      "headline": "The e-signature tool that gets the waiver signed before the first rep",
+      "whyPoints": [
+        {
+          "title": "Waiver signed on the spot",
+          "body": "CyberSygn finds the signature and date fields on a liability waiver or health questionnaire in about three seconds, so a new client can sign on the gym floor before you start the session."
+        },
+        {
+          "title": "No account, just a signature",
+          "body": "Your client opens the link and signs on their phone, no login and no app. That keeps the energy on the workout instead of on troubleshooting a signing portal."
+        },
+        {
+          "title": "A documented waiver you can rely on",
+          "body": "Each signed waiver carries a SHA-256 audit certificate showing who signed and when, giving you a tamper-evident audit trail for liability waivers and health screenings before anyone touches a weight."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a new client sign the liability waiver right at the gym?",
+          "a": "Yes. Send the link and they sign on their phone in seconds, with no account to create and no app to download, so they are cleared to train before the first session."
+        },
+        {
+          "q": "Do I get a record of the signed waiver?",
+          "a": "Every completed waiver includes a tamper-evident SHA-256 audit certificate recording who signed and when, which you can download and keep on file."
+        },
+        {
+          "q": "How much does it cost for an independent trainer?",
+          "a": "Plans run from one dollar to nineteen dollars a month with a free tier, so an independent trainer can send waivers and package agreements without a per-document charge."
+        }
+      ],
+      "docExamples": [
+        "Liability Waiver",
+        "Personal Training Agreement",
+        "PAR-Q Health Questionnaire",
+        "Package Purchase Agreement"
+      ]
+    },
+    {
+      "slug": "tutors",
+      "name": "tutors",
+      "singular": "a tutor",
+      "keyword": "e-signature for tutors",
+      "painLine": "You are arranging sessions with a busy parent over text, and a service agreement that requires them to register for an account is a step that quietly never gets done.",
+      "headline": "The e-signature tool that gets parents to sign the tutoring agreement",
+      "whyPoints": [
+        {
+          "title": "Agreement out the moment they commit",
+          "body": "CyberSygn places the signature and date fields on a tutoring agreement or cancellation policy in about three seconds, so you can send it while the parent is still in the conversation and ready to say yes."
+        },
+        {
+          "title": "Parents sign without another login",
+          "body": "A parent opens the link and signs on their phone between meetings, with no account and no app. That is how a busy parent actually completes paperwork rather than leaving it in their inbox."
+        },
+        {
+          "title": "A clear record of the terms",
+          "body": "Each signed agreement carries a SHA-256 audit certificate showing who agreed and when, so your rates, scheduling, and cancellation terms are documented with a tamper-evident audit trail."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a parent sign the agreement from their phone?",
+          "a": "Yes. They open the link and sign in their phone browser with no account and no app, which is the realistic way a busy parent gets it done."
+        },
+        {
+          "q": "Does CyberSygn find the signature fields automatically?",
+          "a": "It does. The AI detects signature and date fields in about three seconds so you do not have to place them by hand on every agreement."
+        },
+        {
+          "q": "Is there a record if a scheduling dispute comes up?",
+          "a": "Every completed agreement includes a tamper-evident SHA-256 audit certificate showing who signed and when, so the agreed terms are on record."
+        }
+      ],
+      "docExamples": [
+        "Tutoring Service Agreement",
+        "Parent Consent Form",
+        "Cancellation Policy",
+        "Payment Agreement"
+      ]
+    },
+    {
+      "slug": "web-designers",
+      "name": "web designers",
+      "singular": "a web designer",
+      "keyword": "e-signature for web designers",
+      "painLine": "You do not want to open a design file until the contract is signed and the deposit is in, but a signing process that makes the client create an account stalls the whole project at the starting line.",
+      "headline": "The e-signature tool that gets your design contract signed and the deposit in",
+      "whyPoints": [
+        {
+          "title": "Contract signed before scope creep starts",
+          "body": "CyberSygn detects the signature and date fields on a web design contract or statement of work in about three seconds, so you can send it the moment a prospect approves the proposal and start protected."
+        },
+        {
+          "title": "Clients sign, no account required",
+          "body": "Your client opens the link and signs, with no login and no app. That removes the friction that keeps a signed contract sitting in someone's inbox for a week while your calendar fills up."
+        },
+        {
+          "title": "A documented statement of work",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who agreed and when, so the scope in your SOW is captured with a tamper-evident audit trail if a client later asks for something that was never in it."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can I get the SOW and deposit agreement signed quickly?",
+          "a": "Yes. The AI places the fields in about three seconds and your client signs from a link with no account, so you can lock scope and collect the deposit before starting work."
+        },
+        {
+          "q": "Do clients need to sign up to sign?",
+          "a": "No. They sign in their browser with no login and no app, which keeps the project from stalling at the contract stage."
+        },
+        {
+          "q": "Is there a record of what the client agreed to?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording the signer and timestamp, so the agreed scope is documented."
+        }
+      ],
+      "docExamples": [
+        "Web Design Contract",
+        "Statement of Work",
+        "Deposit Agreement",
+        "Maintenance Agreement"
+      ]
+    },
+    {
+      "slug": "marketing-agencies",
+      "name": "marketing agencies",
+      "singular": "a marketing agency",
+      "keyword": "e-signature for marketing agencies",
+      "painLine": "Closing a client means routing an MSA and SOW past several stakeholders, and every one you ask to create an account is a person who delays the whole signature.",
+      "headline": "The e-signature tool that gets agency contracts signed across every stakeholder",
+      "whyPoints": [
+        {
+          "title": "MSAs and SOWs ready to send in seconds",
+          "body": "CyberSygn's AI detects the signature and date fields on a master services agreement or statement of work in about three seconds, so a new client engagement is out the door the same day you win it."
+        },
+        {
+          "title": "Every signer signs, none of them sign up",
+          "body": "Whether it is a founder, a marketing lead, or a legal contact, each person opens the link and signs with no account and no app. Removing sign-up friction keeps multi-party contracts from stalling on the one person who could not log in."
+        },
+        {
+          "title": "A tamper-evident record for the account file",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who signed and when, so your MSA, SOW, and NDA all sit on file with a tamper-evident audit trail."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Does everyone in the client's org need an account to sign?",
+          "a": "No. Each signer opens the link and signs with no login and no app, which is what keeps a contract with several stakeholders from getting stuck."
+        },
+        {
+          "q": "Can I turn a signed MSA around the day I close?",
+          "a": "Yes. The AI places the fields in about three seconds so you can send the agreement immediately and get the engagement started without a paperwork delay."
+        },
+        {
+          "q": "Is there a record for each contract?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording who signed and when, which you can archive with the account."
+        }
+      ],
+      "docExamples": [
+        "Master Services Agreement",
+        "Statement of Work",
+        "Retainer Agreement",
+        "Non-Disclosure Agreement"
+      ]
+    },
+    {
+      "slug": "recruiters",
+      "name": "recruiters",
+      "singular": "a recruiter",
+      "keyword": "e-signature for recruiters",
+      "painLine": "A hiring manager is ready to engage you now, but a terms-of-business agreement that forces them into a signing portal cools a hot lead while a competing recruiter moves faster.",
+      "headline": "The e-signature tool that gets your recruitment terms signed while the client is hot",
+      "whyPoints": [
+        {
+          "title": "Terms of business signed before the role goes cold",
+          "body": "CyberSygn detects the signature and date fields on a placement fee agreement or terms of business in about three seconds, so you can send it the minute a client is ready and lock in your fee before the requisition shifts."
+        },
+        {
+          "title": "Clients and candidates sign without an account",
+          "body": "A hiring manager or candidate opens the link and signs, with no login and no app. That speed is the difference between engaging a client today and losing the search to whoever answered faster."
+        },
+        {
+          "title": "A documented record of your fee agreement",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who agreed and when, so your placement fee terms are captured with a tamper-evident audit trail when it is time to invoice."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a hiring manager sign my fee agreement immediately?",
+          "a": "Yes. The AI places the fields in about three seconds and the client signs from a link with no account, so you can lock in terms before a competing recruiter does."
+        },
+        {
+          "q": "Do candidates need to sign up to sign a consent form?",
+          "a": "No. They sign in their browser with no login and no app, which makes candidate consent quick to collect."
+        },
+        {
+          "q": "Is there a record when it is time to invoice a placement?",
+          "a": "Every completed agreement includes a tamper-evident SHA-256 audit certificate showing who signed and when, so your fee terms are documented."
+        }
+      ],
+      "docExamples": [
+        "Terms of Business",
+        "Placement Fee Agreement",
+        "Candidate Consent Form",
+        "Recruitment Services Agreement"
+      ]
+    },
+    {
+      "slug": "property-managers",
+      "name": "property managers",
+      "singular": "a property manager",
+      "keyword": "e-signature for property managers",
+      "painLine": "You are turning over units and renewing leases at volume, and every tenant who has to create an account to sign is a move-in you have to chase and a unit that sits empty longer.",
+      "headline": "The e-signature tool that keeps leases and renewals moving at volume",
+      "whyPoints": [
+        {
+          "title": "Leases prepped in seconds, not per-field clicking",
+          "body": "CyberSygn's AI detects the signature, date, and initial fields on a lease or renewal in about three seconds, so processing a stack of units does not mean placing fields by hand on every page of every document."
+        },
+        {
+          "title": "Tenants sign, no account to set up",
+          "body": "A tenant opens the link and signs on their phone, with no login and no app. That is how you get a lease signed before the applicant changes their mind and how you keep move-ins on schedule."
+        },
+        {
+          "title": "A tamper-evident record for every unit",
+          "body": "Each signed lease carries a SHA-256 audit certificate showing who signed and when, so your leases, renewals, and move-in checklists sit on file with a tamper-evident audit trail if a tenancy is ever disputed."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can I process a lot of leases quickly?",
+          "a": "Yes. Because the AI detects the fields automatically in about three seconds, prepping each lease is fast, which matters when you are turning over many units at once."
+        },
+        {
+          "q": "Do tenants need an account to sign a lease?",
+          "a": "No. They sign from the link on their phone with no login and no app, which keeps move-ins from getting stuck at the paperwork stage."
+        },
+        {
+          "q": "Is there a record if a lease is disputed?",
+          "a": "Every completed lease includes a tamper-evident SHA-256 audit certificate recording who signed and when, which you can keep in the unit file."
+        }
+      ],
+      "docExamples": [
+        "Lease Agreement",
+        "Lease Renewal",
+        "Property Management Agreement",
+        "Move-In Checklist"
+      ]
+    },
+    {
+      "slug": "event-planners",
+      "name": "event planners",
+      "singular": "an event planner",
+      "keyword": "e-signature for event planners",
+      "painLine": "Dates get held and released fast, and a client who has to make an account to sign the contract and pay the deposit might lose their date while the paperwork sits unsigned.",
+      "headline": "The e-signature tool that locks the date before someone else books it",
+      "whyPoints": [
+        {
+          "title": "Contract out the moment they choose you",
+          "body": "CyberSygn places the signature and date fields on an event contract or vendor agreement in about three seconds, so you can send it while the client is deciding and secure the date before it slips."
+        },
+        {
+          "title": "Clients and vendors sign without an account",
+          "body": "Your client, or a caterer, or a venue contact opens the link and signs with no login and no app. That keeps every party in the timeline signing quickly instead of asking you how the portal works."
+        },
+        {
+          "title": "A documented record of every agreement",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who agreed and when, so your client contracts and vendor agreements are captured with a tamper-evident audit trail across a busy event calendar."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a client sign the contract and lock the date fast?",
+          "a": "Yes. The AI places the fields in about three seconds and the client signs from a link with no account, so you can hold the date the moment they decide."
+        },
+        {
+          "q": "Do vendors need to sign up to sign an agreement?",
+          "a": "No. Each vendor signs from the link with no login and no app, which keeps agreements moving across everyone involved in the event."
+        },
+        {
+          "q": "Is there a record of what each party agreed to?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording the signer and timestamp, so the terms are documented."
+        }
+      ],
+      "docExamples": [
+        "Event Planning Contract",
+        "Vendor Agreement",
+        "Deposit Agreement",
+        "Cancellation Policy"
+      ]
+    },
+    {
+      "slug": "bookkeepers",
+      "name": "bookkeepers",
+      "singular": "a bookkeeper",
+      "keyword": "e-signature for bookkeepers",
+      "painLine": "You are onboarding clients onto recurring service and need an engagement letter and an authorization signed before you can touch their books, and a signing portal that demands an account slows every new client down.",
+      "headline": "The e-signature tool that gets your engagement letter signed before month one",
+      "whyPoints": [
+        {
+          "title": "Engagement letters out in seconds",
+          "body": "CyberSygn detects the signature and date fields on a bookkeeping engagement letter or service agreement in about three seconds, so a new client is signed and you can start reconciling without a paperwork delay."
+        },
+        {
+          "title": "Clients sign without another login",
+          "body": "A small business owner opens the link and signs between other tasks, with no account and no app. That is how a busy owner actually gets your engagement letter signed rather than leaving it open in a tab."
+        },
+        {
+          "title": "A clear record of the engagement",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who agreed and when, so your engagement letters and authorizations sit on file with a tamper-evident audit trail."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can I onboard a new client quickly?",
+          "a": "Yes. The AI places the fields in about three seconds and the client signs from a link with no account, so the engagement letter is signed before you begin the work."
+        },
+        {
+          "q": "Do clients need to create an account to sign?",
+          "a": "No. They sign in their browser with no login and no app, which is the easiest path for a business owner juggling their own work."
+        },
+        {
+          "q": "Is there a record of the signed engagement?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording who signed and when, which you can retain in the client file."
+        }
+      ],
+      "docExamples": [
+        "Bookkeeping Engagement Letter",
+        "Service Agreement",
+        "ACH Authorization Form",
+        "Confidentiality Agreement"
+      ]
+    },
+    {
+      "slug": "interior-designers",
+      "name": "interior designers",
+      "singular": "an interior designer",
+      "keyword": "e-signature for interior designers",
+      "painLine": "You do not order furnishings until the design agreement is signed and the deposit clears, but a client who has to register for an account to sign can hold up a whole project timeline.",
+      "headline": "The e-signature tool that gets the design agreement signed before you order",
+      "whyPoints": [
+        {
+          "title": "Agreement signed while the client is excited",
+          "body": "CyberSygn places the signature and date fields on a design agreement or purchase authorization in about three seconds, so you can send it right after the presentation and start sourcing while the client is still enthusiastic."
+        },
+        {
+          "title": "Clients sign, no account needed",
+          "body": "Your client opens the link and signs on their phone, with no login and no app. That keeps the momentum from the reveal instead of losing days to a signing portal they cannot get into."
+        },
+        {
+          "title": "A documented purchase authorization",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who approved and when, so your design agreements and purchase authorizations are captured with a tamper-evident audit trail before you commit spend on their behalf."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a client sign the agreement right after the presentation?",
+          "a": "Yes. The AI places the fields in about three seconds and the client signs from a link with no account, so you can lock the agreement and deposit while they are excited about the design."
+        },
+        {
+          "q": "Do clients need an account to approve a purchase authorization?",
+          "a": "No. They sign from the link with no login and no app, which keeps procurement moving."
+        },
+        {
+          "q": "Is there a record of what the client authorized?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording who approved and when, so authorizations are documented before you spend on their behalf."
+        }
+      ],
+      "docExamples": [
+        "Interior Design Agreement",
+        "Letter of Agreement",
+        "Purchase Authorization",
+        "Deposit Invoice"
+      ]
+    },
+    {
+      "slug": "contractors",
+      "name": "contractors",
+      "singular": "a contractor",
+      "keyword": "e-signature for contractors",
+      "painLine": "You are standing on the job site with a change order the homeowner needs to approve before you can proceed, and there is no good moment to ask them to create an account to sign it.",
+      "headline": "The e-signature tool that gets change orders signed right on the job site",
+      "whyPoints": [
+        {
+          "title": "Proposals and change orders signed on site",
+          "body": "CyberSygn detects the signature and date fields on a construction contract or change order in about three seconds, so a homeowner can approve it on your phone before you keep working, no trip back to the office."
+        },
+        {
+          "title": "Homeowners sign, no account to set up",
+          "body": "The homeowner opens the link and signs on their phone right there, with no login and no app. That is how you get approval before the crew moves on instead of doing work that is not yet authorized."
+        },
+        {
+          "title": "A documented record of every approval",
+          "body": "Each signed document carries a SHA-256 audit certificate showing who approved and when, so your contracts and change orders are captured with a tamper-evident audit trail if the scope or the bill is questioned later."
+        }
+      ],
+      "faqs": [
+        {
+          "q": "Can a homeowner sign a change order on the job site?",
+          "a": "Yes. Send the link and they sign on their phone in seconds, with no account to create and no app to download, so you get approval before proceeding with the extra work."
+        },
+        {
+          "q": "Does it find the signature fields on my contract automatically?",
+          "a": "It does. The AI detects signature and date fields in about three seconds, so you are not placing fields by hand while standing on a job site."
+        },
+        {
+          "q": "Is there a record if the scope is disputed?",
+          "a": "Every completed document includes a tamper-evident SHA-256 audit certificate recording who approved and when, so approved changes are documented."
+        }
+      ],
+      "docExamples": [
+        "Construction Contract",
+        "Change Order",
+        "Proposal Acceptance",
+        "Lien Waiver"
+      ]
+    }
+  ]
+}

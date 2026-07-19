@@ -88,56 +88,152 @@
       "name": "freelancers",
       "singular": "a freelancer",
       "audienceLine": "You bill by the project. Every minute spent dragging fields into a contract is unbilled time you could be working on the next gig.",
-      "ideal": ["freelance-contract", "nda", "contractor-agreement", "consulting-agreement"]
+      "ideal": [
+        "freelance-contract",
+        "nda",
+        "contractor-agreement",
+        "consulting-agreement"
+      ]
     },
     {
       "slug": "consultants",
       "name": "consultants",
       "singular": "a consultant",
       "audienceLine": "Your engagements are high-trust, high-stakes, and frequent. Clients need to sign yesterday and you need an audit trail tomorrow.",
-      "ideal": ["msa", "consulting-agreement", "nda", "contractor-agreement"]
+      "ideal": [
+        "msa",
+        "consulting-agreement",
+        "nda",
+        "contractor-agreement"
+      ]
     },
     {
       "slug": "coaches",
       "name": "coaches",
       "singular": "a coach",
       "audienceLine": "Onboarding a new client should take five minutes, not fifty. The intake forms, the agreement, the cancellation policy, all on the same device, same session.",
-      "ideal": ["coaching-agreement", "nda", "consulting-agreement"]
+      "ideal": [
+        "coaching-agreement",
+        "nda",
+        "consulting-agreement"
+      ]
     },
     {
       "slug": "photographers",
       "name": "photographers",
       "singular": "a photographer",
       "audienceLine": "Between shoots, edits, and client management, the last thing you need is a signature tool that fights you. The shoot starts on time when the paperwork is already signed.",
-      "ideal": ["photography-contract", "model-release", "freelance-contract"]
+      "ideal": [
+        "photography-contract",
+        "model-release",
+        "freelance-contract"
+      ]
     },
     {
       "slug": "startups",
       "name": "startups",
       "singular": "a startup",
       "audienceLine": "Speed is the only moat. Contractor agreements, NDAs, advisor agreements, same templates, every time, signed without friction.",
-      "ideal": ["nda", "contractor-agreement", "msa", "employment-agreement"]
+      "ideal": [
+        "nda",
+        "contractor-agreement",
+        "msa",
+        "employment-agreement"
+      ]
     },
     {
       "slug": "real-estate-agents",
       "name": "real estate agents",
       "singular": "a real estate agent",
       "audienceLine": "Closings hinge on speed and accuracy. A signature platform that finds every field across a 40-page lease is the difference between a Friday close and a Monday escalation.",
-      "ideal": ["rental-lease", "nda", "consulting-agreement"]
+      "ideal": [
+        "rental-lease",
+        "nda",
+        "consulting-agreement"
+      ]
     },
     {
       "slug": "agencies",
       "name": "agencies",
       "singular": "an agency",
       "audienceLine": "You sign a hundred contracts a month across clients, contractors, and partners. The detection step alone reclaims days a year.",
-      "ideal": ["msa", "consulting-agreement", "nda", "contractor-agreement"]
+      "ideal": [
+        "msa",
+        "consulting-agreement",
+        "nda",
+        "contractor-agreement"
+      ]
     },
     {
       "slug": "lawyers",
       "name": "lawyers",
       "singular": "a solo or small-firm lawyer",
       "audienceLine": "Engagement letters, NDAs, retainer agreements, every page needs initials, every signature needs an audit certificate. Detection that does the placement makes intake feel like the rest of your practice.",
-      "ideal": ["consulting-agreement", "nda", "msa"]
+      "ideal": [
+        "consulting-agreement",
+        "nda",
+        "msa"
+      ]
+    },
+    {
+      "slug": "property-managers",
+      "name": "property managers",
+      "singular": "a property manager",
+      "audienceLine": "You turn units, chase renewals, and sign a lease for every move-in. Every minute spent dragging fields onto a 30-page lease is a minute the unit sits vacant.",
+      "ideal": [
+        "rental-lease",
+        "nda",
+        "contractor-agreement",
+        "consulting-agreement"
+      ]
+    },
+    {
+      "slug": "accountants",
+      "name": "accountants",
+      "singular": "an accountant",
+      "audienceLine": "Your hours are the product, billed to the tenth. Time spent placing signature and date boxes onto an engagement letter is time you can never invoice back.",
+      "ideal": [
+        "consulting-agreement",
+        "msa",
+        "nda",
+        "employment-agreement"
+      ]
+    },
+    {
+      "slug": "contractors",
+      "name": "contractors",
+      "singular": "a contractor",
+      "audienceLine": "You are on a job site, not behind a desk. Dragging fields onto a work agreement from your phone is unbilled time that should have been a signed change order.",
+      "ideal": [
+        "contractor-agreement",
+        "msa",
+        "nda",
+        "consulting-agreement"
+      ]
+    },
+    {
+      "slug": "recruiters",
+      "name": "recruiters",
+      "singular": "a recruiter",
+      "audienceLine": "You place candidates on a clock, and offers go stale fast. Manually setting up signature fields on every offer letter is unbilled overhead between you and a filled req.",
+      "ideal": [
+        "employment-agreement",
+        "contractor-agreement",
+        "nda",
+        "msa"
+      ]
+    },
+    {
+      "slug": "web-designers",
+      "name": "web designers",
+      "singular": "a web designer",
+      "audienceLine": "You bill for design, not admin. Every minute spent dragging signature and initial boxes onto a project contract is time that never makes it onto the invoice.",
+      "ideal": [
+        "freelance-contract",
+        "contractor-agreement",
+        "nda",
+        "consulting-agreement"
+      ]
     }
   ]
 }
