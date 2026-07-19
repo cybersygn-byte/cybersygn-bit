@@ -3,14 +3,17 @@
  * Blog cache generator (slice 103).
  *
  * Reads scripts/blog-matrix.json and emits:
- *   - web/blog/<slug>/index.html for every post whose publishDate <= today
+ *   - web/blog/<slug>/index.html for EVERY post (the full corpus is crawlable
+ *     immediately, see the crawlable-now note in main())
  *   - web/blog/index.html (rebuilt blog landing with category filter, search,
- *     latest-on-top ordering)
- *   - Updates web/sitemap.xml inside <!-- BLOG_OPEN/CLOSE --> markers
- *     to include ONLY published posts
+ *     latest-on-top ordering) that FEATURES only posts whose publishDate passed
+ *   - Updates web/sitemap.xml inside <!-- BLOG_OPEN/CLOSE --> markers to include
+ *     the full corpus so search engines can index every post now
  *
- * Future-dated posts are tracked but NOT written to disk, so the worker
- * can never serve them. The blog index also excludes them.
+ * Reveal-on-schedule is HUMAN-only: prev/next, related, and the index grid link
+ * only to already-published posts, so a human is never routed to a post before
+ * its date, while crawlers get the whole library. Not-yet-published posts carry a
+ * stable "available since" date (CRAWLABLE_SINCE), never a future or rolling date.
  *
  * Per-post HTML includes Article JSON-LD, BreadcrumbList, OpenGraph,
  * canonical, dark-mode meta, related-posts grid, and a Solo/Studio CTA
@@ -31,12 +34,20 @@ const SITEMAP = join(ROOT, 'web/sitemap.xml');
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
-// Clamp a post's publish date to today for anything CRAWLABLE or human-visible.
-// The index still gates the grid on the raw publishDate (reveal-on-schedule),
-// but no crawlable page should ever advertise a future datePublished /
-// dateModified / byline, Google distrusts future-dated structured data.
+// The full corpus went live and crawlable on this date (blog launch). It is a
+// FIXED historical anchor, never the moving clock, and matches the earliest
+// publishDate in blog-matrix.json.
+const CRAWLABLE_SINCE = '2026-05-26';
+
+// Structured-data / byline date for a post. Posts whose real publishDate has
+// arrived carry their true date. Not-yet-published posts are crawlable now but
+// must never advertise a FUTURE date (Google distrusts future-dated structured
+// data), so they show the stable CRAWLABLE_SINCE "available since" date. Using a
+// fixed anchor instead of TODAY means re-running the build on a later day never
+// re-stamps these dates, so deploys stop churning datePublished / dateModified.
 function displayDate(iso) {
-  return iso && iso > TODAY ? TODAY : iso;
+  if (!iso) return iso;
+  return iso > TODAY ? CRAWLABLE_SINCE : iso;
 }
 
 function esc(s) {
@@ -612,9 +623,10 @@ async function updateSitemap(posts) {
     console.warn('sitemap.xml missing BLOG_OPEN/CLOSE markers, skipping sitemap update');
     return;
   }
-  // lastmod is clamped to today for not-yet-dated posts, never emit a future
-  // lastmod (invalid per the sitemap spec). The content is live as of today.
-  const lastmod = (p) => (p.publishDate <= TODAY ? p.publishDate : TODAY);
+  // lastmod = the real publishDate once it has arrived, else the stable
+  // CRAWLABLE_SINCE anchor. Never a future date (invalid per the sitemap spec)
+  // and never the moving clock, so lastmod does not churn on every deploy.
+  const lastmod = (p) => (p.publishDate <= TODAY ? p.publishDate : CRAWLABLE_SINCE);
   const entries = [
     `  <url>\n    <loc>https://cybersygn.io/blog/</loc>\n    <changefreq>weekly</changefreq>\n    <priority>0.75</priority>\n  </url>`,
     ...posts.map(p =>

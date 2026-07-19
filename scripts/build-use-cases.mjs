@@ -32,6 +32,11 @@ const MATRIX = join(ROOT, 'scripts/seo-matrix.json');
 const OUT_ROOT = join(ROOT, 'web/use-cases');
 const SITEMAP = join(ROOT, 'web/sitemap.xml');
 
+// Fixed "available since" anchor for these evergreen landing pages. Using a
+// stable date instead of the build-day clock keeps datePublished honest and the
+// generator truly idempotent, so every deploy does not re-stamp it to "today".
+const CRAWLABLE_SINCE = '2026-05-26';
+
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -113,7 +118,7 @@ function renderPage(doc, vert) {
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
         "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
-        "datePublished": "${new Date().toISOString().slice(0, 10)}",
+        "datePublished": "${CRAWLABLE_SINCE}",
         "mainEntityOfPage": "${esc(canonical)}"
       },
       {
@@ -313,7 +318,10 @@ async function main() {
     console.error('sitemap.xml has no </urlset> closing tag; aborting sitemap update.');
     process.exit(2);
   }
-  const updated = cleaned.slice(0, insertBefore) + block + '\n' + cleaned.slice(insertBefore);
+  // Collapse any accumulated blank lines so re-running the build is idempotent
+  // (strip-then-insert otherwise leaves one extra newline before </urlset> each run).
+  const updated = (cleaned.slice(0, insertBefore) + block + '\n' + cleaned.slice(insertBefore))
+    .replace(/\n{3,}/g, '\n\n');
   await writeFile(SITEMAP, updated, 'utf8');
   console.log(`Updated sitemap.xml with ${sitemapUrls.length} use-case URLs.`);
 }

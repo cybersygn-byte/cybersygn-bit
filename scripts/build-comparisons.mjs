@@ -18,6 +18,11 @@ const ROOT = join(__dirname, '..');
 const OUT_ROOT = join(ROOT, 'web/alternatives');
 const SITEMAP = join(ROOT, 'web/sitemap.xml');
 
+// Fixed "available since" anchor for these evergreen landing pages. Using a
+// stable date instead of the build-day clock keeps datePublished honest and
+// idempotent, so every deploy does not re-stamp datePublished to "today".
+const CRAWLABLE_SINCE = '2026-05-26';
+
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -179,7 +184,7 @@ function renderPage(c) {
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
         "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
-        "datePublished": "${new Date().toISOString().slice(0,10)}",
+        "datePublished": "${CRAWLABLE_SINCE}",
         "mainEntityOfPage": ${JSON.stringify(canonical)}
       },
       {
@@ -409,6 +414,9 @@ async function main() {
   ).join('\n') + '\n' + CLOSE;
   const insertAt = sitemap.lastIndexOf('</urlset>');
   sitemap = sitemap.slice(0, insertAt) + block + '\n' + sitemap.slice(insertAt);
+  // Collapse any accumulated blank lines so re-running the build is idempotent
+  // (strip-then-insert otherwise leaves one extra newline before </urlset> each run).
+  sitemap = sitemap.replace(/\n{3,}/g, '\n\n');
   await writeFile(SITEMAP, sitemap, 'utf8');
   console.log(`  sitemap.xml updated with ${urls.length} comparison URLs`);
 }
