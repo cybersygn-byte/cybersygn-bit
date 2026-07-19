@@ -152,6 +152,25 @@ const worker = {
       }
     }
 
+    // Canonical host consolidation. www serves the site 200 today with only a
+    // rel=canonical hint; a real 301 consolidates link equity and crawl budget
+    // on the apex. Only the marketing www alias redirects; control/www.control
+    // are handled above and API traffic never uses www.
+    if (url.hostname === 'www.cybersygn.io') {
+      return Response.redirect('https://cybersygn.io' + url.pathname + url.search, 301);
+    }
+    // The workers.dev preview host mirrors the whole site as a crawlable
+    // duplicate origin. Keep it usable for debugging but tell crawlers it is
+    // not the canonical site: serve a Disallow-all robots.txt and stamp
+    // X-Robots-Tag: noindex on everything else from that host.
+    const isPreviewHost = url.hostname.endsWith('.workers.dev');
+    if (isPreviewHost && url.pathname === '/robots.txt') {
+      return new Response('User-agent: *\nDisallow: /\n', {
+        status: 200,
+        headers: { 'content-type': 'text/plain; charset=utf-8', 'x-robots-tag': 'noindex' },
+      });
+    }
+
     // /api/status is handled by handleStatus (subsystem shape + liveness
     // fields). A second registration below routes it; do not add a shadowing
     // handler here or the status page shows a false "degraded".
@@ -660,7 +679,15 @@ const worker = {
     }
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
       const upstream = await env.ASSETS.fetch(request);
-      return hardenAssetHeaders(maybeInjectAnalytics(upstream, env), url.pathname);
+      const hardened = hardenAssetHeaders(maybeInjectAnalytics(upstream, env), url.pathname);
+      // Preview host (workers.dev): mirror content for debugging, but keep it
+      // out of the index so the apex stays the only crawlable origin.
+      if (isPreviewHost) {
+        const h = new Headers(hardened.headers);
+        h.set('x-robots-tag', 'noindex');
+        return new Response(hardened.body, { status: hardened.status, statusText: hardened.statusText, headers: h });
+      }
+      return hardened;
     }
     return new Response('Not found.', {
       status: 404,
@@ -755,12 +782,17 @@ function shouldRunMonthlyReport(event) {
   } catch (e) { return false; }
 }
 
-// Twice daily: 00:00 and 12:00 UTC (06:00 / 18:00 America/Denver during MDT).
+// Twice daily at 06:00 and 18:00 America/Denver, DST-safe. The cron fires hourly,
+// so gate on the actual Denver wall-clock hour rather than a fixed UTC hour: the
+// old 00:00/12:00 UTC test only hit 06:00/18:00 Denver during MDT and drifted to
+// 05:00/17:00 in winter (MST).
 function shouldRunSecurityCheck(event) {
   try {
     const now = event && event.scheduledTime ? new Date(event.scheduledTime) : new Date();
-    const h = now.getUTCHours();
-    return h === 0 || h === 12;
+    let h;
+    try { h = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: 'America/Denver', hour: '2-digit', hour12: false }).format(now), 10); }
+    catch { const u = now.getUTCHours(); h = (u === 0 || u === 12) ? 6 : -1; }
+    return h === 6 || h === 18;
   } catch (e) { return false; }
 }
 
@@ -2619,14 +2651,35 @@ async function handleContact(request, env, url) {
  * down to what the public page renders. Cache-busts every 60s.
  */
 async function handleStatus(request, env, url) {
+  // Truthfulness over presence: a set-but-dead key (the 2026-07-10 Resend 401
+  // incident) must show degraded, not operational. Reuse the /api/health auth
+  // probes, cached in KV for 60s so anonymous status polling cannot amplify
+  // external API calls. If the probe layer itself fails, fall back to the old
+  // presence checks rather than taking the status page down.
+  let probes = null;
+  try {
+    const kv = env && env.CYBERSYGN_DOCS;
+    if (kv) {
+      const cached = await kv.get('status:probes');
+      if (cached) probes = JSON.parse(cached);
+    }
+    if (!probes) {
+      const healthResp = await handleHealth(env);
+      const health = await healthResp.json();
+      probes = health && health.subsystems ? health.subsystems : null;
+      if (probes && kv) {
+        try { await kv.put('status:probes', JSON.stringify(probes), { expirationTtl: 60 }); } catch (_) {}
+      }
+    }
+  } catch (_) { probes = null; }
   const subsystems = {
     worker: { ok: true, label: 'CyberSygn API' },
-    kv: { ok: Boolean(env && env.CYBERSYGN_DOCS), label: 'Document storage (KV)' },
+    kv: { ok: probes && probes.kv ? probes.kv.ok === true : Boolean(env && env.CYBERSYGN_DOCS), label: 'Document storage (KV)' },
     pdfs: { ok: Boolean(env && env.CYBERSYGN_PDFS), label: 'PDF storage' },
-    stripe: { ok: Boolean(env && env.STRIPE_SECRET_KEY), label: 'Payments (Stripe)' },
-    email: { ok: Boolean(env && env.RESEND_API_KEY), label: 'Email (Resend)' },
+    stripe: { ok: probes && probes.stripe ? probes.stripe.ok === true : Boolean(env && env.STRIPE_SECRET_KEY), label: 'Payments (Stripe)' },
+    email: { ok: probes && probes.resend ? probes.resend.ok === true : Boolean(env && env.RESEND_API_KEY), label: 'Email (Resend)' },
     analytics: { ok: Boolean(env && env.CYBERSYGN_EVENTS), label: 'Analytics Engine' },
-    vision: { ok: Boolean(env && env.ANTHROPIC_API_KEY), label: 'Vision API (optional)' },
+    vision: { ok: probes && probes.anthropic ? probes.anthropic.ok === true : Boolean(env && env.ANTHROPIC_API_KEY), label: 'Vision API (optional)' },
   };
   const allOk = Object.values(subsystems).every(s => s.ok || s.label.includes('optional'));
   const storage = getStorage(env);
