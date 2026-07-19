@@ -152,14 +152,34 @@ async function loadKpis() {
     const free = d.free || {};
     const dataset = d.dataset || {};
     const integ = d.integrations || {};
+    const revenue = d.revenue || {};
     const claimedPct = founding.cap > 0 ? Math.round((founding.claimed / founding.cap) * 100) : 0;
     const dsPct = Math.round((dataset.progress || 0) * 100);
+    const money = (cents) => '$' + (Math.round((cents || 0)) / 100).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const sources = Array.isArray(revenue.bySource) ? revenue.bySource : [];
+    const sourceRows = sources.length
+      ? sources.map((s) =>
+          '<tr>' +
+            '<td class="control-src__name">' + srcEsc(s.source) + '</td>' +
+            '<td class="control-src__num">' + (Number(s.subs) || 0) + '</td>' +
+            '<td class="control-src__num">' + money(s.mrrCents) + '</td>' +
+          '</tr>').join('')
+      : '<tr><td colspan="3" class="control-tile__empty">No paid subscriptions yet.</td></tr>';
     body.innerHTML =
       '<div class="control-stats">' +
         statBlock(founding.claimed, 'Origin claimed', founding.cap + ' cap · ' + claimedPct + '%') +
         statBlock(free.signups, 'Free signups', 'lifetime') +
         statBlock(dataset.total, 'Labeled corpus', dataset.threshold.toLocaleString() + ' target · ' + dsPct + '%') +
         statBlock(dataset.contributors, 'Contributors', 'unique emails') +
+      '</div>' +
+      '<div class="control-revenue">' +
+        '<p class="kicker kicker--muted">Recurring revenue by source</p>' +
+        '<div class="control-stats control-stats--rev">' +
+          '<div class="control-stat"><span class="control-stat__num">' + money(revenue.mrrCents) + '</span><span class="control-stat__label">Active MRR</span><span class="control-stat__sub">' + (Number(revenue.activeSubs) || 0) + ' paid ' + ((Number(revenue.activeSubs) === 1) ? 'subscriber' : 'subscribers') + '</span></div>' +
+        '</div>' +
+        '<table class="control-src-table"><thead><tr><th>Source</th><th class="control-src__num">Subs</th><th class="control-src__num">MRR</th></tr></thead><tbody>' +
+          sourceRows +
+        '</tbody></table>' +
       '</div>' +
       '<div class="control-integrations">' +
         '<p class="kicker kicker--muted">Integrations</p>' +
@@ -183,6 +203,14 @@ function statBlock(num, label, sub) {
     '<span class="control-stat__label">' + label + '</span>' +
     (sub ? '<span class="control-stat__sub">' + sub + '</span>' : '') +
   '</div>';
+}
+
+// Source values arrive already sanitized server-side to [a-z0-9_.-], but escape
+// defensively before injecting as HTML.
+function srcEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function integBlock(name, on) {

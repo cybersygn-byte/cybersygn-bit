@@ -57,11 +57,19 @@ async function startCheckout(button) {
     }
   } catch (e) {}
 
+  // First-touch marketing source (set once by telemetry.js), forwarded so the
+  // owner can attribute recurring revenue to the channel that earned the visit.
+  let source = null;
+  try {
+    const sm = document.cookie.match(/(?:^|;\s*)cybersygn_src=([^;]+)/);
+    if (sm) source = decodeURIComponent(sm[1]).toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40) || null;
+  } catch (e) {}
+
   try {
     const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ tier, senderId, ref }),
+      body: JSON.stringify({ tier, senderId, ref, source }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.url) {

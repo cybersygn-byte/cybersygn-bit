@@ -176,4 +176,26 @@
       cybersygn.track('affiliate_landing', { code: code });
     }
   } catch (e) {}
+
+  // ---- first-touch marketing source capture
+  // Record where the visitor first arrived from (utm_source, else the
+  // referring host, else "direct") in a first-touch cookie the checkout
+  // button forwards as Stripe metadata. First-touch: never overwritten, so
+  // the channel that earned the visit gets the credit for the eventual sale.
+  // Same-domain cookie, 60-day TTL, no third-party or analytics-network leak.
+  try {
+    if (!/(?:^|;\s*)cybersygn_src=/.test(document.cookie)) {
+      var sp = new URLSearchParams(w.location.search);
+      var src = sp.get('utm_source') || '';
+      if (!src && document.referrer) {
+        try {
+          var rh = new URL(document.referrer).hostname.replace(/^www\./, '');
+          if (rh && rh !== w.location.hostname) src = rh;
+        } catch (e) {}
+      }
+      src = String(src || 'direct').toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40) || 'direct';
+      var srcExp = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = 'cybersygn_src=' + encodeURIComponent(src) + '; path=/; expires=' + srcExp + '; SameSite=Lax';
+    }
+  } catch (e) {}
 })();

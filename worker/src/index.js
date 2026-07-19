@@ -1093,7 +1093,11 @@ async function handleCheckoutCreateSession(request, env, url) {
   if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/checkout/create-session' });
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
-  const { tier, senderId, email, ref, quantity } = body.value || {};
+  const { tier, senderId, email, ref, quantity, source } = body.value || {};
+  // First-touch marketing source, sanitized to a short slug for MRR attribution.
+  const safeSource = typeof source === 'string'
+    ? source.toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40)
+    : undefined;
 
   if (!tier || !TIERS[tier] || tier === 'free') {
     return jsonResponse(400, {
@@ -1131,6 +1135,7 @@ async function handleCheckoutCreateSession(request, env, url) {
       origin,
       ref: typeof ref === 'string' ? ref.toLowerCase() : undefined,
       quantity: Number.isFinite(Number(quantity)) ? Number(quantity) : undefined,
+      source: safeSource || undefined,
     });
     return jsonResponse(200, { url: session.url, sessionId: session.sessionId });
   } catch (err) {
@@ -3144,6 +3149,32 @@ async function handleMetricsDashboard(request, env, url) {
     }
   } catch (e) {
     out.errors.push('free: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  // Source-attributed recurring revenue. Sums active MRR from the subs
+  // registry and groups it by the first-touch marketing source captured at
+  // checkout, so the owner can see which channels drive paid subscriptions.
+  out.revenue = { mrrCents: 0, activeSubs: 0, bySource: [] };
+  try {
+    await ensureSubsBackfill(env);
+    const registry = (await readSubsRegistry(env)) || {};
+    const bySource = {};
+    for (const rec of Object.values(registry)) {
+      const tier = typeof rec.tier === 'string' ? rec.tier : 'free';
+      const status = typeof rec.status === 'string' ? rec.status : '';
+      if (tier === 'free' || (status !== 'active' && status !== 'trialing')) continue;
+      const cents = TIER_MRR_CENTS[tier] || 0;
+      if (cents <= 0) continue;
+      out.revenue.activeSubs += 1;
+      out.revenue.mrrCents += cents;
+      const src = (typeof rec.source === 'string' && rec.source) ? rec.source : 'unknown';
+      if (!bySource[src]) bySource[src] = { source: src, subs: 0, mrrCents: 0 };
+      bySource[src].subs += 1;
+      bySource[src].mrrCents += cents;
+    }
+    out.revenue.bySource = Object.values(bySource).sort((a, b) => b.mrrCents - a.mrrCents);
+  } catch (e) {
+    out.errors.push('revenue: ' + (e && e.message ? e.message : 'unknown'));
   }
 
   return jsonResponse(200, out);

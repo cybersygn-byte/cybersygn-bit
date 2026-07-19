@@ -86,9 +86,15 @@ export async function recordSubForMetrics(env, senderId, rec) {
   try {
     const store = getStorage(env).docs;
     const registry = (await store.get(SUBS_KEY, { json: true })) || {};
+    const prior = registry[senderId] || {};
     registry[senderId] = {
       tier: (rec && typeof rec.tier === 'string') ? rec.tier : 'free',
       status: (rec && typeof rec.status === 'string') ? rec.status : '',
+      // First-touch attribution: a later event (renewal, upgrade) with no
+      // source must not erase the channel that drove the original sale.
+      source: (rec && typeof rec.source === 'string' && rec.source)
+        ? rec.source.slice(0, 40)
+        : (typeof prior.source === 'string' ? prior.source : ''),
     };
     await store.put(SUBS_KEY, registry);
   } catch (e) { /* best-effort */ }

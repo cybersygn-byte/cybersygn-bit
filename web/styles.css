@@ -9437,3 +9437,28 @@ body[data-owner-active="true"] .free-pill {
   transition: border-color 160ms var(--ease, ease);
 }
 .best-related__list a:hover { border-bottom-color: currentColor; }
+
+
+/* ---- Control panel: recurring-revenue-by-source table -------------------- */
+.control-revenue { margin-top: var(--s-5, 24px); }
+.control-stats--rev { margin-bottom: var(--s-3, 12px); }
+.control-src-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.control-src-table th,
+.control-src-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line, rgba(1,20,52,0.1));
+  text-align: left;
+}
+.control-src-table th {
+  font-family: var(--disp, var(--sans));
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3, #6b7a92);
+}
+.control-src__name { font-family: var(--mono, ui-monospace, monospace); }
+.control-src__num { text-align: right; font-variant-numeric: tabular-nums; }

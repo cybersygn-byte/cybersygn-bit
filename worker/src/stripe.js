@@ -214,7 +214,7 @@ export function foundingCap() {
  * Founding 100 is gated server-side: if the count is already at the cap,
  * we refuse and ask the caller to fall back to Solo.
  */
-export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin, ref, quantity }) {
+export async function createCheckoutSession(env, { tier, senderId, email, successUrl, cancelUrl, origin, ref, quantity, source }) {
   if (!env || typeof env.STRIPE_SECRET_KEY !== 'string' || !env.STRIPE_SECRET_KEY.startsWith('sk_')) {
     throw stripeError('not_configured', 'Stripe is not configured on this deployment.');
   }
@@ -291,6 +291,15 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   if (typeof ref === 'string' && /^[a-z0-9]{4,16}$/.test(ref)) {
     body.set('metadata[ref]', ref);
     if (!isOneTime) body.set('subscription_data[metadata][ref]', ref);
+  }
+
+  // First-touch marketing source (utm_source or referrer host, sanitized
+  // client-side). Stored on the subscription metadata so it survives every
+  // later subscription.* webhook and can be aggregated into MRR-by-source.
+  if (typeof source === 'string' && source) {
+    const s = source.slice(0, 40);
+    body.set('metadata[source]', s);
+    if (!isOneTime) body.set('subscription_data[metadata][source]', s);
   }
   if (reUseCustomer) {
     body.set('customer', reUseCustomer);
@@ -486,6 +495,8 @@ async function onCheckoutCompleted(env, session) {
     currentPeriodEnd: subDetails?.current_period_end
       ? new Date(subDetails.current_period_end * 1000).toISOString()
       : null,
+    // First-touch marketing source, set at checkout for MRR attribution.
+    source: (session.metadata && session.metadata.source) || null,
     activatedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -637,6 +648,9 @@ async function onSubscriptionUpserted(env, sub) {
     status: sub.status,
     stripeCustomerId: customerId,
     stripeSubscriptionId: sub.id,
+    // Preserve first-touch source: prefer the value on the subscription
+    // metadata, else keep whatever the original checkout recorded.
+    source: (sub.metadata && sub.metadata.source) || existing.source || null,
     priceId: sub.items?.data?.[0]?.price?.id || existing.priceId || null,
     currentPeriodEnd: sub.current_period_end
       ? new Date(sub.current_period_end * 1000).toISOString()
