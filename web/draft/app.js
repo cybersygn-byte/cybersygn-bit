@@ -43,6 +43,21 @@ function esc(s) {
 
 function el(id) { return document.getElementById(id); }
 
+/**
+ * Fire a first-party funnel event through the shared telemetry sink
+ * (telemetry.js, loaded before this module). Never throws, never blocks the
+ * user flow, and carries no extra PII: telemetry.js attaches only the
+ * anonymous senderId, path, and tier. The draft description, party names, and
+ * email are NEVER passed here.
+ */
+function track(event, props) {
+  try {
+    if (window.cybersygn && typeof window.cybersygn.track === 'function') {
+      window.cybersygn.track(event, props || {});
+    }
+  } catch (e) {}
+}
+
 // Human labels for the kinds, used in the preview heading + the /preview/
 // handoff title. Keep in sync with the <select> options in index.html.
 const KIND_LABELS = {
@@ -94,10 +109,19 @@ async function onSubmit(e) {
   const otherParty = (otherEl && otherEl.value || '').trim();
 
   if (description.length < 12) {
+    track('draft_validation_nudge', { source: 'draft' });
+    // WCAG 3.3.1: flag the field itself as invalid; the nudge text renders
+    // into the aria-live output region so it is announced (4.1.3).
+    if (descEl) descEl.setAttribute('aria-invalid', 'true');
     renderNudge('Add a little more detail about the deal so the draft has something to work with. A sentence or two is plenty.');
     if (descEl) descEl.focus();
     return;
   }
+  if (descEl) descEl.removeAttribute('aria-invalid');
+
+  // cta_click: the user asked for a draft. Carry the kind (not the content).
+  track('draft_requested', { source: 'draft', kind });
+  const startedAt = Date.now();
 
   setLoading(true);
   renderStatus('Drafting your contract. This takes a few seconds.');
@@ -132,17 +156,21 @@ async function onSubmit(e) {
   setLoading(false);
 
   if (payload && payload.ok && payload.draft && typeof payload.draft.body === 'string') {
+    // activation: a real draft came back. durationMs = time to first draft.
+    track('draft_generated', { source: 'draft', durationMs: Date.now() - startedAt });
     renderDraft(payload.draft, { kind, yourName, otherParty, description });
     return;
   }
 
   if (payload && payload.ok === false && payload.reason === 'unconfigured') {
+    track('draft_early_access_shown', { source: 'draft' });
     renderEarlyAccess();
     return;
   }
 
   // Any other shape (ok:false with another reason, or an unexpected body)
   // becomes a friendly retry rather than a raw error dump.
+  track('draft_failed', { source: 'draft' });
   renderRetry();
 }
 
@@ -236,6 +264,8 @@ function renderDraft(draft, ctx) {
 // ---------------------------------------------------------------------------
 
 async function startSendHandoff(sendBtn, draft, ctx, title) {
+  // checkout_started proxy: the user chose to route this draft into signing.
+  track('draft_send_started', { source: 'draft', kind: ctx && ctx.kind });
   const priorHtml = sendBtn.innerHTML;
   sendBtn.disabled = true;
   sendBtn.setAttribute('aria-busy', 'true');
@@ -292,6 +322,8 @@ async function startSendHandoff(sendBtn, draft, ctx, title) {
   sendBtn.removeAttribute('aria-busy');
   sendBtn.innerHTML = priorHtml;
 
+  // The PDF is built and downloaded: the handoff into the signer flow is live.
+  track('draft_send_ready', { source: 'draft' });
   renderSendoff({ url, filename, sizeKb: Math.max(1, Math.round(pdfBytes.length / 1024)), draft, ctx, title });
 }
 
@@ -559,10 +591,10 @@ function renderEarlyAccess() {
       '<form id="draft-early-form" class="draft-early__form" autocomplete="on">' +
         '<label class="draft-field-label" for="draft-early-email">Email</label>' +
         '<div class="draft-early__row">' +
-          '<input id="draft-early-email" type="email" class="field__input" placeholder="you@email.com" autocomplete="email" required />' +
+          '<input id="draft-early-email" type="email" class="field__input" placeholder="you@email.com" autocomplete="email" aria-describedby="draft-early-status" required />' +
           '<button type="submit" class="btn btn--primary" id="draft-early-submit">Get early access</button>' +
         '</div>' +
-        '<p class="draft-early__status caption" id="draft-early-status">Goes to CyberSygn, nowhere else.</p>' +
+        '<p class="draft-early__status caption" id="draft-early-status" role="status" aria-live="polite">Goes to CyberSygn, nowhere else.</p>' +
       '</form>' +
       '<div class="draft-early__alt">' +
         '<p class="draft-early__alt-lead">Prefer to start from a proven template?</p>' +
@@ -581,9 +613,10 @@ function renderEarlyAccess() {
       const email = (emailInput && emailInput.value || '').trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         if (statusEl) statusEl.textContent = 'Enter a valid email so we can reach you.';
-        if (emailInput) emailInput.focus();
+        if (emailInput) { emailInput.setAttribute('aria-invalid', 'true'); emailInput.focus(); }
         return;
       }
+      if (emailInput) emailInput.removeAttribute('aria-invalid');
       if (earlyBtn) earlyBtn.disabled = true;
       if (statusEl) statusEl.textContent = 'Adding you to the list.';
       try {
@@ -594,6 +627,9 @@ function renderEarlyAccess() {
         });
         const data = await res.json().catch(() => ({}));
         if (data && data.ok) {
+          // lead_capture: an early-access email was accepted. The email itself
+          // is never sent to telemetry, only that a lead was captured.
+          track('draft_lead_captured', { source: 'draft' });
           if (statusEl) statusEl.textContent = 'You are on the list. We will be in touch.';
           return;
         }
