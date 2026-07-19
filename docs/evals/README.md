@@ -21,11 +21,21 @@ injection inside user briefs, and cost-control adherence.
   `generateSummary` from `worker/src`, so it tests the actual production prompts,
   model string, token bounds, and parsing.
 
-## This runner is not automated and costs real money
+## What runs automatically vs. what costs money
 
-`run-evals.mjs` is deliberately NOT referenced by any `package.json` script,
-lint, test, build, or deploy step. It never runs on its own. Each `--run`
-invocation calls the live Anthropic API and spends real money.
+Two things run on every `npm run lint` (and therefore every deploy), both
+**offline with zero API spend**, wired through `npm run eval:check`:
+
+- `node docs/evals/run-evals.mjs` (no `--run`): parses and validates every case
+  file and imports the real `generateDraft` / `generateSummary`, so a broken
+  case file or a syntax error in the production AI modules fails the gate.
+- `node docs/evals/guardrails.test.mjs`: 12 deterministic assertions against the
+  exported `sanitizeDraft` / `sanitizeSummary` backstops (code-fence stripping,
+  preamble removal, hard length caps, refusal pass-through, null-safety).
+
+The **live** runner (`run-evals.mjs --run`, also `npm run eval:run`) is the only
+part that calls the Anthropic API and spends real money. It is never invoked by
+lint, build, or deploy, and refuses to run without `ANTHROPIC_API_KEY`.
 
 ## Running
 
