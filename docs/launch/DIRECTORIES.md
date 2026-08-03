@@ -38,14 +38,16 @@ certificate that captures every event, IP address, and timestamp.
 
 Built solo on Cloudflare Workers. ESIGN Act and UETA compliant. 100%
 detection accuracy on our 37-document regression set. Free for 3 documents
-lifetime. Origin tier $9/mo locked for life (first 100 founders only).
-Solo $12/mo for unlimited. Studio $29/mo for a 3-seat team.
+lifetime. Solo $12/mo unlimited. Pro $19/mo adds an AI drafting co-pilot.
+Studio $29/mo for a 3-seat team. Business $79/mo with white-label, SSO,
+and API. Origin $9/mo locked for life (first 100 founders only), or
+Lifetime for a one-time $299.
 
 Differentiated from DocuSign, Dropbox Sign, and HelloSign by the
 detection step, none of the alternatives do this automatically.
 
 Website: https://cybersygn.io
-Pricing: $0 free, $9-29/mo paid
+Pricing: $0 free (3 documents), $9-79/mo paid, $299 lifetime
 Categories: E-signature, Document automation, Productivity
 Founder: Nathan Vogt
 Founded: 2026

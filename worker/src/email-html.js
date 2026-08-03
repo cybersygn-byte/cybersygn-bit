@@ -53,6 +53,15 @@ const FOOTER_SIGNER = 'You received this because a CyberSygn sender added your e
 const FOOTER_ACCOUNT = 'You are getting this because you created a free CyberSygn account. Reply to this email to stop these getting-started notes.';
 const FOOTER_ORIGIN = 'You are getting this because you joined CyberSygn Origin. Reply to this email with any questions.';
 
+// Physical mailing address for commercial email (CAN-SPAM requires one).
+// Configured once per invocation from env.CYBERSYGN_BUSINESS_ADDRESS by the
+// worker entry points; when unset the footer simply omits the line, so email
+// keeps sending while the owner sorts out a registered agent / PO Box.
+let BUSINESS_ADDRESS = '';
+export function setEmailBusinessAddress(addr) {
+  BUSINESS_ADDRESS = typeof addr === 'string' ? addr.trim() : '';
+}
+
 function shell({ preheader, body, footer }) {
   const footerLine = footer || FOOTER_SIGNER;
   return `<!doctype html>
@@ -111,6 +120,7 @@ function shell({ preheader, body, footer }) {
       <!-- Footer -->
       <tr><td align="center" style="padding:24px 8px 8px 8px;font-family:${FONT_STACK};font-size:12px;line-height:1.55;color:${MUTED};" class="cs-muted">
         ${footerLine} <br />
+        ${BUSINESS_ADDRESS ? `CyberSygn, ${esc(BUSINESS_ADDRESS)} <br />` : ''}
         Visit <a href="https://cybersygn.io/" style="color:${CYAN};text-decoration:underline;">cybersygn.io</a>.
       </td></tr>
     </table>

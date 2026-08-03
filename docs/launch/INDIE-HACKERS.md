@@ -55,14 +55,14 @@ So I built it.
   mostly the pdf.js + audit-cert renderer.
 - **pdf.js + pdf-lib** for browser-side PDF parsing and flattening.
 - The field-detection engine is heuristic, not ML. ~50 ms per PDF on a
-  Cloudflare Worker. I'll open-source it as `cybersygn-detect` this week.
+  Cloudflare Worker. I plan to open-source it as `cybersygn-detect`
+  (MIT) once it has had more real-world mileage.
 
-## The numbers (8 weeks in)
+## The numbers (9 weeks in)
 
-- 67 git commits → 67 deployable slices
-- 6 KV namespaces
+- 173 git commits → each one a deployable slice
+- 88 programmatic SEO money pages + 156 blog posts + 502 contract templates
 - 9 Stripe webhook events handled with idempotency
-- 28 programmatic SEO landing pages
 - 100% detection accuracy on the regression set (37 real-world contracts)
 - $0 in revenue (pre-launch) → public launch is today
 - 0 investors. 0 employees. 0 outside opinions.

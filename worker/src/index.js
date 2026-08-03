@@ -34,6 +34,7 @@
 import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder, deliver as deliverEmail } from './email.js';
+import { setEmailBusinessAddress } from './email-html.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
@@ -124,6 +125,9 @@ const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 const worker = {
   async fetch(request, env, ctx) {
    try {
+    // CAN-SPAM physical address for email footers, configured per invocation
+    // so every email path (invite, drip, reports) picks it up when set.
+    setEmailBusinessAddress(env && env.CYBERSYGN_BUSINESS_ADDRESS);
     const url = new URL(request.url);
 
     // control.cybersygn.io is a dedicated host for the owner panel: its root
@@ -185,6 +189,11 @@ const worker = {
     // links alive forever.
     if (url.pathname === '/charter' || url.pathname === '/charter/') {
       return Response.redirect('https://cybersygn.io/origin/', 301);
+    }
+    // Campaign-friendly pricing URL: /pricing is the natural link people type
+    // into ads, emails, and posts, but pricing lives on the homepage anchor.
+    if (url.pathname === '/pricing' || url.pathname === '/pricing/') {
+      return Response.redirect('https://cybersygn.io/#pricing', 301);
     }
     if (url.pathname.startsWith('/charter/')) {
       const tail = url.pathname.slice('/charter/'.length);
@@ -723,6 +732,7 @@ const worker = {
     // Reminder sweep runs every hour. Monthly owner report only fires
     // on the first day of the month between 00:00 and 00:59 UTC. Free-
     // tier drip campaign fires daily at 14:00 UTC (~9am EST/10am EDT).
+    setEmailBusinessAddress(env && env.CYBERSYGN_BUSINESS_ADDRESS);
     ctx.waitUntil(runReminderSweep(env, event));
     if (shouldRunMonthlyReport(event)) {
       ctx.waitUntil(runMonthlyOwnerReport(env, event));
@@ -2317,14 +2327,17 @@ async function handleLookupTemplate(request, env, url) {
 // ---- Free-tier endpoints ---------------------------------------------------
 
 async function handleFreeSignup(request, env) {
-  // Rate limit: per-IP 3 signups per 24h, 10 per week. Tight enough to
-  // stop drive-by signup floods, generous enough not to bite a real
-  // user creating multiple test accounts in a day.
+  // Rate limit: per-IP 12 signup ATTEMPTS per 24h, 40 per week. The check
+  // runs before body validation, so a typo'd email burns an attempt; and
+  // launch traffic can put whole offices or carrier-NAT audiences behind one
+  // IP. These caps stop drive-by floods without locking out a shared-IP
+  // audience on launch day; real free-tier abuse is separately capped
+  // per-account by the emailHash lifetime document limit.
   const owner = await getOwnerForRequest(request, env, new URL(request.url));
   if (!owner) {
     const limit = await checkRateLimit(env, `signup:${ipKey(request)}`, [
-      { windowSec: 60 * 60 * 24,     max: 3 },
-      { windowSec: 60 * 60 * 24 * 7, max: 10 },
+      { windowSec: 60 * 60 * 24,     max: 12 },
+      { windowSec: 60 * 60 * 24 * 7, max: 40 },
     ]);
     if (!limit.ok) return rateLimitedResponse(limit, { endpoint: '/api/free/signup' });
   }

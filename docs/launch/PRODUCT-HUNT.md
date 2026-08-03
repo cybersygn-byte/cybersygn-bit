@@ -51,9 +51,12 @@ What makes CyberSygn different from the dozen DocuSign alternatives:
   still make you drag boxes.
 • Detection runs in YOUR browser. Your PDF doesn't leave the page until
   you choose to send it. Privacy by architecture.
-• It's $9/month for life if you're one of the first 100 (the Origin tier).
-  After that, $12/mo Solo or $29/mo Studio for small teams.
-• 30-day money back, no haggling. Email me, I refund.
+• Every plan starts with 3 free documents, no card. Solo is $12/mo,
+  Pro is $19/mo with an AI co-pilot that drafts contracts from a
+  sentence, Studio is $29/mo for a 3-seat team, Business is $79/mo
+  with white-label + API. First 100 founders lock Origin at $9/mo for
+  life, or grab Lifetime once for $299.
+• Try before you pay: the free tier is real, not a trial clock.
 • Built solo on Cloudflare Workers. I reply to every email at
   nathan@cybersygn.io.
 

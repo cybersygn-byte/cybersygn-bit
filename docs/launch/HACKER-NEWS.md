@@ -57,10 +57,12 @@ Detection accuracy: 100% on a regression set of 37 real-world contracts
 and 10 synthetic PDFs. Most failures during dev were around exotic
 fonts (Hiragino CJK, etc.), pdf.js needs CMap data shipped alongside.
 
-Pricing: 3 free signs (lifetime, no card). $9/mo Origin (founding 100,
-locked for life). $12/mo Solo. $29/mo Studio (3 seats). Why those
-prices: $12/mo Solo is half of DocuSign Personal's $25, and the $9
-Origin rate is a thank-you to the first 100 people who try it.
+Pricing: 3 free signs (lifetime, no card). $12/mo Solo, $19/mo Pro
+(adds an AI drafting co-pilot), $29/mo Studio (3 seats), $79/mo
+Business (white-label, SSO, API). $9/mo Origin for the founding 100,
+locked for life, and a one-time $299 Lifetime. Why those prices:
+$12/mo Solo is half of DocuSign Personal's $25, and the $9 Origin
+rate is a thank-you to the first 100 people who try it.
 
 Live: https://cybersygn.io
 Try it (no signup, drop any PDF): https://cybersygn.io/preview/
