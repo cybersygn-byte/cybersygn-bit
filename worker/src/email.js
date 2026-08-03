@@ -206,7 +206,7 @@ export async function sendDripDay1(env, { to, name, appUrl }) {
   const text = [
     `${name || 'Hello'},`,
     '',
-    'Yesterday you signed up for CyberSygn. Three free documents, no card.',
+    'Yesterday you signed up for CyberSygn. Your first one\'s on us, with three free in the tank, no card.',
     'Today, here is the one thing that makes the product worth the email:',
     '',
     'Drop a contract PDF on the preview page. Watch every signature line,',

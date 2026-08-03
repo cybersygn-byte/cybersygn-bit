@@ -216,7 +216,7 @@ function renderPage(doc, vert) {
             <h2 class="h-section section__title">Pricing that respects ${esc(vert.singular)}.</h2>
           </div>
           <p class="lede section__lede">
-            Every plan is unlimited and starts with three free documents, no card. Solo is $12 a month.
+            Your first one's on us (every plan starts with three free documents, no card). Solo is $12 a month.
             Pro is $19 a month and adds an AI co-pilot that drafts contracts and summarizes signed
             documents in plain language. Studio is $29 a month for three seats. Business is $79 a month
             with white-label, SSO, and a full API. Annual billing saves two months, and early-adopter

@@ -292,7 +292,7 @@ export function renderDripDay1Html({ name, url }) {
         Hello ${esc(name || 'there')},
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.55;color:${INK};">
-        Yesterday you signed up for CyberSygn. Three free documents, no card.
+        Yesterday you signed up for CyberSygn. Your first one's on us, with three free in the tank, no card.
         Today, here is the one thing that makes the product worth the email:
       </p>
       <p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};">

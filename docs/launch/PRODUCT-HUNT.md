@@ -51,7 +51,8 @@ What makes CyberSygn different from the dozen DocuSign alternatives:
   still make you drag boxes.
 • Detection runs in YOUR browser. Your PDF doesn't leave the page until
   you choose to send it. Privacy by architecture.
-• Every plan starts with 3 free documents, no card. Solo is $12/mo,
+• Your first one's on us: every plan starts with 3 free documents,
+  no card. Solo is $12/mo,
   Pro is $19/mo with an AI co-pilot that drafts contracts from a
   sentence, Studio is $29/mo for a 3-seat team, Business is $79/mo
   with white-label + API. First 100 founders lock Origin at $9/mo for

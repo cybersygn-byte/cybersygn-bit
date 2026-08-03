@@ -57,7 +57,8 @@ Detection accuracy: 100% on a regression set of 37 real-world contracts
 and 10 synthetic PDFs. Most failures during dev were around exotic
 fonts (Hiragino CJK, etc.), pdf.js needs CMap data shipped alongside.
 
-Pricing: 3 free signs (lifetime, no card). $12/mo Solo, $19/mo Pro
+Pricing: your first sign is on us (3 free lifetime, no card). $12/mo
+Solo, $19/mo Pro
 (adds an AI drafting co-pilot), $29/mo Studio (3 seats), $79/mo
 Business (white-label, SSO, API). $9/mo Origin for the founding 100,
 locked for life, and a one-time $299 Lifetime. Why those prices:

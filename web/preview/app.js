@@ -2939,7 +2939,7 @@ function showFreeSignupGate(message) {
       <h2 class="modal-card__title">${escapeHtmlLite(message || 'Sign up to download.')}</h2>
     </div>
     <div class="modal-card__body">
-      <p class="modal-card__lede">Three free documents, no credit card. Your count is tied to
+      <p class="modal-card__lede">Your first one's on us, and there are three in the tank. No credit card. Your count is tied to
         your email, so it survives a cookie clear. Upgrade anytime with the same email and
         your history comes with you.</p>
       <form id="gate-form" class="exit-intent__form" autocomplete="on">
@@ -3178,7 +3178,7 @@ async function onSignClick() {
   const freeToken = readFreeToken();
   if (!freeToken) {
     // No token = never signed up. Surface the gate.
-    showFreeSignupGate('Sign up first to download. Three free documents, no card needed.');
+    showFreeSignupGate('Sign up first to download. Your first one\'s on us, no card needed.');
     return;
   }
   if (freeToken.indexOf('paid:') !== 0) {
@@ -3930,7 +3930,7 @@ function showSignerMicrosite({ docComplete, auditUrl, verifyHash, signerName, si
   const pitch = document.createElement('p');
   pitch.className = 'signer-done__pitch';
   pitch.textContent =
-    'Drop a PDF, we find the signature lines, send it in about 30 seconds. No card.';
+    'Your first one\'s on us. Drop a PDF, we find the signature lines, send it in about 30 seconds. No card.';
   invite.appendChild(pitch);
 
   const later = document.createElement('button');
@@ -4626,7 +4626,7 @@ function openSendModal() {
           // Free-tier gates come back as 402 with a machine-readable code.
           if (sendResult.code === 'free_signup_required') {
             close();
-            showFreeSignupGate('Sign up first to send. Three free documents, lifetime, no card needed.');
+            showFreeSignupGate('Sign up first to send. Your first one\'s on us, no card needed.');
             return;
           }
           if (sendResult.code === 'free_cap_reached' || sendResult.code === 'free_tier_limit') {

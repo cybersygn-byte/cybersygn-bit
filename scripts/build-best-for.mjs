@@ -225,7 +225,7 @@ ${faqs.map(f => `          <details class="faq__item">
     <section class="section">
       <div class="container" style="text-align:center">
         <h2 class="h-section">Send your first contract in about 30 seconds.</h2>
-        <p class="lede" style="margin:12px auto 24px;max-width:52ch">Three free documents, no card. If CyberSygn saves you time, Solo is $12 a month, unlimited.</p>
+        <p class="lede" style="margin:12px auto 24px;max-width:52ch">Your first one's on us (three free, no card). If CyberSygn saves you time, Solo is $12 a month, unlimited.</p>
         <a class="btn btn--primary btn--lg" href="../../preview/">Try It Out <span class="btn-arrow" aria-hidden="true">&#8594;</span></a>
       </div>
     </section>
