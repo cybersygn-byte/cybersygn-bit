@@ -1,0 +1,203 @@
+/* ==========================================================================
+   Ambassador dashboard. Mobile-first, built entirely on the existing token
+   system in styles.css (no new design language, no new colors).
+   ========================================================================== */
+
+.amb { padding-bottom: var(--s-8, 64px); }
+
+.amb-state { padding: var(--s-8, 64px) 0; text-align: center; }
+.amb-state__msg { color: var(--text-3); }
+.amb-signin { max-width: 380px; margin: var(--s-5, 24px) auto 0; text-align: left; }
+.amb-signin__status { margin-top: var(--s-3, 12px); min-height: 1.2em; }
+
+/* ---- a. Hero ------------------------------------------------------------ */
+.amb-hero { padding: var(--s-6, 32px) 0 var(--s-5, 24px); }
+.amb-hero__row {
+  display: flex; align-items: center; gap: var(--s-3, 12px); flex-wrap: wrap;
+}
+.amb-hero__title { margin: 0; font-size: clamp(1.6rem, 5vw, 2.2rem); }
+.amb-tier {
+  display: inline-flex; align-items: center; padding: 4px 12px;
+  border-radius: var(--r-pill, 999px); font-family: var(--mono, monospace);
+  font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid var(--accent-line); color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.amb-code {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s-3, 12px);
+  width: 100%; margin: var(--s-4, 16px) 0 var(--s-3, 12px);
+  padding: var(--s-4, 16px) var(--s-5, 24px);
+  background: var(--surface); border: 1px solid var(--accent-line);
+  border-radius: var(--r-lg, 14px); cursor: pointer; text-align: left;
+  transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.amb-code:hover, .amb-code:focus-visible {
+  border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.amb-code__value {
+  font-family: var(--mono, monospace); font-size: clamp(1.4rem, 6vw, 2rem);
+  letter-spacing: 0.08em; color: var(--text); font-weight: 600;
+}
+.amb-code__hint {
+  font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-3); white-space: nowrap;
+}
+.amb-hero__actions { display: flex; gap: var(--s-2, 8px); flex-wrap: wrap; }
+.amb-hero__gives { margin-top: var(--s-3, 12px); color: var(--text-2); }
+
+/* ---- Sections ----------------------------------------------------------- */
+.amb-section { padding: var(--s-6, 32px) 0; border-top: 1px solid var(--line); }
+.amb-section__head { margin-bottom: var(--s-4, 16px); }
+.amb-section__head .h-section { margin: 0 0 6px; }
+.amb-note { margin-top: var(--s-3, 12px); color: var(--text-2); font-size: 0.92rem; }
+.amb-sub { color: var(--text-3); font-size: 0.82em; }
+
+/* ---- Card grids --------------------------------------------------------- */
+.amb-grid {
+  display: grid; gap: var(--s-3, 12px);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.amb-card {
+  display: block; padding: var(--s-4, 16px); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg, 14px);
+  text-decoration: none; color: inherit;
+  transition: border-color 160ms var(--ease), transform 160ms var(--ease);
+}
+.amb-card:hover { border-color: var(--accent-line); }
+.amb-card__title { margin: 0 0 4px; font-size: 1rem; }
+.amb-card__why { margin: 0; color: var(--text-2); font-size: 0.9rem; line-height: 1.5; }
+
+/* ---- c. Zero-state activation checklist --------------------------------- */
+.amb-steps { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; gap: var(--s-3, 12px); }
+.amb-step {
+  counter-increment: step; position: relative; padding: var(--s-4, 16px) var(--s-4, 16px) var(--s-4, 16px) 56px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg, 14px);
+}
+.amb-step::before {
+  content: counter(step); position: absolute; left: 16px; top: 16px;
+  width: 26px; height: 26px; display: grid; place-items: center;
+  border-radius: var(--r-pill, 999px); background: var(--accent-soft);
+  border: 1px solid var(--accent-line); color: var(--accent-text);
+  font-family: var(--mono, monospace); font-size: 0.8rem;
+}
+.amb-step strong { display: block; margin-bottom: 2px; }
+.amb-step span { color: var(--text-2); font-size: 0.92rem; }
+
+/* ---- Stats -------------------------------------------------------------- */
+.amb-stat-grid {
+  display: grid; gap: var(--s-3, 12px);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.amb-stat {
+  padding: var(--s-4, 16px); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg, 14px);
+}
+.amb-stat__n {
+  display: block; font-size: clamp(1.4rem, 5vw, 1.9rem); font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--text);
+}
+.amb-stat__l {
+  display: block; margin-top: 2px; font-size: 0.75rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-3);
+}
+
+/* ---- d/e. Progress ------------------------------------------------------ */
+.amb-progress {
+  padding: var(--s-4, 16px); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg, 14px);
+}
+.amb-bar {
+  margin-top: var(--s-3, 12px); height: 8px; border-radius: var(--r-pill, 999px);
+  background: var(--bg-2); overflow: hidden;
+}
+.amb-bar__fill {
+  display: block; height: 100%; border-radius: inherit;
+  background: var(--accent); transition: width 400ms var(--ease);
+}
+
+/* ---- f. Payout table ---------------------------------------------------- */
+.amb-table-wrap { overflow-x: auto; }
+.amb-table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
+.amb-table th, .amb-table td {
+  padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.amb-table th {
+  font-family: var(--disp, var(--sans)); font-size: 0.72rem; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-3);
+}
+.amb-earn { font-weight: 600; color: var(--accent-text); font-variant-numeric: tabular-nums; }
+
+/* ---- g. Lessons --------------------------------------------------------- */
+.amb-lessons { display: grid; gap: var(--s-2, 8px); }
+.amb-lesson {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg, 14px); overflow: hidden;
+}
+.amb-lesson.is-done { opacity: 0.72; }
+.amb-lesson__q {
+  display: flex; align-items: center; gap: var(--s-3, 12px);
+  padding: var(--s-4, 16px); cursor: pointer; font-weight: 600; list-style: none;
+}
+.amb-lesson__q::-webkit-details-marker { display: none; }
+.amb-lesson__tick {
+  width: 24px; height: 24px; flex: 0 0 24px; display: grid; place-items: center;
+  border-radius: var(--r-pill, 999px); background: var(--accent-soft);
+  border: 1px solid var(--accent-line); color: var(--accent-text);
+  font-family: var(--mono, monospace); font-size: 0.78rem;
+}
+.amb-lesson__a { padding: 0 var(--s-4, 16px) var(--s-4, 16px); }
+.amb-lesson__a p { color: var(--text-2); line-height: 1.6; }
+.amb-lesson__do { color: var(--text) !important; }
+.amb-lesson__done { color: var(--accent-text) !important; font-size: 0.9rem; }
+
+/* ---- h. Scripts --------------------------------------------------------- */
+.amb-scripts { display: grid; gap: var(--s-3, 12px); }
+.amb-script {
+  padding: var(--s-4, 16px); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--r-lg, 14px);
+}
+.amb-script__head { display: flex; align-items: center; gap: var(--s-2, 8px); flex-wrap: wrap; }
+.amb-script__title { margin: 0; font-size: 1rem; }
+.amb-script__tag {
+  padding: 2px 8px; border-radius: var(--r-pill, 999px); font-size: 0.68rem;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  background: var(--accent-soft); color: var(--accent-text); border: 1px solid var(--accent-line);
+}
+.amb-script__tag--dm { background: var(--bg-2); color: var(--text-3); border-color: var(--line); }
+.amb-script__why { margin: 6px 0 10px; color: var(--text-3); font-size: 0.86rem; }
+.amb-script__body {
+  margin: 0 0 10px; padding: var(--s-3, 12px); background: var(--bg-2);
+  border-radius: var(--r, 8px); font-family: var(--mono, monospace);
+  font-size: 0.84rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word;
+  max-height: 220px; overflow-y: auto; color: var(--text-2);
+}
+
+/* ---- k. Getting paid ---------------------------------------------------- */
+.amb-payflow {
+  list-style: none; margin: var(--s-4, 16px) 0 0; padding: 0;
+  display: grid; gap: var(--s-2, 8px);
+}
+.amb-payflow__step {
+  padding: var(--s-3, 12px) var(--s-4, 16px); border-radius: var(--r, 8px);
+  background: var(--bg-2); border-left: 3px solid var(--line);
+}
+.amb-payflow__step.is-on { border-left-color: var(--accent); }
+.amb-payflow__step strong { display: block; }
+.amb-payflow__step span { color: var(--text-2); font-size: 0.9rem; }
+
+.amb-founder { text-align: center; }
+
+/* ---- Toast -------------------------------------------------------------- */
+.amb-toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
+  padding: 10px 18px; border-radius: var(--r-pill, 999px);
+  background: var(--text); color: var(--surface); font-size: 0.9rem;
+  opacity: 0; transition: opacity 200ms var(--ease), transform 200ms var(--ease);
+  z-index: 900; pointer-events: none;
+}
+.amb-toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (min-width: 720px) {
+  .amb-code__value { letter-spacing: 0.12em; }
+}

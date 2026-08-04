@@ -270,6 +270,14 @@ async function main() {
   // Dashboard subfolder: imports from ../preview/, so the relative
   // paths work both in dev (web/dashboard/ -> web/preview/) and in
   // dist (dist/dashboard/ -> dist/preview/).
+  // Ambassador dashboard: its own surface, magic-link auth, renders only what
+  // /api/ambassador/me returns. content.json carries the scripts and lessons.
+  await mkdir(join(OUT, 'ambassador'), { recursive: true });
+  for (const f of ['index.html', 'app.js', 'ambassador.css', 'content.json']) {
+    await copyFile(join(SRC, 'ambassador', f), join(OUT, 'ambassador', f));
+    console.log(`  wrote dist/ambassador/${f}`);
+  }
+
   await mkdir(join(OUT, 'dashboard'), { recursive: true });
   await copyFile(join(SRC, 'dashboard', 'index.html'), join(OUT, 'dashboard', 'index.html'));
   console.log('  wrote dist/dashboard/index.html');

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Ambassador dashboard. CyberSygn.</title>
+  <meta name="description" content="Your CyberSygn ambassador dashboard: your code, your share link, what each sale pays you, and the scripts to send today." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/brand/icon-apple-180.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="./ambassador.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body data-app-shell>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">ambassador</span>
+      </a>
+      <nav class="masthead__nav" aria-label="Ambassador">
+        <a class="masthead__link" href="../dashboard/">My documents</a>
+        <a class="masthead__link masthead__link--cta" href="../preview/">Send a document</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container amb" id="amb-root">
+
+    <!-- Loading / not-an-ambassador states are swapped in by app.js. -->
+    <section class="amb-state" id="amb-loading">
+      <p class="amb-state__msg">Loading your dashboard.</p>
+    </section>
+
+    <section class="amb-state" id="amb-signin" hidden>
+      <h1 class="h-section">Sign in to your ambassador dashboard</h1>
+      <p class="lede">Enter the email you enrolled with. We send a one-tap link, no password.</p>
+      <form class="amb-signin" id="amb-signin-form">
+        <div class="field">
+          <input class="field__input" id="amb-email" name="email" type="email" placeholder=" " autocomplete="email" required />
+          <label class="field__label" for="amb-email">Email</label>
+        </div>
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Send my sign-in link</button>
+        <p class="amb-signin__status caption" id="amb-signin-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <div id="amb-panel" hidden>
+
+      <!-- a. HERO -->
+      <section class="amb-hero">
+        <p class="kicker" id="amb-greeting">Welcome back.</p>
+        <div class="amb-hero__row">
+          <h1 class="h-display amb-hero__title">Your code</h1>
+          <span class="amb-tier" id="amb-tier-badge"></span>
+        </div>
+        <button class="amb-code" id="amb-code-pill" type="button" title="Tap to copy your code">
+          <span class="amb-code__value" id="amb-code-value"></span>
+          <span class="amb-code__hint" aria-hidden="true">tap to copy</span>
+        </button>
+        <div class="amb-hero__actions">
+          <button class="btn btn--primary" id="amb-copy-link" type="button">Copy share link</button>
+          <a class="btn btn--ghost" id="amb-open-link" href="#" target="_blank" rel="noopener">Preview it</a>
+        </div>
+        <p class="amb-hero__gives" id="amb-discount-line"></p>
+      </section>
+
+      <!-- b. PRODUCT PASS / TOOLKIT -->
+      <section class="amb-section" id="amb-pass-section">
+        <header class="amb-section__head">
+          <h2 class="h-section">Your pass</h2>
+          <p class="lede" id="amb-pass-line"></p>
+        </header>
+        <div class="amb-grid" id="amb-toolkit"></div>
+      </section>
+
+      <!-- c. ZERO STATE (activation) or STATS -->
+      <section class="amb-section" id="amb-activation" hidden>
+        <header class="amb-section__head">
+          <h2 class="h-section">Start here</h2>
+          <p class="lede">Three steps. The first sale almost always comes from someone you already know.</p>
+        </header>
+        <ol class="amb-steps" id="amb-steps"></ol>
+      </section>
+
+      <section class="amb-section" id="amb-stats" hidden>
+        <header class="amb-section__head"><h2 class="h-section">Your numbers</h2></header>
+        <div class="amb-stat-grid" id="amb-stat-grid"></div>
+      </section>
+
+      <!-- d. NEXT WIN -->
+      <section class="amb-section" id="amb-nextwin" hidden>
+        <header class="amb-section__head"><h2 class="h-section">Next win</h2></header>
+        <div class="amb-progress" id="amb-nextwin-body"></div>
+      </section>
+
+      <!-- e. MONTHLY SPRINT -->
+      <section class="amb-section" id="amb-sprint" hidden>
+        <header class="amb-section__head"><h2 class="h-section">This month's sprint</h2></header>
+        <div class="amb-progress" id="amb-sprint-body"></div>
+      </section>
+
+      <!-- f. WHAT EACH SALE PAYS YOU -->
+      <section class="amb-section">
+        <header class="amb-section__head">
+          <h2 class="h-section">What each sale pays you</h2>
+          <p class="lede" id="amb-payout-lede"></p>
+        </header>
+        <div class="amb-table-wrap">
+          <table class="amb-table" id="amb-payout-table">
+            <thead>
+              <tr><th scope="col">Plan</th><th scope="col">Sticker</th><th scope="col">They pay</th><th scope="col">You earn</th></tr>
+            </thead>
+            <tbody id="amb-payout-body"></tbody>
+          </table>
+        </div>
+        <p class="amb-note" id="amb-firstsale-note" hidden></p>
+      </section>
+
+      <!-- g. LEARNING CENTER -->
+      <section class="amb-section" id="amb-learn-section">
+        <header class="amb-section__head">
+          <h2 class="h-section">Learn the basics</h2>
+          <p class="lede">Three short lessons. Each one ends with a thing to do.</p>
+        </header>
+        <div class="amb-lessons" id="amb-lessons"></div>
+      </section>
+
+      <!-- h. READY-TO-POST SCRIPTS -->
+      <section class="amb-section" id="amb-scripts-section">
+        <header class="amb-section__head">
+          <h2 class="h-section">Ready to send</h2>
+          <p class="lede">Already filled in with your code and link. Personal sends are first because that is where first sales come from.</p>
+        </header>
+        <div class="amb-scripts" id="amb-scripts"></div>
+      </section>
+
+      <!-- i. CREATIVE DRAWER -->
+      <section class="amb-section" id="amb-creative-section">
+        <header class="amb-section__head">
+          <h2 class="h-section">Images you can post</h2>
+          <p class="lede">Finished assets, no editing needed.</p>
+        </header>
+        <div class="amb-grid" id="amb-creative"></div>
+      </section>
+
+      <!-- j. RECENT EARNINGS -->
+      <section class="amb-section" id="amb-ledger-section" hidden>
+        <header class="amb-section__head"><h2 class="h-section">Recent earnings</h2></header>
+        <div class="amb-table-wrap">
+          <table class="amb-table">
+            <thead><tr><th scope="col">When</th><th scope="col">What</th><th scope="col">Amount</th></tr></thead>
+            <tbody id="amb-ledger-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- k. GETTING PAID -->
+      <section class="amb-section amb-paid">
+        <header class="amb-section__head"><h2 class="h-section">Getting paid</h2></header>
+        <div class="amb-stat-grid" id="amb-paid-grid"></div>
+        <ol class="amb-payflow" id="amb-payflow"></ol>
+        <p class="amb-note" id="amb-paid-note"></p>
+      </section>
+
+      <!-- l. FOOTER -->
+      <section class="amb-section amb-founder">
+        <h2 class="h-card">Questions go straight to me</h2>
+        <p class="lede">I read and answer every one. Mention your code so I can look at your numbers with you.</p>
+        <p><a class="btn btn--ghost" href="mailto:hello@cybersygn.io?subject=Ambassador%20question">Email the founder</a></p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="amb-toast" id="amb-toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="./app.js"></script>
+  <link rel="stylesheet" href="/shared/app-shell.css" />
+  <script src="/shared/app-shell.js" defer></script>
+</body>
+</html>

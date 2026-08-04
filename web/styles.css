@@ -751,6 +751,24 @@ button { font: inherit; cursor: pointer; }
 .pdf-tile__line--80 { width: 80%; }
 .pdf-tile__line--70 { width: 70%; }
 .pdf-tile__line--60 { width: 60%; }
+.pdf-tile__icon {
+  /* Centered in the page's blank middle. The copy lines sit at the top and the
+     field boxes are pinned to the bottom, so the icon is optically centered in
+     the space between them rather than in the raw box: 46% reads as centered
+     to the eye once the bottom field stack is accounted for. */
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 34%;
+  height: auto;
+  color: rgba(1, 20, 52, 0.16);
+  pointer-events: none;
+}
+:root[data-theme="dark"] .pdf-tile__icon,
+.pdf-tile__paper .pdf-tile__icon { color: rgba(1, 20, 52, 0.16); }
+.pdf-tile:hover .pdf-tile__icon { color: var(--accent-line); }
+
 .pdf-tile__sig {
   display: block;
   margin-top: auto;

@@ -493,6 +493,34 @@
     return widths.map(w => '<span class="pdf-tile__line pdf-tile__line--' + w + '"></span>').join('');
   }
 
+  // Category watermarks. The mock page has copy lines at the top and field
+  // boxes pinned to the bottom, which left a large blank middle that read as
+  // an unfinished page. A single quiet line-icon per category fills it and
+  // tells you what kind of document you are looking at before you read the
+  // label. Stroke-only, one weight, 24x24 grid, so they sit as a family.
+  const TILE_ICONS = {
+    business:        '<path d="M3 8h18v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/>',
+    confidentiality: '<path d="M12 3 5 6v6c0 4.5 3 7.8 7 9 4-1.2 7-4.5 7-9V6l-7-3Z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v3"/>',
+    employment:      '<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
+    'real-estate':   '<path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-6h4v6"/>',
+    creative:        '<path d="M3 8h4l1.5-2h7L17 8h4v11H3V8Z"/><circle cx="12" cy="13" r="3.4"/>',
+    professional:    '<path d="M9 4h6v3H9z"/><path d="M5 7h14v13H5z"/><path d="M9 13l2 2 4-4"/>',
+    freelance:       '<path d="M4 6h16v10H4z"/><path d="M2 19h20"/><path d="M10 16h4"/>',
+    events:          '<path d="M12 4a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-5 0v-4A2.5 2.5 0 0 1 12 4Z"/><path d="M6.5 11a5.5 5.5 0 0 0 11 0"/><path d="M12 16.5V20"/><path d="M9 20h6"/>',
+    finance:         '<circle cx="12" cy="12" r="8"/><path d="M12 7.5v9"/><path d="M14.5 10a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2.5 0 0 1 9.5 14"/>',
+    personal:        '<path d="M12 20s-6.5-4-6.5-8.5A3.5 3.5 0 0 1 12 9a3.5 3.5 0 0 1 6.5 2.5C18.5 16 12 20 12 20Z"/>',
+    tech:            '<path d="M9 9 5.5 12 9 15"/><path d="M15 9l3.5 3-3.5 3"/><path d="M13 6.5l-2 11"/>',
+  };
+
+  function iconHTML(type) {
+    const paths = TILE_ICONS[type] || TILE_ICONS.business;
+    return (
+      '<svg class="pdf-tile__icon" viewBox="0 0 24 24" fill="none" ' +
+        'stroke="currentColor" stroke-width="1.25" stroke-linecap="round" ' +
+        'stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths + '</svg>'
+    );
+  }
+
   function tileHTML(t) {
     const accents =
       t.layout === 'sig-init'  ? '<span class="pdf-tile__sig"></span><span class="pdf-tile__init"></span>' :
@@ -501,7 +529,7 @@
     return (
       '<a class="pdf-tile" href="./templates/?cat=' + t.type + '" data-type="' + t.type + '">' +
         '<div class="pdf-tile__paper" aria-hidden="true">' +
-          lineHTML() + accents +
+          lineHTML() + iconHTML(t.type) + accents +
         '</div>' +
         '<p class="pdf-tile__name">' + t.name + '</p>' +
         '<p class="pdf-tile__sub">' + t.sub + '</p>' +

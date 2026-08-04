@@ -2833,6 +2833,23 @@ async function handleAmbassadorMe(request, env, url) {
     payout: payoutState(rec),
     learn: rec.learn || {},
     ledger: Array.isArray(rec.ledger) ? rec.ledger.slice(-10).reverse() : [],
+    // Live payout table computed from THIS ambassador's current tier and the
+    // real price book, so what they see is what a sale actually pays them.
+    payoutTable: ['solo', 'pro', 'team', 'business'].map((planId) => {
+      const sticker = (TIER_MRR_CENTS[planId] || 0) / 100;
+      const buyerPays = Math.round(sticker * (1 - DISCOUNT.percentOff / 100) * 100) / 100;
+      return {
+        plan: planId === 'team' ? 'Studio' : planId.charAt(0).toUpperCase() + planId.slice(1),
+        stickerUsd: sticker,
+        buyerPaysUsd: buyerPays,
+        buyerPaysNote: `for ${DISCOUNT.months} months`,
+        youEarnUsd: tier.bounty,
+      };
+    }),
+    // First-sale math, shown only to ambassadors who have not sold yet.
+    firstSale: sales === 0
+      ? { bounty: tier.bounty, milestoneBonus: (MILESTONES[0] && MILESTONES[0].bonus) || 0, totalUsd: tier.bounty + ((MILESTONES[0] && MILESTONES[0].bonus) || 0) }
+      : null,
   });
 }
 
