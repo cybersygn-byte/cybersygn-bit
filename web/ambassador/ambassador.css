@@ -116,11 +116,22 @@
 }
 
 /* ---- f. Payout table ---------------------------------------------------- */
-.amb-table-wrap { overflow-x: auto; }
+.amb-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .amb-table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
 .amb-table th, .amb-table td {
-  padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line);
+  padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line);
   white-space: nowrap;
+}
+/* The earn column is the point of the table, so it never gets clipped: pin it
+   right and let the middle columns absorb any overflow instead. */
+.amb-table th:last-child, .amb-table td:last-child { text-align: right; padding-right: 0; }
+.amb-table th:first-child, .amb-table td:first-child { padding-left: 0; }
+.amb-table td .amb-sub { display: block; font-size: 0.72rem; line-height: 1.2; }
+/* On a phone the sticker price is the least useful column (the point is what
+   the buyer pays and what you earn), so drop it rather than force a sideways
+   scroll on the one table an ambassador reads most. */
+@media (max-width: 520px) {
+  .amb-table th:nth-child(2), .amb-table td:nth-child(2) { display: none; }
 }
 .amb-table th {
   font-family: var(--disp, var(--sans)); font-size: 0.72rem; letter-spacing: 0.04em;
