@@ -2780,12 +2780,27 @@ async function handleAffiliateRegister(request, env, url) {
 
   const result = await registerAffiliate(env, { senderId, email });
   if (!result.ok) return jsonResponse(500, { error: result.error });
+
+  // Provision the real Stripe discount so the promised offer cannot silently
+  // fail at checkout. Idempotent, and non-fatal: attribution still works if
+  // Stripe is unreachable, and the next call retries cleanly (orphan coupons
+  // are cleaned up inside ensureStripeDiscount).
+  let discount = null;
+  try {
+    const { ensureStripeDiscount, DISCOUNT } = await import('./affiliate.js');
+    const d = await ensureStripeDiscount(env, result.code, result.record);
+    if (d.ok) discount = DISCOUNT.label;
+  } catch (e) {
+    console.error('[affiliate] discount provision failed:', e && e.message);
+  }
+
   const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
   return jsonResponse(200, {
     ok: true,
     code: result.code,
     isNew: result.isNew,
     shareUrl: `${baseUrl}/?ref=${result.code}`,
+    discount,
     record: {
       clicks: result.record.clicks || 0,
       signups: result.record.signups || 0,

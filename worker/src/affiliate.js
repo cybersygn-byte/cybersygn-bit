@@ -28,9 +28,91 @@
 import { sha256Hex } from './audit.js';
 
 const KV_PREFIX = 'affiliate:';
-const PAYOUT_USD = 20;
+const PAYOUT_USD = 20;   // legacy flat bounty; tiers below supersede it
 const COOKIE_DAYS = 60;
 const CODE_LEN = 8;  // base36 chars; ~2.8 trillion address space
+
+// ---- Commission ladder (docs/COMMISSION-MODEL.md is the plain-language copy)
+// Bounty per qualifying sale, rising with LIFETIME sales. Milestones pay once.
+// The monthly sprint repeats every calendar month.
+export const TIERS = [
+  { key: 'bronze', label: 'Bronze', min: 0,  bounty: 20 },
+  { key: 'silver', label: 'Silver', min: 5,  bounty: 25 },
+  { key: 'gold',   label: 'Gold',   min: 15, bounty: 30 },
+];
+export const MILESTONES = [
+  { at: 1,  bonus: 10,  label: 'First sale' },
+  { at: 10, bonus: 50,  label: '10 sales' },
+  { at: 25, bonus: 100, label: '25 sales' },
+];
+export const SPRINT = { salesNeeded: 5, bonus: 50, label: '5 sales in a calendar month' };
+// What the buyer gets for using an ambassador code.
+export const DISCOUNT = { percentOff: 20, months: 3, label: '20% off their first 3 months' };
+
+/** Tier for a given lifetime sales count. */
+export function tierFor(conversions) {
+  const n = Number(conversions) || 0;
+  let t = TIERS[0];
+  for (const tier of TIERS) if (n >= tier.min) t = tier;
+  return t;
+}
+
+/** Resolve an ambassador code to its Stripe promotion_code id, or null. */
+export async function promoIdForCode(env, code) {
+  if (!isValidCode(code)) return null;
+  const rec = await loadCode(env, code);
+  return (rec && rec.status !== 'revoked' && rec.stripePromoId) ? rec.stripePromoId : null;
+}
+
+/**
+ * Create the Stripe coupon + promotion code for an ambassador, atomically from
+ * the caller's perspective: if the promotion-code call fails after the coupon
+ * was created, the orphan coupon is deleted so a retry starts clean.
+ */
+export async function ensureStripeDiscount(env, code, knownRecord) {
+  if (!isValidCode(code)) return { ok: false, error: 'invalid_code' };
+  // Accept the caller's freshly-written record: KV is eventually consistent, so
+  // a read immediately after registerAffiliate can miss it and would otherwise
+  // fail as unknown_code, leaving the ambassador with no working discount.
+  const rec = knownRecord || await loadCode(env, code);
+  if (!rec) return { ok: false, error: 'unknown_code' };
+  if (rec.stripePromoId) return { ok: true, promoId: rec.stripePromoId, existing: true };
+  if (!env || !env.STRIPE_SECRET_KEY) return { ok: false, error: 'stripe_not_configured' };
+
+  const { stripeFetch } = await import('./stripe.js');
+  let couponId = null;
+  try {
+    const cBody = new URLSearchParams();
+    cBody.set('percent_off', String(DISCOUNT.percentOff));
+    cBody.set('duration', 'repeating');
+    cBody.set('duration_in_months', String(DISCOUNT.months));
+    cBody.set('name', `Ambassador ${code}`);
+    cBody.set('metadata[ambassadorCode]', code);
+    const coupon = await stripeFetch(env, 'POST', '/coupons', cBody);
+    couponId = coupon && coupon.id;
+    if (!couponId) throw new Error('no coupon id');
+
+    const pBody = new URLSearchParams();
+    pBody.set('coupon', couponId);
+    pBody.set('code', code.toUpperCase());
+    pBody.set('metadata[ambassadorCode]', code);
+    const promo = await stripeFetch(env, 'POST', '/promotion_codes', pBody);
+    if (!promo || !promo.id) throw new Error('no promo id');
+
+    rec.stripeCouponId = couponId;
+    rec.stripePromoId = promo.id;
+    rec.discount = DISCOUNT.label;
+    await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
+    return { ok: true, promoId: promo.id, couponId };
+  } catch (e) {
+    // Orphan cleanup: a coupon with no promotion code is dead weight and would
+    // block a clean retry, so delete it before surfacing the failure.
+    if (couponId) {
+      try { await stripeFetch(env, 'DELETE', `/coupons/${couponId}`, null); } catch (e2) {}
+    }
+    return { ok: false, error: 'stripe_discount_failed', detail: e && e.message };
+  }
+}
 
 // ---- Code minting ---------------------------------------------------------
 
@@ -138,7 +220,7 @@ export async function bumpSignup(env, code) {
  * is created with metadata.ref set. Idempotent on (code, customerId) so
  * a customer's renewals don't double-credit.
  */
-export async function recordConversion(env, code, customerId, tier, buyerSenderId) {
+export async function recordConversion(env, code, customerId, tier, buyerSenderId, buyerEmail) {
   if (!isValidCode(code)) return { ok: false, error: 'invalid_code' };
   if (!customerId) return { ok: false, error: 'missing_customer' };
   const dedupeKey = `${KV_PREFIX}conv:${code}:${customerId}`;
@@ -153,7 +235,9 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   // riding their own ?ref link is pure arbitrage. Block by matching the
   // buyer's senderId against the code owner's, and remember the block so a
   // webhook retry does not re-attempt it.
-  if (buyerSenderId && rec.senderId && buyerSenderId === rec.senderId) {
+  const sameEmail = buyerEmail && rec.email &&
+    String(buyerEmail).trim().toLowerCase() === String(rec.email).trim().toLowerCase();
+  if (sameEmail || (buyerSenderId && rec.senderId && buyerSenderId === rec.senderId)) {
     try {
       await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({ at: new Date().toISOString(), tier, blocked: 'self_referral' }), {
         expirationTtl: 60 * 60 * 24 * 365 * 5,
@@ -161,8 +245,26 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     } catch (e) {}
     return { ok: false, error: 'self_referral_blocked' };
   }
+  // Ladder: the bounty is set by the tier the ambassador is in AS OF this sale.
   rec.conversions = (rec.conversions || 0) + 1;
-  rec.earnedUsd = (rec.earnedUsd || 0) + PAYOUT_USD;
+  const earnedTier = tierFor(rec.conversions);
+  let credit = earnedTier.bounty;
+  const bonuses = [];
+  for (const m of MILESTONES) {
+    if (rec.conversions === m.at) { credit += m.bonus; bonuses.push(m.label); }
+  }
+  // Monthly sprint: repeatable, tracked per calendar month.
+  const monthKey = new Date().toISOString().slice(0, 7);
+  rec.monthly = (rec.monthly && rec.monthly.month === monthKey)
+    ? rec.monthly : { month: monthKey, sales: 0, sprintPaid: false };
+  rec.monthly.sales += 1;
+  if (!rec.monthly.sprintPaid && rec.monthly.sales >= SPRINT.salesNeeded) {
+    credit += SPRINT.bonus;
+    rec.monthly.sprintPaid = true;
+    bonuses.push(SPRINT.label);
+  }
+  rec.earnedUsd = (rec.earnedUsd || 0) + credit;
+  rec.tier = earnedTier.key;
   rec.lastConversionAt = new Date().toISOString();
   try {
     await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
@@ -170,7 +272,7 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
       expirationTtl: 60 * 60 * 24 * 365 * 5,
     });
   } catch (e) {}
-  return { ok: true, alreadyCounted: false, payoutUsd: PAYOUT_USD };
+  return { ok: true, alreadyCounted: false, payoutUsd: credit, tier: earnedTier.key, bonuses };
 }
 
 /**

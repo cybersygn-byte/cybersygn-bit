@@ -271,9 +271,10 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   body.set('success_url', successUrl || `${origin}/dashboard/?checkout=success&session_id={CHECKOUT_SESSION_ID}`);
   body.set('cancel_url', cancelUrl || `${origin}/?checkout=canceled`);
   body.set('client_reference_id', senderId || '');
-  // No open promo-code field: no codes exist, and an empty coupon box at the
-  // pay button invites discount-hunting and erodes the price anchor. Re-enable
-  // per-session behind a flag if a real coupon campaign ever runs.
+  // No OPEN promo-code field (an empty coupon box at the pay button invites
+  // discount-hunting and erodes the price anchor). Ambassador discounts are
+  // applied server-side below, from the referring code, so the buyer never has
+  // to type anything and the promised discount cannot silently fail.
   body.set('billing_address_collection', 'auto');
   body.set('metadata[tier]', tier);
   body.set('metadata[senderId]', senderId || '');
@@ -291,6 +292,18 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   if (typeof ref === 'string' && /^[a-z0-9]{4,16}$/.test(ref)) {
     body.set('metadata[ref]', ref);
     if (!isOneTime) body.set('subscription_data[metadata][ref]', ref);
+    // THE DISCOUNT MUST ACTUALLY APPLY. Resolve the ambassador code to its
+    // Stripe promotion code and attach it to the session server-side, so the
+    // buyer sees the promised discount without typing anything. If the code has
+    // no promo (legacy code, or Stripe call failed at setup), we simply do not
+    // discount: attribution still works and checkout still succeeds.
+    try {
+      const { promoIdForCode } = await import('./affiliate.js');
+      const promoId = await promoIdForCode(env, ref);
+      if (promoId) body.set('discounts[0][promotion_code]', promoId);
+    } catch (e) {
+      console.error('[stripe] promo lookup failed:', e && e.message);
+    }
   }
 
   // First-touch marketing source (utm_source or referrer host, sanitized
@@ -456,7 +469,8 @@ async function onCheckoutCompleted(env, session) {
       const { recordConversion } = await import('./affiliate.js');
       // Pass the buyer's senderId so the affiliate module can block a
       // self-referral (buying through your own code).
-      await recordConversion(env, ref.toLowerCase(), customerId, tier, senderId);
+      await recordConversion(env, ref.toLowerCase(), customerId, tier, senderId,
+        session.customer_details?.email || session.customer_email || null);
     } catch (e) {
       console.error('[stripe] affiliate credit failed:', e && e.message);
     }
@@ -796,6 +810,8 @@ async function senderIdForCustomer(env, customerId) {
   const storage = pickStorage(env);
   return await storage.get(`stripe:customer:${customerId}`);
 }
+
+export { stripeFetch };
 
 async function stripeFetch(env, method, path, body) {
   const url = `${STRIPE_API}${path}`;
