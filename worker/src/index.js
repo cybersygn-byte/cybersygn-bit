@@ -348,6 +348,17 @@ const worker = {
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/register' });
       return handleAffiliateRegister(request, env, url);
     }
+    // Ambassador dashboard payload: everything the page needs in one response.
+    if (request.method === 'GET' && url.pathname === '/api/ambassador/me') {
+      const rl = await checkRateLimit(env, `ambme:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/me' });
+      return handleAmbassadorMe(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/ambassador/learn') {
+      const rl = await checkRateLimit(env, `amblearn:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/learn' });
+      return handleAmbassadorLearn(request, env, url);
+    }
     if (request.method === 'POST' && url.pathname === '/api/affiliate/click') {
       const rl = await checkRateLimit(env, `aff-click:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/click' });
@@ -2770,6 +2781,78 @@ async function handleStatus(request, env, url) {
  * Body: { senderId, email? }
  * Returns: { ok, code, record, isNew, shareUrl }
  */
+/**
+ * GET /api/ambassador/me?senderId=...
+ * One response with every number the dashboard renders. Opening the dashboard
+ * is a signal of life, so this also RENEWS the product pass (the pass can
+ * never lapse mid-program while someone is actually showing up).
+ *
+ * Honesty rules baked in: rates are omitted below a meaningful sample, and
+ * zero-sale ambassadors get an activation checklist instead of a wall of
+ * zeros. The client renders what it is given, it never invents numbers.
+ */
+async function handleAmbassadorMe(request, env, url) {
+  const senderId = String(url.searchParams.get('senderId') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
+
+  const { ambassadorBySender, passActive, touchPass, payoutState } = await import('./ambassador.js');
+  const { tierFor, TIERS: LADDER, MILESTONES, SPRINT, DISCOUNT } = await import('./affiliate.js');
+
+  const rec = await ambassadorBySender(env, senderId);
+  if (!rec) return jsonResponse(404, { error: 'not_an_ambassador' });
+
+  // Signal of life: renew the pass on every dashboard open.
+  await touchPass(env, rec, 'dashboard');
+
+  const sales = Number(rec.conversions) || 0;
+  const clicks = Number(rec.clicks) || 0;
+  const tier = tierFor(sales);
+  const nextTier = LADDER.find(t => t.min > sales) || null;
+  const nextMilestone = MILESTONES.find(m => m.at > sales) || null;
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthly = (rec.monthly && rec.monthly.month === monthKey) ? rec.monthly : { month: monthKey, sales: 0, sprintPaid: false };
+  const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+
+  // A conversion rate on a tiny sample is noise, not information. Below 50
+  // clicks we send null and the dashboard hides the stat entirely.
+  const conversionRate = clicks >= 50 ? Math.round((sales / clicks) * 1000) / 10 : null;
+
+  return jsonResponse(200, {
+    ok: true,
+    code: rec.code,
+    shareUrl: `${baseUrl}/?ref=${rec.code}`,
+    discount: DISCOUNT.label,
+    status: rec.status === 'revoked' ? 'revoked' : 'active',
+    pass: { active: passActive(rec), until: rec.passUntil || null },
+    tier: { key: tier.key, label: tier.label, bounty: tier.bounty },
+    nextTier: nextTier ? { label: nextTier.label, bounty: nextTier.bounty, salesRemaining: nextTier.min - sales } : null,
+    nextMilestone: nextMilestone ? { label: nextMilestone.label, bonus: nextMilestone.bonus, salesRemaining: nextMilestone.at - sales } : null,
+    sprint: { needed: SPRINT.salesNeeded, bonus: SPRINT.bonus, sales: monthly.sales, paid: !!monthly.sprintPaid, month: monthly.month },
+    stats: { clicks, sales, conversionRate },
+    hasSales: sales > 0,
+    payout: payoutState(rec),
+    learn: rec.learn || {},
+    ledger: Array.isArray(rec.ledger) ? rec.ledger.slice(-10).reverse() : [],
+  });
+}
+
+/** POST /api/ambassador/learn {senderId, moduleId} -> persist completion. */
+async function handleAmbassadorLearn(request, env, url) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+  const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
+
+  const { ambassadorBySender, markLearnDone } = await import('./ambassador.js');
+  const rec = await ambassadorBySender(env, senderId);
+  if (!rec) return jsonResponse(404, { error: 'not_an_ambassador' });
+
+  const result = await markLearnDone(env, rec, payload.moduleId);
+  if (!result.ok) return jsonResponse(400, { error: result.error });
+  return jsonResponse(200, { ok: true, learn: result.learn });
+}
+
 async function handleAffiliateRegister(request, env, url) {
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
@@ -2790,6 +2873,10 @@ async function handleAffiliateRegister(request, env, url) {
     const { ensureStripeDiscount, DISCOUNT } = await import('./affiliate.js');
     const d = await ensureStripeDiscount(env, result.code, result.record);
     if (d.ok) discount = DISCOUNT.label;
+    // Grant the product pass immediately so a new ambassador can run the
+    // product on their own contract before pitching it (lesson 1 asks them to).
+    const { touchPass } = await import('./ambassador.js');
+    await touchPass(env, result.record, 'enrolled');
   } catch (e) {
     console.error('[affiliate] discount provision failed:', e && e.message);
   }

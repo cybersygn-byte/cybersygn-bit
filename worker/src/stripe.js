@@ -140,6 +140,16 @@ export async function checkFreeTierAllowance(env, senderId) {
   if (sub.status === 'active' && sub.tier !== 'free') {
     return { allowed: true, remaining: Infinity, tier: sub.tier, used: 0, sub };
   }
+  // Ambassador product pass: active ambassadors get the full product free.
+  // Checked after a real paid plan (a paying ambassador keeps their own tier)
+  // and before the free-tier counter, so the pass genuinely unlocks sending.
+  try {
+    const { ambassadorBySender, passActive } = await import('./ambassador.js');
+    const amb = await ambassadorBySender(env, senderId);
+    if (passActive(amb)) {
+      return { allowed: true, remaining: Infinity, tier: 'ambassador', used: 0, sub, ambassadorPass: true };
+    }
+  } catch (e) { /* pass check must never block a send */ }
   const used = await getUsageThisMonth(env, senderId);
   const cap = TIERS.free.docs;
   return {
