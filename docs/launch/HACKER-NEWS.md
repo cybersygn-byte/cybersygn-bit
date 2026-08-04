@@ -62,8 +62,10 @@ Solo, $19/mo Pro
 (adds an AI drafting co-pilot), $29/mo Studio (3 seats), $79/mo
 Business (white-label, SSO, API). $9/mo Origin for the founding 100,
 locked for life, and a one-time $299 Lifetime. Why those prices:
-$12/mo Solo is half of DocuSign Personal's $25, and the $9 Origin
-rate is a thank-you to the first 100 people who try it.
+DocuSign Personal is $11/mo on an annual plan but caps you at 5
+envelopes a month (and even their $45 tier caps 100/user/year);
+Solo is unlimited. The $9 Origin rate is a thank-you to the first
+100 people who try it.
 
 Live: https://cybersygn.io
 Try it (no signup, drop any PDF): https://cybersygn.io/preview/
