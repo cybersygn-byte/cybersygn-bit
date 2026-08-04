@@ -22,9 +22,16 @@
 
 import { sha256Hex } from './audit.js';
 
-// Dev fallback: SHA-256 of "cybersygn-dev-owner". Documented in DEPLOY.md.
-// Production owners MUST override this via the CYBERSYGN_OWNER_HASH secret.
-const DEV_OWNER_HASH = 'db4620902e87f722ffe92d06b1d013e58a09aacceae9fce7899456da072698b5';
+// SHA-256 of the historical dev phrase "cybersygn-dev-owner". This is NO LONGER
+// a fallback: production fails CLOSED when the owner hash is absent or malformed
+// (see expectedHash). It is exported only as a BLOCKLIST value so the security
+// self-check can flag a deploy that accidentally set the secret to this
+// world-readable value (the repo is public). Tests set CYBERSYGN_OWNER_HASH to
+// this explicitly to exercise the owner path.
+export const KNOWN_DEV_OWNER_HASH = 'db4620902e87f722ffe92d06b1d013e58a09aacceae9fce7899456da072698b5';
+
+// A valid owner hash is exactly 64 lowercase hex characters (a SHA-256 digest).
+const OWNER_HASH_RE = /^[a-f0-9]{64}$/;
 
 const TOKEN_BYTES = 32;
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 365;  // 365 days
@@ -51,10 +58,15 @@ function randomTokenHex(byteLength = TOKEN_BYTES) {
 }
 
 function expectedHash(env) {
-  if (env && typeof env.CYBERSYGN_OWNER_HASH === 'string' && env.CYBERSYGN_OWNER_HASH.length === 64) {
-    return env.CYBERSYGN_OWNER_HASH.toLowerCase();
+  if (env && typeof env.CYBERSYGN_OWNER_HASH === 'string') {
+    // Trim first: `wrangler secret put` piped from a file often carries a
+    // trailing newline, which previously silently failed the length check and
+    // dropped through to the dev fallback. Now we normalize and validate.
+    const h = env.CYBERSYGN_OWNER_HASH.trim().toLowerCase();
+    if (OWNER_HASH_RE.test(h)) return h;
   }
-  return DEV_OWNER_HASH;
+  // Fail closed: with no valid owner hash configured, no phrase can claim owner.
+  return null;
 }
 
 /**
@@ -62,11 +74,13 @@ function expectedHash(env) {
  * owner hash. Returns true on match.
  */
 export async function isOwnerPhrase(candidate, env) {
+  const expected = expectedHash(env);
+  if (!expected) return false;   // fail closed: no owner hash configured
   if (typeof candidate !== 'string' || candidate.length === 0) return false;
   if (candidate.length > 256) return false;
   const bytes = new TextEncoder().encode(candidate);
   const candidateHash = await sha256Hex(bytes);
-  return constantTimeEquals(candidateHash, expectedHash(env));
+  return constantTimeEquals(candidateHash, expected);
 }
 
 /**
@@ -278,6 +292,7 @@ export async function loginWithCredentials(username, password, env) {
 }
 
 export const __forTests = {
-  DEV_OWNER_HASH,
+  KNOWN_DEV_OWNER_HASH,
   constantTimeEquals,
+  expectedHash,
 };

@@ -201,6 +201,15 @@ const worker = {
     }
 
     if (request.method === 'POST' && url.pathname === '/detect') {
+      // /detect is unauthenticated and runs the heaviest compute in the worker
+      // (full PDF parse on up to 25MB of attacker-controlled bytes). Throttle
+      // it like /api/docs so a single IP cannot exhaust CPU/duration. Generous
+      // enough for the live homepage demo, which detects once per dropped file.
+      const rl = await checkRateLimit(env, `detect:${ipKey(request)}`, [
+        { windowSec: 60, max: 20 },
+        { windowSec: 3600, max: 200 },
+      ]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/detect' });
       return handleDetect(request);
     }
 
@@ -469,6 +478,14 @@ const worker = {
       }
     }
     if (request.method === 'GET' && url.pathname === '/api/origin/wall') {
+      // Public but expensive: one call lists up to 1000 sub:* keys and gets
+      // each. Throttle per-IP so it cannot be used as a KV read-amplification
+      // lever. Generous because the homepage polls it for the founder counter.
+      const rl = await checkRateLimit(env, `originwall:${ipKey(request)}`, [
+        { windowSec: 60, max: 30 },
+        { windowSec: 3600, max: 300 },
+      ]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/origin/wall' });
       return handleOriginWall(env);
     }
     if (request.method === 'POST' && url.pathname === '/api/origin/profile') {

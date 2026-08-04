@@ -21,6 +21,7 @@
 
 import { getStorage } from './storage.js';
 import { deliver } from './email.js';
+import { KNOWN_DEV_OWNER_HASH } from './owner.js';
 
 const RESULT_KEY = 'meta:security-check:latest';
 
@@ -54,8 +55,17 @@ export async function runSecurityCheck(env, opts = {}) {
   }
   add('owner_login_configured', ownerConfigured,
     'owner login not configured (no username/hash and no KV credential)', 'critical');
-  add('owner_backdoor_closed', has('CYBERSYGN_OWNER_HASH'),
-    'CYBERSYGN_OWNER_HASH unset, the publicly-documented dev phrase can claim owner', 'high');
+  // The owner hash must be present, a well-formed 64-hex SHA-256, AND not the
+  // world-readable dev value. A malformed secret now fails CLOSED in owner.js,
+  // but this still catches an operator who set it to the wrong shape or to the
+  // published dev hash (the repo is public), which would leave owner unusable
+  // or trivially claimable respectively.
+  const ownerHashRaw = (env && typeof env.CYBERSYGN_OWNER_HASH === 'string') ? env.CYBERSYGN_OWNER_HASH.trim().toLowerCase() : '';
+  const ownerHashValid = /^[a-f0-9]{64}$/.test(ownerHashRaw) && ownerHashRaw !== KNOWN_DEV_OWNER_HASH;
+  add('owner_backdoor_closed', ownerHashValid,
+    !ownerHashRaw ? 'CYBERSYGN_OWNER_HASH unset, owner claim disabled (fail-closed)'
+      : ownerHashRaw === KNOWN_DEV_OWNER_HASH ? 'CYBERSYGN_OWNER_HASH is the PUBLIC dev value, rotate immediately'
+      : 'CYBERSYGN_OWNER_HASH is not a valid 64-hex SHA-256', 'critical');
 
   // ---- 2. KV reachability ---------------------------------------------------
   let kvOk = false;

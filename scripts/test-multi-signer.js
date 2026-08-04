@@ -30,8 +30,13 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 
-// Empty env: storage falls back to memory, email falls back to console.
-const env = {};
+// Test env: storage falls back to memory, email falls back to console. The
+// owner hash is set EXPLICITLY to the SHA-256 of "cybersygn-dev-owner" so the
+// owner-claim test exercises the real path; production has no such fallback
+// (owner.js fails closed when this secret is absent or malformed).
+const env = {
+  CYBERSYGN_OWNER_HASH: 'db4620902e87f722ffe92d06b1d013e58a09aacceae9fce7899456da072698b5',
+};
 
 let passed = 0;
 let failed = 0;
