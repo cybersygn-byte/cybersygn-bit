@@ -113,11 +113,10 @@ function isValidEmail(s) {
 }
 
 // ---- Pageview --------------------------------------------------------------
-
-cybersygn.track('marketing_pageview', {
-  path: location.pathname,
-  referrer: document.referrer || null,
-});
+// Deliberately NOT fired here: telemetry.js already emits one 'pageview' per
+// page load, and the server records the referrer host on every event. Firing a
+// second 'marketing_pageview' here double-counted marketing surfaces in the
+// totals. Left as a note so it is not re-added.
 
 // Owner-mode bootstrap: validates any saved token and listens for the
 // activation gesture. Runs after pageview tracking.

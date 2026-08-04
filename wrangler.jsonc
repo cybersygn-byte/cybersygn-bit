@@ -17,7 +17,9 @@
   "routes": [
     { "pattern": "cybersygn.io", "custom_domain": true },
     { "pattern": "www.cybersygn.io", "custom_domain": true },
-    { "pattern": "control.cybersygn.io", "custom_domain": true }
+    { "pattern": "control.cybersygn.io", "custom_domain": true },
+    { "pattern": "admin.cybersygn.io", "custom_domain": true },
+    { "pattern": "owner.cybersygn.io", "custom_domain": true }
   ],
 
   "workers_dev": true,

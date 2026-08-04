@@ -113,6 +113,16 @@ const TIER_MRR_CENTS = {
   free: 0,
 };
 
+// Hostnames that serve the owner /control/ panel. control.cybersygn.io is the
+// original; admin/owner.cybersygn.io are convenience aliases. All are still
+// gated by the owner login (owner token is per-origin, so each host logs in on
+// its own). Keep in sync with the "routes" custom_domain list in wrangler.jsonc.
+const OWNER_PANEL_HOSTS = new Set([
+  'control.cybersygn.io', 'www.control.cybersygn.io',
+  'admin.cybersygn.io', 'www.admin.cybersygn.io',
+  'owner.cybersygn.io', 'www.owner.cybersygn.io',
+]);
+
 const MAX_PDF_BYTES = 25 * 1024 * 1024; // 25 MB ceiling for Phase 1
 const DETECTION_TIMEOUT_MS = 15000;
 const MAX_JSON_BYTES = 256 * 1024; // default for small JSON endpoints
@@ -130,12 +140,14 @@ const worker = {
     setEmailBusinessAddress(env && env.CYBERSYGN_BUSINESS_ADDRESS);
     const url = new URL(request.url);
 
-    // control.cybersygn.io is a dedicated host for the owner panel: its root
-    // and ./control.js map into the /control/ asset subtree. Everything else
-    // the panel loads (/styles.css, /brand/*, /preview/owner.js, /api/owner/*)
-    // uses absolute root paths and resolves normally on this host, so only the
-    // two control-specific paths need remapping.
-    if (url.hostname === 'control.cybersygn.io' || url.hostname === 'www.control.cybersygn.io') {
+    // Dedicated owner-panel hosts. control/admin/owner.cybersygn.io all serve
+    // the same /control/ panel: their root and ./control.js map into the
+    // /control/ asset subtree. Everything else the panel loads (/styles.css,
+    // /brand/*, /api/owner/*) uses absolute root paths and resolves normally on
+    // any worker-bound host, so only the two panel-specific paths need
+    // remapping. Access is still gated by the owner login on each host (owner
+    // token is per-origin), so extra hostnames add convenience, not privilege.
+    if (OWNER_PANEL_HOSTS.has(url.hostname)) {
       let mapped = null;
       if (url.pathname === '/' || url.pathname === '') mapped = '/control/';
       else if (url.pathname === '/control.js') mapped = '/control/control.js';
@@ -2377,6 +2389,22 @@ async function handleFreeSignup(request, env) {
   // let an attacker pre-seed a victim's future magic-link recovery with the
   // attacker's senderId. Binding happens only at verified magic-link confirm
   // (worker/src/auth.js), using the confirming device's own senderId.
+
+  // Affiliate signup attribution: if the visitor arrived via a ?ref link the
+  // cybersygn_ref cookie is set; count the signup against that code so the
+  // affiliate's "Signups" stat is real. Best-effort, first signup only, never
+  // blocks the response.
+  if (!result.isReturning) {
+    try {
+      const cookie = request.headers.get('cookie') || '';
+      const m = cookie.match(/(?:^|;\s*)cybersygn_ref=([a-z0-9]{4,16})/);
+      if (m) {
+        const { bumpSignup } = await import('./affiliate.js');
+        await bumpSignup(env, m[1].toLowerCase()).catch(() => {});
+      }
+    } catch (e) { /* attribution is never load-bearing */ }
+  }
+
   return jsonResponse(200, {
     ok: true,
     freeToken: result.freeToken,
@@ -3260,6 +3288,49 @@ async function handleMetricsDashboard(request, env, url) {
     out.revenue.bySource = Object.values(bySource).sort((a, b) => b.mrrCents - a.mrrCents);
   } catch (e) {
     out.errors.push('revenue: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  // At-risk revenue: refunds, disputes, and failed (past-due) payments, from
+  // the best-effort metrics:risk counter the Stripe webhook maintains.
+  out.risk = { refunds: 0, disputes: 0, failedPayments: 0, recent: [] };
+  try {
+    if (env && env.CYBERSYGN_DOCS) {
+      const raw = await env.CYBERSYGN_DOCS.get('metrics:risk');
+      if (raw) {
+        const r = JSON.parse(raw) || {};
+        out.risk.refunds = r.refunds || 0;
+        out.risk.disputes = r.disputes || 0;
+        out.risk.failedPayments = r.failedPayments || 0;
+        out.risk.recent = Array.isArray(r.recent) ? r.recent.slice(0, 8) : [];
+      }
+    }
+  } catch (e) {
+    out.errors.push('risk: ' + (e && e.message ? e.message : 'unknown'));
+  }
+
+  // Affiliate liability: unpaid commission owed across all codes, so the owner
+  // knows what is owed before recruiting more. Bounded list (1000 codes).
+  out.affiliates = { count: 0, unpaidUsd: 0, conversions: 0, top: [] };
+  try {
+    if (env && env.CYBERSYGN_DOCS && typeof env.CYBERSYGN_DOCS.list === 'function') {
+      const res = await env.CYBERSYGN_DOCS.list({ prefix: 'affiliate:code:', limit: 1000 });
+      const rows = [];
+      for (const key of res.keys || []) {
+        const raw = await env.CYBERSYGN_DOCS.get(key.name);
+        if (!raw) continue;
+        let rec; try { rec = JSON.parse(raw); } catch (e) { continue; }
+        if (!rec) continue;
+        out.affiliates.count += 1;
+        const earned = Number(rec.earnedUsd) || 0;
+        const paid = Number(rec.paidUsd) || 0;
+        out.affiliates.unpaidUsd += Math.max(0, earned - paid);
+        out.affiliates.conversions += Number(rec.conversions) || 0;
+        rows.push({ code: rec.code, unpaidUsd: Math.max(0, earned - paid), conversions: Number(rec.conversions) || 0 });
+      }
+      out.affiliates.top = rows.filter(r => r.unpaidUsd > 0).sort((a, b) => b.unpaidUsd - a.unpaidUsd).slice(0, 5);
+    }
+  } catch (e) {
+    out.errors.push('affiliates: ' + (e && e.message ? e.message : 'unknown'));
   }
 
   return jsonResponse(200, out);

@@ -226,7 +226,9 @@ export async function summary(env, opts = {}) {
   // carries a valid owner token, so this cleanly separates owner test
   // traffic from real customer signal in every chart.
   const excludeOwner = opts.excludeOwner !== false;  // default true
-  const ownerClause = excludeOwner ? " AND blob8 != 'owner'" : '';
+  // Also exclude classified bot traffic (blob5='bot') from every summary so
+  // crawler hits do not inflate totals, top paths, or referrers.
+  const ownerClause = (excludeOwner ? " AND blob8 != 'owner'" : '') + " AND blob5 != 'bot'";
 
   const queries = {
     totals: `SELECT SUM(_sample_interval) AS events, COUNT(DISTINCT index1) AS senders FROM ${dataset} WHERE ${since}${ownerClause}`,

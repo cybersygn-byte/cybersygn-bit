@@ -410,6 +410,15 @@ export async function applyStripeEvent(env, event) {
     case 'customer.subscription.deleted':
       result = await onSubscriptionDeleted(env, obj);
       break;
+    case 'invoice.payment_failed':
+      result = await onPaymentFailed(env, obj);
+      break;
+    case 'charge.refunded':
+      result = await onChargeReversed(env, obj, 'refund');
+      break;
+    case 'charge.dispute.created':
+      result = await onChargeReversed(env, obj, 'dispute');
+      break;
     default:
       return { applied: false, reason: `unhandled:${type}` };
   }
@@ -499,6 +508,9 @@ async function onCheckoutCompleted(env, session) {
       : null,
     // First-touch marketing source, set at checkout for MRR attribution.
     source: (session.metadata && session.metadata.source) || null,
+    // Affiliate code that earned this customer, kept so a later refund/dispute
+    // can reverse the commission (clawback) without scanning.
+    ref: (ref && typeof ref === 'string') ? ref.toLowerCase() : null,
     activatedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -653,6 +665,7 @@ async function onSubscriptionUpserted(env, sub) {
     // Preserve first-touch source: prefer the value on the subscription
     // metadata, else keep whatever the original checkout recorded.
     source: (sub.metadata && sub.metadata.source) || existing.source || null,
+    ref: (sub.metadata && sub.metadata.ref) || existing.ref || null,
     priceId: sub.items?.data?.[0]?.price?.id || existing.priceId || null,
     currentPeriodEnd: sub.current_period_end
       ? new Date(sub.current_period_end * 1000).toISOString()
@@ -695,6 +708,63 @@ async function onSubscriptionDeleted(env, sub) {
   await storage.put(`sub:${senderId}`, JSON.stringify(next));
   await recordSubForMetrics(env, senderId, next).catch(() => {});
   return { applied: true, senderId, tier: 'free', status: 'canceled' };
+}
+
+// Best-effort risk counters so the owner panel can surface at-risk revenue
+// without scanning. Non-atomic (same KV tradeoff as every other counter here).
+async function bumpRisk(env, field, senderId) {
+  try {
+    const storage = pickStorage(env);
+    let risk = {};
+    try { risk = JSON.parse((await storage.get('metrics:risk')) || '{}') || {}; } catch (e) {}
+    risk[field] = (risk[field] || 0) + 1;
+    risk.updatedAt = new Date().toISOString();
+    if (senderId) {
+      risk.recent = Array.isArray(risk.recent) ? risk.recent : [];
+      risk.recent.unshift({ field, senderId, at: risk.updatedAt });
+      risk.recent = risk.recent.slice(0, 20);
+    }
+    await storage.put('metrics:risk', JSON.stringify(risk));
+  } catch (e) { /* best-effort */ }
+}
+
+// invoice.payment_failed: a renewal charge failed. Mark the subscription
+// past_due (Stripe will retry per its dunning settings and eventually cancel).
+// Surfaces dunning risk without changing entitlement prematurely.
+async function onPaymentFailed(env, invoice) {
+  const storage = pickStorage(env);
+  const customerId = invoice.customer;
+  const senderId = await senderIdForCustomer(env, customerId);
+  if (!senderId) return { applied: false, reason: 'no_sender_for_customer' };
+  const existing = await getSubscription(env, senderId);
+  const next = { ...existing, status: 'past_due', pastDueAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+  await storage.put(`sub:${senderId}`, JSON.stringify(next));
+  await recordSubForMetrics(env, senderId, next).catch(() => {});
+  await bumpRisk(env, 'failedPayments', senderId);
+  return { applied: true, senderId, status: 'past_due' };
+}
+
+// charge.refunded / charge.dispute.created: money went back. Flag the record
+// and claw back any affiliate commission earned on this customer.
+async function onChargeReversed(env, charge, kind) {
+  const storage = pickStorage(env);
+  const customerId = charge.customer;
+  if (!customerId) return { applied: false, reason: 'no_customer' };
+  const senderId = await senderIdForCustomer(env, customerId);
+  await bumpRisk(env, kind === 'dispute' ? 'disputes' : 'refunds', senderId || null);
+  if (senderId) {
+    const existing = await getSubscription(env, senderId);
+    const next = { ...existing, [kind === 'dispute' ? 'disputedAt' : 'refundedAt']: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    await storage.put(`sub:${senderId}`, JSON.stringify(next));
+    // Affiliate clawback: reverse the bounty if this customer came via a code.
+    if (existing.ref) {
+      try {
+        const { reverseConversion } = await import('./affiliate.js');
+        await reverseConversion(env, String(existing.ref).toLowerCase(), customerId, kind);
+      } catch (e) { console.error('[stripe] affiliate clawback failed:', e && e.message); }
+    }
+  }
+  return { applied: true, kind, senderId: senderId || null };
 }
 
 // ---- Helpers ---------------------------------------------------------------

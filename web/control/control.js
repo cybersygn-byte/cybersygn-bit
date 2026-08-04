@@ -181,6 +181,7 @@ async function loadKpis() {
           sourceRows +
         '</tbody></table>' +
       '</div>' +
+      revenueRiskBlock(d.risk || {}, d.affiliates || {}, money) +
       '<div class="control-integrations">' +
         '<p class="kicker kicker--muted">Integrations</p>' +
         '<ul>' +
@@ -202,6 +203,27 @@ function statBlock(num, label, sub) {
     '<span class="control-stat__num">' + n + '</span>' +
     '<span class="control-stat__label">' + label + '</span>' +
     (sub ? '<span class="control-stat__sub">' + sub + '</span>' : '') +
+  '</div>';
+}
+
+// At-risk revenue (refunds, disputes, failed payments) + affiliate liability.
+// Renders nothing alarming when all zero; the point is early visibility.
+function revenueRiskBlock(risk, aff, money) {
+  const refunds = Number(risk.refunds) || 0;
+  const disputes = Number(risk.disputes) || 0;
+  const failed = Number(risk.failedPayments) || 0;
+  const affCount = Number(aff.count) || 0;
+  const unpaid = money ? money(Math.round((Number(aff.unpaidUsd) || 0) * 100)) : ('$' + (Number(aff.unpaidUsd) || 0));
+  return '<div class="control-revenue">' +
+    '<p class="kicker kicker--muted">Risk and liabilities</p>' +
+    '<div class="control-stats control-stats--rev">' +
+      statBlock(failed, 'Failed payments', 'past-due renewals') +
+      statBlock(refunds, 'Refunds', 'lifetime') +
+      statBlock(disputes, 'Disputes', 'chargebacks') +
+      '<div class="control-stat"><span class="control-stat__num">' + srcEsc(unpaid) + '</span>' +
+        '<span class="control-stat__label">Affiliate owed</span>' +
+        '<span class="control-stat__sub">' + affCount + ' ' + (affCount === 1 ? 'affiliate' : 'affiliates') + '</span></div>' +
+    '</div>' +
   '</div>';
 }
 

@@ -173,6 +173,37 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   return { ok: true, alreadyCounted: false, payoutUsd: PAYOUT_USD };
 }
 
+/**
+ * Reverse a previously-credited conversion (refund, dispute, chargeback). Backs
+ * out the $20 and the conversion count from the affiliate's code record and
+ * marks the per-customer conversion record so it is never re-credited or
+ * double-reversed. Idempotent and best-effort.
+ */
+export async function reverseConversion(env, code, customerId, reason) {
+  if (!isValidCode(code) || !customerId) return { ok: false, error: 'bad_args' };
+  const dedupeKey = `${KV_PREFIX}conv:${code}:${customerId}`;
+  try {
+    const raw = await env.CYBERSYGN_DOCS.get(dedupeKey);
+    if (!raw) return { ok: true, nothingToReverse: true };
+    let conv;
+    try { conv = JSON.parse(raw); } catch (e) { conv = {}; }
+    if (conv.reversed || conv.blocked) return { ok: true, alreadyHandled: true };
+    const rec = await loadCode(env, code);
+    if (rec) {
+      rec.conversions = Math.max(0, (rec.conversions || 0) - 1);
+      rec.earnedUsd = Math.max(0, (rec.earnedUsd || 0) - PAYOUT_USD);
+      rec.reversals = (rec.reversals || 0) + 1;
+      await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
+    }
+    conv.reversed = reason || 'reversed';
+    conv.reversedAt = new Date().toISOString();
+    await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify(conv), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
+    return { ok: true, reversed: true, clawedBackUsd: PAYOUT_USD };
+  } catch (e) {
+    return { ok: false, error: 'reverse_failed' };
+  }
+}
+
 // ---- Public read endpoints ------------------------------------------------
 
 export async function getCodeStats(env, code) {
