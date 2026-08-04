@@ -95,11 +95,11 @@ kept**, because that money may still be owed.
 
 ## Where this is implemented
 
-- `worker/src/affiliate.js` — code minting, Stripe coupon and promotion code
+- `worker/src/affiliate.js`: code minting, Stripe coupon and promotion code
   creation with orphan cleanup, tier ladder, milestones, sprint, conversion
   recording with dedupe, self-referral blocking, clawback.
-- `worker/src/ambassador.js` — email-based identity, product pass lifecycle,
+- `worker/src/ambassador.js`: email-based identity, product pass lifecycle,
   learning progress, payout state, revoke.
-- `worker/src/stripe.js` — server-side discount application at checkout,
+- `worker/src/stripe.js`: server-side discount application at checkout,
   attribution through subscription metadata, refund and dispute reversal.
-- `docs/AMBASSADOR-ACADEMY.md` — the training curriculum and build triggers.
+- `docs/AMBASSADOR-ACADEMY.md`: the training curriculum and build triggers.
