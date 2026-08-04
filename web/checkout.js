@@ -65,6 +65,15 @@ async function startCheckout(button) {
     if (sm) source = decodeURIComponent(sm[1]).toLowerCase().replace(/[^a-z0-9_.-]/g, '').slice(0, 40) || null;
   } catch (e) {}
 
+  // Fire the checkout-intent event: the single most important funnel step,
+  // previously untracked, so signup -> checkout -> paid could never be
+  // computed. Best-effort and non-blocking (never delays the redirect).
+  try {
+    if (window.cybersygn && typeof window.cybersygn.track === 'function') {
+      window.cybersygn.track('checkout_started', { tier: tier, hasRef: !!ref });
+    }
+  } catch (e) {}
+
   try {
     const res = await fetch(ENDPOINT, {
       method: 'POST',

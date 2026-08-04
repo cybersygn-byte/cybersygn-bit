@@ -138,7 +138,7 @@ export async function bumpSignup(env, code) {
  * is created with metadata.ref set. Idempotent on (code, customerId) so
  * a customer's renewals don't double-credit.
  */
-export async function recordConversion(env, code, customerId, tier) {
+export async function recordConversion(env, code, customerId, tier, buyerSenderId) {
   if (!isValidCode(code)) return { ok: false, error: 'invalid_code' };
   if (!customerId) return { ok: false, error: 'missing_customer' };
   const dedupeKey = `${KV_PREFIX}conv:${code}:${customerId}`;
@@ -148,6 +148,19 @@ export async function recordConversion(env, code, customerId, tier) {
   } catch (e) {}
   const rec = await loadCode(env, code);
   if (!rec) return { ok: false, error: 'unknown_code' };
+  // Self-referral guard: an affiliate must not earn a bounty on their own
+  // purchase. $20 on a $9-$19 monthly plan is negative-margin, so a buyer
+  // riding their own ?ref link is pure arbitrage. Block by matching the
+  // buyer's senderId against the code owner's, and remember the block so a
+  // webhook retry does not re-attempt it.
+  if (buyerSenderId && rec.senderId && buyerSenderId === rec.senderId) {
+    try {
+      await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({ at: new Date().toISOString(), tier, blocked: 'self_referral' }), {
+        expirationTtl: 60 * 60 * 24 * 365 * 5,
+      });
+    } catch (e) {}
+    return { ok: false, error: 'self_referral_blocked' };
+  }
   rec.conversions = (rec.conversions || 0) + 1;
   rec.earnedUsd = (rec.earnedUsd || 0) + PAYOUT_USD;
   rec.lastConversionAt = new Date().toISOString();

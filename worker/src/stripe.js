@@ -445,7 +445,9 @@ async function onCheckoutCompleted(env, session) {
   if (ref) {
     try {
       const { recordConversion } = await import('./affiliate.js');
-      await recordConversion(env, ref.toLowerCase(), customerId, tier);
+      // Pass the buyer's senderId so the affiliate module can block a
+      // self-referral (buying through your own code).
+      await recordConversion(env, ref.toLowerCase(), customerId, tier, senderId);
     } catch (e) {
       console.error('[stripe] affiliate credit failed:', e && e.message);
     }
