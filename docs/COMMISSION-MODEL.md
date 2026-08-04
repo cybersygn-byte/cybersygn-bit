@@ -13,26 +13,52 @@ the Stripe checkout page before payment.
 
 ## What each sale pays the ambassador
 
-The bounty is a flat dollar amount per qualifying sale, and it rises with
-lifetime sales. There are no projected or estimated earnings anywhere in this
-program: an ambassador is told what each sale pays, never what they "could
-make."
+The bounty is scaled to the PLAN the customer bought, and it rises with the
+ambassador's lifetime sales. There are no projected or estimated earnings
+anywhere in this program: an ambassador is told what each sale pays, never what
+they "could make."
 
-| Tier | Lifetime sales | Each sale pays |
+Why plan-scaled and not flat: a flat bounty pays the same for a $12 Solo sale
+and a $79 Business sale. That overpays cheap plans (a flat $20 on an Origin
+sale exceeded the $20.07 the sale actually nets), underpays valuable ones, and
+gives nobody a reason to chase the sales that fund the business. Each base
+bounty below is roughly 35 to 40 percent of what the customer's discounted
+first three months actually net after Stripe fees, so every sale is
+margin-positive from day one.
+
+| Plan | Sticker | Base bounty |
 |---|---|---|
-| Bronze | 0 to 4 | $20 |
-| Silver | 5 to 14 | $25 |
-| Gold | 15+ | $30 |
+| Origin | $9/mo | $7 |
+| Solo | $12/mo | $10 |
+| Pro | $19/mo | $16 |
+| Studio | $29/mo | $25 |
+| Business | $79/mo | $70 |
+| Lifetime | $299 once | $85 |
 
-**Milestone bonuses** (paid once each):
-- First sale: +$10
-- 10th sale: +$50
-- 25th sale: +$100
+**Tier multiplier**, by lifetime sales:
+
+| Tier | Lifetime sales | Multiplier |
+|---|---|---|
+| Bronze | 0 to 4 | 1.0x |
+| Silver | 5 to 14 | 1.15x |
+| Gold | 15+ | 1.3x |
+
+So a Gold ambassador selling Business earns $91, and a Bronze ambassador
+selling Solo earns $10.
+
+**Milestone bonuses** (paid once each): first sale +$10, 10th sale +$40, 25th
+sale +$75.
 
 **Monthly sprint** (repeats every calendar month): 5 sales in one calendar
-month pays +$50.
+month pays +$40.
 
-So a first sale at Bronze pays $30 ($20 bounty + $10 first-sale milestone).
+Bonuses are funded by ongoing subscription revenue rather than the first three
+months. Even the heaviest stack (a Gold ambassador closing five Solo sales in
+the month they cross 25 lifetime sales) is recovered by those customers'
+ongoing payments inside a single month.
+
+Add-ons (extra seats, white-label) attach to an existing plan and do not pay a
+separate bounty.
 
 ## What counts as a qualifying sale
 

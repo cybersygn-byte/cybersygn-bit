@@ -2791,12 +2791,18 @@ async function handleStatus(request, env, url) {
  * zero-sale ambassadors get an activation checklist instead of a wall of
  * zeros. The client renders what it is given, it never invents numbers.
  */
+
+/** Canonical base URL for links inside ambassador mail. */
+function baseUrlForMail(env, url) {
+  return (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
+}
+
 async function handleAmbassadorMe(request, env, url) {
   const senderId = String(url.searchParams.get('senderId') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
 
   const { ambassadorBySender, passActive, touchPass, payoutState } = await import('./ambassador.js');
-  const { tierFor, TIERS: LADDER, MILESTONES, SPRINT, DISCOUNT } = await import('./affiliate.js');
+  const { tierFor, TIERS: LADDER, MILESTONES, SPRINT, DISCOUNT, payoutFor } = await import('./affiliate.js');
 
   const rec = await ambassadorBySender(env, senderId);
   if (!rec) return jsonResponse(404, { error: 'not_an_ambassador' });
@@ -2824,8 +2830,10 @@ async function handleAmbassadorMe(request, env, url) {
     discount: DISCOUNT.label,
     status: rec.status === 'revoked' ? 'revoked' : 'active',
     pass: { active: passActive(rec), until: rec.passUntil || null },
-    tier: { key: tier.key, label: tier.label, bounty: tier.bounty },
-    nextTier: nextTier ? { label: nextTier.label, bounty: nextTier.bounty, salesRemaining: nextTier.min - sales } : null,
+    // Bounty is per-plan now, so the tier carries its multiplier and the
+    // payout table below shows what each plan actually pays.
+    tier: { key: tier.key, label: tier.label, mult: tier.mult, soloBounty: payoutFor('solo', sales) },
+    nextTier: nextTier ? { label: nextTier.label, mult: nextTier.mult, salesRemaining: nextTier.min - sales } : null,
     nextMilestone: nextMilestone ? { label: nextMilestone.label, bonus: nextMilestone.bonus, salesRemaining: nextMilestone.at - sales } : null,
     sprint: { needed: SPRINT.salesNeeded, bonus: SPRINT.bonus, sales: monthly.sales, paid: !!monthly.sprintPaid, month: monthly.month },
     stats: { clicks, sales, conversionRate },
@@ -2843,12 +2851,12 @@ async function handleAmbassadorMe(request, env, url) {
         stickerUsd: sticker,
         buyerPaysUsd: buyerPays,
         buyerPaysNote: `for ${DISCOUNT.months} months`,
-        youEarnUsd: tier.bounty,
+        youEarnUsd: payoutFor(planId, sales),
       };
     }),
     // First-sale math, shown only to ambassadors who have not sold yet.
     firstSale: sales === 0
-      ? { bounty: tier.bounty, milestoneBonus: (MILESTONES[0] && MILESTONES[0].bonus) || 0, totalUsd: tier.bounty + ((MILESTONES[0] && MILESTONES[0].bonus) || 0) }
+      ? { bounty: payoutFor('pro', 0), milestoneBonus: (MILESTONES[0] && MILESTONES[0].bonus) || 0, totalUsd: payoutFor('pro', 0) + ((MILESTONES[0] && MILESTONES[0].bonus) || 0), plan: 'Pro' }
       : null,
   });
 }
@@ -2894,6 +2902,21 @@ async function handleAffiliateRegister(request, env, url) {
     // product on their own contract before pitching it (lesson 1 asks them to).
     const { touchPass } = await import('./ambassador.js');
     await touchPass(env, result.record, 'enrolled');
+    // You-are-live email with a SIGNED-IN dashboard link. They just proved
+    // this email is theirs, so we do not force a second round trip. Guarded
+    // at-most-once inside sendYouAreLive.
+    if (result.isNew && email) {
+      const { sendYouAreLive } = await import('./ambassador-email.js');
+      const { payoutFor } = await import('./affiliate.js');
+      await sendYouAreLive(env, {
+        to: email,
+        code: result.code,
+        shareUrl: `${baseUrlForMail(env, url)}/?ref=${result.code}`,
+        discount: DISCOUNT.label,
+        signedInUrl: `${baseUrlForMail(env, url)}/ambassador/?s=${encodeURIComponent(senderId)}`,
+        bounty: payoutFor('pro', 0),
+      }).catch(() => {});
+    }
   } catch (e) {
     console.error('[affiliate] discount provision failed:', e && e.message);
   }

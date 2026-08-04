@@ -35,17 +35,64 @@ const CODE_LEN = 8;  // base36 chars; ~2.8 trillion address space
 // ---- Commission ladder (docs/COMMISSION-MODEL.md is the plain-language copy)
 // Bounty per qualifying sale, rising with LIFETIME sales. Milestones pay once.
 // The monthly sprint repeats every calendar month.
+// UNIT ECONOMICS. The bounty is scaled to the PLAN, not flat, because a flat
+// bounty overpays cheap plans and underpays valuable ones. Each base bounty is
+// about 35 to 40 percent of the net revenue from the customer's discounted
+// first three months (sticker, minus the 20 percent ambassador discount, minus
+// Stripe's 2.9 percent + 30 cents per charge), so EVERY sale is margin-positive
+// on day one and Business/Studio sales are visibly worth chasing.
+//
+//   plan      net first 3 months   base bounty   margin
+//   Origin    $20.07               $7            +$13.07
+//   Solo      $27.07               $10           +$17.07
+//   Pro       $43.38               $16           +$27.38
+//   Studio    $66.68               $25           +$41.68
+//   Business  $183.20              $70           +$113.20
+//   Lifetime  $231.96              $85           +$146.96
+//
+// A flat $20 previously paid MORE than an Origin sale earned ($20.07 net) and
+// a first Solo sale actually lost money once the first-sale bonus applied.
+export const PLAN_BOUNTY = {
+  founding: 7,  founding_annual: 7,
+  solo: 10,     solo_annual: 10,
+  pro: 16,      pro_annual: 16,
+  team: 25,     team_annual: 25,
+  business: 70, business_annual: 70,
+  lifetime: 85,
+  // Add-ons attach to an existing plan and do not pay a separate bounty.
+  seat: 0, whitelabel: 0, free: 0,
+};
+export const DEFAULT_BOUNTY = 10;
+
+// The ladder is now a MULTIPLIER on the plan bounty, so climbing pays more on
+// every plan without ever inverting the plan-value relationship.
 export const TIERS = [
-  { key: 'bronze', label: 'Bronze', min: 0,  bounty: 20 },
-  { key: 'silver', label: 'Silver', min: 5,  bounty: 25 },
-  { key: 'gold',   label: 'Gold',   min: 15, bounty: 30 },
+  { key: 'bronze', label: 'Bronze', min: 0,  mult: 1.0 },
+  { key: 'silver', label: 'Silver', min: 5,  mult: 1.15 },
+  { key: 'gold',   label: 'Gold',   min: 15, mult: 1.3 },
 ];
+// Bonuses are funded by ongoing subscription revenue, not the first 3 months.
+// Sized so even the worst stack (Gold, five cheap sales, milestone + sprint in
+// one month) is recovered by ongoing revenue inside a single month.
 export const MILESTONES = [
-  { at: 1,  bonus: 10,  label: 'First sale' },
-  { at: 10, bonus: 50,  label: '10 sales' },
-  { at: 25, bonus: 100, label: '25 sales' },
+  { at: 1,  bonus: 10, label: 'First sale' },
+  { at: 10, bonus: 40, label: '10 sales' },
+  { at: 25, bonus: 75, label: '25 sales' },
 ];
-export const SPRINT = { salesNeeded: 5, bonus: 50, label: '5 sales in a calendar month' };
+export const SPRINT = { salesNeeded: 5, bonus: 40, label: '5 sales in a calendar month' };
+
+/** Base bounty for a Stripe tier id, before the ladder multiplier. */
+export function bountyForPlan(planId) {
+  const b = PLAN_BOUNTY[String(planId || '').toLowerCase()];
+  return typeof b === 'number' ? b : DEFAULT_BOUNTY;
+}
+
+/** What a specific plan actually pays this ambassador at their current tier. */
+export function payoutFor(planId, conversions) {
+  const base = bountyForPlan(planId);
+  if (base <= 0) return 0;
+  return Math.round(base * tierFor(conversions).mult);
+}
 // What the buyer gets for using an ambassador code.
 export const DISCOUNT = { percentOff: 20, months: 3, label: '20% off their first 3 months' };
 
@@ -248,7 +295,14 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   // Ladder: the bounty is set by the tier the ambassador is in AS OF this sale.
   rec.conversions = (rec.conversions || 0) + 1;
   const earnedTier = tierFor(rec.conversions);
-  let credit = earnedTier.bounty;
+  // Plan-scaled: what this specific sale is worth, times the ladder multiplier.
+  // Add-ons pay 0, so an add-on purchase never mints a bounty.
+  let credit = payoutFor(tier, rec.conversions);
+  if (credit <= 0) {
+    // Not a bounty-bearing purchase (add-on, free). Count nothing, pay nothing.
+    rec.conversions -= 1;
+    return { ok: false, error: 'non_qualifying_plan' };
+  }
   const bonuses = [];
   for (const m of MILESTONES) {
     if (rec.conversions === m.at) { credit += m.bonus; bonuses.push(m.label); }
@@ -264,6 +318,9 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     bonuses.push(SPRINT.label);
   }
   rec.earnedUsd = (rec.earnedUsd || 0) + credit;
+  rec.ledger = Array.isArray(rec.ledger) ? rec.ledger : [];
+  rec.ledger.push({ at: new Date().toISOString(), what: `${tier} sale`, amount: credit });
+  if (rec.ledger.length > 200) rec.ledger = rec.ledger.slice(-200);
   rec.tier = earnedTier.key;
   rec.lastConversionAt = new Date().toISOString();
   try {
@@ -329,3 +386,8 @@ export const __forTests = {
   COOKIE_DAYS,
   KV_PREFIX,
 };
+
+/** Full ambassador record by code (internal callers: email, owner tooling). */
+export async function getCodeRecord(env, code) {
+  return loadCode(env, code);
+}

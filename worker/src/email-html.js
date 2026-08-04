@@ -464,3 +464,37 @@ export function renderOriginWelcomeHtml({ name, foundingNumber, url }) {
       </p>`,
   });
 }
+
+/**
+ * Ambassador mail shell. A thin wrapper so ambassador emails cannot drift from
+ * the product's look: callers pass semantic fragments and this applies the same
+ * inline-styled shell every other CyberSygn email uses.
+ *
+ * Supported fragment classes (rewritten to inline styles here):
+ *   cs-title  headline      cs-text  paragraph
+ *   cs-kv     key/value row (uses cs-kv-key + cs-kv-val spans)
+ *   cs-muted  fine print
+ */
+export function renderAmbassadorHtml({ preheader, body }) {
+  const styled = String(body || '')
+    .replace(/<h1 class="cs-title"[^>]*>/g,
+      `<h1 class="cs-title" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-0.02em;color:${NAVY};">`)
+    .replace(/<h2 class="cs-title"([^>]*)>/g,
+      `<h2 class="cs-title" style="margin:24px 0 8px 0;font-family:${FONT_STACK};font-size:18px;line-height:1.3;font-weight:700;color:${NAVY};"$1>`)
+    .replace(/<p class="cs-text"([^>]*)>/g,
+      `<p class="cs-text" style="margin:0 0 16px 0;font-family:${FONT_STACK};font-size:15px;line-height:1.6;color:${INK};"$1>`)
+    .replace(/<p class="cs-muted"[^>]*>/g,
+      `<p class="cs-muted" style="margin:16px 0 0 0;font-family:${FONT_STACK};font-size:12px;line-height:1.5;color:${MUTED};">`)
+    .replace(/<div class="cs-kv">/g,
+      `<div style="border-top:1px solid ${LINE};padding:8px 0;font-family:${FONT_STACK};">`)
+    .replace(/<span class="cs-kv-key">/g,
+      `<span class="cs-kv-key" style="display:inline-block;width:44%;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:${MUTED};">`)
+    .replace(/<span class="cs-kv-val">/g,
+      `<span class="cs-kv-val" style="font-size:15px;color:${NAVY};font-weight:600;">`)
+    .replace(/<a href=/g, `<a style="color:${CYAN};" href=`);
+  return shell({
+    preheader,
+    footer: 'You are getting this because you are a CyberSygn ambassador. Reply to this email any time, it reaches the founder directly.',
+    body: styled,
+  });
+}

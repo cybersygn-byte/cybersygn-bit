@@ -165,7 +165,7 @@ function renderNextWin(d) {
     sub = target.v.salesRemaining + (target.v.salesRemaining === 1 ? ' sale away' : ' sales away');
   } else {
     total = sales + target.v.salesRemaining;
-    title = target.v.label + ' tier, ' + money(target.v.bounty) + ' per sale';
+    title = target.v.label + ' tier, ' + Math.round(target.v.mult * 100 - 100) + '% more on every sale';
     sub = target.v.salesRemaining + (target.v.salesRemaining === 1 ? ' sale away' : ' sales away');
   }
   $('amb-nextwin-body').innerHTML =
@@ -188,7 +188,7 @@ function renderSprint(d) {
 
 function renderPayoutTable(d) {
   $('amb-payout-lede').textContent =
-    'You are ' + d.tier.label + ' tier, so every qualifying sale pays you ' + money(d.tier.bounty) + '. This is what each plan looks like.';
+    'You are ' + d.tier.label + ' tier. Bigger plans pay more, so this is what each one pays you.';
   $('amb-payout-body').innerHTML = (d.payoutTable || []).map(r =>
     '<tr>' +
       '<td>' + esc(r.plan) + '</td>' +
@@ -200,7 +200,7 @@ function renderPayoutTable(d) {
   if (d.firstSale) {
     const n = $('amb-firstsale-note');
     n.hidden = false;
-    n.textContent = 'Your first sale pays ' + money(d.firstSale.totalUsd) + ': ' +
+    n.textContent = 'Your first ' + (d.firstSale.plan || 'Pro') + ' sale pays ' + money(d.firstSale.totalUsd) + ': ' +
       money(d.firstSale.bounty) + ' for the sale plus a ' + money(d.firstSale.milestoneBonus) + ' first-sale bonus.';
   }
 }

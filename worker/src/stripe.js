@@ -479,8 +479,32 @@ async function onCheckoutCompleted(env, session) {
       const { recordConversion } = await import('./affiliate.js');
       // Pass the buyer's senderId so the affiliate module can block a
       // self-referral (buying through your own code).
-      await recordConversion(env, ref.toLowerCase(), customerId, tier, senderId,
+      const conv = await recordConversion(env, ref.toLowerCase(), customerId, tier, senderId,
         session.customer_details?.email || session.customer_email || null);
+      // Sale alert. Guarded per conversion (code + stripe customer) so a
+      // webhook redelivery cannot double-send. Never blocks the webhook.
+      if (conv && conv.ok && !conv.alreadyCounted) {
+        try {
+          const [{ sendSaleAlert }, aff] = await Promise.all([
+            import('./ambassador-email.js'),
+            import('./affiliate.js'),
+          ]);
+          const rec = await aff.getCodeRecord(env, ref.toLowerCase());
+          if (rec && rec.email) {
+            const base = (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io';
+            await sendSaleAlert(env, {
+              to: rec.email,
+              code: rec.code,
+              guardKey: `${rec.code}:${customerId}`,
+              amount: conv.payoutUsd,
+              bonuses: conv.bonuses || [],
+              tierLabel: aff.tierFor(rec.conversions || 0).label,
+              totalSales: rec.conversions || 0,
+              dashUrl: `${base}/ambassador/`,
+            });
+          }
+        } catch (e) { console.error('[ambassador] sale alert failed:', e && e.message); }
+      }
     } catch (e) {
       console.error('[stripe] affiliate credit failed:', e && e.message);
     }
