@@ -376,15 +376,35 @@ wrong before.
 
 ---
 
-## 8. Year end: 1099-NEC
+## 8. Year end: two filings, two thresholds
 
-### Who needs one
+### Who needs what
 
-A US payee (`taxDocType: "w9"`) whose `paidThisYearUsd` is at or above their
-`reportingThresholdUsd` for that calendar year.
+There are TWO separate returns with TWO different floors. Do not read one
+number and assume you are done. For each US payee (`taxDocType: "w9"`):
 
-- **2026 threshold: $2,000.** Not $600. IRC 6041(a) as amended by Pub. L.
+| Paid in the year | Federal 1099-NEC | Colorado return |
+|---|---|---|
+| Under $600 | No | No |
+| $600 to $1,999 | **No** | **Yes** |
+| $2,000 and up | Yes | Yes |
+
+Read the flags, not the blended number:
+- `reportingLikelyFederal` (against `federalThresholdUsd`) drives the 1099-NEC.
+- `reportingLikelyState` (against `stateThresholdUsd`) drives the Colorado one.
+- `reportingThresholdUsd` is the LOWER of the two and exists to decide "does
+  this payee need paperwork at all". It is NOT the 1099-NEC threshold. Filing a
+  1099-NEC off that number would file federal returns for payees who do not
+  need one.
+
+- **2026 federal threshold: $2,000.** IRC 6041(a) as amended by Pub. L.
   119-21 section 70433, applicable to payments made after December 31, 2025.
+- **2026 Colorado threshold: $600.** Colorado did not conform to the federal
+  increase. Colorado also does NOT accept 1099-NEC through the Combined
+  Federal/State Filing program: CDOR requires a separate .TXT upload in IRS
+  Publication 1220 format through Revenue Online, against a Colorado
+  withholding account. No filing vendor does this leg for you automatically,
+  so budget for it as manual work every January.
 - **2027 and later re-index.** IRC 6041(h) indexes for inflation, rounded to
   the nearest $100. The code carries a per-year table
   (`REPORTING_THRESHOLD_BY_YEAR`). **Seed the new year in that table every

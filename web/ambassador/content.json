@@ -5,7 +5,7 @@
       "channel": "SMS / iMessage",
       "label": "Text a friend",
       "public": false,
-      "body": "Hey, you still emailing PDFs back and forth to get things signed? I started using CyberSygn and it's kind of a relief. You drop in a PDF, the AI finds every signature, date, and initial spot in about 3 seconds, and the person signing doesn't have to make an account or log in to anything. First document is free, no card. If you want to try it, use my link and you get {{DISCOUNT}}: {{LINK}}",
+      "body": "Hey, you still emailing PDFs back and forth to get things signed? I started using CyberSygn and it's kind of a relief. You drop in a PDF, the AI finds every signature, date, and initial spot in about 3 seconds, and the person signing doesn't have to make an account or log in to anything. First document is free, no card. If you want to try it, use my link and you get {{DISCOUNT}}: {{LINK}} (full disclosure: that's my referral link, I earn a commission if you subscribe.)",
       "whyFirst": "Send to the one friend you've personally watched wrestle with a PDF; a real memory makes it land."
     },
     {
@@ -13,7 +13,7 @@
       "channel": "DM to a peer (Slack / IG / LinkedIn DM)",
       "label": "DM a peer",
       "public": false,
-      "body": "Random, but this feels like your kind of tool. It's CyberSygn, an e-signature thing. The part that won me over: upload a PDF and its AI tags every signature, date, and initial field in ~3 seconds, so I'm not dragging boxes around by hand. And whoever I send it to signs without creating an account. Every finished doc also gets a tamper-evident SHA-256 certificate, so it holds up. Your first one is free (no card). If you end up liking it, my link gets you {{DISCOUNT}}: {{LINK}}",
+      "body": "Random, but this feels like your kind of tool. It's CyberSygn, an e-signature thing. The part that won me over: upload a PDF and its AI tags every signature, date, and initial field in ~3 seconds, so I'm not dragging boxes around by hand. And whoever I send it to signs without creating an account. Every finished doc also gets a tamper-evident SHA-256 certificate, so it holds up. Your first one is free (no card). If you end up liking it, my link gets you {{DISCOUNT}}: {{LINK}} (and yes, that's a referral link, I get a commission if you sign up.)",
       "whyFirst": "Best for a peer who signs contracts weekly; lead with the field detection, it's the part they'll feel day one."
     },
     {
@@ -21,7 +21,7 @@
       "channel": "Email to a coach / multiplier",
       "label": "Email a multiplier",
       "public": false,
-      "body": "Subject: A signing tool worth passing to your people\n\nHi [Name],\n\nYou work with a lot of operators who are still stuck emailing contracts around, so I wanted to put this in front of you.\n\nIt's called CyberSygn. Three things that actually matter:\n1. Drop in a PDF and the AI finds every signature, date, and initial field in about 3 seconds. No manual box-dragging.\n2. The person signing needs no account and no login. They just sign.\n3. Every completed document gets a tamper-evident SHA-256 certificate.\n\nThe first document is free, no card required, so anyone can test it on a real contract in a couple of minutes.\n\nIf it's useful to your group, here's my link, and it gets them {{DISCOUNT}}: {{LINK}}\n\nHappy to walk anyone through it.\n\nThanks,\n[Your name]",
+      "body": "Subject: A signing tool worth passing to your people\n\nHi [Name],\n\nYou work with a lot of operators who are still stuck emailing contracts around, so I wanted to put this in front of you.\n\nIt's called CyberSygn. Three things that actually matter:\n1. Drop in a PDF and the AI finds every signature, date, and initial field in about 3 seconds. No manual box-dragging.\n2. The person signing needs no account and no login. They just sign.\n3. Every completed document gets a tamper-evident SHA-256 certificate.\n\nThe first document is free, no card required, so anyone can test it on a real contract in a couple of minutes.\n\nIf it's useful to your group, here's my link, and it gets them {{DISCOUNT}}: {{LINK}}\n\nHappy to walk anyone through it.\n\nThanks,\n[Your name]\n\nDisclosure: that is my referral link and I earn a commission if someone subscribes through it.",
       "whyFirst": "Coaches and community leaders are multipliers; one yes puts it in front of dozens. Give them the clean 3-point version they can forward."
     },
     {

@@ -355,15 +355,42 @@ await t('a small sale reversal does not steal from other sales', async () => {
   const code = 'orig01';
   await env.CYBERSYGN_DOCS.put(`affiliate:code:${code}`, JSON.stringify(baseRec({ code, conversions: 0, earnedUsd: 0 })));
   await recordConversion(env, code, 'cus_a', 'founding', 'sub_a');
-  const afterFirst = JSON.parse(env._kv.get(`affiliate:code:${code}`)).earnedUsd;
   await recordConversion(env, code, 'cus_b', 'pro', 'sub_b');
-  const afterBoth = JSON.parse(env._kv.get(`affiliate:code:${code}`)).earnedUsd;
+  const both = JSON.parse(env._kv.get(`affiliate:code:${code}`));
+  const proBounty = both.ledger.find(e => e.type === 'bounty' && e.customerId === 'cus_b').amount;
 
   await reverseConversion(env, code, 'cus_a', 'refund');
-  const afterRev = JSON.parse(env._kv.get(`affiliate:code:${code}`)).earnedUsd;
-  assert.equal(afterRev, Math.round((afterBoth - afterFirst) * 100) / 100,
-    'the surviving sale keeps every cent it earned');
-  assert.ok(afterRev > 0);
+  const after = JSON.parse(env._kv.get(`affiliate:code:${code}`));
+
+  // The surviving sale keeps every cent of its own bounty.
+  assert.ok(after.earnedUsd >= proBounty, 'the surviving sale keeps its bounty');
+  // And the ledger still reconciles to the scalar.
+  assert.equal(Math.round(after.ledger.reduce((s, e) => s + e.amount, 0) * 100) / 100, after.earnedUsd,
+    'ledger and earnedUsd stay in lockstep through a reversal');
+});
+
+// THE INVARIANT the whole reconcile exists to protect. Earnings must be a pure
+// function of the sales that are still standing. If a refunded-then-replaced
+// book paid differently from a clean book of the same shape, the ledger drifts
+// and neither the ambassador nor the owner can ever reconcile it.
+await t('identical standing books pay identically, refunds and all', async () => {
+  async function bookValue(code, steps) {
+    const env = makeEnv();
+    await env.CYBERSYGN_DOCS.put(`affiliate:code:${code}`, JSON.stringify(baseRec({ code, conversions: 0, earnedUsd: 0 })));
+    for (const s of steps) {
+      if (s[0] === 'sale') await recordConversion(env, code, s[1], s[2], `sub_${s[1]}`);
+      else await reverseConversion(env, code, s[1], 'refund');
+    }
+    return JSON.parse(env._kv.get(`affiliate:code:${code}`)).earnedUsd;
+  }
+  // Sold two, refunded one. Standing book: a single pro sale.
+  const messy = await bookValue('mess01', [
+    ['sale', 'cus_a', 'founding'], ['sale', 'cus_b', 'pro'], ['rev', 'cus_a'],
+  ]);
+  // Sold one, never refunded. Standing book: a single pro sale. Same shape.
+  const clean = await bookValue('cln001', [['sale', 'cus_b', 'pro']]);
+  assert.equal(messy, clean,
+    `a refunded-and-replaced book must pay the same as a clean one (${messy} vs ${clean})`);
 });
 
 await t('reversal writes a negative ledger entry so ledger and earned agree', async () => {

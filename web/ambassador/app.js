@@ -504,7 +504,10 @@ function renderPaid(d, faq) {
   const p = (d && d.payout) || {};
   const T = programTerms(d);
 
-  const available = fin(p.availableUsd);
+  // payoutState names this payableUsd. Only the owner roster renames it to
+  // availableUsd, so reading availableUsd here was always undefined and the
+  // ambassador's headline "payable now" figure never rendered.
+  const available = fin(p.payableUsd != null ? p.payableUsd : p.availableUsd);
   const pending = fin(p.pendingUsd);
   const paid = fin(p.paidUsd);
   const earned = fin(p.earnedAllTimeUsd);
@@ -658,7 +661,11 @@ function renderPaid(d, faq) {
     '<div class="amb-term"><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd></div>').join('');
 
   // ---- Tax paperwork -------------------------------------------------------
-  const state = typeof p.taxDocState === 'string' ? p.taxDocState : 'none';
+  // payoutState returns the normalized value as w9State. taxDocState is the
+  // owner-roster alias, so reading it here always fell through to 'none' and
+  // told an ambassador with a W-9 on file that we had nothing.
+  const state = typeof p.w9State === 'string' ? p.w9State
+    : (typeof p.taxDocState === 'string' ? p.taxDocState : 'none');
   const tax = TAX_COPY[state] || TAX_COPY.none;
   const onFile = state === 'w9_on_file' || state === 'w8ben_on_file';
   let taxBody = '<p>' + esc(tax.body) + '</p>';
@@ -689,6 +696,55 @@ function renderPaid(d, faq) {
     }
   }
   $('amb-paid-tax').innerHTML = callout(onFile ? 'ok' : 'warn', tax.title, taxBody);
+
+  // ---- Accepting the program terms ----------------------------------------
+  // Without this control nobody could ever clear no_terms_acceptance, so every
+  // payout was blocked forever. The code is minted silently on first dashboard
+  // visit, which is fine for a tracking code but is not agreement to a payout
+  // contract, so acceptance is an explicit, deliberate action here.
+  const acceptBox = $('amb-paid-accept');
+  if (acceptBox) {
+    if (p.termsCurrent) {
+      acceptBox.innerHTML = callout('ok', 'Program terms accepted',
+        '<p>You accepted the ambassador terms' +
+        (p.termsAcceptedAt ? ' on ' + esc(new Date(p.termsAcceptedAt).toLocaleDateString()) : '') +
+        '. You can reread them any time at <a href="/ambassador/terms/">the terms page</a>.</p>');
+    } else {
+      acceptBox.innerHTML = callout('warn', 'Accept the program terms to get paid',
+        '<p>Money cannot move until you have agreed to how it works. Read ' +
+        '<a href="/ambassador/terms/" target="_blank" rel="noopener">the ambassador terms</a>, ' +
+        'then accept below. It covers what each sale pays, the 30 day hold, the ' +
+        esc(money(fin(T.minimumUsd) != null ? T.minimumUsd : 25)) + ' minimum, clawbacks on refunds, and taxes.</p>' +
+        '<p><button type="button" class="btn btn--primary" id="amb-accept-btn">I have read and accept the terms</button></p>' +
+        '<p class="amb-note" id="amb-accept-msg"></p>');
+      const btn = $('amb-accept-btn');
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          const msg = $('amb-accept-msg');
+          if (msg) msg.textContent = 'Recording your acceptance...';
+          try {
+            const res = await fetch('/api/ambassador/accept-terms', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ senderId: senderId(), termsVersion: T.termsVersion || T.version }),
+            });
+            const data = await res.json().catch(() => null);
+            if (res.ok && data && data.ok) { load(); return; }
+            if (msg) {
+              msg.textContent = (data && data.error === 'stale_terms_version')
+                ? 'The terms were updated. Reload the page and read the current version.'
+                : 'That did not save. Try again, or email me and I will sort it out.';
+            }
+            btn.disabled = false;
+          } catch (e) {
+            if (msg) msg.textContent = 'That did not save. Check your connection and try again.';
+            btn.disabled = false;
+          }
+        });
+      }
+    }
+  }
 
   // ---- Anything blocking a payout right now --------------------------------
   const reasons = Array.isArray(p.blockReasons)

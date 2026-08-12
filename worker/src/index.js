@@ -359,6 +359,11 @@ const worker = {
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/learn' });
       return handleAmbassadorLearn(request, env, url);
     }
+    if (request.method === 'POST' && url.pathname === '/api/ambassador/accept-terms') {
+      const rl = await checkRateLimit(env, `ambterms:${ipKey(request)}`, [{ windowSec: 60, max: 20 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/accept-terms' });
+      return handleAmbassadorAcceptTerms(request, env, url);
+    }
     if (request.method === 'POST' && url.pathname === '/api/affiliate/click') {
       const rl = await checkRateLimit(env, `aff-click:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/click' });
@@ -3011,7 +3016,7 @@ async function handleAmbassadorMe(request, env, url) {
   const senderId = String(url.searchParams.get('senderId') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
 
-  const { ambassadorBySender, passActive, touchPass, payoutState } = await import('./ambassador.js');
+  const { ambassadorBySender, passActive, touchPass, payoutState, PAYOUT_TERMS } = await import('./ambassador.js');
   const { tierFor, TIERS: LADDER, MILESTONES, SPRINT, DISCOUNT, payoutFor } = await import('./affiliate.js');
 
   const rec = await ambassadorBySender(env, senderId);
@@ -3048,6 +3053,11 @@ async function handleAmbassadorMe(request, env, url) {
     sprint: { needed: SPRINT.salesNeeded, bonus: SPRINT.bonus, sales: monthly.sales, paid: !!monthly.sprintPaid, month: monthly.month },
     stats: { clicks, sales, conversionRate },
     hasSales: sales > 0,
+    // The dashboard renders terms from the server so the published numbers and
+    // the enforced ones cannot drift. Without this it silently fell back to a
+    // hardcoded literal in app.js, which is the exact drift the single source
+    // of truth exists to prevent.
+    terms: PAYOUT_TERMS,
     payout: payoutState(rec),
     learn: rec.learn || {},
     ledger: Array.isArray(rec.ledger) ? rec.ledger.slice(-10).reverse() : [],
@@ -3068,6 +3078,52 @@ async function handleAmbassadorMe(request, env, url) {
     firstSale: sales === 0
       ? { bounty: payoutFor('pro', 0), milestoneBonus: (MILESTONES[0] && MILESTONES[0].bonus) || 0, totalUsd: payoutFor('pro', 0) + ((MILESTONES[0] && MILESTONES[0].bonus) || 0), plan: 'Pro' }
       : null,
+  });
+}
+
+/**
+ * POST /api/ambassador/accept-terms {senderId, termsVersion} -> record it.
+ *
+ * The affiliate code is minted silently on the first dashboard visit, which is
+ * fine for a tracking code but is NOT agreement to a payout contract. Without
+ * this endpoint no ambassador could ever accept, so the no_terms_acceptance
+ * block was permanent and unclearable and NOBODY could be paid, ever.
+ */
+async function handleAmbassadorAcceptTerms(request, env, url) {
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const payload = body.value || {};
+  const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!senderId) return jsonResponse(400, { error: 'missing_sender' });
+
+  const { ambassadorBySender, acceptTermsForCode, payoutState, TERMS_VERSION } = await import('./ambassador.js');
+  const rec = await ambassadorBySender(env, senderId);
+  if (!rec) return jsonResponse(404, { error: 'not_an_ambassador' });
+
+  // Only the CURRENT published version can be accepted. Letting a client name
+  // an arbitrary version would let someone accept terms that were never shown.
+  const claimed = String(payload.termsVersion || TERMS_VERSION);
+  if (claimed !== TERMS_VERSION) {
+    return jsonResponse(409, { error: 'stale_terms_version', current: TERMS_VERSION });
+  }
+
+  // Hash the IP rather than storing it: enough to evidence acceptance, not a
+  // durable record of where someone was.
+  let ipHash = null;
+  try {
+    const { sha256Hex } = await import('./audit.js');
+    const ip = request.headers.get('cf-connecting-ip') || '';
+    if (ip) ipHash = await sha256Hex(ip);
+  } catch (e) {}
+
+  const result = await acceptTermsForCode(env, rec.code, TERMS_VERSION, ipHash);
+  if (!result || !result.ok) return jsonResponse(400, { error: (result && result.error) || 'accept_failed' });
+  const fresh = await ambassadorBySender(env, senderId);
+  return jsonResponse(200, {
+    ok: true,
+    termsVersion: TERMS_VERSION,
+    termsAcceptedAt: fresh && fresh.termsAcceptedAt,
+    payout: payoutState(fresh || rec),
   });
 }
 

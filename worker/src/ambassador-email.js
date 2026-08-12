@@ -342,9 +342,14 @@ export async function runWeeklyDigest(env, { redirectTo } = {}) {
 
   await eachAmbassador(env, async (rec) => {
     const week = (rec.ledger || []).filter(e => Date.parse(e.at || 0) >= since);
-    const sales = week.length;
+    // ONE SALE CAN WRITE THREE ENTRIES (bounty, milestone, sprint) and a
+    // reversal writes negative ones, so counting entries reported a single sale
+    // as three and a refund week as new sales. Count bounty entries only.
+    const sales = week.filter(e => e && e.type === 'bounty' && Number(e.amount) > 0).length;
     if (!sales || !rec.email) { out.quiet += 1; return; }
-    const earned = week.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    // Earnings still sum EVERY entry, including negatives, so a week with a
+    // refund reports the true net rather than an inflated gross.
+    const earned = Math.round(week.reduce((s, e) => s + (Number(e.amount) || 0), 0) * 100) / 100;
     const r = await sendWeeklyDigest(env, {
       to: redirectTo || rec.email,
       code: rec.code, weekKey, sales, earned,

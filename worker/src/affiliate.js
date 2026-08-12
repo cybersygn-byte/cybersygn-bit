@@ -348,14 +348,46 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     amount: credit, what: `${tier} sale`,
   }];
   const bonuses = [];
+  // A milestone is awarded at most ONCE, ever, and that fact is PERSISTED.
+  // It used to be inferred from `rec.conversions === m.at`, a live counter that
+  // reverseConversion decrements. Reversing any sale other than the one that
+  // triggered the milestone left the bonus credited AND re-armed the trigger,
+  // so the next sale paid it again. A refund-and-replace cycle that always
+  // netted 10 sales minted the $40 bonus six times: $420 earned against a true
+  // book of $262.
+  rec.milestonesPaid = (rec.milestonesPaid && typeof rec.milestonesPaid === 'object')
+    ? rec.milestonesPaid : {};
+  // BACKFILL for records written before milestonesPaid existed. Seed from the
+  // ledger where we have evidence, then assume any milestone already at or
+  // below the lifetime count was paid under the old rule. Assuming PAID is the
+  // safe direction: the worst case is an ambassador misses a bonus we cannot
+  // prove they are owed, which is visible and fixable by hand, versus silently
+  // paying a 20-sale veteran their first-sale and 10-sale bonuses all over
+  // again on their next sale. The ledger is capped and can be archived, so its
+  // silence is not proof a milestone was never paid.
+  if (!rec.milestonesPaidSeeded) {
+    for (const e of (Array.isArray(rec.ledger) ? rec.ledger : [])) {
+      if (e && e.type === 'milestone' && Number(e.amount) > 0) {
+        const m = MILESTONES.find(x => x.bonus === Number(e.amount));
+        if (m && !rec.milestonesPaid[m.at]) rec.milestonesPaid[m.at] = e.id || true;
+      }
+    }
+    const priorConversions = Math.max(0, (rec.conversions || 0) - 1);
+    for (const m of MILESTONES) {
+      if (priorConversions >= m.at && !rec.milestonesPaid[m.at]) rec.milestonesPaid[m.at] = 'legacy';
+    }
+    rec.milestonesPaidSeeded = true;
+  }
   for (const m of MILESTONES) {
-    if (rec.conversions === m.at) {
+    if (rec.conversions >= m.at && !rec.milestonesPaid[m.at]) {
+      const mid = ledgerId();
       credit += m.bonus;
       bonuses.push(m.label);
       entries.push({
-        id: ledgerId(), at, clearsAt, type: 'milestone', planId, customerId,
+        id: mid, at, clearsAt, type: 'milestone', planId, customerId,
         amount: m.bonus, what: `${m.label} bonus`,
       });
+      rec.milestonesPaid[m.at] = mid;
     }
   }
   // Monthly sprint: repeatable, tracked per calendar month.
@@ -364,11 +396,15 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     ? rec.monthly : { month: monthKey, sales: 0, sprintPaid: false };
   rec.monthly.sales += 1;
   if (!rec.monthly.sprintPaid && rec.monthly.sales >= SPRINT.salesNeeded) {
+    const sid = ledgerId();
     credit += SPRINT.bonus;
     rec.monthly.sprintPaid = true;
+    // Keep the entry id so a reversal can withdraw THIS bonus by id rather
+    // than silently re-arming the threshold for the next sale to re-earn.
+    rec.monthly.sprintEntryId = sid;
     bonuses.push(SPRINT.label);
     entries.push({
-      id: ledgerId(), at, clearsAt, type: 'sprint', planId, customerId,
+      id: sid, at, clearsAt, type: 'sprint', planId, customerId,
       amount: SPRINT.bonus, what: `${SPRINT.label} bonus`,
     });
   }
@@ -376,19 +412,30 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   pushLedger(rec, entries);
   rec.tier = earnedTier.key;
   rec.lastConversionAt = at;
+
+  // CLAIM BEFORE CREDIT. The dedupe key is written FIRST. If the second write
+  // fails, the sale is claimed but uncredited: visible and recoverable. The old
+  // order credited first, so a failed dedupe write left a credited sale with no
+  // claim, and every webhook redelivery credited it again. A swallowed error
+  // that still returned ok:true is how that stayed invisible.
+  const dedupeValue = JSON.stringify({
+    at, tier, planId,
+    creditTotal: credit,
+    entryIds: entries.map(e => e.id),
+    month: monthKey,
+  });
+  try {
+    await env.CYBERSYGN_DOCS.put(dedupeKey, dedupeValue, { expirationTtl: 60 * 60 * 24 * 365 * 5 });
+  } catch (e) {
+    return { ok: false, error: 'dedupe_claim_failed' };
+  }
   try {
     await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
-    // creditTotal + entryIds are what let a reversal back out the EXACT amount
-    // this sale credited instead of a flat figure that is wrong in both
-    // directions ($20 clawed back against a $7 Origin sale quietly takes $13
-    // out of a different, legitimately earned sale).
-    await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({
-      at, tier, planId,
-      creditTotal: credit,
-      entryIds: entries.map(e => e.id),
-      month: monthKey,
-    }), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
-  } catch (e) {}
+  } catch (e) {
+    // Claimed but not credited. Say so instead of reporting a success, so the
+    // webhook can be redelivered and the gap can be reconciled by hand.
+    return { ok: false, error: 'credit_write_failed', claimed: true, payoutUsd: credit };
+  }
   return { ok: true, alreadyCounted: false, payoutUsd: credit, tier: earnedTier.key, bonuses };
 }
 
@@ -429,43 +476,113 @@ export async function reverseConversion(env, code, customerId, reason) {
     const legacy = !Number.isFinite(credited);
 
     const rec = await loadCode(env, code);
-    if (rec) {
-      const at = new Date().toISOString();
-      rec.conversions = Math.max(0, (rec.conversions || 0) - 1);
-      rec.earnedUsd = Math.round(((rec.earnedUsd || 0) - clawback) * 100) / 100;
-      rec.reversals = (rec.reversals || 0) + 1;
+    // No record means we cannot apply the debit. Marking the dedupe key
+    // reversed anyway would poison it forever: the sale stays credited and no
+    // retry can ever reverse it, because the marker says it is already handled.
+    if (!rec) return { ok: false, error: 'record_unavailable' };
 
-      // Cleared immediately: a reversal must reduce the payable balance now, not
-      // sit in the hold window where it could be paid around.
-      pushLedger(rec, [{
-        id: ledgerId(),
-        at,
-        clearsAt: at,
-        type: 'reversal',
-        planId: conv.planId || null,
-        customerId,
-        amount: -clawback,
-        what: `reversal (${reason || 'reversed'})`,
-        reversesEntryIds: Array.isArray(conv.entryIds) ? conv.entryIds : [],
-        legacyFlatClawback: legacy || undefined,
-      }]);
+    const at = new Date().toISOString();
+    const reversedIds = Array.isArray(conv.entryIds) ? conv.entryIds : [];
+    rec.conversions = Math.max(0, (rec.conversions || 0) - 1);
+    rec.earnedUsd = Math.round(((rec.earnedUsd || 0) - clawback) * 100) / 100;
+    rec.reversals = (rec.reversals || 0) + 1;
 
-      // The sale no longer counts toward the month, so the sprint can be
-      // re-earned honestly, and it no longer counts toward tier.
-      if (rec.monthly && rec.monthly.month === conv.month) {
-        rec.monthly.sales = Math.max(0, (rec.monthly.sales || 0) - 1);
-        if (rec.monthly.sprintPaid && rec.monthly.sales < SPRINT.salesNeeded) {
-          rec.monthly.sprintPaid = false;
-        }
-      }
-      rec.tier = tierFor(rec.conversions).key;
+    // Cleared immediately: a reversal must reduce the payable balance now, not
+    // sit in the hold window where it could be paid around.
+    const reversalEntries = [{
+      id: ledgerId(),
+      at,
+      clearsAt: at,
+      type: 'reversal',
+      planId: conv.planId || null,
+      customerId,
+      amount: -clawback,
+      what: `reversal (${reason || 'reversed'})`,
+      reversesEntryIds: reversedIds,
+      legacyFlatClawback: legacy || undefined,
+    }];
 
-      await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
+    // Clear any bonus flag whose entry was inside this sale's creditTotal. The
+    // money is already backed out above, so the flag must stop claiming it is
+    // paid. Reconciliation below then decides whether it is re-earned.
+    rec.milestonesPaid = (rec.milestonesPaid && typeof rec.milestonesPaid === 'object')
+      ? rec.milestonesPaid : {};
+    for (const m of MILESTONES) {
+      const paidId = rec.milestonesPaid[m.at];
+      if (paidId && reversedIds.includes(paidId)) delete rec.milestonesPaid[m.at];
     }
+    if (rec.monthly && rec.monthly.month === conv.month) {
+      rec.monthly.sales = Math.max(0, (rec.monthly.sales || 0) - 1);
+      if (rec.monthly.sprintEntryId && reversedIds.includes(rec.monthly.sprintEntryId)) {
+        rec.monthly.sprintPaid = false;
+        rec.monthly.sprintEntryId = null;
+      }
+    }
+
+    // CANONICAL RECONCILE. Entitlement is recomputed from the surviving counts,
+    // then the record is moved to match it. This is symmetric by construction:
+    // entitled-but-unpaid credits, paid-but-not-entitled debits. Patching the
+    // flags case by case is what produced both a $158 overpayment and, once
+    // that was half-fixed, a $40 shortfall when a reversed sale happened to be
+    // the one carrying the sprint bonus.
+    for (const m of MILESTONES) {
+      const entitled = rec.conversions >= m.at;
+      const paid = !!rec.milestonesPaid[m.at];
+      if (entitled && !paid) {
+        const mid = ledgerId();
+        rec.earnedUsd = Math.round((rec.earnedUsd + m.bonus) * 100) / 100;
+        reversalEntries.push({
+          id: mid, at, clearsAt: at, type: 'milestone',
+          planId: conv.planId || null, customerId,
+          amount: m.bonus, what: `${m.label} bonus`,
+        });
+        rec.milestonesPaid[m.at] = mid;
+      } else if (!entitled && paid) {
+        rec.earnedUsd = Math.round((rec.earnedUsd - m.bonus) * 100) / 100;
+        reversalEntries.push({
+          id: ledgerId(), at, clearsAt: at, type: 'reversal',
+          planId: conv.planId || null, customerId,
+          amount: -m.bonus, what: `${m.label} bonus withdrawn`,
+        });
+        delete rec.milestonesPaid[m.at];
+      }
+    }
+    if (rec.monthly && rec.monthly.month === conv.month) {
+      const entitled = (rec.monthly.sales || 0) >= SPRINT.salesNeeded;
+      if (entitled && !rec.monthly.sprintPaid) {
+        const sid = ledgerId();
+        rec.earnedUsd = Math.round((rec.earnedUsd + SPRINT.bonus) * 100) / 100;
+        reversalEntries.push({
+          id: sid, at, clearsAt: at, type: 'sprint',
+          planId: conv.planId || null, customerId,
+          amount: SPRINT.bonus, what: `${SPRINT.label} bonus`,
+        });
+        rec.monthly.sprintPaid = true;
+        rec.monthly.sprintEntryId = sid;
+      } else if (!entitled && rec.monthly.sprintPaid) {
+        rec.earnedUsd = Math.round((rec.earnedUsd - SPRINT.bonus) * 100) / 100;
+        reversalEntries.push({
+          id: ledgerId(), at, clearsAt: at, type: 'reversal',
+          planId: conv.planId || null, customerId,
+          amount: -SPRINT.bonus, what: `${SPRINT.label} bonus withdrawn`,
+        });
+        rec.monthly.sprintPaid = false;
+        rec.monthly.sprintEntryId = null;
+      }
+    }
+
+    pushLedger(rec, reversalEntries);
+    rec.tier = tierFor(rec.conversions).key;
+
+    // CLAIM BEFORE DEBIT, same reasoning as recordConversion. If the debit write
+    // fails after the marker lands, the reversal is un-applied and visible, not
+    // applied twice. The old order debited first, so a throw on the marker write
+    // left the debit applied with nothing to stop a second attempt.
     conv.reversed = reason || 'reversed';
-    conv.reversedAt = new Date().toISOString();
+    conv.reversedAt = at;
     conv.clawedBackUsd = clawback;
     await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify(conv), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
+    await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
     return { ok: true, reversed: true, clawedBackUsd: clawback, legacyFlatClawback: legacy };
   } catch (e) {
     return { ok: false, error: 'reverse_failed' };

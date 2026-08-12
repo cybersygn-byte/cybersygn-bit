@@ -307,12 +307,20 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
     // buyer sees the promised discount without typing anything. If the code has
     // no promo (legacy code, or Stripe call failed at setup), we simply do not
     // discount: attribution still works and checkout still succeeds.
-    try {
-      const { promoIdForCode } = await import('./affiliate.js');
-      const promoId = await promoIdForCode(env, ref);
-      if (promoId) body.set('discounts[0][promotion_code]', promoId);
-    } catch (e) {
-      console.error('[stripe] promo lookup failed:', e && e.message);
+    // NOT on one-time purchases. The ambassador coupon is duration=repeating
+    // over 3 months, which Stripe rejects on a 'payment' mode session, so
+    // attaching it to Lifetime failed the whole checkout rather than merely
+    // skipping the discount. "20% off the first 3 months" has no meaning on a
+    // one-time purchase anyway. Attribution and the bounty are unaffected:
+    // both ride on metadata, not on the discount.
+    if (!isOneTime) {
+      try {
+        const { promoIdForCode } = await import('./affiliate.js');
+        const promoId = await promoIdForCode(env, ref);
+        if (promoId) body.set('discounts[0][promotion_code]', promoId);
+      } catch (e) {
+        console.error('[stripe] promo lookup failed:', e && e.message);
+      }
     }
   }
 
