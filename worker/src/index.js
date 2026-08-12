@@ -371,6 +371,19 @@ const worker = {
       }
     }
 
+    // ---- Ambassador program, owner only ------------------------------
+    if (request.method === 'GET' && url.pathname === '/api/owner/ambassadors') {
+      return handleOwnerAmbassadors(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/payout') {
+      return handleOwnerAmbassadorPayout(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/revoke') {
+      return handleOwnerAmbassadorRevoke(request, env, url);
+    }
+    if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/test-email') {
+      return handleOwnerAmbassadorTestEmail(request, env, url);
+    }
     if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
       return handleMetricsDashboard(request, env, url);
     }
@@ -780,6 +793,21 @@ const worker = {
     if (shouldRunDripCampaign(event)) {
       ctx.waitUntil(runDripCampaign(env, event));
     }
+    // Ambassador mail. Monthly scoreboard on the 1st (same window as the owner
+    // report), weekly digest on Mondays. Both are internally guarded so a
+    // duplicate cron fire cannot double-send.
+    if (shouldRunMonthlyReport(event)) {
+      ctx.waitUntil((async () => {
+        const { runMonthlyScoreboard } = await import('./ambassador-email.js');
+        await runMonthlyScoreboard(env, {});
+      })().catch((e) => console.error('[ambassador] monthly failed:', e && e.message)));
+    }
+    if (shouldRunAmbassadorWeekly(event)) {
+      ctx.waitUntil((async () => {
+        const { runWeeklyDigest } = await import('./ambassador-email.js');
+        await runWeeklyDigest(env, {});
+      })().catch((e) => console.error('[ambassador] weekly failed:', e && e.message)));
+    }
     // Daily KV to R2 backup at 03:00 UTC (slice 100). No-op if R2
     // binding isn't configured.
     if (shouldRunKvBackup(event)) {
@@ -823,6 +851,15 @@ export default worker;
 function selfDispatch(env, ctx) {
   const safeCtx = ctx && typeof ctx.waitUntil === 'function' ? ctx : { waitUntil() {}, passThroughOnException() {} };
   return (request) => worker.fetch(request, env, safeCtx);
+}
+
+/**
+ * Ambassador weekly digest window: Mondays 15:00 UTC (mid-morning US). The
+ * digest itself only mails ambassadors who had sales, so a quiet week is silent.
+ */
+function shouldRunAmbassadorWeekly(event) {
+  const now = event && event.scheduledTime ? new Date(event.scheduledTime) : new Date();
+  return now.getUTCDay() === 1 && now.getUTCHours() === 15;
 }
 
 function shouldRunMonthlyReport(event) {
@@ -2791,6 +2828,108 @@ async function handleStatus(request, env, url) {
  * zero-sale ambassadors get an activation checklist instead of a wall of
  * zeros. The client renders what it is given, it never invents numbers.
  */
+
+
+// ---- Phase 6: owner visibility into the ambassador program ----------------
+
+/**
+ * GET /api/owner/ambassadors
+ * The roster plus the number that actually matters to a solo operator: total
+ * unpaid commission liability. Owner-gated like every /api/owner/* route.
+ */
+async function handleOwnerAmbassadors(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+
+  const [{ payoutState, passActive }, { tierFor }] = await Promise.all([
+    import('./ambassador.js'), import('./affiliate.js'),
+  ]);
+
+  const rows = [];
+  const totals = { ambassadors: 0, active: 0, sales: 0, earnedUsd: 0, paidUsd: 0, owedUsd: 0, w9Needed: 0 };
+  try {
+    let cursor, pages = 0;
+    while (pages < 10) {
+      const page = await env.CYBERSYGN_DOCS.list({ prefix: 'affiliate:code:', limit: 100, cursor });
+      for (const k of (page.keys || [])) {
+        let rec = null;
+        try { rec = JSON.parse(await env.CYBERSYGN_DOCS.get(k.name)); } catch (e) {}
+        if (!rec || !rec.code) continue;
+        const pay = payoutState(rec);
+        const active = passActive(rec);
+        totals.ambassadors += 1;
+        if (active) totals.active += 1;
+        totals.sales += Number(rec.conversions) || 0;
+        totals.earnedUsd += pay.earnedAllTimeUsd;
+        totals.paidUsd += pay.paidUsd;
+        totals.owedUsd += pay.owedUsd;
+        if (pay.w9Required && pay.w9State !== 'received') totals.w9Needed += 1;
+        rows.push({
+          code: rec.code,
+          email: rec.email || '',
+          status: rec.status === 'revoked' ? 'revoked' : (active ? 'active' : 'lapsed'),
+          tier: tierFor(rec.conversions || 0).label,
+          clicks: Number(rec.clicks) || 0,
+          sales: Number(rec.conversions) || 0,
+          earnedUsd: pay.earnedAllTimeUsd,
+          paidUsd: pay.paidUsd,
+          owedUsd: pay.owedUsd,
+          w9Required: pay.w9Required,
+          w9State: pay.w9State,
+          createdAt: rec.createdAt || null,
+          lastConversionAt: rec.lastConversionAt || null,
+        });
+      }
+      pages += 1;
+      if (page.list_complete || !page.cursor) break;
+      cursor = page.cursor;
+    }
+  } catch (e) {
+    return jsonResponse(200, { ok: true, rows, totals, error: 'partial_list' });
+  }
+  // Highest liability first: that is the queue the owner works.
+  rows.sort((a, b) => b.owedUsd - a.owedUsd || b.sales - a.sales);
+  return jsonResponse(200, { ok: true, rows, totals });
+}
+
+/** POST /api/owner/ambassadors/payout {code, amount, method, note} */
+async function handleOwnerAmbassadorPayout(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { code, amount, method, note } = body.value || {};
+  const { recordPayout } = await import('./ambassador.js');
+  const r = await recordPayout(env, String(code || '').toLowerCase(), { amount, method, note });
+  return jsonResponse(r.ok ? 200 : 400, r);
+}
+
+/** POST /api/owner/ambassadors/revoke {code, reason} */
+async function handleOwnerAmbassadorRevoke(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { code, reason } = body.value || {};
+  const { revokeAmbassador } = await import('./ambassador.js');
+  const r = await revokeAmbassador(env, String(code || '').toLowerCase(), reason);
+  return jsonResponse(r.ok ? 200 : 400, r);
+}
+
+/**
+ * POST /api/owner/ambassadors/test-email
+ * Renders the monthly scoreboard from REAL records but ALWAYS redirects the
+ * send to the owner, so a test can never reach a real ambassador.
+ */
+async function handleOwnerAmbassadorTestEmail(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const to = ownerEmail(env);
+  if (!to) return jsonResponse(400, { error: 'no_owner_email' });
+  const { runMonthlyScoreboard } = await import('./ambassador-email.js');
+  const result = await runMonthlyScoreboard(env, { redirectTo: to, limit: 3 });
+  return jsonResponse(200, { ok: true, redirectedTo: to, ...result });
+}
 
 /** Canonical base URL for links inside ambassador mail. */
 function baseUrlForMail(env, url) {

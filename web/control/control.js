@@ -432,5 +432,120 @@ if (forgotLink && resetReqForm) {
   });
 })();
 
+// ----- Ambassador program tile ----------------------------------------------
+
+async function loadAmbassadors() {
+  const body = $('ctrl-amb-body');
+  if (!body) return;
+  body.innerHTML = '<p class="control-tile__empty">Loading ambassadors.</p>';
+  try {
+    const res = await fetch('/api/owner/ambassadors', {
+      headers: { 'X-CyberSygn-Owner': readToken() },
+    });
+    if (res.status === 401) { body.innerHTML = '<p class="control-tile__empty">Session expired.</p>'; return; }
+    if (!res.ok) { body.innerHTML = '<p class="control-tile__empty">Could not load: HTTP ' + res.status + '</p>'; return; }
+    const d = await res.json();
+    const t = d.totals || {};
+    const money = (n) => '$' + (Math.round((Number(n) || 0) * 100) / 100).toLocaleString();
+
+    if (!d.rows || !d.rows.length) {
+      body.innerHTML = '<p class="control-tile__empty">No ambassadors enrolled yet.</p>';
+      return;
+    }
+
+    const rows = d.rows.map((r) => (
+      '<tr>' +
+        '<td class="control-src__name">' + srcEsc(r.code.toUpperCase()) + '</td>' +
+        '<td>' + srcEsc(r.status) + '</td>' +
+        '<td>' + srcEsc(r.tier) + '</td>' +
+        '<td class="control-src__num">' + r.sales + '</td>' +
+        '<td class="control-src__num">' + money(r.earnedUsd) + '</td>' +
+        '<td class="control-src__num"><strong>' + money(r.owedUsd) + '</strong></td>' +
+        '<td>' + (r.w9Required ? srcEsc(r.w9State || 'needed') : 'n/a') + '</td>' +
+        '<td class="control-amb__act">' +
+          (r.owedUsd > 0 ? '<button class="btn btn--ghost btn--sm" data-payout="' + srcEsc(r.code) + '" data-owed="' + r.owedUsd + '">Pay</button> ' : '') +
+          (r.status !== 'revoked' ? '<button class="btn btn--ghost btn--sm" data-revoke="' + srcEsc(r.code) + '">Revoke</button>' : '') +
+        '</td>' +
+      '</tr>'
+    )).join('');
+
+    body.innerHTML =
+      '<div class="control-stats">' +
+        statBlock(t.active, 'Active', t.ambassadors + ' enrolled') +
+        statBlock(t.sales, 'Attributed sales', 'all time') +
+        '<div class="control-stat"><span class="control-stat__num">' + money(t.owedUsd) + '</span>' +
+          '<span class="control-stat__label">Unpaid liability</span>' +
+          '<span class="control-stat__sub">' + money(t.earnedUsd) + ' earned, ' + money(t.paidUsd) + ' paid</span></div>' +
+        statBlock(t.w9Needed, 'W-9 needed', 'past $600 this year') +
+      '</div>' +
+      '<table class="control-src-table"><thead><tr>' +
+        '<th>Code</th><th>Status</th><th>Tier</th>' +
+        '<th class="control-src__num">Sales</th>' +
+        '<th class="control-src__num">Earned</th>' +
+        '<th class="control-src__num">Owed</th>' +
+        '<th>W-9</th><th>Actions</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>';
+  } catch (err) {
+    body.innerHTML = '<p class="control-tile__empty">Network error: ' + (err.message || err) + '</p>';
+  }
+}
+
+// Payout and revoke, both confirmed before they fire. Revoke is destructive
+// (it kills the Stripe promo and the product pass) so it asks twice.
+document.addEventListener('click', async (e) => {
+  const payBtn = e.target.closest('[data-payout]');
+  if (payBtn) {
+    const code = payBtn.dataset.payout;
+    const owed = payBtn.dataset.owed;
+    const amount = window.prompt('Record a payout for ' + code.toUpperCase() + '. Amount owed is $' + owed + '. Enter the amount you actually sent:', owed);
+    if (amount === null) return;
+    const method = window.prompt('Method (paypal, wise, other):', 'paypal');
+    if (method === null) return;
+    payBtn.disabled = true;
+    const res = await fetch('/api/owner/ambassadors/payout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-CyberSygn-Owner': readToken() },
+      body: JSON.stringify({ code, amount: Number(amount), method }),
+    });
+    if (res.ok) loadAmbassadors(); else payBtn.disabled = false;
+    return;
+  }
+  const revBtn = e.target.closest('[data-revoke]');
+  if (revBtn) {
+    const code = revBtn.dataset.revoke;
+    if (!window.confirm('Revoke ' + code.toUpperCase() + '? This deactivates their discount code and ends their product pass. Earned commission is kept.')) return;
+    const reason = window.prompt('Reason (kept on the record):', '');
+    if (reason === null) return;
+    revBtn.disabled = true;
+    const res = await fetch('/api/owner/ambassadors/revoke', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-CyberSygn-Owner': readToken() },
+      body: JSON.stringify({ code, reason }),
+    });
+    if (res.ok) loadAmbassadors(); else revBtn.disabled = false;
+  }
+});
+
+const ambRefresh = $('ctrl-amb-refresh');
+if (ambRefresh) ambRefresh.addEventListener('click', loadAmbassadors);
+const ambTest = $('ctrl-amb-test');
+if (ambTest) ambTest.addEventListener('click', async () => {
+  ambTest.disabled = true;
+  const prior = ambTest.textContent;
+  ambTest.textContent = 'Sending.';
+  try {
+    const res = await fetch('/api/owner/ambassadors/test-email', {
+      method: 'POST',
+      headers: { 'X-CyberSygn-Owner': readToken() },
+    });
+    const d = await res.json().catch(() => ({}));
+    ambTest.textContent = res.ok ? ('Sent to ' + (d.redirectedTo || 'you')) : 'Failed';
+  } catch (e) { ambTest.textContent = 'Failed'; }
+  setTimeout(() => { ambTest.textContent = prior; ambTest.disabled = false; }, 2600);
+});
+
+
 // Initial paint
 paint();
+loadAmbassadors();
+

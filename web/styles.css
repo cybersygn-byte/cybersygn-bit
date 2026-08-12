@@ -9480,3 +9480,7 @@ body[data-owner-active="true"] .free-pill {
 }
 .control-src__name { font-family: var(--mono, ui-monospace, monospace); }
 .control-src__num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---- Control panel: ambassador roster actions --------------------------- */
+.control-amb__act { white-space: nowrap; text-align: right; }
+.control-amb__act .btn { margin-left: 4px; }

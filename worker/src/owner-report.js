@@ -52,12 +52,41 @@ export async function runMonthlyOwnerReport(env, event) {
     foundingCapValue = foundingCap();
   } catch (e) {}
 
+  // Ambassador program totals: how many are active, how much they have sold,
+  // and the number a solo operator most needs to see, unpaid commission
+  // liability. Best-effort so a KV hiccup never blocks the report.
+  let ambassadors = null;
+  try {
+    const [{ payoutState, passActive }] = await Promise.all([import('./ambassador.js')]);
+    const t = { count: 0, active: 0, sales: 0, earnedUsd: 0, owedUsd: 0 };
+    let cursor, pages = 0;
+    while (pages < 10) {
+      const page = await env.CYBERSYGN_DOCS.list({ prefix: 'affiliate:code:', limit: 100, cursor });
+      for (const k of (page.keys || [])) {
+        let rec = null;
+        try { rec = JSON.parse(await env.CYBERSYGN_DOCS.get(k.name)); } catch (e) {}
+        if (!rec || !rec.code) continue;
+        const pay = payoutState(rec);
+        t.count += 1;
+        if (passActive(rec)) t.active += 1;
+        t.sales += Number(rec.conversions) || 0;
+        t.earnedUsd += pay.earnedAllTimeUsd;
+        t.owedUsd += pay.owedUsd;
+      }
+      pages += 1;
+      if (page.list_complete || !page.cursor) break;
+      cursor = page.cursor;
+    }
+    ambassadors = t;
+  } catch (e) { /* report still sends without this block */ }
+
   // Render HTML email. Inline styles only; email clients strip <style>.
   const html = renderReportHtml({
     monthLabel: now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' }),
     stats,
     foundingTaken,
     foundingCap: foundingCapValue,
+    ambassadors,
     generatedAt: now.toISOString(),
   });
   const text = renderReportText({
@@ -65,6 +94,7 @@ export async function runMonthlyOwnerReport(env, event) {
     stats,
     foundingTaken,
     foundingCap: foundingCapValue,
+    ambassadors,
     generatedAt: now.toISOString(),
   });
 
@@ -158,6 +188,20 @@ function renderReportHtml(ctx) {
       </table>
     </td></tr>
 
+    ${ctx.ambassadors ? `<tr><td style="padding:24px 32px;">
+      <h2 style="margin:0 0 8px;font-size:16px;font-weight:600;">Ambassador program.</h2>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr><td style="padding:6px 0;color:#3A4258;font-size:14px;">Active of enrolled</td>
+            <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;">${ctx.ambassadors.active} / ${ctx.ambassadors.count}</td></tr>
+        <tr><td style="padding:6px 0;color:#3A4258;font-size:14px;">Attributed sales</td>
+            <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;">${ctx.ambassadors.sales}</td></tr>
+        <tr><td style="padding:6px 0;color:#3A4258;font-size:14px;">Commission earned, all time</td>
+            <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;">$${ctx.ambassadors.earnedUsd.toFixed(2)}</td></tr>
+        <tr><td style="padding:6px 0;color:#3A4258;font-size:14px;font-weight:600;">Unpaid liability</td>
+            <td style="padding:6px 0;text-align:right;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;">$${ctx.ambassadors.owedUsd.toFixed(2)}</td></tr>
+      </table>
+    </td></tr>` : ''}
+
     <tr><td style="padding:24px 32px;">
       <h2 style="margin:0 0 8px;font-size:16px;font-weight:600;">Training readiness.</h2>
       <p style="margin:0 0 8px;color:#3A4258;font-size:14px;">
@@ -202,6 +246,14 @@ function renderReportText(ctx) {
     ``,
     `Training readiness: ${ready.percentReady}% (${ready.current} of ${ready.threshold} examples).`,
     ``,
+    ...(ctx.ambassadors ? [
+      `Ambassador program:`,
+      `  ${ctx.ambassadors.active} active of ${ctx.ambassadors.count} enrolled`,
+      `  ${ctx.ambassadors.sales} attributed sales`,
+      `  $${ctx.ambassadors.earnedUsd.toFixed(2)} commission earned all time`,
+      `  $${ctx.ambassadors.owedUsd.toFixed(2)} UNPAID liability`,
+      ``,
+    ] : []),
     `Generated ${ctx.generatedAt}`,
   ].join('\n');
 }
