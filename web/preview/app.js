@@ -4903,8 +4903,53 @@ async function boot() {
     // Optional ?theme=light|dark|auto and ?accent=#hex from slice 95.
     applyEmbedTheme(params.get('theme'), params.get('accent'));
     await enterEmbedMode(pdfUrl, params.get('embed') || 'embed');
+  } else if (params.get('from') === 'draft' && loadDraftBridge()) {
+    // Handled inside loadDraftBridge.
   } else {
     resetApp();
+  }
+}
+
+/**
+ * Pick up a PDF that /draft/ just generated.
+ *
+ * /draft/ has always written the finished PDF to sessionStorage under a
+ * versioned key, but nothing here read it, so the AI-drafting flow handed
+ * the user a file and then asked them to re-upload the file it had just
+ * made. That broke the one funnel the homepage advertises, for the only
+ * visitors guaranteed to have a PDF in hand.
+ *
+ * Returns true when it took over the boot path.
+ */
+function loadDraftBridge() {
+  const KEY = 'cybersygn.draft.pdf.v1';
+  let raw = null;
+  try { raw = sessionStorage.getItem(KEY); } catch (e) { return false; }
+  if (!raw) return false;
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch (e) {
+    try { sessionStorage.removeItem(KEY); } catch (e2) {}
+    return false;
+  }
+  // Field names must match what draft/app.js writes at :305.
+  const b64 = parsed && typeof parsed.pdfBase64 === 'string' ? parsed.pdfBase64 : null;
+  if (!b64) return false;
+
+  // One-shot: clear before loading so a refresh cannot resurrect a stale
+  // draft over whatever the user is working on now.
+  try { sessionStorage.removeItem(KEY); } catch (e) {}
+
+  try {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const name = (parsed.filename && String(parsed.filename)) || 'draft.pdf';
+    const file = new File([bytes], name, { type: 'application/pdf' });
+    handleFiles([file]);
+    return true;
+  } catch (e) {
+    console.error('[preview] draft bridge failed:', e && e.message);
+    return false;
   }
 }
 

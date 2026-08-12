@@ -1389,9 +1389,27 @@ async function main() {
     ok(pMonthlyOnly.pro === false, 'pro not purchasable when only the monthly price exists');
     const pBoth = stripe.purchasableTiers({ STRIPE_PRICE_PRO: 'price_x', STRIPE_PRICE_PRO_ANNUAL: 'price_y' });
     ok(pBoth.pro === true, 'pro purchasable when both monthly and annual prices exist');
+    // RETIRED SKUs are never purchasable, even with a live Stripe price.
+    // Seats and white-label were withdrawn 2026-08-12: the whitelabel
+    // entitlement was written and read by nothing, and one flat member cap
+    // applied to every plan, so both took money and delivered no change.
     const pSeat = stripe.purchasableTiers({ STRIPE_PRICE_SEAT: 'price_s' });
-    ok(pSeat.seat === true, 'seat add-on purchasable with its single price (no annual variant needed)');
+    ok(pSeat.seat === false, 'retired seat add-on is NOT purchasable even though its price exists');
+    const pWl = stripe.purchasableTiers({ STRIPE_PRICE_WHITELABEL: 'price_w' });
+    ok(pWl.whitelabel === false, 'retired white-label add-on is NOT purchasable even though its price exists');
     ok(stripe.purchasableTiers({}).solo === false, 'unpriced tier is not purchasable');
+
+    // And the server refuses at checkout, not just in the UI, so a stale page
+    // or a hand-crafted request cannot buy a withdrawn SKU.
+    let retiredErr = null;
+    try {
+      await stripe.createCheckoutSession(
+        { STRIPE_SECRET_KEY: 'sk_test_x', STRIPE_PRICE_SEAT: 'price_s', CYBERSYGN_APP_URL: 'https://x.test' },
+        { tier: 'seat', senderId: 'someone' },
+      );
+    } catch (e) { retiredErr = e; }
+    ok(retiredErr && /retired/i.test(String(retiredErr.code || retiredErr.message || '')),
+      'checkout refuses a retired SKU server-side');
 
     // An add-on purchase must NOT overwrite the base plan in sub:<senderId>.
     await store.put('sub:addon-tester', JSON.stringify({ tier: 'pro', status: 'active', stripeSubscriptionId: 'sub_base' }));

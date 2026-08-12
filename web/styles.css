@@ -1880,7 +1880,16 @@ button { font: inherit; cursor: pointer; }
   display: flex;
   gap: var(--s-3);
   flex-wrap: wrap;
-  margin-bottom: var(--s-6);
+  margin-bottom: var(--s-2);
+}
+
+/* Sits under the hero buttons. Answers the two objections a stranger has
+   before clicking anything: what will this cost me, and where does my
+   document go. */
+.hero__actions-note {
+  margin: 0 0 var(--s-6);
+  font-size: var(--t-sm);
+  color: var(--text-2);
 }
 
 .hero__note {
@@ -8399,6 +8408,26 @@ details[open] > .field-list__group--toggle::after {
   font-size: var(--t-sm);
   line-height: 1.55;
 }
+
+/* "No contract handy? Try it on a sample" under the upload buttons. The
+   whole product rests on a claim you can only believe by watching it, so
+   the path to watching it cannot require a file the visitor lacks. */
+.dropzone-card__sample {
+  margin: var(--s-3) 0 0;
+  font-size: var(--t-sm);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.dropzone-card__sample-link {
+  color: var(--accent);
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.dropzone-card__sample-link:hover,
+.dropzone-card__sample-link:focus-visible {
+  text-decoration: underline;
+}
 .free-gate__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -8448,15 +8477,16 @@ details[open] > .field-list__group--toggle::after {
 }
 .free-status__cap a { color: var(--accent-text); }
 
-/* Free-gated state (no signup yet): the upload buttons and hints HIDE
-   completely. The free-gate becomes the only path forward, the
-   conversion paywall. Once signup succeeds the data-free-gated flips
-   to "false" and the upload buttons reveal. Three uploads counted by
-   email (server-side) so cookie clears can't reset the count. */
-body[data-free-gated="true"] .dropzone-card__actions,
-body[data-free-gated="true"] .dropzone-card__hints {
-  display: none;
-}
+/* Free-gated state (no signup yet): the upload buttons and hints STAY
+   VISIBLE. They used to be hidden, which made the signup form the only
+   path forward and meant a first-time visitor could not try the one
+   thing that proves this product works.
+
+   Field detection runs entirely in the browser and costs nothing to
+   serve, so there is no reason to charge personal data for it. The
+   real gate is at DOWNLOAD time (app.js, "One step left"), which is
+   after the visitor has already seen the value. Three uploads are
+   counted by email server-side, so clearing cookies cannot reset it. */
 body[data-free-gated="true"] .free-gate {
   margin-top: var(--s-4);
   padding: var(--s-5);

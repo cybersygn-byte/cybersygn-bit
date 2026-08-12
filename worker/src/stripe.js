@@ -43,10 +43,22 @@ export const TIERS = {
   // No recurring billing. Same feature set as Solo. Tracked separately
   // so the tier label and Stripe checkout-mode differ from subscriptions.
   lifetime:        { id: 'lifetime',        docs: Infinity, priceEnv: 'STRIPE_PRICE_LIFETIME',         label: 'Lifetime', oneTime: true },
-  // A la carte add-ons. `seat` supports a quantity; `whitelabel` is a flat
-  // recurring add-on. These attach to an existing paid workspace.
-  seat:            { id: 'seat',            docs: 0,        priceEnv: 'STRIPE_PRICE_SEAT',             label: 'Extra seat', addon: true, quantifiable: true },
-  whitelabel:      { id: 'whitelabel',      docs: 0,        priceEnv: 'STRIPE_PRICE_WHITELABEL',       label: 'White-label', addon: true },
+  // A la carte add-ons, WITHDRAWN FROM SALE 2026-08-12.
+  //
+  // Both were purchasable and neither did anything. The whitelabel
+  // entitlement is written to `addons:<senderId>` by the webhook and read by
+  // NOTHING: a customer could pay $19/month and receive no change, while a
+  // free user removes the same footer from devtools in five seconds. Seats
+  // were worse: there is a single flat MEMBER_HARD_CAP of 25 applied to every
+  // workspace regardless of plan, and no code path reads a purchased
+  // quantity, so "extra seat" bought nothing at all.
+  //
+  // `retired: true` keeps the definitions so existing Stripe objects and any
+  // historical subscription still resolve, while removing them from the
+  // purchasable set below. Delete the flag to put them back on sale, and only
+  // do that on the day the entitlement is actually enforced.
+  seat:            { id: 'seat',            docs: 0,        priceEnv: 'STRIPE_PRICE_SEAT',             label: 'Extra seat', addon: true, quantifiable: true, retired: true },
+  whitelabel:      { id: 'whitelabel',      docs: 0,        priceEnv: 'STRIPE_PRICE_WHITELABEL',       label: 'White-label', addon: true, retired: true },
 };
 
 /**
@@ -70,7 +82,10 @@ export function purchasableTiers(env) {
     // annual variant (lifetime, seat, whitelabel) just need their one price.
     const annualId = `${id}_annual`;
     const needsAnnual = !!TIERS[annualId];
-    out[id] = priced(id) && (!needsAnnual || priced(annualId));
+    // A retired SKU is never purchasable, whatever Stripe still has priced.
+    // We do not take money for something the code does not deliver.
+    const retired = !!(TIERS[id] && TIERS[id].retired);
+    out[id] = !retired && priced(id) && (!needsAnnual || priced(annualId));
   }
   return out;
 }
@@ -231,6 +246,12 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
   const tierConf = TIERS[tier];
   if (!tierConf || !tierConf.priceEnv) {
     throw stripeError('invalid_tier', 'That tier is not purchasable.');
+  }
+  // Server-side guard, not just a hidden button. A retired SKU still has a
+  // live Stripe price, so a stale page or a hand-crafted request could still
+  // reach checkout and take money for functionality that does not exist.
+  if (tierConf.retired) {
+    throw stripeError('tier_retired', 'That add-on is no longer sold.');
   }
   const priceId = env[tierConf.priceEnv];
   if (typeof priceId !== 'string' || !priceId.startsWith('price_')) {

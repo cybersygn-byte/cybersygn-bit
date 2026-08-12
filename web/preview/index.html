@@ -160,15 +160,28 @@
           <ul class="dropzone-card__hints">
             <li>Works with any PDF, up to 25 MB. Camera photos become a PDF automatically.</li>
           </ul>
-          <!-- Free-tier signup gate. Hard wall in front of upload for
-               first-time visitors. Three documents lifetime per email.
-               When the user has no freeToken in localStorage, the upload
-               buttons hide via [data-free-gated="true"] CSS and this gate
-               becomes the only path forward. Email is verified on every
-               signed PDF download (a copy is mailed to the address on file).
+          <!-- No PDF handy? Most curious visitors do not have a contract on
+               their device at the moment they get curious, and on mobile
+               almost nobody does. This loads a real template through the
+               identical upload path via the ?pdf= loader in app.js. -->
+          <p class="dropzone-card__sample">
+            No contract handy?
+            <a class="dropzone-card__sample-link" href="?pdf=/templates-pdf/consulting-agreement.pdf">
+              Try it on a sample consulting agreement
+              <span aria-hidden="true">→</span>
+            </a>
+          </p>
+          <!-- Free-tier signup. NOT a wall in front of upload. Anyone can
+               drop a PDF and watch detection run, because detection is
+               100% client-side and costs nothing to serve. Signing up is
+               what you do when you want to DOWNLOAD or SEND the finished
+               document, and app.js enforces that at download time.
+               Three documents lifetime per email, counted server-side so
+               clearing cookies cannot reset the count.
             -->
           <form class="free-gate" id="free-gate" autocomplete="on">
-            <h3 class="free-gate__title">Your first one's on us</h3>
+            <h3 class="free-gate__title">Sign up when you're ready to send</h3>
+            <p class="free-gate__lede">Try it first. You only need an account to download or send the finished document, and your first three are free.</p>
             <div class="free-gate__row">
               <div class="field">
                 <input class="field__input" id="free-first" name="firstName" placeholder=" " type="text" autocomplete="given-name" required />
@@ -187,8 +200,11 @@
             <label class="consent-row consent-row--locked" for="free-consent">
               <input type="checkbox" id="free-consent" checked disabled />
               <span class="consent-row__text">
-                Free documents include anonymous field-position data to
-                improve detection. No document content is ever used.
+                Just looking? Nothing leaves your browser. If you sign up
+                and download on the free plan, we keep the anonymous
+                coordinates of the detected fields to improve detection.
+                Never your text, your file, or who you sent it to. Paid
+                plans contribute nothing.
               </span>
             </label>
 

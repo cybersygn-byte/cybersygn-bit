@@ -106,7 +106,13 @@
             <input class="exit-intent__input" id="tmpl-email" type="email" name="email" placeholder="you@email.com" autocomplete="email" required />
           </div>
           <div class="tmpl-modal__actions">
-            <button class="btn btn--primary" type="submit" data-mode="email">Email it to me</button>
+            <!-- The library used to dead-end here in a download button, which
+                 handed the visitor a PDF and sent them away. This opens the
+                 same template inside the product via the ?pdf= loader, no
+                 email required, so the biggest asset on the site becomes the
+                 top of the funnel instead of a giveaway. -->
+            <a class="btn btn--primary" id="tmpl-open-app" href="/preview/">Open it in CyberSygn</a>
+            <button class="btn btn--ghost" type="submit" data-mode="email">Email it to me</button>
             <button class="btn btn--ghost" type="button" data-mode="download" id="tmpl-direct-dl">Download direct</button>
           </div>
           <p id="tmpl-status" class="exit-intent__small">Goes to CyberSygn, nowhere else.</p>
@@ -260,6 +266,12 @@
       if (!btn) return;
       opener = btn;
       currentSlug = btn.dataset.slug;
+      // Point the primary action at this exact template inside the app.
+      var openApp = document.getElementById('tmpl-open-app');
+      if (openApp) {
+        openApp.href = '/preview/?pdf=' +
+          encodeURIComponent('/templates-pdf/' + currentSlug + '.pdf');
+      }
       modalTitle.textContent = btn.dataset.title + ' template';
       modalBlurb.textContent = btn.dataset.blurb;
       statusEl.textContent = 'Goes to CyberSygn, nowhere else.';

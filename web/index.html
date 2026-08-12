@@ -133,7 +133,7 @@
               "priceCurrency": "USD",
               "billingDuration": "P1M"
             },
-            "description": "10 seats, white-label with your own domain, single sign-on, full REST API, priority support"
+            "description": "Team workspace, full REST API with higher rate limits, outbound webhooks, bulk send from CSV, priority support"
           },
           {
             "@type": "Offer",
@@ -230,7 +230,7 @@
             "name": "What does it cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that drafts and summarizes contracts, plus bulk send and priority support. Studio is $29 per month for a 3-seat team. Business is $79 per month for 10 seats with white-label, single sign-on, and the API. Annual billing saves two months. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
+              "text": "Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that drafts and summarizes contracts, plus bulk send and priority support. Studio is $29 per month for a 3-seat team. Business is $79 per month for a whole team, adding the REST API, webhooks, and bulk send. Annual billing saves two months. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
             }
           },
           {
@@ -392,12 +392,17 @@
             to send.
           </p>
           <div class="hero__actions">
-            <a class="btn btn--primary btn--lg" href="./preview/">
-              Try It Out
+            <!-- The primary CTA now carries a sample document. "Try it out"
+                 used to land on an upload wall demanding a PDF the visitor
+                 does not have at the moment they get curious, which is the
+                 whole reason the claim above could never be believed. -->
+            <a class="btn btn--primary btn--lg" href="./preview/?pdf=%2Ftemplates-pdf%2Fconsulting-agreement.pdf">
+              Watch it find the fields
               <span class="btn-arrow" aria-hidden="true">→</span>
             </a>
-            <a class="btn btn--ghost btn--lg" href="#pricing">See pricing</a>
+            <a class="btn btn--ghost btn--lg" href="./preview/">Use my own PDF</a>
           </div>
+          <p class="hero__actions-note">No account, no card. Detection runs in your browser.</p>
           <p class="hero__note">Your first one's on us. No card, no trial clock.</p>
         </div>
 
@@ -969,20 +974,26 @@
           </button>
         </article>
 
-        <!-- BUSINESS. The high anchor: white-label + SSO + API. -->
+        <!-- BUSINESS. The high anchor. Lists only shipped features: white-label
+             and SSO were removed 2026-08-12 because neither is enforced. -->
         <article class="tier tier--anchor" data-tier="business" data-tier-new="1" data-monthly="79" data-annual="65" data-annual-total="780">
           <p class="tier__name">Business</p>
           <div class="tier__price">
             <span class="tier__price-num">$65</span>
             <span class="tier__price-unit">/mo billed yearly</span>
           </div>
-          <p class="tier__hook">Your brand, your domain, your systems. Signing that looks and feels like you built it.</p>
+          <p class="tier__hook">For a team that signs constantly and wants it wired into their own systems.</p>
+          <!-- These bullets list only what ships TODAY. White-label and SSO
+               used to be here and neither exists: the whitelabel entitlement
+               is written by the webhook and read by nothing, and there is one
+               flat member cap for every plan. Put them back the day the code
+               enforces them, not before. -->
           <ul class="tier__list">
-            <li>Everything in Studio, ten seats included</li>
-            <li>White-label: your logo, your domain, no CyberSygn mark</li>
-            <li>Single sign-on (SSO) for your team</li>
+            <li>Everything in Studio, for your whole team</li>
             <li>Full REST API and higher rate limits</li>
-            <li>Priority support with a real person</li>
+            <li>Outbound webhooks into your own systems</li>
+            <li>Bulk send from a CSV</li>
+            <li>Priority support, answered by the founder</li>
           </ul>
           <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="business">
             Scale on Business →
@@ -1217,8 +1228,8 @@
               Every plan is unlimited and starts with 3 free documents, no card required. Solo is
               $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that
               drafts and reads your contracts, plus bulk send and priority support. Studio is $29
-              per month for a 3-seat team. Business is $79 per month for 10 seats with white-label,
-              single sign-on, and the API. Annual billing saves two months. Two early-adopter
+              per month for a 3-seat team. Business is $79 per month for a whole team, adding the
+              REST API, webhooks, and bulk send. Annual billing saves two months. Two early-adopter
               options remain while spots last: Origin at $9 per month locked for the life of your
               account (first 100 customers) and Lifetime at $299 one-time (first 50 customers).
             </p>
