@@ -277,6 +277,14 @@ async function main() {
     await copyFile(join(SRC, 'ambassador', f), join(OUT, 'ambassador', f));
     console.log(`  wrote dist/ambassador/${f}`);
   }
+  // The binding program terms. This is a PUBLIC page, not part of the signed-in
+  // dashboard: it has to be readable and crawlable before anyone enrolls, and
+  // the commission model is unenforceable if the people it governs cannot read
+  // it. The loop above copies a fixed file list and does not recurse, so this
+  // subdirectory needs its own copy or the page 404s.
+  await mkdir(join(OUT, 'ambassador', 'terms'), { recursive: true });
+  await copyFile(join(SRC, 'ambassador', 'terms', 'index.html'), join(OUT, 'ambassador', 'terms', 'index.html'));
+  console.log('  wrote dist/ambassador/terms/index.html');
 
   await mkdir(join(OUT, 'dashboard'), { recursive: true });
   await copyFile(join(SRC, 'dashboard', 'index.html'), join(OUT, 'dashboard', 'index.html'));

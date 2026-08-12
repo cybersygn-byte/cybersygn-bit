@@ -184,9 +184,87 @@
   max-height: 220px; overflow-y: auto; color: var(--text-2);
 }
 
-/* ---- k. Getting paid ---------------------------------------------------- */
+/* ---- k. Getting paid ----------------------------------------------------
+   Built for a 380px phone first. NOTHING here uses a fixed-width grid track or
+   a nowrap label: every money figure sits in its own flex item that is allowed
+   to keep its width while the label beside it wraps. That is the fix for the
+   payout table that clipped at this width before.
+   ------------------------------------------------------------------------- */
+.amb-paid__h3 {
+  margin: var(--s-5, 24px) 0 var(--s-2, 8px); font-size: 1rem;
+}
+.amb-paid__hint {
+  margin: var(--s-2, 8px) 0 0; color: var(--text-2);
+  font-size: 0.9rem; line-height: 1.55;
+}
+.amb-paid__label {
+  display: block; font-size: 0.7rem; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--accent-text);
+}
+
+/* Payable now: the one number someone opens this page for. */
+.amb-paid__lead {
+  padding: var(--s-4, 16px); border-radius: var(--r-lg, 14px);
+  background: var(--accent-soft); border: 1px solid var(--accent-line);
+}
+.amb-paid__figure {
+  display: block; margin-top: 2px; line-height: 1.05;
+  font-size: clamp(1.9rem, 9vw, 2.6rem); font-weight: 600;
+  letter-spacing: -0.015em; font-variant-numeric: tabular-nums;
+  color: var(--text); overflow-wrap: anywhere;
+}
+.amb-paid__gap {
+  margin: var(--s-2, 8px) 0 0; color: var(--text-2);
+  font-size: 0.92rem; line-height: 1.55;
+}
+
+/* Label left, figure right. The label wraps, the figure never does. */
+.amb-rows { margin: var(--s-4, 16px) 0 0; }
+.amb-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--s-3, 12px); padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.amb-row:last-child { border-bottom: 0; }
+.amb-row__k {
+  flex: 1 1 auto; min-width: 0; color: var(--text-2);
+  font-size: 0.9rem; line-height: 1.4;
+}
+.amb-row__v {
+  flex: 0 0 auto; margin: 0; font-weight: 600; color: var(--text);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.amb-neg { color: var(--danger); }
+
+/* Held chunks and their clear dates. */
+.amb-pending { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.amb-pending__item {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--s-3, 12px); padding: 10px 12px;
+  background: var(--bg-2); border-radius: var(--r, 8px);
+}
+.amb-pending__when {
+  flex: 1 1 auto; min-width: 0; color: var(--text-2);
+  font-size: 0.9rem; line-height: 1.4;
+}
+.amb-pending__amt {
+  flex: 0 0 auto; font-weight: 600; font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The next run date. */
+.amb-paid__next {
+  margin-top: var(--s-5, 24px); padding: var(--s-4, 16px);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--r-lg, 14px);
+}
+.amb-paid__date {
+  display: block; margin-top: 2px; font-size: clamp(1.15rem, 5vw, 1.4rem);
+  color: var(--text); overflow-wrap: anywhere;
+}
+
 .amb-payflow {
-  list-style: none; margin: var(--s-4, 16px) 0 0; padding: 0;
+  list-style: none; margin: var(--s-5, 24px) 0 0; padding: 0;
   display: grid; gap: var(--s-2, 8px);
 }
 .amb-payflow__step {
@@ -195,7 +273,40 @@
 }
 .amb-payflow__step.is-on { border-left-color: var(--accent); }
 .amb-payflow__step strong { display: block; }
-.amb-payflow__step span { color: var(--text-2); font-size: 0.9rem; }
+.amb-payflow__step span { color: var(--text-2); font-size: 0.9rem; line-height: 1.5; }
+
+/* Method / schedule / minimum / hold. Stacked, so a long sentence never
+   fights a value column for width. */
+.amb-terms { margin: var(--s-5, 24px) 0 0; display: grid; gap: var(--s-4, 16px); }
+.amb-term { display: grid; gap: 3px; }
+.amb-term dt {
+  font-size: 0.7rem; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-3);
+}
+.amb-term dd {
+  margin: 0; color: var(--text-2); font-size: 0.94rem; line-height: 1.6;
+}
+
+/* Tax status and payout blocks. */
+.amb-callout {
+  margin-top: var(--s-5, 24px); padding: var(--s-4, 16px);
+  border-radius: var(--r-lg, 14px); background: var(--bg-2);
+  border: 1px solid var(--line); border-left: 3px solid var(--line);
+}
+.amb-callout--ok { background: var(--ok-soft); border-color: var(--line); border-left-color: var(--ok); }
+.amb-callout--warn { background: var(--warn-soft); border-color: var(--line); border-left-color: var(--warn); }
+.amb-callout__title { margin: 0 0 6px; font-size: 0.98rem; }
+.amb-callout p { margin: 0 0 8px; color: var(--text-2); font-size: 0.92rem; line-height: 1.6; }
+.amb-callout p:last-child { margin-bottom: 0; }
+.amb-callout ul { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 0.92rem; line-height: 1.6; }
+
+.amb-paid__faq { margin-top: var(--s-5, 24px); }
+.amb-paid__cta { margin: var(--s-5, 24px) 0 0; }
+.amb-inline-link { color: var(--accent-text); }
+
+@media (min-width: 560px) {
+  .amb-paid__cta .btn--block { display: inline-flex; width: auto; }
+}
 
 .amb-founder { text-align: center; }
 

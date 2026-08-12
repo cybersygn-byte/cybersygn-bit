@@ -1041,6 +1041,12 @@
   </url>
 <!-- BLOG_CLOSE -->
 
+  <url>
+    <loc>https://cybersygn.io/ambassador/terms/</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 <!-- USE_CASES_OPEN -->
   <url>
     <loc>https://cybersygn.io/use-cases/freelance-contract/freelancers/</loc>

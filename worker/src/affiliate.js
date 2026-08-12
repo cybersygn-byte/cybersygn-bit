@@ -26,10 +26,42 @@
  */
 
 import { sha256Hex } from './audit.js';
+import { PAYOUT_TERMS } from './ambassador.js';
 
 const KV_PREFIX = 'affiliate:';
 const PAYOUT_USD = 20;   // legacy flat bounty; tiers below supersede it
-const COOKIE_DAYS = 60;
+// Attribution window. Read from the one canonical terms object so the number
+// we publish and the cookie we actually set can never drift apart.
+const COOKIE_DAYS = PAYOUT_TERMS.cookieWindowDays;
+const HOLD_DAYS = PAYOUT_TERMS.holdDays;
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Ledger cap. Entries beyond this are folded into a scalar rather than dropped,
+// because every money figure is derived from this array and silently deleting
+// the oldest 200th entry corrupts the total the moment the program works.
+const LEDGER_MAX = 2000;
+
+function ledgerId() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return `led_${crypto.randomUUID()}`;
+  } catch (e) {}
+  return `led_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Append ledger entries and keep the array bounded WITHOUT losing money.
+ * Anything trimmed is added to rec.ledgerArchivedUsd, so a derived sum over
+ * (ledger + archived) still equals rec.earnedUsd.
+ */
+function pushLedger(rec, entries) {
+  rec.ledger = Array.isArray(rec.ledger) ? rec.ledger : [];
+  for (const e of entries) rec.ledger.push(e);
+  if (rec.ledger.length > LEDGER_MAX) {
+    const drop = rec.ledger.splice(0, rec.ledger.length - LEDGER_MAX);
+    const dropped = drop.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    rec.ledgerArchivedUsd = Math.round(((Number(rec.ledgerArchivedUsd) || 0) + dropped) * 100) / 100;
+  }
+  return rec.ledger;
+}
 const CODE_LEN = 8;  // base36 chars; ~2.8 trillion address space
 
 // ---- Commission ladder (docs/COMMISSION-MODEL.md is the plain-language copy)
@@ -303,9 +335,28 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     rec.conversions -= 1;
     return { ok: false, error: 'non_qualifying_plan' };
   }
+  // ONE ENTRY PER COMPONENT. A refund has to reverse exactly the bounty plus
+  // the bonuses THAT sale triggered and leave every other sale alone, which is
+  // impossible once the components are folded into a single summed amount.
+  // clearsAt is stamped HERE, at write time, not derived on read, so changing
+  // the hold later can never retroactively move money already promised.
+  const at = new Date().toISOString();
+  const clearsAt = new Date(Date.now() + HOLD_DAYS * DAY_MS).toISOString();
+  const planId = String(tier || '').toLowerCase() || null;
+  const entries = [{
+    id: ledgerId(), at, clearsAt, type: 'bounty', planId, customerId,
+    amount: credit, what: `${tier} sale`,
+  }];
   const bonuses = [];
   for (const m of MILESTONES) {
-    if (rec.conversions === m.at) { credit += m.bonus; bonuses.push(m.label); }
+    if (rec.conversions === m.at) {
+      credit += m.bonus;
+      bonuses.push(m.label);
+      entries.push({
+        id: ledgerId(), at, clearsAt, type: 'milestone', planId, customerId,
+        amount: m.bonus, what: `${m.label} bonus`,
+      });
+    }
   }
   // Monthly sprint: repeatable, tracked per calendar month.
   const monthKey = new Date().toISOString().slice(0, 7);
@@ -316,27 +367,50 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
     credit += SPRINT.bonus;
     rec.monthly.sprintPaid = true;
     bonuses.push(SPRINT.label);
+    entries.push({
+      id: ledgerId(), at, clearsAt, type: 'sprint', planId, customerId,
+      amount: SPRINT.bonus, what: `${SPRINT.label} bonus`,
+    });
   }
-  rec.earnedUsd = (rec.earnedUsd || 0) + credit;
-  rec.ledger = Array.isArray(rec.ledger) ? rec.ledger : [];
-  rec.ledger.push({ at: new Date().toISOString(), what: `${tier} sale`, amount: credit });
-  if (rec.ledger.length > 200) rec.ledger = rec.ledger.slice(-200);
+  rec.earnedUsd = Math.round(((rec.earnedUsd || 0) + credit) * 100) / 100;
+  pushLedger(rec, entries);
   rec.tier = earnedTier.key;
-  rec.lastConversionAt = new Date().toISOString();
+  rec.lastConversionAt = at;
   try {
     await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
-    await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({ at: new Date().toISOString(), tier }), {
-      expirationTtl: 60 * 60 * 24 * 365 * 5,
-    });
+    // creditTotal + entryIds are what let a reversal back out the EXACT amount
+    // this sale credited instead of a flat figure that is wrong in both
+    // directions ($20 clawed back against a $7 Origin sale quietly takes $13
+    // out of a different, legitimately earned sale).
+    await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({
+      at, tier, planId,
+      creditTotal: credit,
+      entryIds: entries.map(e => e.id),
+      month: monthKey,
+    }), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
   } catch (e) {}
   return { ok: true, alreadyCounted: false, payoutUsd: credit, tier: earnedTier.key, bonuses };
 }
 
 /**
- * Reverse a previously-credited conversion (refund, dispute, chargeback). Backs
- * out the $20 and the conversion count from the affiliate's code record and
- * marks the per-customer conversion record so it is never re-credited or
- * double-reversed. Idempotent and best-effort.
+ * Reverse a previously-credited conversion (refund, dispute, chargeback).
+ *
+ * Backs out the EXACT amount this sale credited, read from creditTotal on the
+ * per-customer dedupe record, including any milestone or sprint bonus the sale
+ * triggered. It deliberately does not use a flat figure: a flat $20 was wrong
+ * in both directions, leaving $71 of unearned commission on a clawed-back Gold
+ * Business sale and, worse, taking $13 out of OTHER legitimately earned sales
+ * when a $7 Origin sale reversed.
+ *
+ * Two more rules that keep the books honest:
+ *  - A negative ledger entry is written per reversed component, so the ledger
+ *    and earnedUsd still agree. Without it the monthly email keeps reporting
+ *    the original figure forever.
+ *  - earnedUsd is NOT clamped at zero. If a reversal lands after the money went
+ *    out, the balance must go negative so payoutState can surface it as an
+ *    overpayment. Clamping is exactly what made that loss invisible.
+ *
+ * Idempotent and best-effort.
  */
 export async function reverseConversion(env, code, customerId, reason) {
   if (!isValidCode(code) || !customerId) return { ok: false, error: 'bad_args' };
@@ -347,17 +421,52 @@ export async function reverseConversion(env, code, customerId, reason) {
     let conv;
     try { conv = JSON.parse(raw); } catch (e) { conv = {}; }
     if (conv.reversed || conv.blocked) return { ok: true, alreadyHandled: true };
+
+    // Legacy records (written before creditTotal existed) carry no credit, so
+    // the flat figure is the only number available. Fall back to it ONLY there.
+    const credited = Number(conv.creditTotal);
+    const clawback = Number.isFinite(credited) ? credited : PAYOUT_USD;
+    const legacy = !Number.isFinite(credited);
+
     const rec = await loadCode(env, code);
     if (rec) {
+      const at = new Date().toISOString();
       rec.conversions = Math.max(0, (rec.conversions || 0) - 1);
-      rec.earnedUsd = Math.max(0, (rec.earnedUsd || 0) - PAYOUT_USD);
+      rec.earnedUsd = Math.round(((rec.earnedUsd || 0) - clawback) * 100) / 100;
       rec.reversals = (rec.reversals || 0) + 1;
+
+      // Cleared immediately: a reversal must reduce the payable balance now, not
+      // sit in the hold window where it could be paid around.
+      pushLedger(rec, [{
+        id: ledgerId(),
+        at,
+        clearsAt: at,
+        type: 'reversal',
+        planId: conv.planId || null,
+        customerId,
+        amount: -clawback,
+        what: `reversal (${reason || 'reversed'})`,
+        reversesEntryIds: Array.isArray(conv.entryIds) ? conv.entryIds : [],
+        legacyFlatClawback: legacy || undefined,
+      }]);
+
+      // The sale no longer counts toward the month, so the sprint can be
+      // re-earned honestly, and it no longer counts toward tier.
+      if (rec.monthly && rec.monthly.month === conv.month) {
+        rec.monthly.sales = Math.max(0, (rec.monthly.sales || 0) - 1);
+        if (rec.monthly.sprintPaid && rec.monthly.sales < SPRINT.salesNeeded) {
+          rec.monthly.sprintPaid = false;
+        }
+      }
+      rec.tier = tierFor(rec.conversions).key;
+
       await env.CYBERSYGN_DOCS.put(`${KV_PREFIX}code:${code}`, JSON.stringify(rec));
     }
     conv.reversed = reason || 'reversed';
     conv.reversedAt = new Date().toISOString();
+    conv.clawedBackUsd = clawback;
     await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify(conv), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
-    return { ok: true, reversed: true, clawedBackUsd: PAYOUT_USD };
+    return { ok: true, reversed: true, clawedBackUsd: clawback, legacyFlatClawback: legacy };
   } catch (e) {
     return { ok: false, error: 'reverse_failed' };
   }

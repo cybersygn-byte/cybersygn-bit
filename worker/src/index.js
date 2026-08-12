@@ -378,6 +378,9 @@ const worker = {
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/payout') {
       return handleOwnerAmbassadorPayout(request, env, url);
     }
+    if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/taxdoc') {
+      return handleOwnerAmbassadorTaxDoc(request, env, url);
+    }
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/revoke') {
       return handleOwnerAmbassadorRevoke(request, env, url);
     }
@@ -2841,12 +2844,24 @@ async function handleOwnerAmbassadors(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
 
-  const [{ payoutState, passActive }, { tierFor }] = await Promise.all([
+  const [{ payoutState, passActive, PAYOUT_TERMS }, { tierFor }] = await Promise.all([
     import('./ambassador.js'), import('./affiliate.js'),
   ]);
+  // Totals are summed in dollars, so round each step: 0.1 + 0.2 across a
+  // roster is exactly how a liability figure ends in ...0000004.
+  const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
   const rows = [];
-  const totals = { ambassadors: 0, active: 0, sales: 0, earnedUsd: 0, paidUsd: 0, owedUsd: 0, w9Needed: 0 };
+  const totals = {
+    ambassadors: 0, active: 0, sales: 0,
+    earnedUsd: 0, paidUsd: 0, owedUsd: 0,
+    // The split that decides what actually gets sent on payout day.
+    availableUsd: 0, pendingUsd: 0,
+    // Money already out the door that a clawback took back. Its own line,
+    // because it used to hide inside owedUsd reading as a settled $0.
+    overpaidUsd: 0,
+    taxDocBlocked: 0, payableNow: 0,
+  };
   try {
     let cursor, pages = 0;
     while (pages < 10) {
@@ -2860,10 +2875,14 @@ async function handleOwnerAmbassadors(request, env, url) {
         totals.ambassadors += 1;
         if (active) totals.active += 1;
         totals.sales += Number(rec.conversions) || 0;
-        totals.earnedUsd += pay.earnedAllTimeUsd;
-        totals.paidUsd += pay.paidUsd;
-        totals.owedUsd += pay.owedUsd;
-        if (pay.w9Required && pay.w9State !== 'received') totals.w9Needed += 1;
+        totals.earnedUsd = round2(totals.earnedUsd + pay.earnedAllTimeUsd);
+        totals.paidUsd = round2(totals.paidUsd + pay.paidUsd);
+        totals.owedUsd = round2(totals.owedUsd + pay.owedUsd);
+        totals.availableUsd = round2(totals.availableUsd + pay.payableUsd);
+        totals.pendingUsd = round2(totals.pendingUsd + pay.pendingUsd);
+        totals.overpaidUsd = round2(totals.overpaidUsd + pay.overpaidUsd);
+        if (pay.w9Blocking) totals.taxDocBlocked += 1;
+        if (pay.payable) totals.payableNow += 1;
         rows.push({
           code: rec.code,
           email: rec.email || '',
@@ -2874,8 +2893,27 @@ async function handleOwnerAmbassadors(request, env, url) {
           earnedUsd: pay.earnedAllTimeUsd,
           paidUsd: pay.paidUsd,
           owedUsd: pay.owedUsd,
-          w9Required: pay.w9Required,
-          w9State: pay.w9State,
+          // Send this number, not owedUsd.
+          availableUsd: pay.payableUsd,
+          pendingUsd: pay.pendingUsd,
+          balanceUsd: pay.balanceUsd,
+          overpaidUsd: pay.overpaidUsd,
+          belowMinimum: pay.belowMinimum,
+          payable: pay.payable,
+          blockReasons: pay.blockReasons,
+          warnings: pay.warnings,
+          nextPayoutDate: pay.nextPayoutDate,
+          // Tax, on a cash basis and against the correct year's threshold.
+          paidThisYearUsd: pay.paidThisYearUsd,
+          reportingThresholdUsd: pay.reportingThresholdUsd,
+          reportingLikely: pay.reportingLikely,
+          priorYearReported: pay.priorYearReported,
+          taxDocState: pay.w9State,
+          taxDocType: pay.taxDocType,
+          taxDocExpiresAt: pay.taxDocExpiresAt,
+          w9Blocking: pay.w9Blocking,
+          termsAcceptedAt: pay.termsAcceptedAt,
+          termsVersion: pay.termsVersion,
           createdAt: rec.createdAt || null,
           lastConversionAt: rec.lastConversionAt || null,
         });
@@ -2887,20 +2925,53 @@ async function handleOwnerAmbassadors(request, env, url) {
   } catch (e) {
     return jsonResponse(200, { ok: true, rows, totals, error: 'partial_list' });
   }
-  // Highest liability first: that is the queue the owner works.
-  rows.sort((a, b) => b.owedUsd - a.owedUsd || b.sales - a.sales);
-  return jsonResponse(200, { ok: true, rows, totals });
+  // Overpaid accounts first (they must be cleared before anything is sent),
+  // then the actually-payable queue by size. Sorting by owedUsd was wrong:
+  // owed includes money still inside its hold window.
+  rows.sort((a, b) =>
+    (b.overpaidUsd - a.overpaidUsd) ||
+    (b.availableUsd - a.availableUsd) ||
+    (b.sales - a.sales));
+  return jsonResponse(200, { ok: true, rows, totals, terms: PAYOUT_TERMS });
 }
 
-/** POST /api/owner/ambassadors/payout {code, amount, method, note} */
+/**
+ * POST /api/owner/ambassadors/payout
+ * {code, amount, rail, railRef, idempotencyKey, note, belowMinimum?, allowOverpay?}
+ * The override flags are forwarded deliberately: a final settlement on a
+ * closing account is legitimately below the minimum, and recordPayout refuses
+ * it otherwise.
+ */
 async function handleOwnerAmbassadorPayout(request, env, url) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) return jsonResponse(401, { error: 'unauthorized' });
   const body = await readJsonBody(request);
   if (body.error) return jsonResponse(400, body.error);
-  const { code, amount, method, note } = body.value || {};
+  const { code, amount, method, note, rail, railRef, idempotencyKey, belowMinimum, allowOverpay } = body.value || {};
   const { recordPayout } = await import('./ambassador.js');
-  const r = await recordPayout(env, String(code || '').toLowerCase(), { amount, method, note });
+  const r = await recordPayout(env, String(code || '').toLowerCase(), {
+    amount, method, note, rail, railRef, idempotencyKey,
+    belowMinimum: belowMinimum === true,
+    allowOverpay: allowOverpay === true,
+  });
+  return jsonResponse(r.ok ? 200 : 400, r);
+}
+
+/**
+ * POST /api/owner/ambassadors/taxdoc {code, state, docType?, vendor?, vendorPayeeId?, collectedAt?, expiresAt?, country?}
+ * Marks a W-9 or W-8BEN as collected. We never receive or store the TIN
+ * itself, only the status and an opaque collector reference.
+ */
+async function handleOwnerAmbassadorTaxDoc(request, env, url) {
+  const owner = await getOwnerForRequest(request, env, url);
+  if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+  const body = await readJsonBody(request);
+  if (body.error) return jsonResponse(400, body.error);
+  const { code, state, docType, vendor, vendorPayeeId, collectedAt, expiresAt, country } = body.value || {};
+  const { setW9State } = await import('./ambassador.js');
+  const r = await setW9State(env, String(code || '').toLowerCase(), state, {
+    docType, vendor, vendorPayeeId, collectedAt, expiresAt, country,
+  });
   return jsonResponse(r.ok ? 200 : 400, r);
 }
 
@@ -3027,6 +3098,22 @@ async function handleAffiliateRegister(request, env, url) {
 
   const result = await registerAffiliate(env, { senderId, email });
   if (!result.ok) return jsonResponse(500, { error: result.error });
+
+  // Record acceptance of the published program terms. Without a stored version
+  // and timestamp there is no evidence anyone agreed to the clawback, the
+  // disclosure duty, or the payout schedule, in either direction. Enrolment is
+  // not blocked on it: an existing caller that predates the terms page still
+  // gets a working code, and payoutState treats a missing acceptance on a
+  // post-terms record as a payout block, which is the right place to stop.
+  try {
+    const { acceptTermsForCode, TERMS_VERSION } = await import('./ambassador.js');
+    if (payload.termsAccepted === true) {
+      const ipHash = await sha256Hex(new TextEncoder().encode(
+        `${request.headers.get('cf-connecting-ip') || ''}|${TERMS_VERSION}`,
+      ));
+      await acceptTermsForCode(env, result.code, String(payload.termsVersion || TERMS_VERSION), ipHash);
+    }
+  } catch (e) { /* non-fatal: the block reason surfaces it in Control */ }
 
   // Provision the real Stripe discount so the promised offer cannot silently
   // fail at checkout. Idempotent, and non-fatal: attribution still works if

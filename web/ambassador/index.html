@@ -90,6 +90,7 @@
           <p class="lede">Three steps. The first sale almost always comes from someone you already know.</p>
         </header>
         <ol class="amb-steps" id="amb-steps"></ol>
+        <p class="amb-note"><a class="amb-inline-link" href="#getting-paid">See exactly how and when the money reaches you</a>, before you send anything.</p>
       </section>
 
       <section class="amb-section" id="amb-stats" hidden>
@@ -165,10 +166,40 @@
       </section>
 
       <!-- k. GETTING PAID -->
-      <section class="amb-section amb-paid">
-        <header class="amb-section__head"><h2 class="h-section">Getting paid</h2></header>
-        <div class="amb-stat-grid" id="amb-paid-grid"></div>
+      <section class="amb-section amb-paid" id="getting-paid">
+        <header class="amb-section__head">
+          <h2 class="h-section">Getting paid</h2>
+          <p class="lede" id="amb-paid-lede"></p>
+        </header>
+
+        <!-- Balance: payable now, and the distance to the minimum. Rendered
+             only when the server sent real figures. -->
+        <div id="amb-paid-balance"></div>
+
+        <!-- Held money, with the date each chunk clears. -->
+        <div id="amb-paid-pending"></div>
+
+        <!-- The next run, as a real date. -->
+        <div id="amb-paid-next"></div>
+
+        <!-- The journey, four steps, lit by real state. -->
         <ol class="amb-payflow" id="amb-payflow"></ol>
+
+        <!-- Method, schedule, minimum, hold. One plain line each. -->
+        <dl class="amb-terms" id="amb-paid-terms"></dl>
+
+        <!-- Tax paperwork, and what happens when it is missing. -->
+        <div id="amb-paid-tax"></div>
+
+        <!-- Anything currently blocking a payout, in plain words. -->
+        <div id="amb-paid-blocks"></div>
+
+        <!-- Optional extra answers from content.json. -->
+        <div id="amb-paid-faq"></div>
+
+        <p class="amb-paid__cta">
+          <a class="btn btn--primary btn--block" id="amb-terms-link" href="/ambassador/terms/">Read the full payout terms</a>
+        </p>
         <p class="amb-note" id="amb-paid-note"></p>
       </section>
 

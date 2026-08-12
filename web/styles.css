@@ -9484,3 +9484,7 @@ body[data-owner-active="true"] .free-pill {
 /* ---- Control panel: ambassador roster actions --------------------------- */
 .control-amb__act { white-space: nowrap; text-align: right; }
 .control-amb__act .btn { margin-left: 4px; }
+/* An overpaid account has to be impossible to scroll past. It used to render
+   identically to a settled one. */
+.control-amb--over { background: rgba(190, 60, 40, 0.07); }
+.control-stat--warn .control-stat__num { color: rgb(158, 45, 28); }

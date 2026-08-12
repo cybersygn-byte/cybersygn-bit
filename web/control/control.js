@@ -453,37 +453,72 @@ async function loadAmbassadors() {
       return;
     }
 
+    // Why each block reason gets a plain-English label: the owner is deciding
+    // whether to send real money, and "below_minimum" on its own does not say
+    // whether that is a problem or just a normal roll-over.
+    const REASON = {
+      tax_doc_missing: 'no tax form',
+      tax_doc_expired: 'tax form expired',
+      tax_doc_refused: 'tax form refused',
+      overpaid_balance: 'OVERPAID',
+      owner_freeze: 'frozen',
+      no_terms_acceptance: 'terms not accepted',
+      nothing_cleared: 'in hold',
+      below_minimum: 'under minimum',
+    };
+    const why = (r) => (r.blockReasons || []).map(k => REASON[k] || k).join(', ') || 'ready';
+
     const rows = d.rows.map((r) => (
-      '<tr>' +
+      '<tr' + (r.overpaidUsd > 0 ? ' class="control-amb--over"' : '') + '>' +
         '<td class="control-src__name">' + srcEsc(r.code.toUpperCase()) + '</td>' +
         '<td>' + srcEsc(r.status) + '</td>' +
         '<td>' + srcEsc(r.tier) + '</td>' +
         '<td class="control-src__num">' + r.sales + '</td>' +
         '<td class="control-src__num">' + money(r.earnedUsd) + '</td>' +
-        '<td class="control-src__num"><strong>' + money(r.owedUsd) + '</strong></td>' +
-        '<td>' + (r.w9Required ? srcEsc(r.w9State || 'needed') : 'n/a') + '</td>' +
+        // Send THIS number. Owed still counts money inside its hold window.
+        '<td class="control-src__num"><strong>' + money(r.availableUsd) + '</strong></td>' +
+        '<td class="control-src__num">' + (r.pendingUsd > 0 ? money(r.pendingUsd) : '') + '</td>' +
+        '<td class="control-src__num">' + (r.overpaidUsd > 0 ? '<strong>' + money(r.overpaidUsd) + '</strong>' : '') + '</td>' +
+        '<td>' + srcEsc(r.taxDocState === 'none' ? (r.w9Blocking ? 'needed' : 'n/a') : (r.taxDocState || 'n/a')) + '</td>' +
+        '<td>' + srcEsc(why(r)) + '</td>' +
         '<td class="control-amb__act">' +
-          (r.owedUsd > 0 ? '<button class="btn btn--ghost btn--sm" data-payout="' + srcEsc(r.code) + '" data-owed="' + r.owedUsd + '">Pay</button> ' : '') +
+          (r.payable ? '<button class="btn btn--ghost btn--sm" data-payout="' + srcEsc(r.code) + '" data-owed="' + r.availableUsd + '">Pay</button> ' : '') +
           (r.status !== 'revoked' ? '<button class="btn btn--ghost btn--sm" data-revoke="' + srcEsc(r.code) + '">Revoke</button>' : '') +
         '</td>' +
       '</tr>'
     )).join('');
 
+    const thresholdNote = d.terms && d.terms.taxThresholdUsd
+      ? 'past $' + d.terms.taxThresholdUsd.toLocaleString() + ' paid this year'
+      : 'tax form required before paying';
+
     body.innerHTML =
       '<div class="control-stats">' +
         statBlock(t.active, 'Active', t.ambassadors + ' enrolled') +
         statBlock(t.sales, 'Attributed sales', 'all time') +
-        '<div class="control-stat"><span class="control-stat__num">' + money(t.owedUsd) + '</span>' +
-          '<span class="control-stat__label">Unpaid liability</span>' +
-          '<span class="control-stat__sub">' + money(t.earnedUsd) + ' earned, ' + money(t.paidUsd) + ' paid</span></div>' +
-        statBlock(t.w9Needed, 'W-9 needed', 'past $600 this year') +
+        '<div class="control-stat"><span class="control-stat__num">' + money(t.availableUsd) + '</span>' +
+          '<span class="control-stat__label">Payable now</span>' +
+          '<span class="control-stat__sub">' + money(t.pendingUsd) + ' still in hold, ' +
+          money(t.owedUsd) + ' owed all in</span></div>' +
+        '<div class="control-stat"><span class="control-stat__num">' + money(t.earnedUsd) + '</span>' +
+          '<span class="control-stat__label">Earned all time</span>' +
+          '<span class="control-stat__sub">' + money(t.paidUsd) + ' paid out</span></div>' +
+        statBlock(t.taxDocBlocked, 'Tax form needed', thresholdNote) +
+        // Its own tile on purpose: an overpayment used to read as a settled $0.
+        (t.overpaidUsd > 0
+          ? '<div class="control-stat control-stat--warn"><span class="control-stat__num">' + money(t.overpaidUsd) + '</span>' +
+            '<span class="control-stat__label">Overpaid</span>' +
+            '<span class="control-stat__sub">clawed back after payout, recover first</span></div>'
+          : '') +
       '</div>' +
       '<table class="control-src-table"><thead><tr>' +
         '<th>Code</th><th>Status</th><th>Tier</th>' +
         '<th class="control-src__num">Sales</th>' +
         '<th class="control-src__num">Earned</th>' +
-        '<th class="control-src__num">Owed</th>' +
-        '<th>W-9</th><th>Actions</th>' +
+        '<th class="control-src__num">Payable</th>' +
+        '<th class="control-src__num">In hold</th>' +
+        '<th class="control-src__num">Overpaid</th>' +
+        '<th>Tax</th><th>State</th><th>Actions</th>' +
       '</tr></thead><tbody>' + rows + '</tbody></table>';
   } catch (err) {
     body.innerHTML = '<p class="control-tile__empty">Network error: ' + (err.message || err) + '</p>';
@@ -497,17 +532,31 @@ document.addEventListener('click', async (e) => {
   if (payBtn) {
     const code = payBtn.dataset.payout;
     const owed = payBtn.dataset.owed;
-    const amount = window.prompt('Record a payout for ' + code.toUpperCase() + '. Amount owed is $' + owed + '. Enter the amount you actually sent:', owed);
+    const amount = window.prompt('Record a payout for ' + code.toUpperCase() + '. Payable now is $' + owed + '. Enter the amount you actually sent:', owed);
     if (amount === null) return;
-    const method = window.prompt('Method (paypal, wise, other):', 'paypal');
-    if (method === null) return;
+    const rail = window.prompt('Rail (paypal_gs, wise, account_credit):', 'paypal_gs');
+    if (rail === null) return;
+    // The rail's own transaction id. This is what reconciles our record to the
+    // bank when an ambassador says a payment never landed.
+    const railRef = window.prompt('Transaction id from ' + rail + ' (leave blank if none yet):', '');
+    if (railRef === null) return;
     payBtn.disabled = true;
     const res = await fetch('/api/owner/ambassadors/payout', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'X-CyberSygn-Owner': readToken() },
-      body: JSON.stringify({ code, amount: Number(amount), method }),
+      body: JSON.stringify({
+        code, amount: Number(amount), rail, railRef,
+        // Same button pressed twice must not double paidUsd.
+        idempotencyKey: code + ':' + amount + ':' + (railRef || new Date().toISOString().slice(0, 10)),
+      }),
     });
-    if (res.ok) loadAmbassadors(); else payBtn.disabled = false;
+    if (res.ok) { loadAmbassadors(); }
+    else {
+      let msg = 'Payout refused.';
+      try { const j = await res.json(); msg = j.message || j.error || msg; } catch (err) {}
+      window.alert(msg);
+      payBtn.disabled = false;
+    }
     return;
   }
   const revBtn = e.target.closest('[data-revoke]');
