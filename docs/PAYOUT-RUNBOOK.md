@@ -18,11 +18,15 @@ to show only pending balances. That is the correct state, not a bug.
 
 These are one-time. Nothing below works until they are done.
 
-- [ ] CPA call booked and three answers received **in writing**:
+- [x] **(b) ANSWERED 2026-08-12: Colorado kept $600.** It did not conform to
+      the federal increase, so $600 paid in a year triggers a filing here. The
+      code encodes this (`STATE_REPORTING_THRESHOLD = { CO: 600 }`) and the
+      roster flags against it.
+- [ ] CPA call booked and the remaining two answers received **in writing**:
       (a) the $2,000 federal 1099-NEC threshold applies to our 2026 payments,
-      (b) whether the state of operation kept a $600 state filing threshold,
       (c) whether PayPal goods and services payouts qualify for the
-      Treas. Reg. 1.6041-1(a)(1)(iv) third party network relief.
+      Treas. Reg. 1.6041-1(a)(1)(iv) third party network relief. Note (c) is
+      FEDERAL relief only and would not remove the Colorado obligation.
 - [ ] Tax document collector account open (Stripe Connect is the least new
       surface since we are already on Stripe; Tax1099 or Trolley otherwise),
       and the key set:
@@ -395,9 +399,13 @@ A US payee (`taxDocType: "w9"`) whose `paidThisYearUsd` is at or above their
   and was paid in January belongs to January's year.
 - **Non-US payees** (`taxDocType: "w8ben"`) do not get a 1099-NEC. Do not
   improvise here; a Form 1042-S question goes to the CPA.
-- **State filing** may still use a $600 threshold in some states. That is the
-  open CPA question from section 0. Check the answer before you decide you have
-  nothing to file.
+- **Colorado uses $600, and that is the number that binds you.** RESOLVED
+  2026-08-12: Colorado did not conform to the federal increase. So anyone paid
+  **$600 or more** in the year needs a filing even though the federal floor is
+  $2,000. This is the trap in this whole section: read `reportingLikelyState`,
+  not just `reportingLikelyFederal`. A payee at $900 owes a Colorado return and
+  no federal one, and looking only at the federal number would tell you there
+  is nothing to file.
 
 ### Deadlines
 

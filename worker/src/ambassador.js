@@ -57,8 +57,23 @@ export const TERMS_VERSION = '2026-08-12';
  */
 export const REPORTING_THRESHOLD_BY_YEAR = { 2026: 2000 };
 
-/** Resolve the reporting threshold for a calendar year, loudly on a miss. */
-export function reportingThresholdForYear(year) {
+/**
+ * STATE filing thresholds, which did NOT all follow the federal increase.
+ *
+ * Colorado kept $600 (confirmed by the owner, 2026-08-12). CyberSygn operates
+ * from Colorado, so the number that actually decides whether a return has to
+ * be filed for a payee is $600, not the federal $2,000. Filing is triggered by
+ * the LOWER of the two: clearing the state floor creates a real obligation
+ * even though the federal one is untouched.
+ *
+ * PAYER_STATE is the state we file from. It is not the payee's state: the
+ * obligation follows the payer here.
+ */
+export const PAYER_STATE = 'CO';
+export const STATE_REPORTING_THRESHOLD = { CO: 600 };
+
+/** Federal threshold for a calendar year, loudly on a miss. */
+export function federalThresholdForYear(year) {
   const y = Number(year);
   if (Object.prototype.hasOwnProperty.call(REPORTING_THRESHOLD_BY_YEAR, y)) {
     return REPORTING_THRESHOLD_BY_YEAR[y];
@@ -71,6 +86,24 @@ export function reportingThresholdForYear(year) {
   return newest === null ? 0 : REPORTING_THRESHOLD_BY_YEAR[newest];
 }
 
+/** The state floor we file against, or 0 when the payer state has none. */
+export function stateThresholdForYear() {
+  const v = STATE_REPORTING_THRESHOLD[PAYER_STATE];
+  return Number.isFinite(v) ? v : 0;
+}
+
+/**
+ * The threshold that actually decides filing: the lower of federal and state,
+ * ignoring a zero (meaning "no state floor") so a state without one does not
+ * collapse the federal number to nothing.
+ */
+export function reportingThresholdForYear(year) {
+  const fed = federalThresholdForYear(year);
+  const st = stateThresholdForYear();
+  if (st > 0 && st < fed) return st;
+  return fed;
+}
+
 export const PAYOUT_TERMS = Object.freeze({
   version: TERMS_VERSION,
   termsVersion: TERMS_VERSION,
@@ -78,7 +111,11 @@ export const PAYOUT_TERMS = Object.freeze({
   holdDays: HOLD_DAYS,
   scheduleDayOfMonth: PAYOUT_RUN_DAY,
   cookieWindowDays: COOKIE_WINDOW_DAYS,
+  // The governing figure: the lower of federal and state. Colorado kept $600.
   taxThresholdUsd: reportingThresholdForYear(new Date().getUTCFullYear()),
+  taxThresholdFederalUsd: federalThresholdForYear(new Date().getUTCFullYear()),
+  taxThresholdStateUsd: stateThresholdForYear(),
+  payerState: PAYER_STATE,
   taxThresholdByYear: Object.freeze({ ...REPORTING_THRESHOLD_BY_YEAR }),
   methods: Object.freeze([
     'PayPal goods and services',
@@ -88,7 +125,7 @@ export const PAYOUT_TERMS = Object.freeze({
   rails: Object.freeze(['paypal_gs', 'wise', 'account_credit']),
   scheduleText: "Payouts run once a month, on the 5th (next business day if the 5th falls on a weekend or a US holiday). A commission joins a run once its 30 day hold has finished on or before the 5th. For most sales that is 30 to 35 days from the day the customer's payment cleared. A sale that clears just after a monthly cutoff waits for the following run, which is up to about 60 days. Balances under the $25 minimum roll over and are paid in the first run that clears the minimum. Any balance is paid in full, minimum waived, on request after 90 days with no new qualifying sale, on account closure, and if the program shuts down. Account credit against a CyberSygn subscription has no minimum and no transfer fee. CyberSygn pays the sending fee on PayPal and Wise; any receiving or currency conversion fee charged by the ambassador's own bank or PayPal account is theirs. One person, the founder, runs every payout by hand. There is no automation and no cron job behind this schedule, and zero ambassadors have been paid to date.",
   clawbackText: "If a referred customer's payment is refunded, charged back, disputed, or otherwise reversed, the commission for that sale is reversed. The reversal backs out the exact amount that sale credited, including any milestone bonus or monthly sprint bonus that the sale triggered, not a flat figure, and it is written to the ambassador's ledger as a visible negative entry with the reason and the date. The sale also stops counting toward lifetime sales and tier. If the unpaid balance covers the reversal, it comes out of the balance. If the reversal is larger than the unpaid balance, the shortfall becomes a negative balance carried forward and offset against future commissions. CyberSygn will not invoice an ambassador for a reversal and will not ask for money back. If an ambassador leaves the program, or the program ends, while carrying a negative balance, the balance is written off to zero. The single exception is fraud or self-dealing, where we reserve the right to recover. Card networks generally allow a customer to dispute a charge for up to 120 days after payment, and some payment methods allow up to 180 days, so a reversal can arrive well after a commission has already been paid. The 30 day hold covers the common case and the carry-forward rule covers the long tail. Separately, and as a condition of eligibility: commission is earned only on promotion that clearly and conspicuously discloses the paid relationship, as the FTC Endorsement Guides require of the advertiser at 16 CFR 255.1(d). CyberSygn may withhold or reverse commission on any sale generated by an undisclosed placement, and may end the arrangement for repeated non-disclosure. Both the pending balance and any negative balance are shown to the ambassador and to the owner, never hidden or clamped to zero.",
-  taxText: 'A completed W-9 (US) or W-8BEN (non-US) must be on file before the first dollar moves, at any amount. A missing, refused, or expired tax document blocks the payout. CyberSygn does not store a TIN, an SSN, or a raw tax form: collection is routed to a third-party collector and only a status flag plus an opaque vendor payee id is kept. For payments made in calendar year 2026 the Form 1099-NEC reporting threshold is $2,000, not $600, under IRC 6041(a) as amended by Pub. L. 119-21 section 70433. The threshold is measured against cash actually paid in the calendar year, not commission accrued.',
+  taxText: 'A completed W-9 (US) or W-8BEN (non-US) must be on file before the first dollar moves, at any amount. A missing, refused, or expired tax document blocks the payout. CyberSygn does not store a TIN, an SSN, or a raw tax form: collection is routed to a third-party collector and only a status flag plus an opaque vendor payee id is kept. Two thresholds apply and the lower one governs. Federal: for payments made in calendar year 2026 the Form 1099-NEC threshold is $2,000, raised from $600 by IRC 6041(a) as amended by Pub. L. 119-21 section 70433. State: CyberSygn files from Colorado, which kept the $600 threshold and did not follow the federal increase, so a return is filed once $600 is paid in a year even though no federal return is due until $2,000. Both are measured against cash actually paid in the calendar year, not commission accrued.',
   releaseValveText: 'Any balance is paid in full, minimum waived, on request after 90 days with no new qualifying sale, on account closure, and if the program shuts down.',
   honestyNote: 'Payouts are recorded by hand today, not automatically. One founder runs every run. Zero ambassadors have been paid to date.',
 });
@@ -503,8 +540,16 @@ export function payoutState(rec, now = Date.now()) {
   // IRC 3406(b)(6): if we filed an information return for this payee last year,
   // there is no dollar floor this year. Reportable from the first dollar.
   const priorYearReported = reportedYears.includes(year - 1);
+  // Federal and state are separate filings with different floors. Colorado kept
+  // $600 while federal moved to $2,000, so a payee can owe a STATE return and
+  // no federal one. Report both rather than one blended number, because at
+  // year end they are two different stacks of paperwork.
+  const federalThreshold = priorYearReported ? 0 : federalThresholdForYear(year);
+  const stateThreshold = priorYearReported ? 0 : stateThresholdForYear();
   const threshold = priorYearReported ? 0 : reportingThresholdForYear(year);
-  const reportingLikely = paidThisYear >= threshold;
+  const reportingLikelyFederal = paidThisYear >= federalThreshold;
+  const reportingLikelyState = stateThreshold > 0 && paidThisYear >= stateThreshold;
+  const reportingLikely = reportingLikelyFederal || reportingLikelyState;
 
   const w9State = normalizeTaxDocState(rec);
   const expiresAt = (rec && rec.taxDocExpiresAt) || null;
@@ -561,6 +606,12 @@ export function payoutState(rec, now = Date.now()) {
     paidThisYearUsd: paidThisYear,
     reportingThresholdUsd: threshold,
     reportingLikely,
+    // Split out: at year end these are two separate filings.
+    federalThresholdUsd: federalThreshold,
+    stateThresholdUsd: stateThreshold,
+    payerState: PAYER_STATE,
+    reportingLikelyFederal,
+    reportingLikelyState,
     priorYearReported,
     w9Blocking,
     taxDocType: (rec && rec.taxDocType) || null,

@@ -672,9 +672,21 @@ function renderPaid(d, faq) {
   }
   taxBody += '<p>CyberSygn never stores your SSN, TIN, or the form itself. Collection is routed to a third-party tax document ' +
     'service and all we keep on our side is a status flag and their reference id.</p>';
+  // Two different filings with two different floors. Calling the state one a
+  // 1099-NEC would be wrong, and someone crossing $600 would be told to expect
+  // a federal form that is not coming.
+  const fedThreshold = fin(p.federalThresholdUsd);
+  const stThreshold = fin(p.stateThresholdUsd);
   if (paidThisYear != null && threshold != null && threshold > 0) {
-    taxBody += '<p>You have been paid ' + esc(money(paidThisYear)) + ' this calendar year. At ' + esc(money(threshold)) +
-      ' paid in a year we have to file a 1099-NEC for you, which is why the paperwork has to exist first.</p>';
+    taxBody += '<p>You have been paid ' + esc(money(paidThisYear)) + ' this calendar year.';
+    if (stThreshold != null && stThreshold > 0 && fedThreshold != null && stThreshold < fedThreshold) {
+      taxBody += ' We file from ' + esc(p.payerState || 'our state') + ', which uses a ' + esc(money(stThreshold)) +
+        ' threshold, so past that we file a state return for you. The federal 1099-NEC threshold is higher at ' +
+        esc(money(fedThreshold)) + '. Either way the paperwork has to exist first.</p>';
+    } else {
+      taxBody += ' At ' + esc(money(threshold)) +
+        ' paid in a year we have to file a return for you, which is why the paperwork has to exist first.</p>';
+    }
   }
   $('amb-paid-tax').innerHTML = callout(onFile ? 'ok' : 'warn', tax.title, taxBody);
 

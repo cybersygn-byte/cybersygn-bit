@@ -488,8 +488,10 @@ async function loadAmbassadors() {
       '</tr>'
     )).join('');
 
+    // The governing threshold is the LOWER of federal and state. Naming the
+    // state makes it obvious why the number is not the federal one.
     const thresholdNote = d.terms && d.terms.taxThresholdUsd
-      ? 'past $' + d.terms.taxThresholdUsd.toLocaleString() + ' paid this year'
+      ? 'filing at $' + d.terms.taxThresholdUsd.toLocaleString() + ' paid (' + (d.terms.payerState || 'state') + ')'
       : 'tax form required before paying';
 
     body.innerHTML =

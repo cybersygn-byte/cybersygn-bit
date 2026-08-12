@@ -14,6 +14,7 @@ import assert from 'node:assert/strict';
 import {
   PAYOUT_TERMS, HOLD_DAYS, PAYOUT_MINIMUM_USD, TERMS_VERSION,
   REPORTING_THRESHOLD_BY_YEAR, reportingThresholdForYear,
+  federalThresholdForYear, stateThresholdForYear,
   payoutState, recordPayout, nextPayoutDate, payoutRunDate,
   isUsFederalHoliday, railFor, acceptTerms,
 } from '../worker/src/ambassador.js';
@@ -83,16 +84,23 @@ await t('published terms text carries no em-dash', () => {
 });
 
 // ---------------------------------------------------------------- tax
-await t('2026 reporting threshold is $2,000, not the repealed $600', () => {
-  assert.equal(reportingThresholdForYear(2026), 2000);
+await t('2026 FEDERAL threshold is $2,000, not the repealed $600', () => {
+  assert.equal(federalThresholdForYear(2026), 2000);
   assert.equal(REPORTING_THRESHOLD_BY_YEAR[2026], 2000);
-  assert.notEqual(reportingThresholdForYear(2026), 600);
+});
+
+await t('Colorado kept $600, so the governing threshold is $600', () => {
+  // Colorado did not conform to the federal increase (owner-confirmed).
+  // Filing is triggered by the LOWER floor, so the state one governs.
+  assert.equal(stateThresholdForYear(), 600);
+  assert.equal(reportingThresholdForYear(2026), 600,
+    'the lower of federal and state must govern, not the federal figure');
 });
 
 await t('unseeded year falls back to the newest seeded year, loudly', () => {
   const warn = console.warn; let warned = false;
   console.warn = () => { warned = true; };
-  const v = reportingThresholdForYear(2031);
+  const v = federalThresholdForYear(2031);
   console.warn = warn;
   assert.equal(v, 2000);
   assert.ok(warned, 'must warn rather than silently guess an indexed figure');
@@ -100,15 +108,49 @@ await t('unseeded year falls back to the newest seeded year, loudly', () => {
 
 await t('threshold measures CASH PAID in the year, not accrued earnings', () => {
   const now = Date.parse('2026-11-01T00:00:00Z');
-  // Accrued $3,000 but only $1,500 actually paid in 2026.
+  // Accrued $3,000 but only $400 actually paid in 2026, under both floors.
+  const rec = baseRec({
+    earnedUsd: 3000,
+    ledger: [entry(3000, 200)],
+    payouts: [{ amount: 400, paidAt: '2026-06-01T00:00:00.000Z', taxYear: 2026 }],
+  });
+  const st = payoutState(rec, now);
+  assert.equal(st.paidThisYearUsd, 400);
+  assert.equal(st.reportingLikely, false, '$400 cash is under both thresholds');
+});
+
+await t('$1,500 paid owes a COLORADO return but no federal one', () => {
+  const now = Date.parse('2026-11-01T00:00:00Z');
   const rec = baseRec({
     earnedUsd: 3000,
     ledger: [entry(3000, 200)],
     payouts: [{ amount: 1500, paidAt: '2026-06-01T00:00:00.000Z', taxYear: 2026 }],
   });
   const st = payoutState(rec, now);
-  assert.equal(st.paidThisYearUsd, 1500);
-  assert.equal(st.reportingLikely, false, '$1,500 cash is under the $2,000 threshold');
+  assert.equal(st.reportingLikelyState, true, 'over the $600 Colorado floor');
+  assert.equal(st.reportingLikelyFederal, false, 'under the $2,000 federal floor');
+  assert.equal(st.reportingLikely, true, 'either one is a real filing obligation');
+  assert.equal(st.federalThresholdUsd, 2000);
+  assert.equal(st.stateThresholdUsd, 600);
+  assert.equal(st.payerState, 'CO');
+});
+
+await t('$2,500 paid owes BOTH returns', () => {
+  const now = Date.parse('2026-11-01T00:00:00Z');
+  const rec = baseRec({
+    earnedUsd: 2500, ledger: [entry(2500, 200)],
+    payouts: [{ amount: 2500, paidAt: '2026-06-01T00:00:00.000Z', taxYear: 2026 }],
+  });
+  const st = payoutState(rec, now);
+  assert.equal(st.reportingLikelyFederal, true);
+  assert.equal(st.reportingLikelyState, true);
+});
+
+await t('the published tax text names both thresholds honestly', () => {
+  const s = PAYOUT_TERMS.taxText;
+  assert.match(s, /\$2,000/, 'must state the federal figure');
+  assert.match(s, /\$600/, 'must state the Colorado figure');
+  assert.match(s, /Colorado/, 'must say which state and why it differs');
 });
 
 await t('a dormant ambassador is not flagged by a falsy fallback', () => {

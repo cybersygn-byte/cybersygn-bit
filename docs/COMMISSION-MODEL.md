@@ -191,13 +191,23 @@ persisted. Neither PayPal nor Wise collects a W-9 on our behalf and neither
 files a 1099-NEC for us, so the collector is a named vendor (Stripe Connect,
 Tipalti, Trolley, or Tax1099), not the payment rail.
 
-Two questions are open with the CPA and must not be treated as settled:
-whether the founder's state of operation kept a $600 state filing threshold
-(several states did not conform to the federal increase), and whether PayPal
-goods and services payouts qualify for the Treas. Reg. 1.6041-1(a)(1)(iv)
-third party network transaction relief that would move the 1099 duty off us
-entirely. Until those answers come back in writing, we build as payer of record
-with the full W-9 stack, because that design is correct under either answer.
+**RESOLVED 2026-08-12: Colorado kept the $600 threshold.** CyberSygn files
+from Colorado, which did not conform to the federal increase, so the number
+that actually triggers a filing is **$600, not $2,000**. Both figures are now
+in the code (`PAYER_STATE`, `STATE_REPORTING_THRESHOLD`,
+`federalThresholdForYear`, `stateThresholdForYear`), and
+`reportingThresholdForYear` returns the lower of the two. `payoutState` reports
+`reportingLikelyFederal` and `reportingLikelyState` separately, because at year
+end they are two different filings: $600 to $1,999 paid is a state return only,
+$2,000 and up is both.
+
+One question remains open with the CPA and must not be treated as settled:
+whether PayPal goods and services payouts qualify for the Treas. Reg.
+1.6041-1(a)(1)(iv) third party network transaction relief that would move the
+federal 1099 duty off us. Note that even a yes there is only federal relief and
+does not by itself answer the Colorado obligation. Until that comes back in
+writing, we build as payer of record with the full W-9 stack, because that
+design is correct under either answer.
 
 ### What blocks a payout
 
