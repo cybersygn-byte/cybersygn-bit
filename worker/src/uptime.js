@@ -55,7 +55,11 @@ export async function recordUptimeProbe(env, isOk) {
 export async function readUptimeWindow(env, windowDays = 30) {
   const days = [];
   if (!env || !env.CYBERSYGN_DOCS) {
-    return { windowDays, uptimePct: 100, daysOk: 0, daysDegraded: 0, days };
+    /* No data source is "unknown", not "perfect". Asserting 100% here put a
+       fabricated headline uptime on the public status page whenever the KV
+       binding was absent (misconfig, stripped env, preview deploy). Match the
+       empty-KV branch below and report null so the page renders "no data". */
+    return { windowDays, uptimePct: null, daysOk: 0, daysDegraded: 0, days };
   }
   const now = new Date();
   for (let i = windowDays - 1; i >= 0; i--) {

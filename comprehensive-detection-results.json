@@ -2,7 +2,7 @@
   "overall": {
     "categories": 10,
     "totalPDFs": 100,
-    "totalFields": 344,
+    "totalFields": 359,
     "perCategory": {
       "acroforms": {
         "pdfs": 10,
@@ -27,11 +27,11 @@
       "checkboxes": {
         "pdfs": 10,
         "parsed": 10,
-        "totalFields": 33,
+        "totalFields": 48,
         "withSignature": 0,
         "withDate": 0,
-        "withCheckbox": 6,
-        "empty": 4,
+        "withCheckbox": 9,
+        "empty": 1,
         "errors": 0
       },
       "dates": {
@@ -58,8 +58,8 @@
         "pdfs": 10,
         "parsed": 10,
         "totalFields": 40,
-        "withSignature": 1,
-        "withDate": 1,
+        "withSignature": 10,
+        "withDate": 10,
         "withCheckbox": 0,
         "empty": 0,
         "errors": 0
@@ -78,7 +78,7 @@
         "pdfs": 10,
         "parsed": 10,
         "totalFields": 33,
-        "withSignature": 8,
+        "withSignature": 10,
         "withDate": 6,
         "withCheckbox": 0,
         "empty": 0,
@@ -88,7 +88,7 @@
         "pdfs": 10,
         "parsed": 10,
         "totalFields": 31,
-        "withSignature": 9,
+        "withSignature": 10,
         "withDate": 10,
         "withCheckbox": 0,
         "empty": 0,
@@ -98,7 +98,7 @@
         "pdfs": 10,
         "parsed": 10,
         "totalFields": 26,
-        "withSignature": 2,
+        "withSignature": 0,
         "withDate": 0,
         "withCheckbox": 0,
         "empty": 1,
@@ -239,16 +239,16 @@
         "cbs": 3
       },
       "02-parens-yes-no.pdf": {
-        "fields": 0,
+        "fields": 6,
         "sigs": 0,
         "dates": 0,
-        "cbs": 0
+        "cbs": 6
       },
       "03-square-brackets.pdf": {
-        "fields": 0,
+        "fields": 3,
         "sigs": 0,
         "dates": 0,
-        "cbs": 0
+        "cbs": 3
       },
       "04-circle-radio.pdf": {
         "fields": 0,
@@ -269,10 +269,10 @@
         "cbs": 5
       },
       "07-agree-disagree.pdf": {
-        "fields": 0,
+        "fields": 6,
         "sigs": 0,
         "dates": 0,
-        "cbs": 0
+        "cbs": 6
       },
       "08-acknowledge-each.pdf": {
         "fields": 7,
@@ -303,7 +303,7 @@
       "02-dated-this.pdf": {
         "fields": 5,
         "sigs": 0,
-        "dates": 2,
+        "dates": 3,
         "cbs": 0
       },
       "03-mmddyyyy-format.pdf": {
@@ -420,8 +420,8 @@
     "international": {
       "01-spanish.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 2,
         "cbs": 0
       },
       "02-french.pdf": {
@@ -432,50 +432,50 @@
       },
       "03-german.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "04-italian.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "05-portuguese.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "06-dutch.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "07-polish.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "08-russian-translit.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 1,
+        "dates": 1,
         "cbs": 0
       },
       "09-japanese-translit.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 2,
+        "dates": 1,
         "cbs": 0
       },
       "10-arabic-translit.pdf": {
         "fields": 4,
-        "sigs": 0,
-        "dates": 0,
+        "sigs": 2,
+        "dates": 1,
         "cbs": 0
       }
     },
@@ -524,7 +524,7 @@
       },
       "08-employer-employee.pdf": {
         "fields": 6,
-        "sigs": 1,
+        "sigs": 2,
         "dates": 2,
         "cbs": 0
       },
@@ -556,13 +556,13 @@
       },
       "03-left-margin.pdf": {
         "fields": 5,
-        "sigs": 0,
+        "sigs": 5,
         "dates": 0,
         "cbs": 0
       },
       "04-right-margin.pdf": {
         "fields": 5,
-        "sigs": 0,
+        "sigs": 5,
         "dates": 0,
         "cbs": 0
       },
@@ -624,8 +624,8 @@
       },
       "04-x-marker.pdf": {
         "fields": 3,
-        "sigs": 1,
-        "dates": 2,
+        "sigs": 2,
+        "dates": 1,
         "cbs": 0
       },
       "05-authorize-label.pdf": {
@@ -636,7 +636,7 @@
       },
       "06-by-label.pdf": {
         "fields": 4,
-        "sigs": 0,
+        "sigs": 1,
         "dates": 1,
         "cbs": 0
       },
@@ -674,7 +674,7 @@
       },
       "02-address-multiline.pdf": {
         "fields": 5,
-        "sigs": 1,
+        "sigs": 0,
         "dates": 0,
         "cbs": 0
       },
@@ -704,7 +704,7 @@
       },
       "07-company.pdf": {
         "fields": 3,
-        "sigs": 1,
+        "sigs": 0,
         "dates": 0,
         "cbs": 0
       },

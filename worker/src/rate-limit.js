@@ -57,8 +57,14 @@ export async function checkRateLimit(env, key, policies) {
     try {
       raw = await env.CYBERSYGN_DOCS.get(bucketKey);
     } catch (e) {
-      // Fail-open on read errors.
-      console.warn('[rate-limit] kv get failed', e && e.message);
+      /* FAIL CLOSED. This limiter guards magic-link requests and owner login;
+         a limiter that cannot read its own counter must not hand out unlimited
+         attempts. The old `continue` skipped the policy, which allowed the
+         request, so the abuse burst that broke KV was also the burst that
+         defeated the limiter. Treat an unreadable counter as "at the ceiling". */
+      console.warn('[rate-limit] kv get failed, failing closed', e && e.message);
+      hits.push({ windowSec, max, current: max, remaining: 0, resetSec: windowSec });
+      verdicts.push({ exceeded: true, retryAfterSec: windowSec });
       continue;
     }
     const current = (Number.isFinite(parseInt(raw, 10)) ? parseInt(raw, 10) : 0);

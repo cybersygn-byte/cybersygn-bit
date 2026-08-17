@@ -25,6 +25,7 @@ async function main() {
   console.log('');
 
   let visionRequired = 0;
+  let errored = 0;
   for (const name of all) {
     const buf = await readFile(join(PDF_DIR, name));
     const bytes = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
@@ -39,13 +40,25 @@ async function main() {
       const tag = willInvokeVision ? 'VISION ' : 'TEXT-OK';
       console.log(`  ${tag}  ${name.padEnd(34)}  sigs=${sigs}  dates=${dates}  cb=${cbs}  total=${fields.length}`);
     } catch (err) {
+      errored += 1;
       console.log(`  ERROR   ${name}  ${err.message.slice(0, 80)}`);
     }
   }
 
   console.log('');
   console.log(`Vision-fallback gate: ${visionRequired} of ${all.length} PDFs would trigger vision in production.`);
-  console.log(visionRequired === all.length ? 'All vision-fallback cases gated correctly.' : 'WARNING, some text detection succeeded where vision was expected.');
+  /* This corpus (files 11-20) is designed so EVERY PDF must fall back to vision.
+     The pass criterion in this file's header is real, so enforce it: a PDF that
+     the text detector handled on its own, or that threw, is a regression that
+     must turn the gate red. Previously the warning branch only printed and
+     main() returned 0, so this probe could never fail its own stated rule. */
+  const passed = errored === 0 && visionRequired === all.length && all.length > 0;
+  if (passed) {
+    console.log('PASS: all vision-fallback cases gated correctly.');
+  } else {
+    console.log(`FAIL: ${all.length - visionRequired} case(s) did not need vision, ${errored} errored. Vision fallback is not gating as designed.`);
+  }
+  process.exit(passed ? 0 : 1);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

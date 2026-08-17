@@ -2298,6 +2298,12 @@ async function handleDetectVision(request, env, url) {
   const capPages = parseInt(env.VISION_MONTHLY_CAP_PAGES, 10) || undefined;
   const usage = await checkAndIncrementVisionUsage(env, senderId, capPages);
   if (!usage.ok) {
+    /* usage_check_unavailable (a KV read error) fails closed here: better to
+       ask the sender to retry than to burn an unmetered paid vision call while
+       the usage store is down. */
+    if (usage.error === 'usage_check_unavailable') {
+      return jsonResponse(503, { error: 'usage_check_unavailable', message: 'We could not check your usage just now. Please retry in a moment.' });
+    }
     return jsonResponse(429, {
       error: 'monthly_cap_reached',
       message: `Vision usage cap of ${usage.cap} pages this month reached for this sender. Increment resets on the 1st.`,
@@ -2561,6 +2567,16 @@ async function handleEmailSignedPdf(request, env) {
 
 async function handleDatasetCount(env) {
   const r = await getDatasetCount(env);
+  /* Never publish a KV failure as an authoritative "0 documents". The old
+     code hard-coded ok:true and cached the count for 60s, so a transient read
+     error turned into a confident, edge-cached zero on the public social-proof
+     widget. Propagate the failure with no-store so it is not cached, and let
+     the client render "unavailable" rather than a false scarcity number. */
+  if (!r.ok) {
+    const res = jsonResponse(503, { ok: false, error: 'count_unavailable' });
+    res.headers.set('cache-control', 'no-store');
+    return res;
+  }
   const res = jsonResponse(200, {
     ok: true,
     total: r.total,
@@ -5723,10 +5739,16 @@ async function handleVerify(env, hash) {
     return jsonResponse(400, { error: 'invalid_hash', message: 'A verification hash is a 64-character hex SHA-256.' });
   }
   const record = await getVerifyRecord(env, clean);
-  const headers = { 'cache-control': 'public, max-age=300' };
   if (!record) {
-    return jsonResponse(200, { found: false }, headers);
+    /* Do NOT cache a "not found". getVerifyRecord returns null for BOTH a
+       genuine miss and a swallowed KV read error, so caching this for 300s
+       could pin a false "this signed document was never signed here" on the
+       product's trust surface during a transient blip, and also delay a
+       just-signed document from verifying. Only found:true is immutable and
+       cacheable; a negative is always fetched fresh. */
+    return jsonResponse(200, { found: false }, { 'cache-control': 'no-store' });
   }
+  const headers = { 'cache-control': 'public, max-age=300' };
   // Only the fingerprint, count, timestamps, and status leave this endpoint.
   return jsonResponse(200, {
     found: true,

@@ -107,6 +107,45 @@ async function main() {
 
   await writeFile(OUT, JSON.stringify({ overall, results }, null, 2));
   console.log(`\nWrote ${OUT}`);
+
+  /* Regression gate. This probe used to only exit non-zero when it threw, so a
+     detector regression that quietly stopped finding signatures still reported
+     green. The documented category rules are aspirational (today the detector
+     legitimately leaves one checkboxes/ and one text-fields/ PDF empty, and
+     hits 9 of 10 adversarial signatures), so asserting them strictly would turn
+     this into a FALSE-red gate on the shipping product. Instead we pin the
+     CURRENT measured coverage as a golden baseline: every category must parse
+     without error, and its signal counts must not drop below what ships today.
+     Update BASELINE deliberately when detection genuinely improves. */
+  const BASELINE = {
+    acroforms:     { parsed: 10, withSignature: 2,  withDate: 1,  withCheckbox: 4, totalFields: 30 },
+    adversarial:   { parsed: 10, withSignature: 9,  withDate: 1,  withCheckbox: 1, totalFields: 20 },
+    checkboxes:    { parsed: 10, withSignature: 0,  withDate: 0,  withCheckbox: 9, totalFields: 48 },
+    dates:         { parsed: 10, withSignature: 0,  withDate: 10, withCheckbox: 0, totalFields: 28 },
+    initials:      { parsed: 10, withSignature: 0,  withDate: 0,  withCheckbox: 0, totalFields: 34 },
+    international: { parsed: 10, withSignature: 10, withDate: 10, withCheckbox: 0, totalFields: 40 },
+    'multi-signer':{ parsed: 10, withSignature: 10, withDate: 10, withCheckbox: 0, totalFields: 69 },
+    positioning:   { parsed: 10, withSignature: 10, withDate: 6,  withCheckbox: 0, totalFields: 33 },
+    signatures:    { parsed: 10, withSignature: 10, withDate: 10, withCheckbox: 0, totalFields: 31 },
+    'text-fields': { parsed: 10, withSignature: 0,  withDate: 0,  withCheckbox: 0, totalFields: 26 },
+  };
+  const failures = [];
+  for (const cat of cats) {
+    const s = overall.perCategory[cat] || {};
+    const b = BASELINE[cat];
+    if (s.errors > 0) failures.push(`${cat}: ${s.errors} parse error(s)`);
+    if (!b) { console.warn(`  (no baseline for new category ${cat}; add one)`); continue; }
+    for (const k of ['parsed', 'withSignature', 'withDate', 'withCheckbox', 'totalFields']) {
+      if ((s[k] || 0) < b[k]) failures.push(`${cat}.${k} regressed: ${s[k] || 0} < baseline ${b[k]}`);
+    }
+  }
+  console.log('');
+  if (failures.length) {
+    console.log('FAIL: detection coverage regressed below the golden baseline:');
+    for (const f of failures) console.log('  - ' + f);
+    process.exit(1);
+  }
+  console.log('PASS: detection coverage meets or beats the golden baseline for all 10 categories.');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

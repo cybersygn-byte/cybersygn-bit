@@ -325,7 +325,14 @@ export async function checkAndIncrementVisionUsage(env, senderId, capPages = DEF
       const n = parseInt(raw, 10);
       if (Number.isFinite(n) && n >= 0) usedBefore = n;
     }
-  } catch (e) {}
+  } catch (e) {
+    /* FAIL CLOSED. A swallowed read error used to leave usedBefore at 0, so a
+       sender at or over their monthly cap would be granted a paid vision call
+       exactly when KV is unhealthy: the cost limiter failed open under the one
+       condition it exists to guard. "The store is down" is not "you have used
+       nothing", so refuse rather than grant. */
+    return { ok: false, error: 'usage_check_unavailable', used: null, cap: capPages };
+  }
   if (usedBefore >= capPages) {
     return { ok: false, error: 'monthly_cap_reached', used: usedBefore, cap: capPages };
   }
