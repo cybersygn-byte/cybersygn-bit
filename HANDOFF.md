@@ -1,206 +1,153 @@
 # CyberSygn handoff
 
-Snapshot of project state. If you (or a fresh AI session) come back to this repo, read this first.
+The operating document for the next 90 days. If you (or a fresh AI session) come back to this repo, read this first. Every claim in this file was verified against the repo, production, or KV on 2026-08-17. Do not add claims you have not verified the same way.
+
+Ground truth as of 2026-08-17: zero paying customers, about 2 free signups. The product is built. The next 90 days are about evidence, not features.
+
+## The kill criteria (decision date: 2026-11-15)
+
+These are the commitments. On 2026-11-15 we measure, we do not renegotiate the bar.
+
+1. 10 or more documents sent by humans who are not Nathan.
+2. 3 or more paying non-founder customers.
+3. 5 of 10 watched sessions reaching a signed document unaided.
+4. 14 of 20 interviewees recognizing the document pain unprompted.
+
+The four branches:
+
+- **All four pass**: commit to the vertical fork decision made at day 60. No more hedging, build for that vertical.
+- **Sends pass but no payers**: pricing or model problem, not a product problem. Test per-document pricing before touching anything else.
+- **Watched sessions fail**: product problem. Another activation pass before any marketing spend or outreach. Marketing a product people cannot finish is burning the list.
+- **Interviews fail**: wedge problem. The pain is elsewhere. Re-interview a different trade before building anything.
+
+## The owner punch list
+
+One action per line, exact commands. These are the only things blocked on Nathan. All secret names below are the exact names the worker reads (verified in worker/src on 2026-08-17). Run each from the repo root: `cd ~/Projects/Claude/cybersygn`.
+
+1. Create a GA4 property at analytics.google.com, then:
+   `npx wrangler secret put CYBERSYGN_GA4_ID` (value like `G-XXXXXXXXXX`; read by worker/src/analytics-inject.js, not set as of 2026-08-17)
+2. Verify Search Console ownership via DNS TXT record on cybersygn.io, then:
+   `npx wrangler secret put CYBERSYGN_GSC_TOKEN` (the meta-tag content value GSC issues; not set as of 2026-08-17)
+3. Create a Sentry project, then:
+   `npx wrangler secret put SENTRY_DSN` (read by worker/src/sentry.js; optional, errors are dropped silently until set; not set as of 2026-08-17)
+4. Set the physical mailing address for CAN-SPAM email footers:
+   `npx wrangler secret put CYBERSYGN_BUSINESS_ADDRESS` (read by worker/src/email-html.js; footers omit the address line until set; not set as of 2026-08-17)
+5. AI drafting: NO action needed. The /draft/ page and POST /api/draft/generate run on `ANTHROPIC_API_KEY` (worker/src/ai-draft.js), which IS set in production. There is no OPENAI_API_KEY anywhere in this repo. If the key were ever missing the endpoint degrades to a graceful `{ok:false, reason:'unconfigured'}` 200, not a 500, but the homepage drafting claim would then be false, so keep the key live.
+6. Create a Cloudflare API token scoped to Account Analytics Read only, then:
+   `npx wrangler secret put CF_ANALYTICS_TOKEN` (replaces the broad-scoped token currently set). This unlocks clean reads of the traffic already collected in the `CYBERSYGN_EVENTS` Analytics Engine dataset, live since slice 40, which is 74+ days of real visitor data nobody has looked at yet.
+
+After any secret change: `npx wrangler deploy`.
+
+## The Nathan sequence
+
+In order. Do not skip ahead. Each step gates the next.
+
+1. **Today**: send one real document to one real counterparty and do not stop until a certificate exists at /verify/. Not a test to yourself. A real agreement with a real other person.
+2. Watch ten strangers try the product. Do not help. Do not explain. Write down where each one stalls. This produces the "watched sessions" number for the kill criteria.
+3. Twenty interviews with people who sign contracts for a living. One trade. One identical question every time. This produces the "interviews" number.
+4. Once the funnel holds (steps 1 to 3 done and acted on): five substantive answers a day in eight rooms. Answers that help, with no link unless asked.
+5. The fleet dogfood rule, permanent: every Vyan-fleet agreement goes through cybersygn.io. No exceptions. If it is not good enough for our own paperwork it is not good enough to sell.
+
+## What is deliberately paused
+
+Future sessions: do not resurrect these. They are paused on purpose until the kill criteria are measured.
+
+| Paused item | Current state | Why paused |
+|---|---|---|
+| Blog post 157+ | 156 posts live | More content does not answer any kill criterion |
+| New templates beyond 502 | 502 authored, QC'd, rendered | Same: volume is not the constraint, proof is |
+| Ambassador recruitment | System live and finished, dashboard + emails + payout terms | Recruiting waits until the product has proof; ambassadors amplify evidence, they do not create it |
+| Self-serve API keys | Metered model designed (docs), Vyan partner key works | No external developer has asked; build on pull, not push |
+| i18n scaffold | Deleted 2026-08-17 (web/i18n/ removed, route 404'd in production, nothing referenced it) | English-only until there is a paying English-speaking customer |
 
 ## Production state
 
 | Property | Value |
 |---|---|
 | Live URLs | https://cybersygn.io, https://www.cybersygn.io, https://cybersygn.nathanavogt.workers.dev |
-| Repo | https://github.com/cybersygn-byte/cybersygn-bit |
-| Branch | `main` |
-| Current Cloudflare Worker version | bump on every `wrangler deploy`; check `/api/health` |
-| Health endpoint | https://cybersygn.io/api/health (all subsystems should report `ok: true` except possibly Analytics Engine optional) |
+| Repo | ~/Projects/Claude/cybersygn (moved from ~/Downloads/Claude; GitHub: cybersygn-byte/cybersygn-bit, branch `main`) |
+| Health endpoint | https://cybersygn.io/api/health (returned `ok: true` on 2026-08-17) |
 | Owner workbench | https://cybersygn.io/control/ |
 | Owner username | `nathan@cybersygn.io` |
-| Owner password | (rotated via `node scripts/set-owner-password.mjs`, never write it here) |
+| Owner password | rotated via `node scripts/set-owner-password.mjs`, never written here |
 
-## All five subsystems
+Subsystems: Cloudflare KV (`CYBERSYGN_DOCS`, `CYBERSYGN_PDFS`), Resend (DKIM + SPF verified, sends from hello@cybersygn.io), Stripe live mode (price book in docs/PRICING-MASTERCLASS.md; price IDs live in the STRIPE_PRICE_* secrets, not here), Anthropic Claude (vision detection + drafting + summaries), Cloudflare Analytics Engine (`CYBERSYGN_EVENTS` dataset, writes live).
 
-- **KV** (Cloudflare): `CYBERSYGN_DOCS` and `CYBERSYGN_PDFS` bound, free tier
-- **Resend** (email): `cybersygn.io` domain verified, DKIM + SPF live, sends from `hello@cybersygn.io`
-- **Stripe** (payments): live mode, three prices wired
-  - Solo `price_1Td0LlBearLmu5Er6Kw9iks7` $12/mo
-  - Founding `price_1Td0LlBearLmu5ErXt6Oj11k` $9/mo (cap 100, locked-for-life)
-  - Team `price_1Td0LlBearLmu5Erb5SbrjjH` $29/mo
-  - Webhook `we_1Td0LmBearLmu5ErqBU2eI64` listens to 6 events at `/api/stripe/webhook`
-- **Anthropic Claude Vision**: bound, used by `/api/detect-vision`, opt-in client flag `localStorage.cybersygn.visionEnabled = '1'`, ~$0.01/page, per-sender cap default 1000 pages/month
-- **Cloudflare Analytics Engine**: `CYBERSYGN_EVENTS` dataset bound, write side live, SQL read side wired (Account ID `445c582eb90d6a32d606896b194ad35f`)
-
-## Worker secrets currently set
+## Worker secrets currently set (verified `npx wrangler secret list`, 2026-08-17)
 
 ```
-ANTHROPIC_API_KEY          # Claude Vision
-CF_ACCOUNT_ID              # Analytics SQL queries
-CF_ANALYTICS_TOKEN         # Analytics SQL queries
-CYBERSYGN_OWNER_HASH       # phrase-activation backdoor (slice 21)
-OWNER_USERNAME             # /control/ login (slice 43)
-OWNER_PASSWORD_SALT        # /control/ login
-OWNER_PASSWORD_HASH        # /control/ login
-RESEND_API_KEY             # transactional email
-STRIPE_SECRET_KEY          # payment intents, customers
-STRIPE_PRICE_SOLO          # checkout session product
-STRIPE_PRICE_FOUNDING
-STRIPE_PRICE_TEAM
-STRIPE_WEBHOOK_SECRET      # verify event signatures
+ANTHROPIC_API_KEY              CF_ACCOUNT_ID              CF_ANALYTICS_TOKEN
+CYBERSYGN_OWNER_HASH           OWNER_EMAIL                OWNER_PASSWORD_HASH
+OWNER_PASSWORD_SALT            OWNER_USERNAME             RESEND_API_KEY
+STRIPE_SECRET_KEY              STRIPE_WEBHOOK_SECRET
+STRIPE_PRICE_SOLO              STRIPE_PRICE_SOLO_ANNUAL
+STRIPE_PRICE_PRO               STRIPE_PRICE_PRO_ANNUAL
+STRIPE_PRICE_BUSINESS          STRIPE_PRICE_BUSINESS_ANNUAL
+STRIPE_PRICE_TEAM              STRIPE_PRICE_TEAM_ANNUAL
+STRIPE_PRICE_FOUNDING          STRIPE_PRICE_FOUNDING_ANNUAL
+STRIPE_PRICE_LIFETIME          STRIPE_PRICE_SEAT          STRIPE_PRICE_WHITELABEL
 ```
 
-To list: `npx wrangler secret list`. To rotate any: `npx wrangler secret put <NAME>` then redeploy.
+NOT set (see punch list): `CYBERSYGN_GA4_ID`, `CYBERSYGN_GSC_TOKEN`, `SENTRY_DSN`, `CYBERSYGN_BUSINESS_ADDRESS`.
+
+To list: `npx wrangler secret list`. To rotate: `npx wrangler secret put <NAME>` then `npx wrangler deploy`.
 
 ## Code layout
 
 ```
 worker/src/
-  index.js          ~2000 lines, all routes
-  detect.js         heuristic field detection (37/37 real PDFs, 10/10 synthetic)
-  vision.js         Claude Vision API client (Phase 2b)
+  index.js          all routes (do not hand-edit during parallel agent runs; the orchestrator owns it)
+  detect.js         heuristic field detection
+  vision.js         Claude Vision client
+  ai-draft.js       contract drafting (ANTHROPIC_API_KEY)
+  ai-summary.js     plain-language document summaries
   templates.js      labeled-data templates by PDF SHA-256
-  free-tier.js      3-doc-lifetime gating + signup + drip records
-  stripe.js         checkout session + webhook + sub records
-  owner.js          phrase + username/password auth, token mint
-  analytics.js      Analytics Engine writes + SQL summary
-  dataset.js        owner-only labeled-corpus export
-  owner-report.js   monthly stats email
-  storage.js        KV abstraction with in-memory fallback
-  email.js          Resend wrapper with console fallback
-  audit.js          SHA-256, audit certificate PDF rendering
+  free-tier.js      free gating + signup + drip records
+  stripe.js         checkout + webhook + subscription records
+  owner.js          owner auth, token mint
+  analytics.js      Analytics Engine writes + SQL reads
+  analytics-inject.js  GA4 + GSC tag injection (inert until secrets set)
+  sentry.js         error forwarding (inert until SENTRY_DSN set)
+  email.js / email-html.js  Resend wrapper + CAN-SPAM footer
+  audit.js          SHA-256, audit certificate PDF
 
 web/
-  index.html             marketing home
-  preview/               upload + detect + sign UI
-  dashboard/             sender dashboard with owner-only analytics panel
-  alternatives/          three SEO landing pages
-  control/               hidden owner workbench (slice 43)
-  privacy/ terms/ refund/  legal pages
-  brand/                 logos, favicons, OG card
-  polish.js              scroll-reveal driver (slice 36)
-  telemetry.js           track + report sinks (slice 9)
-  checkout.js            Stripe checkout button wiring
-  styles.css             ~4500 lines, design system
+  index.html        marketing home (5 inline scripts; their sha256 hashes live in web/_headers, recompute on ANY edit or the page breaks silently)
+  sw.js             service worker (precaches /offline, the canonical form; bump CACHE_VERSION on any shell change)
+  offline.html      source of the offline page, served at /offline (the .html form 307s)
+  preview/ dashboard/ control/ draft/ verify/ blog/ templates/  app surfaces
+  styles.css        design system
 
-scripts/
-  build-web.js                builds dist/ from web/ + worker/src/detect.js
-  vendor.js                   copies pdf.js, pdf-lib, mammoth, fonts, cmaps
-  set-owner-password.mjs      interactive password setter (no echo)
-  serve-web.js                local dev server
+scripts/            plain node test + build scripts (assert pattern, see scripts/test-payout.mjs)
 ```
-
-## Slices shipped (most recent first)
-
-Use `git log --oneline` for the full list. Highlights:
-
-- **63** Rate limiting on public mutation endpoints. `worker/src/rate-limit.js` with bucket-per-window KV backing. `/api/free/signup` capped at 3/24h + 10/week, `/api/charter/profile` at 30/hour. Owner bypass via X-CyberSygn-Owner. Returns 429 with Retry-After + standard RateLimit-* headers. Fail-open on KV errors. Verified live (3 OK, then 4th-5th 429'd).
-- **62** Charter welcome email. Fires once per `foundingNumber` assignment via Stripe webhook (`onCheckoutCompleted` calls `maybeSendCharterWelcome`). KV idempotency marker at `meta:charter-welcomed:<senderId>` prevents dupe-send. Email resolution: session.customer_details.email → session.customer_email → fetched customer.email. Subject: `Welcome to the Charter, you are #NNN.` Body anchors with member number + two action items (set wall card, reply with use case).
-- **61** Charter member onboarding. POST /api/charter/profile lets Charter members set their displayName + city on the public wall. Dashboard panel surfaces inline edit for tier=founding users. Two-column form with status feedback. Control-char strip on input. Trust model matches /api/billing/portal (senderId is the auth).
-- **60** Stripe Customer Portal, already shipped pre-session; portal session creation at `/api/billing/portal`, dashboard "Manage billing" button shown when `tier !== 'free'`.
-- **59** Public Charter wall at /charter/. GET /api/charter/wall returns `{taken, cap, remaining, members[]}` from sub:* records filtered by tier='founding'. Grid of member cards with #NNN, optional name + city, join month. Empty-state "be #001" pitch. Cached at edge for 60s. Wired from homepage Charter tier card.
-- **58** Free-tier email drip campaign. Three brand-voice emails at day 1 (welcome + activation), day 3 (templates tip / lock-in), day 7 (Charter conversion ask). `runDripCampaign(env, event)` cron-fires daily at 14:00 UTC. Idempotent per-recipient per-stage via `drip-sent:<emailHash>:<stage>` KV markers. PER_RUN_CAP=200. Owner manual-fire endpoint POST /api/owner/drip/run with ?bypassLock=true for testing.
-- **57** Cinematic scroll-driven hero video. `web/cinematic-hero.js` drives video.currentTime from scroll position. CSS/SVG animated placeholder fills the canvas until a real MP4 is dropped at `web/brand/hero.mp4`. Higgsfield prompts + ffmpeg re-encode commands in docs/HIGGSFIELD-VIDEO-PROMPTS.md.
-- **56** Conversion pass. Tiers renamed Demo/Solo/Charter/Studio across pricing, schema, Stripe products (one-shot rename endpoint fired then removed). Pain-led hero headline ("DocuSign makes you drag every signature box. We find them in 3 seconds."). Post-download "saved X minutes" toast at $60/hr. 2-of-3 + 0-of-3 free loss-aversion banners. New /alternatives/cybersygn-vs-docusign/ side-by-side page with 11-row table, Article+FAQ schema, in sitemap.
-- **55** Owner workspace separation. ownerCreated flag enforced in templates (saves auto-downgrade to private), dataset stats + JSONL export (filtered with ownerSkipped count), reminder sweep (skip), analytics (`tier=owner` blob, excluded by default in summary endpoint).
-- **54** Phase 3 ML strategy committed in docs/ML.md. Defer build until corpus hits 5,000 examples. Threshold-crossed one-shot watchdog email after every public template save, idempotent via `phase3:alert:sent` KV key.
-- **53** Sitemap covered (9 URLs), schema.org WebPage added to /preview/, homepage SoftwareApplication offer fixed (free is 3-lifetime not per-month), dashboard masthead grew the free-pill with inline localStorage paint, email deliverability verified via /api/owner/test-email (Resend providerId `aa769a02…`).
-- **52** Field validation: signer-row emails flag malformed with warn-border; send-by-email pre-flight blocks bad addresses. Free-tier counter pill in /preview/ + /dashboard/ mastheads. Empty state no longer hides upload behind the free-gate form, detection runs in-browser, gate moves to the actual send point.
-- **51** Signer-side completeness. POST /api/docs/:docId/signer/:token/decline + 'Decline to sign' link in signer mode; declined signers skipped by reminder sweep. POST /api/snapshot/email for direct PDF-to-CC sending with Resend attachments; daily rate-limited (30/day free, 200/day owner). 'Email a copy' modal in single-signer Tools.
-- **50** Save/restore editable draft. 'Save resumable draft' button writes a `.cybersygn-draft.json` with PDF base64 + fields + sender edits + fills + signers + assignments. handleFiles detects on upload, restoreDraft rehydrates. bytesToBase64/base64ToBytes promoted to api.js exports. Single-signer CC deferred to slice 51.
-- **49** Verification + signer-mode UX fixes + mobile polish + owner password rotation. Worker 141/141, real PDF 37/37, synthetic 10/10, stripe 34/34. Sender-only controls hidden in signer mode (is-signer-mode class). Mobile sidebar/toolbar tightened at <=640 and <=380. Owner password rotated, new credentials in .owner-password.txt (gitignored, mode 600).
-- **48** Save snapshot at any state. Primary Download button label switches per state ('Download draft (X of Y)' mid-fill); new 'Save snapshot of current work' button writes a timestamped PDF copy.
-- **47** Signer-name focus fix (no more 'one letter at a time'), nav order flipped to PDF y-descending, CC support in Send modal with /api/docs payload + completion-email fanout to CCs.
-- **46** Hide signer chips when single-signer, hide field-type tags by default, floating doc-toolbar with Prev/Next + edit-mode toggle, Tab/Shift+Tab keyboard nav.
-- **45** /preview/ sidebar rebuild: doc-card identity, reliability pill, progress bar above Download CTA, compact legend, Tools & templates disclosure.
-- **44** Template-loaded confidence display: confidence now preserved through save (worker/src/templates.js sanitizeFields), client defaults missing values to 1.0 (web/preview/app.js handleFile), existing public template at `tpl:80cc1a28...` patched in KV. Native Roofing PDF detection report now reads 100% (was 7%).
-- **43** `/control/` owner workbench with username+password login, robots-blocked
-- **42** Monthly owner-report email, runs on the 1st of each UTC month
-- **41** Phase 3 ML scaffolding (export endpoint + readiness threshold). NOT the full pipeline. Heuristic detection still in production.
-- **40** Analytics Engine binding activated
-- **39** Stripe checkout-URL verify (real charge is the user's hand only)
-- **38** Free tier rework: 3 lifetime per email, signup gate, dataset counter
-- **37** Cohesion pass: unified footer across pages, hover lifts on all card types
-- **36** Visual polish pass: scroll reveals, gradients, button micro-interactions
-- **35** Cinema-quality auto-playing demo on preview empty state
-- **34** Template-state badge, page-fill render scale, auto-save nudge
-- **32** Document templates keyed by SHA-256 (public + private scopes)
-- **28** Phase 2a classical CV detection (disabled by default; tuning ongoing)
-- **23** PDF render fix: cmaps + standard_fonts for CJK/macOS-authored PDFs
-- **22** Restored missing layout CSS for /preview/ result view
-- **21** Owner pill UX hardened
-- **18** Interactive hero demo on the marketing homepage
-- **14-17** /api/health deep check, real founding count, owner test-email, HTML emails
-- **9-13** Cloudflare Analytics Engine, sidebar UX, legal pages, mobile sweep, owner analytics view
-- **1-8** Stripe Checkout, SEO + AI crawlers, homepage conversion, render bugs
-
-## Open items I know about
-
-| Item | What's needed | Why deferred |
-|---|---|---|
-| Real card test of Stripe live | Charge yourself $9, then refund via Stripe API | Safety rule prevents me from charging cards on your behalf |
-| Rotate `STRIPE_SECRET_KEY` | Stripe dashboard → API keys → Roll key → expire immediately, then `wrangler secret put STRIPE_SECRET_KEY`, then `wrangler deploy` | The key in chat history is still live; you decide when to rotate |
-| Rotate `ANTHROPIC_API_KEY` | Anthropic console → API Keys → delete → create new → `wrangler secret put` | Same, key was in chat |
-| Rotate `OWNER_PASSWORD_HASH` | `node scripts/set-owner-password.mjs` | `CyberFounder15` was in chat history |
-| Native Roofing template publicly saved | Done (slice 43-era manual promotion) | docId `80cc1a28...` → 79 fields, public scope |
-| Phase 3 ML model | Multi-month: collect 5K labeled examples, train custom CV model | Heuristic detection works at 100% on regression set, vision API is the bridge |
-| Owner auto-bypass free-tier gate | Small refactor: paintFreeStatus should also check owner token | Owners can already use the product via /control/ or by activating owner mode |
-| Analytics SQL scoped token | Generate a Cloudflare token with only Account Analytics:Read scope, swap `CF_ANALYTICS_TOKEN` | Current token uses wrangler OAuth with broader scope; works but defensively-loose |
 
 ## Common operations
 
-**Deploy after a code change:**
 ```
-cd ~/Downloads/Claude/cybersygn
-~/.local/node/bin/npm run build
-~/.local/node/bin/npx wrangler deploy
-```
-
-**Set or rotate any secret:**
-```
-~/.local/node/bin/npx wrangler secret put SECRET_NAME
-# Paste value when prompted (hidden), press Enter
-~/.local/node/bin/npx wrangler deploy
-```
-
-**Run all tests:**
-```
-~/.local/node/bin/npm test                  # synthetic detection (10/10)
-~/.local/node/bin/npm run test:real         # real PDFs (37/37)
-~/.local/node/bin/npm run test:worker       # E2E worker (141/141)
-~/.local/node/bin/npm run test:stripe       # Stripe (34/34)
-```
-
-**Check production health:**
-```
+cd ~/Projects/Claude/cybersygn
+npm run build              # builds web/dist
+npx wrangler deploy        # ships worker + assets
+npm test                   # synthetic detection
+npm run test:real          # real PDF corpus
+npm run test:worker        # E2E worker
+npm run test:stripe        # Stripe flows
 curl https://cybersygn.io/api/health | python3 -m json.tool
 ```
 
-**Trigger the monthly owner report on demand:**
-1. Sign into /control/
-2. Open browser devtools console
-3. `localStorage.getItem('cybersygn.owner.token')`, copy that value
-4. `curl https://cybersygn.io/api/owner/report/preview?send=true -H "X-CyberSygn-Owner: <token>"`
-
-**View live Analytics Engine data:**
-- /control/ → Live analytics tile, or
-- `/api/analytics/summary?window=INTERVAL%20%277%27%20DAY` with owner header
-
-**Export labeled-data corpus for ML work:**
-```
-curl -H "X-CyberSygn-Owner: <token>" https://cybersygn.io/api/owner/dataset/export > corpus.jsonl
-```
+Full slice history: `git log --oneline`. Program docs: docs/LAUNCH-PROGRAM.md, docs/PRICING-MASTERCLASS.md, docs/CRISP-DIRECTIVE.md, docs/NEXT-STANDARD.md.
 
 ## Brand voice / constitution
 
-Read [CONSTITUTION.md](./CONSTITUTION.md) for the immutable rules. Highlights:
+Read CONSTITUTION.md for the immutable rules. Highlights: sentence case, headlines end with periods, no em-dashes anywhere, "field" not "form element", "document" not "envelope", truth before completion (claim only what execution verified), push back when scope is wrong.
 
-- Sentence case. Headlines end with periods. Oxford comma. No em-dashes.
-- Forbidden words listed in Section 1.10.
-- "Field" not "form element." "Document" not "envelope."
-- Modern, not trendy. No glassmorphism. No neon.
-- Truth before completion: claim only what's verified by execution.
-- Push back when scope is wrong; don't comply by default.
+## Honesty rails (bind every future session)
 
-## How to continue this conversation in a fresh session
+- Zero paying customers and about 2 free signups as of 2026-08-17. Never imply otherwise anywhere on the site or in email.
+- Never fabricate a count, testimonial, or capability. If a number is shown publicly it must come from a real query at render time or be removed.
+- CSP is hash-based with no unsafe-inline for scripts. Most JS is external, but SEVERAL pages carry hashed inline scripts: web/index.html has 5, web/templates/index.html has 1, and web/_headers holds 23 script hashes in total. Editing ANY inline script means recomputing its sha256 (base64 of the digest of the exact bytes between the script tags) and updating web/_headers, or that page silently breaks under CSP.
 
-If you start a new Claude Code session, paste this single line into the first message:
+## How to continue in a fresh session
 
-> Read `/Users/nathanvogt/Downloads/Claude/cybersygn/HANDOFF.md` to load project state, then continue from there.
+Paste this into the first message of a new session:
 
-The AI will read this file and have everything it needs.
+> Read `~/Projects/Claude/cybersygn/HANDOFF.md` to load project state, then continue from there.

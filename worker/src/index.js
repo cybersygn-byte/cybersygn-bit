@@ -71,6 +71,9 @@ import { runMonthlyOwnerReport } from './owner-report.js';
 import { runDripCampaign, shouldRunDripCampaign } from './drip-campaign.js';
 import { runSecurityCheck, getLatestSecurityCheck } from './security-check.js';
 import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill, ensureDailyBackfill } from './metrics-counters.js';
+// Funnel instrument. Aliased because index.js already declares its own
+// handleEvent for the legacy /api/event queue endpoint below.
+import { handleEvent as handleFunnelEvent, handleOwnerFunnel, countCrawler } from './events.js';
 import {
   TIERS,
   getSubscription,
@@ -312,6 +315,11 @@ const worker = {
     if (request.method === 'POST' && url.pathname === '/api/event') {
       return handleEvent(request, env, url);
     }
+    // The canonical 11-step funnel. Separate from /api/event: this one also
+    // writes permanent KV counters that outlive the Analytics Engine window.
+    if (request.method === 'POST' && url.pathname === '/api/e') {
+      return handleFunnelEvent(request, env);
+    }
     if (request.method === 'POST' && url.pathname === '/api/error') {
       // Tight rate limit on client-error reports, bug-spam is a real
       // failure mode and we don't want it to hot-spot Resend.
@@ -374,6 +382,10 @@ const worker = {
       if (request.method === 'GET' && m) {
         return handleAffiliateStats(request, env, url, m[1]);
       }
+    }
+
+    if (request.method === 'GET' && url.pathname === '/api/owner/funnel') {
+      return handleOwnerFunnel(request, env, url);
     }
 
     // ---- Ambassador program, owner only ------------------------------
@@ -748,6 +760,17 @@ const worker = {
       });
     }
     if (env && env.ASSETS && typeof env.ASSETS.fetch === 'function') {
+      // Crawler visibility. Every other telemetry path depends on browser
+      // JavaScript, so Googlebot and the AI crawlers named in robots.txt are
+      // otherwise completely invisible. HTML document serves only: counting
+      // js/css/png would multiply one visit into a dozen. Fire and forget,
+      // and countCrawler itself no-ops for any non-crawler user agent.
+      const isHtmlDoc = request.method === 'GET' && (
+        url.pathname === '/' || url.pathname.endsWith('/') || url.pathname.endsWith('.html')
+      );
+      if (isHtmlDoc && ctx && typeof ctx.waitUntil === 'function') {
+        try { ctx.waitUntil(countCrawler(env, request)); } catch (e) {}
+      }
       const upstream = await env.ASSETS.fetch(request);
       const hardened = hardenAssetHeaders(await maybeInjectAnalytics(upstream, env), url.pathname);
       // Preview host (workers.dev): mirror content for debugging, but keep it

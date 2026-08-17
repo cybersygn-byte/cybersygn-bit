@@ -127,6 +127,7 @@ async function paint() {
   if (signout) signout.hidden = false;
   await loadKpis();
   await loadAnalytics();
+  await loadFunnel();
 }
 
 // ----- Founder KPIs tile -----------------------------------------------------
@@ -317,6 +318,75 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// ----- Funnel tile ----------------------------------------------------------
+// Permanent KV counters from GET /api/owner/funnel. Every number is a real
+// counter read; a missing key arrives as 0 and renders as 0. No placeholders.
+
+const FUNNEL_LABELS = {
+  app_open: 'Opened the app',
+  pdf_loaded: 'Loaded a PDF',
+  detect_done: 'Fields detected',
+  fields_confirmed: 'Confirmed fields',
+  signer_added: 'Added a signer',
+  send_started: 'Started a send',
+  doc_created: 'Created a document',
+  signed_downloaded: 'Downloaded the signed copy',
+  sign_link_opened: 'Signer opened their link',
+  signer_completed: 'Signer finished signing',
+  cert_verified: 'Verified a certificate',
+};
+
+function funnelRow(row) {
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0).toLocaleString();
+  const label = FUNNEL_LABELS[row.name] || '';
+  return '<tr>' +
+    '<td class="control-src__name"><code>' + escapeHtml(row.name) + '</code>' +
+      (label ? ' <span class="control-stat__sub">' + escapeHtml(label) + '</span>' : '') + '</td>' +
+    '<td class="control-src__num">' + n(row.lifetime) + '</td>' +
+    '<td class="control-src__num">' + n(row.last7) + '</td>' +
+    '<td class="control-src__num">' + n(row.last30) + '</td>' +
+  '</tr>';
+}
+
+async function loadFunnel() {
+  const body = $('ctrl-funnel-body');
+  if (!body) return;
+  body.innerHTML = '<p class="control-tile__empty">Loading funnel.</p>';
+  try {
+    const res = await fetch('/api/owner/funnel', {
+      headers: { 'X-CyberSygn-Owner': readToken() },
+    });
+    if (res.status === 401) {
+      body.innerHTML = '<p class="control-tile__empty">Session expired. Sign out and back in.</p>';
+      return;
+    }
+    if (!res.ok) {
+      body.innerHTML = '<p class="control-tile__empty">Could not load: HTTP ' + res.status + '</p>';
+      return;
+    }
+    const d = await res.json();
+    if (!d || !d.ok || !Array.isArray(d.rows)) {
+      body.innerHTML = '<p class="control-tile__empty">Funnel counters could not be read. Try refresh.</p>';
+      return;
+    }
+    const crawlers = Array.isArray(d.crawlers) ? d.crawlers : [];
+    const crawlerRows = crawlers.length
+      ? crawlers.map(funnelRow).join('')
+      : '<tr><td colspan="4" class="control-tile__empty">No crawler visits counted yet.</td></tr>';
+    body.innerHTML =
+      '<table class="control-src-table">' +
+        '<thead><tr><th>Step</th><th class="control-src__num">Lifetime</th><th class="control-src__num">Last 7 days</th><th class="control-src__num">Last 30 days</th></tr></thead>' +
+        '<tbody>' + d.rows.map(funnelRow).join('') + '</tbody>' +
+        '<tbody>' +
+          '<tr><td colspan="4"><p class="kicker kicker--muted" style="margin:10px 0 2px;">Crawlers on HTML pages</p></td></tr>' +
+          crawlerRows +
+        '</tbody>' +
+      '</table>';
+  } catch (err) {
+    body.innerHTML = '<p class="control-tile__empty">Network error: ' + escapeHtml(err && err.message ? err.message : String(err)) + '</p>';
+  }
+}
+
 // Refresh + window controls
 const refreshBtn = $('ctrl-refresh');
 if (refreshBtn) refreshBtn.addEventListener('click', loadAnalytics);
@@ -324,6 +394,8 @@ const windowSel = $('ctrl-window');
 if (windowSel) windowSel.addEventListener('change', loadAnalytics);
 const kpiRefreshBtn = $('ctrl-kpi-refresh');
 if (kpiRefreshBtn) kpiRefreshBtn.addEventListener('click', loadKpis);
+const funnelRefreshBtn = $('ctrl-funnel-refresh');
+if (funnelRefreshBtn) funnelRefreshBtn.addEventListener('click', loadFunnel);
 
 // ---- API keys (public API /api/v1) ---------------------------------------
 const keyForm = $('apikey-form');

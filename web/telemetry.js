@@ -23,8 +23,24 @@
   var w = window;
   var cybersygn = (w.cybersygn = w.cybersygn || {});
 
+  // Calls made before this file ran may sit in a stub queue at
+  // cybersygn._q as [name, props] pairs. We drain it after install so
+  // early calls never throw and never get lost.
+  var preInitQueue = Array.isArray(cybersygn._q) ? cybersygn._q.splice(0) : [];
+
   var EVENT_URL = '/api/event';
   var ERROR_URL = '/api/error';
+  var FUNNEL_URL = '/api/e';
+
+  // The 11 canonical funnel events. Must match worker/src/events.js
+  // exactly. These go to /api/e (which writes Analytics Engine AND the
+  // permanent KV counters); everything else keeps the legacy /api/event
+  // path so nothing is double-counted.
+  var FUNNEL_EVENTS = {
+    app_open: 1, pdf_loaded: 1, detect_done: 1, fields_confirmed: 1,
+    signer_added: 1, send_started: 1, doc_created: 1, signed_downloaded: 1,
+    sign_link_opened: 1, signer_completed: 1, cert_verified: 1,
+  };
   var SENDER_KEY = 'cybersygn.senderId';
   var OWNER_KEY  = 'cybersygn.owner.token';
   var FLUSH_DEBOUNCE_MS = 200;
@@ -82,11 +98,44 @@
     flushTimer = setTimeout(flush, FLUSH_DEBOUNCE_MS);
   }
 
+  // ---- funnel transport (/api/e)
+  // Canonical events ship immediately as {e, p}: sendBeacon first (it
+  // survives page unload), fetch keepalive fallback, silent failure.
+  // sendBeacon with a bare string posts as text/plain; the Worker parses
+  // the text body itself, so no Blob content-type dance is needed.
+  function sendFunnel(name, props) {
+    try {
+      // Merge identity context the worker maps into Analytics Engine
+      // (p.senderId -> index1 for unique-sender counts, p.path -> blob2,
+      // p.tier -> blob8 for the owner-exclusion filter). Without these,
+      // every funnel row hashes an empty sender and owner traffic is
+      // indistinguishable from real signal. Caller props win on conflict.
+      var enriched = { senderId: senderId(), path: w.location.pathname, tier: tier() };
+      for (var k in props) {
+        if (Object.prototype.hasOwnProperty.call(props, k)) enriched[k] = props[k];
+      }
+      var payload = JSON.stringify({ e: name, p: enriched });
+      if (navigator && typeof navigator.sendBeacon === 'function') {
+        if (navigator.sendBeacon(FUNNEL_URL, payload)) return;
+      }
+      fetch(FUNNEL_URL, { method: 'POST', body: payload, keepalive: true }).catch(function () {});
+    } catch (e) {
+      // telemetry never breaks the product
+    }
+  }
+
   // ---- public track
   cybersygn.track = function track(event, props) {
     if (!event || typeof event !== 'string') return;
-    if (eventQueue.length >= MAX_QUEUE) return;
     var safeProps = (props && typeof props === 'object') ? props : {};
+    // Canonical funnel events go to /api/e ONLY. That endpoint writes the
+    // same Analytics Engine dataset plus the permanent KV counters, so
+    // also enqueuing them to /api/event would double-count in AE.
+    if (FUNNEL_EVENTS[event] === 1) {
+      sendFunnel(event, safeProps);
+      return;
+    }
+    if (eventQueue.length >= MAX_QUEUE) return;
     eventQueue.push({
       event: event,
       props: {
@@ -119,6 +168,17 @@
     if (w.console && console.error) console.error('[cybersygn:error]', context || '', err);
     scheduleFlush();
   };
+
+  // ---- drain any pre-init stub queue now that track is real
+  try {
+    for (var qi = 0; qi < preInitQueue.length; qi++) {
+      var qEntry = preInitQueue[qi];
+      if (qEntry && qEntry.length) cybersygn.track(qEntry[0], qEntry[1]);
+    }
+  } catch (e) {}
+  // Keep _q as a plain array so any straggler push is harmless (no-op
+  // holding pen; nothing reads it after this point).
+  cybersygn._q = [];
 
   // ---- global error catchers so unhandled exceptions reach the sink
   w.addEventListener('error', function (e) {

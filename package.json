@@ -38,9 +38,10 @@
     "lint": "npm run smoke && npm run lint:css && npm run eval:check",
     "lint:emdash": "node tools/emdash-lint.mjs",
     "lint:emdash:dist": "node tools/emdash-lint.mjs --dist-only",
-    "deploy": "npm run lint && npm run build && npm run test:worker && npm run test:payout && npx wrangler deploy",
+    "deploy": "npm run lint && npm run build && npm run test:worker && npm run test:payout && npm run test:events && npx wrangler deploy",
     "test:accuracy": "node scripts/measure-element-accuracy.mjs",
-    "test:payout": "node scripts/test-payout.mjs"
+    "test:payout": "node scripts/test-payout.mjs",
+    "test:events": "node scripts/test-events.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

@@ -162,15 +162,26 @@
           </ul>
           <!-- No PDF handy? Most curious visitors do not have a contract on
                their device at the moment they get curious, and on mobile
-               almost nobody does. This loads a real template through the
-               identical upload path via the ?pdf= loader in app.js. -->
-          <p class="dropzone-card__sample">
-            No contract handy?
-            <a class="dropzone-card__sample-link" href="?pdf=/templates-pdf/consulting-agreement.pdf">
-              Try it on a sample consulting agreement
-              <span aria-hidden="true">→</span>
-            </a>
-          </p>
+               almost nobody does. These load real templates through the
+               identical upload path via the ?pdf= loader in app.js.
+               &src=sample marks the load as a sample in the funnel. -->
+          <div class="dropzone-card__sample" aria-label="Try a sample document">
+            <p class="sample-cards__label">No contract handy? Try a real one:</p>
+            <div class="sample-cards">
+              <a class="sample-card" href="?pdf=/templates-pdf/consulting-agreement.pdf&amp;src=sample">
+                Consulting agreement
+                <span aria-hidden="true">→</span>
+              </a>
+              <a class="sample-card" href="?pdf=/templates-pdf/independent-contractor-agreement.pdf&amp;src=sample">
+                Independent contractor
+                <span aria-hidden="true">→</span>
+              </a>
+              <a class="sample-card" href="?pdf=/templates-pdf/residential-lease-agreement.pdf&amp;src=sample">
+                Residential lease
+                <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
           <!-- Free-tier signup. NOT a wall in front of upload. Anyone can
                drop a PDF and watch detection run, because detection is
                100% client-side and costs nothing to serve. Signing up is
@@ -416,7 +427,7 @@
             <p class="progress__text" id="fill-progress-text">Drop a PDF to begin.</p>
           </div>
           <button id="sign-button" class="btn btn--primary btn--block btn--lg" type="button" disabled>
-            <span class="sign-btn__label">Download PDF</span>
+            <span class="sign-btn__label">Download or send</span>
             <span class="sign-btn__arrow" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

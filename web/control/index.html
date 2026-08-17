@@ -158,6 +158,26 @@
         </div>
       </section>
 
+      <!-- ----- Funnel: permanent KV counters, never expire ----- -->
+      <section class="control-tile control-tile--funnel">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Funnel</p>
+            <h2 class="h-card">From open to signed.</h2>
+          </div>
+          <button id="ctrl-funnel-refresh" class="btn btn--ghost btn--sm" type="button">Refresh</button>
+        </header>
+        <p class="control-tile__lede">
+          Lifetime counters stored in KV, so they never expire the way
+          Analytics Engine data does. Counting started 2026-08-17. A zero
+          before that date means nothing was counted yet, not that nothing
+          happened.
+        </p>
+        <div id="ctrl-funnel-body" class="control-tile__body" aria-live="polite">
+          <p class="control-tile__empty">Loading funnel.</p>
+        </div>
+      </section>
+
       <!-- ----- Tile 2: Demo deep-links ----- -->
       <section class="control-tile control-tile--demo">
         <header class="control-tile__head">

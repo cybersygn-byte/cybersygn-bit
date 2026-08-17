@@ -332,6 +332,27 @@ const report = cybersygn.report || function report(err, context) {
 cybersygn.track = track;
 cybersygn.report = report;
 
+// ---- Canonical funnel events -----------------------------------------------
+//
+// The 11 shared event names (app_open, pdf_loaded, detect_done,
+// fields_confirmed, signer_added, send_started, doc_created,
+// signed_downloaded, sign_link_opened, signer_completed, cert_verified)
+// are emitted through this helper. It reads window.cybersygn.track at
+// call time (telemetry.js may install the real sink before or after this
+// module evaluates) and never throws when the tracker is missing.
+function emitEvent(name, props) {
+  try {
+    const t = window.cybersygn && window.cybersygn.track;
+    if (typeof t === 'function') t(name, props || {});
+  } catch (e) { /* analytics must never break the app */ }
+}
+
+// Which entry path produced the PDF currently flowing into handleFile.
+// One of: sample | upload | camera | draft | embed | signer. Each entry
+// point sets this right before calling handleFiles, and handleFile reads
+// it when it emits pdf_loaded.
+let pdfLoadSource = 'upload';
+
 // ---- DOM refs --------------------------------------------------------------
 
 const $ = id => document.getElementById(id);
@@ -998,6 +1019,7 @@ signingAsSelect.addEventListener('change', async () => {
 
 fileInput.addEventListener('change', e => {
   const files = Array.from(e.target.files || []);
+  pdfLoadSource = 'upload';
   if (files.length) handleFiles(files);
 });
 
@@ -1010,6 +1032,7 @@ const cameraInput = $('camera-input');
 if (cameraInput) {
   cameraInput.addEventListener('change', e => {
     const files = Array.from(e.target.files || []);
+    pdfLoadSource = 'camera';
     if (files.length) handleFiles(files);
   });
   const cameraChooseButton = $('camera-choose');
@@ -1451,6 +1474,7 @@ if (aiConsentCheckbox) {
 window.addEventListener('drop', e => {
   e.preventDefault();
   const files = Array.from(e.dataTransfer && e.dataTransfer.files || []);
+  pdfLoadSource = 'upload';
   if (files.length) handleFiles(files);
 });
 
@@ -1665,6 +1689,8 @@ async function handleFile(file) {
     return;
   }
 
+  emitEvent('pdf_loaded', { source: pdfLoadSource });
+
   // Detection. Pass a fresh copy so the underlying buffer detachment by
   // pdf.js stays scoped to this call.
   setStatus('busy', 'Finding fields.');
@@ -1677,6 +1703,8 @@ async function handleFile(file) {
     setStatus('error', 'Parse failed.');
     return;
   }
+
+  emitEvent('detect_done', { count: detection.fields.length });
 
   // Assign a stable id to each field so the fill store can address them.
   for (const f of detection.fields) f.id = idFor(f);
@@ -1786,6 +1814,9 @@ async function handleFile(file) {
     docState.mode = await openModePicker({ fields: detection.fields.length, pages: detection.pageCount });
   }
   document.body.dataset.inPerson = docState.mode === 'in-person' ? 'true' : 'false';
+  // The user has seen the detected fields and chosen how to proceed:
+  // this is the moment they move past detection into signing.
+  emitEvent('fields_confirmed', { count: detection.fields.length, mode: docState.mode });
 
   setStatus('busy', 'Rendering pages.');
   showResultLayout();
@@ -2782,7 +2813,7 @@ function resetApp() {
   setTemplateState('hidden');
   fileInput.value = '';
   signButton.disabled = true;
-  signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
+  signButton.innerHTML = '<span class="sign-btn__label">Download or send</span>' + SIGN_BTN_ARROW;
   signButton.classList.remove('btn--ready');
   paintProgress(0, 0);
   if (sidebarTools) sidebarTools.removeAttribute('open');
@@ -2853,7 +2884,7 @@ function paintSignButton(filledCount, totalCount) {
   if (totalCount === 0) {
     signButton.disabled = true;
     signButton.classList.remove('btn--ready');
-    signButton.innerHTML = '<span class="sign-btn__label">Download PDF</span>' + SIGN_BTN_ARROW;
+    signButton.innerHTML = '<span class="sign-btn__label">Download or send</span>' + SIGN_BTN_ARROW;
     if (saveSnapshotButton) saveSnapshotButton.disabled = true;
     if (saveDraftButton) saveDraftButton.disabled = true;
     return;
@@ -2862,16 +2893,16 @@ function paintSignButton(filledCount, totalCount) {
   signButton.classList.add('btn--ready');
   if (saveSnapshotButton) saveSnapshotButton.disabled = false;
   if (saveDraftButton) saveDraftButton.disabled = false;
-  // Three labels so the user knows what they're getting at any state:
-  //   none filled  → "Download PDF" (just the original)
-  //   partial      → "Download draft (X of Y)" (snapshot with current work baked in)
-  //   complete     → "Download signed PDF"
-  // The point: every state is a valid download. The button never locks
-  // the user out, they elect when to save.
+  // The button opens the finishing modal, which holds both real actions:
+  // download the signed copy, or send for signature. The label names
+  // both so neither path is hidden behind an ambiguous "Download".
+  // Progress lives in the bar above; the partial state keeps its count.
   let label;
-  if (filledCount === 0) label = 'Download PDF';
-  else if (filledCount >= totalCount) label = 'Download signed PDF';
-  else label = `Download draft (${filledCount} of ${totalCount})`;
+  if (filledCount > 0 && filledCount < totalCount) {
+    label = `Download or send (${filledCount} of ${totalCount})`;
+  } else {
+    label = 'Download or send';
+  }
   signButton.innerHTML = `<span class="sign-btn__label">${label}</span>` + SIGN_BTN_ARROW;
 }
 
@@ -3160,78 +3191,93 @@ async function onSignClick() {
     return;
   }
 
-  // Multi-signer mode: still goes through the send-by-email modal so
-  // each signer gets their own magic link. Single-signer (just "You"):
-  // the click directly downloads the flattened PDF with whatever is
-  // filled. No more "X fields left" gate; the user controls when
-  // they're done.
-  const isMultiSigner = signers.list().length > 1;
-  if (isMultiSigner) {
-    openSendModal();
-    return;
-  }
+  // Every sender path finishes in the send modal now. Multi-signer gets
+  // the same modal it always had (each signer emailed their own magic
+  // link). Single-signer, the default, gets an explicit choice inside
+  // that modal: download the signed copy right here, or send it for
+  // signature, which creates the server-side document record with an
+  // audit trail and a SHA-256 certificate at /verify/.
+  openSendModal();
+}
 
-  // Free-tier gate. Free users must consume one of their three signs
-  // before any flattened PDF leaves their browser. Paid customers
-  // skip the consume call entirely (their token equals 'paid:...').
-  // Returning 402 from /api/free/consume opens the paywall modal.
+// ---- Free-tier download credit ---------------------------------------------
+//
+// Free users burn one of their three lifetime credits per DOCUMENT they
+// download, not per click: re-downloading the same doc, or downloading
+// after already sending it (which burns the credit server-side inside
+// POST /api/docs), must not double-bill. We remember which docIds already
+// consumed a credit this session.
+//
+// KNOWN LIMIT, stated rather than papered over: this dedupe only covers
+// orders that pass through the client. Downloading FIRST and then sending
+// the same document still bills twice, because handleCreateDoc consumes
+// unconditionally server-side and has no way to learn the client already
+// consumed. Fixing that needs a server-side marker keyed on the PDF hash.
+//
+// docId is null when the sha256 could not be computed or a restored draft
+// carries none. A shared 'unknown' sentinel would make document B inherit
+// document A's consumed flag and download free, so unkeyed documents get a
+// per-load unique id instead and simply never dedupe.
+const _freeConsumedDocs = new Set();
+
+let _unkeyedDocSeq = 0;
+const _unkeyedDocIds = new WeakMap();
+function freeCreditKey() {
+  if (docState.docId) return docState.docId;
+  // No stable id: mint one per docState object so two different unkeyed
+  // documents can never share a key.
+  if (!_unkeyedDocIds.has(docState)) {
+    _unkeyedDocIds.set(docState, `unkeyed:${++_unkeyedDocSeq}`);
+  }
+  return _unkeyedDocIds.get(docState);
+}
+
+function markFreeCreditConsumedForCurrentDoc() {
+  _freeConsumedDocs.add(freeCreditKey());
+}
+
+/**
+ * Ensure the current user may download a flattened PDF. Returns true to
+ * proceed. Handles the signup gate, the paywall, and error toasts
+ * itself, so callers just bail on false.
+ *
+ * Paid customers ('paid:' token) skip the consume call entirely. A doc
+ * that already consumed a credit (earlier download, or a send routed
+ * through /api/docs which consumes server-side) skips it too.
+ */
+async function ensureFreeDownloadCredit() {
   const freeToken = readFreeToken();
   if (!freeToken) {
     // No token = never signed up. Surface the gate.
     showFreeSignupGate('Sign up first to download. Your first one\'s on us, no card needed.');
-    return;
+    return false;
   }
-  if (freeToken.indexOf('paid:') !== 0) {
-    try {
-      const res = await fetch('/api/free/consume', {
-        method: 'POST',
-        headers: { 'X-CyberSygn-Free': freeToken },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 402 || data.error === 'free_cap_reached') {
-        showPaywallModal();
-        return;
-      }
-      if (!res.ok) {
-        showToast('Could not validate free quota: HTTP ' + res.status + '. Try again.');
-        return;
-      }
-      // Repaint the remaining-pill so the count updates.
-      try { paintFreeStatus(); } catch (e) {}
-    } catch (err) {
-      showToast('Network error verifying free quota. Try again.');
-      return;
-    }
-  }
-
+  if (freeToken.indexOf('paid:') === 0) return true;
+  if (_freeConsumedDocs.has(freeCreditKey())) return true;
   try {
-    signButton.disabled = true;
-    const originalHtml = signButton.innerHTML;
-    signButton.innerHTML = '<span class="sign-btn__label">Preparing PDF...</span>';
-    await flattenAndDownload({
-      originalBytes: freshCopy(docState.originalBytes),
-      fields: docState.fields,
-      fillStore,
-      filename: docState.filename || 'signed.pdf',
+    const res = await fetch('/api/free/consume', {
+      method: 'POST',
+      headers: { 'X-CyberSygn-Free': freeToken },
     });
-    track('preview_downloaded_direct', {
-      fieldsTotal: docState.fields.length,
-      fieldsFilled: fillStore.size(),
-    });
-    signButton.innerHTML = originalHtml;
-
-    // Post-download anchoring toast. Computes the time saved vs.
-    // dragging each field by hand in DocuSign (industry average ~20s
-    // per field for manual placement; we cite a conservative 15s).
-    // This is the moment the buyer feels the value most acutely, 
-    // reciprocity primer for the upgrade ask later.
-    showSavedTimeToast(docState.fields.length);
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 402 || data.error === 'free_cap_reached') {
+      showPaywallModal();
+      return false;
+    }
+    if (!res.ok) {
+      showToast('Could not validate free quota: HTTP ' + res.status + '. Try again.');
+      return false;
+    }
+    markFreeCreditConsumedForCurrentDoc();
+    // Repaint the remaining-pill so the count updates.
+    if (Number.isFinite(data.remaining)) {
+      try { setFreeUsed(data.used, data.remaining); } catch (e) {}
+    }
+    try { paintFreeStatus(); } catch (e) {}
+    return true;
   } catch (err) {
-    report(err, 'direct_download');
-    showToast(`Could not generate PDF: ${err.message || err}`);
-  } finally {
-    signButton.disabled = false;
-    updateFillUI();  // restore the button state to "X of N filled"
+    showToast('Network error verifying free quota. Try again.');
+    return false;
   }
 }
 
@@ -3421,6 +3467,8 @@ async function restoreDraft(file) {
     docState.docId = draft.docId || null;
     docState.fields = draft.fields.map(f => ({ ...f, id: f.id || idFor(f) }));
     docState.mode = draft.mode || null;
+
+    emitEvent('pdf_loaded', { source: 'draft' });
 
     // Render pages (re-uses the same path fresh uploads take).
     setStatus('busy', 'Restoring draft.');
@@ -3714,6 +3762,7 @@ async function submitSignerFills() {
       docComplete: !!(res.data && res.data.docComplete),
     });
     if (res.data && res.data.signerComplete) {
+      emitEvent('signer_completed', { docComplete: !!res.data.docComplete });
       signButton.textContent = res.data.docComplete
         ? 'All signed.'
         : 'Your part is done.';
@@ -4040,6 +4089,7 @@ function onAddSigner() {
     if (nameInput) { nameInput.focus(); nameInput.select(); }
   }, 30);
   track('preview_signer_added');
+  emitEvent('signer_added', { count: signers.list().length });
 }
 
 function updateSignersUI(list) {
@@ -4457,8 +4507,10 @@ function openSendModal() {
   const list = signers.list();
   if (list.length === 1) {
     lede.textContent =
-      'This document has one signer (you). Click Download below to get the ' +
-      'PDF with every filled field locked in place.';
+      'Two ways to finish. Download the signed copy with every filled ' +
+      'field locked in place. Or send it for signature: the other party ' +
+      'gets a private signing link, and the finished document comes with ' +
+      'an audit trail and a certificate anyone can check at /verify/.';
   } else {
     lede.textContent =
       'CyberSygn emails each signer their own private signing link. ' +
@@ -4573,11 +4625,25 @@ function openSendModal() {
   const right = document.createElement('div');
   right.className = 'modal-card__footer-right';
 
-  // Send via Worker: appears when the Worker is reachable AND there is
-  // more than one signer (single-signer documents flatten and download
-  // immediately; routing them by email would add no value).
-  // Single-signer CC arrives in slice 51 via a direct PDF-to-CC endpoint
-  // that doesn't go through the magic-link flow.
+  // Send via Worker: appears whenever the Worker is reachable, for any
+  // signer count. Routing a single-signer document through the Worker is
+  // what creates the server-side doc record, the audit trail, and the
+  // SHA-256 certificate at /verify/, so the product's core action leaves
+  // a verifiable trace instead of only a browser-side flatten.
+  if (workerStatus.ok && list.length === 1) {
+    const sendBtn = document.createElement('button');
+    sendBtn.type = 'button';
+    sendBtn.className = 'btn btn--ink';
+    sendBtn.textContent = 'Send for signature';
+    sendBtn.addEventListener('click', () => {
+      close();
+      // Carry any CC the user typed in this modal. Without this the CC
+      // input is collected and then silently discarded on the single
+      // signer path, so nobody they listed is ever notified.
+      openSingleSendModal(parseCcEmails(ccInput ? ccInput.value : ''));
+    });
+    right.appendChild(sendBtn);
+  }
   if (workerStatus.ok && list.length > 1) {
     const sendBtn = document.createElement('button');
     sendBtn.type = 'button';
@@ -4594,6 +4660,7 @@ function openSendModal() {
         showToast(`Fix the email for ${bad.map(s => s.name).join(', ')} before sending.`);
         return;
       }
+      emitEvent('send_started', { signers: list.length });
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending.';
       try {
@@ -4643,6 +4710,7 @@ function openSendModal() {
         }
         close();
         openLinksModal(sendResult.data);
+        emitEvent('doc_created', { signers: list.length });
         track('preview_doc_created', {
           signers: list.length,
           email_mode: sendResult.data.email,
@@ -4662,28 +4730,61 @@ function openSendModal() {
   downloadBtn.className = 'btn btn--primary';
   const totalFilled = fillStore.size();
   const allComplete = progress.every(p => p.noFields || p.complete);
-  downloadBtn.textContent = allComplete
-    ? `Download signed PDF`
-    : `Download what is signed so far (${totalFilled})`;
+  const isSingle = list.length === 1;
+  if (isSingle) {
+    downloadBtn.textContent = allComplete
+      ? 'Download signed copy'
+      : `Download signed copy (${totalFilled} of ${docState.fields.length} filled)`;
+  } else {
+    downloadBtn.textContent = allComplete
+      ? `Download signed PDF`
+      : `Download what is signed so far (${totalFilled})`;
+  }
   if (!allComplete) downloadBtn.classList.add('btn--warn');
   downloadBtn.addEventListener('click', async () => {
+    // Single-signer downloads burn one free-tier credit per document,
+    // exactly as the old direct-download path did. The helper handles
+    // the signup gate and the paywall, and will not re-bill a doc this
+    // session that was already sent or already downloaded. It cannot
+    // cover download-then-send: that bills twice (see the note on
+    // _freeConsumedDocs). Multi-signer downloads are unchanged (their
+    // credit burns server-side at send time).
+    if (isSingle) {
+      const allowed = await ensureFreeDownloadCredit();
+      if (!allowed) return;
+    }
     downloadBtn.disabled = true;
     downloadBtn.textContent = 'Preparing your PDF.';
     try {
       await flattenAndDownload({
-        originalBytes: docState.originalBytes,
+        originalBytes: freshCopy(docState.originalBytes),
         fields: docState.fields,
         fillStore,
         filename: docState.filename,
       });
+      // Only a COMPLETE document counts as signed_downloaded. The
+      // multi-signer "Download what is signed so far" partial would
+      // otherwise inflate the permanent lifetime counter with
+      // incomplete documents, and the KV side cannot tell them apart
+      // after the fact (it stores a bare integer, not the props).
+      emitEvent(allComplete ? 'signed_downloaded' : 'preview_partial_downloaded', {
+        filled: fillStore.size(),
+        total: docState.fields.length,
+      });
       track('preview_download_succeeded', { filled: fillStore.size(), signers: list.length });
       close();
-      showToast(
-        allComplete
-          ? `Downloaded. Every signer has signed their fields.`
-          : `Downloaded a partial. ${fillStore.size()} of ${docState.fields.length} fields filled.`,
-        { action: { href: '../#pricing', label: 'See plans →' } },
-      );
+      if (isSingle) {
+        // Post-download anchoring toast: how much manual field placement
+        // this run just avoided. Same nudge the direct path always had.
+        showSavedTimeToast(docState.fields.length);
+      } else {
+        showToast(
+          allComplete
+            ? `Downloaded. Every signer has signed their fields.`
+            : `Downloaded a partial. ${fillStore.size()} of ${docState.fields.length} fields filled.`,
+          { action: { href: '../#pricing', label: 'See plans →' } },
+        );
+      }
     } catch (err) {
       report(err, 'flatten');
       downloadBtn.disabled = false;
@@ -4696,6 +4797,193 @@ function openSendModal() {
   footer.appendChild(left);
   footer.appendChild(right);
   card.appendChild(footer);
+}
+
+// ---- Single-signer send modal ----------------------------------------------
+
+/**
+ * Minimal send-for-signature modal for the default one-signer document.
+ * Asks ONE thing: the counterparty's email (name optional). Submitting
+ * calls the same createDoc path multi-signer sends use, so the document
+ * gets a server-side record, an audit trail, and a SHA-256 certificate
+ * at /verify/, none of which the browser-only flatten can produce.
+ *
+ * The low-pressure secondary option prefills the sender's own email
+ * (from the free-signup record when present) so they can dry-run the
+ * exact experience their counterparty will get.
+ *
+ * Free-tier note: POST /api/docs consumes the free credit server-side,
+ * so this path makes NO /api/free/consume call. One send = one credit.
+ */
+function openSingleSendModal(ccList = []) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  const card = document.createElement('div');
+  card.className = 'modal-card';
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+  document.body.style.overflow = 'hidden';
+
+  function close() {
+    document.body.style.overflow = '';
+    overlay.remove();
+    window.removeEventListener('keydown', onKey);
+  }
+  function onKey(e) { if (e.key === 'Escape') close(); }
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  window.addEventListener('keydown', onKey);
+
+  card.innerHTML = `
+    <div class="modal-card__head">
+      <span class="modal-card__kicker">Send for signature.</span>
+      <h2 class="modal-card__title">Who signs this?</h2>
+      <button type="button" class="modal-card__close" aria-label="Close">×</button>
+    </div>
+    <div class="modal-card__body">
+      <p class="modal-card__lede">
+        They get a private signing link by email. Every field goes to them
+        to fill, including any you filled here, so send a blank copy and let
+        them complete it. When they finish, the signed PDF comes with an
+        audit certificate you can both verify.
+      </p>
+      <form id="single-send-form" class="exit-intent__form" autocomplete="on">
+        <div class="exit-intent__row">
+          <input class="exit-intent__input" id="single-send-email" type="email" name="email"
+                 placeholder="their@email.com" autocomplete="email" required />
+        </div>
+        <div class="exit-intent__row">
+          <input class="exit-intent__input" id="single-send-name" type="text" name="name"
+                 placeholder="Their name (optional)" autocomplete="off" />
+        </div>
+        <p class="exit-intent__small" id="single-send-status"></p>
+      </form>
+      <p class="single-send__self">
+        Not sure yet?
+        <button type="button" class="single-send__self-btn" id="single-send-self">
+          Send it to yourself first</button>
+        and see exactly what your counterparty will see.
+      </p>
+    </div>
+  `;
+
+  const footer = document.createElement('footer');
+  footer.className = 'modal-card__footer';
+  const left = document.createElement('div');
+  left.className = 'modal-card__footer-left';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn--ghost';
+  cancelBtn.textContent = 'Back';
+  cancelBtn.addEventListener('click', () => { close(); openSendModal(); });
+  left.appendChild(cancelBtn);
+  const right = document.createElement('div');
+  right.className = 'modal-card__footer-right';
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.className = 'btn btn--primary';
+  submitBtn.textContent = 'Send signing link';
+  submitBtn.setAttribute('form', 'single-send-form');
+  right.appendChild(submitBtn);
+  footer.appendChild(left);
+  footer.appendChild(right);
+  card.appendChild(footer);
+
+  const closeBtn = card.querySelector('.modal-card__close');
+  if (closeBtn) closeBtn.addEventListener('click', close);
+
+  const emailInput = card.querySelector('#single-send-email');
+  const nameInput = card.querySelector('#single-send-name');
+  const statusEl = card.querySelector('#single-send-status');
+  setTimeout(() => { if (emailInput) emailInput.focus(); }, 60);
+
+  // "Send it to yourself first": prefill the sender's own email from the
+  // free-signup record when we have it; otherwise just focus the field.
+  const selfBtn = card.querySelector('#single-send-self');
+  if (selfBtn) selfBtn.addEventListener('click', () => {
+    let ownEmail = '';
+    try { ownEmail = localStorage.getItem('cybersygn.email') || ''; } catch (e) {}
+    if (ownEmail && emailInput) emailInput.value = ownEmail;
+    if (emailInput) emailInput.focus();
+    if (statusEl) {
+      statusEl.textContent = ownEmail
+        ? 'Prefilled with your own email. Hit send to see the signer side.'
+        : 'Type your own email to see the signer side first.';
+    }
+  });
+
+  const form = card.querySelector('#single-send-form');
+  if (form) form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (emailInput && emailInput.value || '').trim();
+    const name = (nameInput && nameInput.value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (statusEl) statusEl.textContent = 'That email does not look right. Check the format.';
+      return;
+    }
+    emitEvent('send_started', { signers: 1 });
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending.';
+    if (statusEl) statusEl.textContent = '';
+    try {
+      const s0 = signers.list()[0];
+      const signerId = s0 ? s0.id : 'p1';
+      // Keep the roster in sync so a re-opened send modal shows reality.
+      if (s0) {
+        try { signers.update(s0.id, { email, ...(name ? { name } : {}) }); } catch (e2) {}
+      }
+      const activeWs = getActiveWorkspace();
+      const fieldEditsPayload = {};
+      for (const [fieldId, overlay] of senderEdits.entries()) {
+        fieldEditsPayload[fieldId] = overlay;
+      }
+      const sendResult = await createDoc({
+        title: docState.filename || 'CyberSygn document',
+        pdfBytes: docState.originalBytes,
+        fields: docState.fields,
+        fieldEdits: fieldEditsPayload,
+        signers: [{ id: signerId, name, email }],
+        assignments: Object.fromEntries(
+          docState.fields.map(f => [f.id, signerId]),
+        ),
+        cc: Array.isArray(ccList) ? ccList : [],
+        senderName: '',
+        senderId: getSenderId(),
+        workspaceId: activeWs ? activeWs.id : null,
+        mode: docState.mode || 'send',
+      });
+      if (!sendResult.ok) {
+        if (sendResult.code === 'free_signup_required') {
+          close();
+          showFreeSignupGate('Sign up first to send. Your first one\'s on us, no card needed.');
+          return;
+        }
+        if (sendResult.code === 'free_cap_reached' || sendResult.code === 'free_tier_limit') {
+          close();
+          showPaywallModal();
+          return;
+        }
+        throw new Error(sendResult.error || 'send failed');
+      }
+      // The Worker consumed the free credit inside createDoc. Remember
+      // that so a later download of this same doc does not bill again.
+      markFreeCreditConsumedForCurrentDoc();
+      try { paintFreeStatus(); } catch (e2) {}
+      if (sendResult.data.senderToken) {
+        rememberDocToken(sendResult.data.docId, sendResult.data.senderToken);
+      }
+      close();
+      openLinksModal(sendResult.data);
+      emitEvent('doc_created', { signers: 1 });
+      track('preview_doc_created', { signers: 1, email_mode: sendResult.data.email });
+    } catch (err) {
+      report(err, 'createDoc:single');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Try sending again';
+      if (statusEl) statusEl.textContent = `Could not send: ${err.message || err}`;
+    }
+  });
 }
 
 // ---- Magic-link modal (shown after a successful createDoc) ----------------
@@ -4870,6 +5158,8 @@ function openLinksModal(payload) {
 const workerStatus = { ok: false, mode: 'memory', email: 'console' };
 
 async function boot() {
+  emitEvent('app_open');
+
   // Probe the Worker once on load so the UI can adapt.
   const status = await checkWorker();
   Object.assign(workerStatus, status);
@@ -4901,8 +5191,13 @@ async function boot() {
   } else if (pdfUrl) {
     // Embed-mode handling (slice 78 / 83 / 95): /preview/?pdf=<url>&embed=<source>
     // Optional ?theme=light|dark|auto and ?accent=#hex from slice 95.
+    // &src=sample marks the load as one of the sample-template cards on
+    // the dropzone, so the funnel can tell samples from real embeds.
     applyEmbedTheme(params.get('theme'), params.get('accent'));
-    await enterEmbedMode(pdfUrl, params.get('embed') || 'embed');
+    const embedSource = params.get('src') === 'sample'
+      ? 'sample'
+      : (params.get('embed') || 'embed');
+    await enterEmbedMode(pdfUrl, embedSource);
   } else if (params.get('from') === 'draft' && loadDraftBridge()) {
     // Handled inside loadDraftBridge.
   } else {
@@ -4945,6 +5240,7 @@ function loadDraftBridge() {
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     const name = (parsed.filename && String(parsed.filename)) || 'draft.pdf';
     const file = new File([bytes], name, { type: 'application/pdf' });
+    pdfLoadSource = 'draft';
     handleFiles([file]);
     return true;
   } catch (e) {
@@ -4995,6 +5291,7 @@ async function enterEmbedMode(pdfUrl, source) {
     const file = new File([blob], filename, { type: blob.type || 'application/pdf' });
     setStatus('ok', 'Loaded.');
     track('embed_pdf_loaded', { source });
+    pdfLoadSource = source === 'sample' ? 'sample' : 'embed';
     await handleFiles([file]);
   } catch (err) {
     setStatus('error', 'Could not load PDF.');
@@ -5020,6 +5317,8 @@ async function enterSignerMode(docId, token) {
   }
   const session = hydrateResult.data;
 
+  emitEvent('sign_link_opened');
+
   // Slice 94: apply sender brand if present. Paid senders can supply
   // a logo + accent color which gets baked into the masthead and the
   // primary CTA color on this signing page.
@@ -5040,6 +5339,7 @@ async function enterSignerMode(docId, token) {
 
   // Configure the app exactly as if the user had uploaded the file and we
   // were just rendering the fields they own.
+  emitEvent('pdf_loaded', { source: 'signer' });
   docState.filename = session.title;
   docState.originalBytes = pdfResult.bytes;
   docState.fields = session.fields;

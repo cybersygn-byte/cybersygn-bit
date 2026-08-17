@@ -3,7 +3,7 @@
  *
  * A public "verify a signature" surface. It takes a 64-hex document
  * fingerprint, either pasted into the field or passed as ?h=<hash> in the
- * URL (the form the verify link / QR on a signed PDF uses), and calls the
+ * URL (the form the verify link on a signed PDF uses), and calls the
  * public GET /api/verify/:hash endpoint.
  *
  * The endpoint returns PII-FREE facts only:
@@ -93,6 +93,13 @@ function renderLoading(hash) {
 
 /** Verified: a confident, honest found state. All fields are PII-free. */
 function renderFound(data) {
+  // Funnel instrument: a certificate successfully rendered. The transport
+  // (telemetry.js) is loaded on this page; guard anyway and never throw.
+  try {
+    if (window.cybersygn && typeof window.cybersygn.track === 'function') {
+      window.cybersygn.track('cert_verified');
+    }
+  } catch (e) {}
   const signers = Number(data.signerCount);
   const signerText = Number.isFinite(signers) && signers > 0
     ? (signers === 1 ? '1 signer' : signers + ' signers')
@@ -170,7 +177,7 @@ function renderNotFound(hash) {
       '<ul class="verify-guidance">' +
         '<li>Check that you copied the full 64-character fingerprint, with nothing missing or added.</li>' +
         '<li>The fingerprint comes from a completed document. A document still awaiting signatures will not have one yet.</li>' +
-        '<li>If you opened this from a signed PDF, use the exact verify link or QR code printed on it.</li>' +
+        '<li>If you opened this from a signed PDF, use the exact verify link printed on it.</li>' +
       '</ul>' +
     '</div>'
   );
@@ -257,7 +264,7 @@ if (input) {
   });
 }
 
-// Auto-run when the URL carries ?h=<hash> (the signed-PDF verify link / QR).
+// Auto-run when the URL carries ?h=<hash> (the signed-PDF verify link).
 (function bootFromURL() {
   const wanted = new URLSearchParams(location.search).get('h');
   if (!wanted) return;

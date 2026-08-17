@@ -12,12 +12,14 @@
  *
  * Storage: `verify:<pdfSha256>` in the docs namespace (CYBERSYGN_DOCS).
  * Shape: { v:1, fingerprint, signerCount, createdAt, completedAt, status:'completed' }.
- * TTL: 1 year.
+ * TTL: NONE. These records are tiny, PII-free by construction, and their
+ * entire value is permanence: the homepage stakes the brand on "proof anyone
+ * can check", and the audit certificate tells signers the record is retained.
+ * A record that quietly evaporates after a year turns that promise into
+ * "record not found" for the exact person a certificate exists to protect.
  */
 
 import { getStorage } from './storage.js';
-
-const VERIFY_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year
 const HEX64 = /^[0-9a-f]{64}$/;
 
 /**
@@ -57,9 +59,8 @@ export async function writeVerifyRecord(env, { pdfSha256, signerCount, createdAt
 
   try {
     const storage = getStorage(env);
-    await storage.docs.put(`verify:${pdfSha256}`, record, {
-      expirationTtl: VERIFY_TTL_SECONDS,
-    });
+    // No expirationTtl: verify records are permanent by design (see header).
+    await storage.docs.put(`verify:${pdfSha256}`, record);
     return true;
   } catch (e) {
     return false;

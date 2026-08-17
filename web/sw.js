@@ -16,8 +16,13 @@
  * Bump CACHE_VERSION to invalidate everything on the next visit.
  */
 
-const CACHE_VERSION = 'cybersygn-v5';
-const OFFLINE_URL = '/offline.html';
+// The offline page is authored as web/offline.html but the worker serves it
+// canonically at /offline (requesting /offline.html returns a 307 to /offline).
+// Precache the FINAL url form: caching the .html form stores a redirected
+// response, and browsers refuse to use a redirected cached response to satisfy
+// a navigation, so the offline fallback silently never worked.
+const CACHE_VERSION = 'cybersygn-v6';
+const OFFLINE_URL = '/offline';
 const PRECACHE = [
   OFFLINE_URL,
   '/styles.css',
