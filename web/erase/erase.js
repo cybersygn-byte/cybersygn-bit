@@ -110,6 +110,10 @@ if (token && wrap) {
               (kept === 1 ? '' : 's') + ' kept, so anyone holding a signed copy can still verify it. ' +
               'No name, email, or document text is in them.</p>'
             : '') +
+          (data.complete === false
+            ? '<p class="free-gate__small" data-kind="warn">' +
+              String(data.incompleteReason || 'Some records could not be removed.') + '</p>'
+            : '') +
           '<p class="free-gate__small">Receipt: <code>' + String(data.receiptId || '').replace(/[^a-f0-9]/g, '') + '</code>. ' +
           'Keep it if you ever need to show the request was honored.</p>' +
         '</div>';

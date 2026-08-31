@@ -26,7 +26,7 @@ function makeEnv(seed = {}) {
     },
     put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { m.delete(k); },
-    list: async () => ({ keys: [...m.keys()].map(name => ({ name })), list_complete: true }),
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
   });
   return { CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs), _kv: kv, _pdfs: pdfs };
 }
@@ -148,6 +148,53 @@ await t('the receipt records the act without re-storing personal data', async ()
   assert.ok(r.id && r.completedAt, 'receipt is identifiable and timestamped');
   assert.ok(!/a@x\.com/.test(blob), 'no raw email in the receipt');
   assert.ok(!/snd_1/.test(blob), 'no senderId in the receipt');
+});
+
+await t('a sender with MORE documents than the 200-entry index cap is fully erased', async () => {
+  // Regression: addToSenderIndex caps the index at 200, so walking only the
+  // index deleted the newest 200 and reported success while the rest survived.
+  const kv = new Map(), pdfs = new Map();
+  const ids = [...Array(250)].map((_, i) => 'd' + i);
+  for (const id of ids) kv.set('doc:' + id, JSON.stringify({ senderId: 'snd_1', signers: [] }));
+  for (let i = 0; i < 10; i++) kv.set('doc:other' + i, JSON.stringify({ senderId: 'snd_OTHER', signers: [] }));
+  kv.set('sender:snd_1:docs', JSON.stringify({ docs: ids.slice(0, 200) }));
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  const env = { CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs) };
+  const tally = await eraseIdentity(env, { emailHash: 'h', senderId: 'snd_1', scope: 'account' });
+  assert.equal(tally.documents, 250, 'every document deleted, not just the indexed 200');
+  assert.equal([...kv.keys()].filter(k => /^doc:d\d+$/.test(k)).length, 0, 'none left behind');
+  assert.equal([...kv.keys()].filter(k => k.startsWith('doc:other')).length, 10, 'another tenant untouched');
+  assert.equal(tally.scanComplete, true);
+});
+
+await t('the sweep ignores non-document keys even if the listing misbehaves', async () => {
+  // Defense in depth: a list() that ignores its prefix must not let the sweep
+  // destroy an auth binding or a brand record just because it carries a
+  // matching senderId field. This is exactly what happened before the guard.
+  const kv = new Map([
+    ['doc:d1', JSON.stringify({ senderId: 'snd_1', signers: [] })],
+    ['login:email:deadbeef', JSON.stringify({ senderId: 'snd_1' })],
+    ['brand:snd_1', JSON.stringify({ senderId: 'snd_1' })],
+    ['doc:../../etc/passwd', JSON.stringify({ senderId: 'snd_1', signers: [] })],
+  ]);
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    // Deliberately BROKEN: ignores the prefix entirely.
+    list: async () => ({ keys: [...m.keys()].map(name => ({ name })), list_complete: true }),
+  });
+  const env = { CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(new Map()) };
+  await eraseIdentity(env, { emailHash: 'deadbeef', senderId: 'snd_1', scope: 'documents' });
+  assert.equal(kv.has('doc:d1'), false, 'real documents still erased');
+  assert.equal(kv.has('login:email:deadbeef'), true, 'auth binding untouched by the doc sweep');
+  assert.equal(kv.has('brand:snd_1'), true, 'brand record untouched by the doc sweep');
+  assert.equal(kv.has('doc:../../etc/passwd'), true, 'a traversal-shaped id is skipped, not processed');
 });
 
 // ---------------------------------------------------------------- backups

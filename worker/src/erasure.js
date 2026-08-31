@@ -129,6 +129,21 @@ export async function eraseIdentity(env, { emailHash, senderId, scope }) {
       tally.documents++;
     }
     await safeDelete(kv, `sender:${senderId}:docs`, tally);
+
+    // SAFETY NET. The index above is a convenience that addToSenderIndex caps
+    // at 200 entries, so a heavy sender's older documents are not listed in it
+    // at all. Walking only the index therefore deletes the newest 200 and
+    // reports success while the rest quietly survive, which is the single
+    // worst failure this feature can have: telling someone their data is gone
+    // when it is not. Verified before this existed: 250 documents in, 200
+    // deleted, 50 left behind, ok:true returned.
+    //
+    // So after the index pass, scan the doc: prefix and delete anything else
+    // that actually belongs to this sender. Ownership is re-checked per record,
+    // so the scan can only ever remove documents this sender owns.
+    const scan = await sweepOrphanedDocs(kv, env, senderId, tally);
+    tally.scanComplete = scan.complete;
+    if (!scan.complete) tally.errors.push('scan_incomplete');
   }
 
   if (scope === 'documents') return tally;
@@ -150,6 +165,59 @@ export async function eraseIdentity(env, { emailHash, senderId, scope }) {
   }
 
   return tally;
+}
+
+/**
+ * Delete any remaining documents owned by `senderId` that the capped index did
+ * not list. Paginated, and bounded so a pathological account cannot run the
+ * request out of KV operations. Returns complete:false if the cap is hit, so
+ * the caller can report an incomplete erasure instead of a false success.
+ */
+const SCAN_PAGE = 1000;
+const SCAN_MAX_PAGES = 20;
+
+async function sweepOrphanedDocs(kv, env, senderId, tally) {
+  let cursor;
+  let pages = 0;
+  try {
+    do {
+      const page = await kv.list({ prefix: 'doc:', limit: SCAN_PAGE, cursor });
+      for (const entry of (page.keys || [])) {
+        const key = entry.name;
+        // Never trust the listing to have filtered for us. A list that ignores
+        // or mishandles the prefix would otherwise hand us keys from other
+        // namespaces, and any record that merely HAS a matching senderId field
+        // (an auth binding, a brand record) would be destroyed as if it were a
+        // document. Re-assert the namespace here.
+        if (!key.startsWith('doc:')) continue;
+        const docId = key.slice('doc:'.length);
+        // A doc id is opaque but must not contain separators that could let a
+        // crafted id address a different namespace in the derived keys below.
+        if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
+        let doc = null;
+        try { doc = await kv.get(key, { json: true }); } catch (e) { continue; }
+        // Only this sender's documents. Anything else is untouched.
+        if (!doc || doc.senderId !== senderId) continue;
+
+        if (doc.pdfSha256) tally.keptVerifyRecords++;
+        await safeDelete(kv, key, tally);
+        await safeDelete(kv, `meta:doc-complete-fired:${docId}`, tally);
+        if (env.CYBERSYGN_PDFS) {
+          try { await env.CYBERSYGN_PDFS.delete(`pdf:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`pdf:${docId}`); }
+          try { await env.CYBERSYGN_PDFS.delete(`audit:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`audit:${docId}`); }
+        }
+        for (const sg of (doc.signers || [])) {
+          await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);
+        }
+        tally.documents++;
+      }
+      cursor = page.list_complete ? null : page.cursor;
+      pages++;
+    } while (cursor && pages < SCAN_MAX_PAGES);
+  } catch (e) {
+    return { complete: false };
+  }
+  return { complete: !cursor };
 }
 
 /**

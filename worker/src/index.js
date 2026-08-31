@@ -460,11 +460,18 @@ const worker = {
       const receipt = await writeErasureReceipt(env, {
         emailHash: claim.emailHash, scope: claim.scope, tally,
       });
+      // Report partial failure honestly. Telling someone their data is gone
+      // when some of it is not is the one outcome this feature must never
+      // produce, so any delete error or an incomplete scan downgrades the
+      // answer instead of being swallowed by a blanket ok:true.
+      const clean = tally.errors.length === 0 && tally.scanComplete !== false;
       return jsonResponse(200, {
         ok: true,
+        complete: clean,
         scope: claim.scope,
         documentsDeleted: tally.documents,
         verifyRecordsKept: tally.keptVerifyRecords,
+        incompleteReason: clean ? null : 'Some records could not be removed. Contact hello@cybersygn.io with your receipt id and we will finish it by hand.',
         receiptId: receipt.id,
         note: 'Verification records are anonymous fingerprints with no personal data. They are kept so anyone holding a copy of a signed document can still prove it is genuine.',
       });
