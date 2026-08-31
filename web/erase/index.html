@@ -76,26 +76,38 @@
         <li>Every document you sent, including the original PDF, the signed PDF, and the audit certificate.</li>
         <li>Anything each signer typed into those documents.</li>
         <li>Your logo and branding, your webhook endpoints, and your saved settings.</li>
-        <li>The link between your email address and your workspace, and your free-plan record.</li>
+        <li>Your saved contacts: every counterparty name and email address you had stored.</li>
+        <li>Every link between your email address and your workspace, in both directions.</li>
+        <li>Your free-plan record and your marketing record, so the onboarding emails stop.</li>
+        <li>Any API keys issued to you, revoked so they can no longer act as your account.</li>
       </ul>
 
       <h2>What we keep, and why.</h2>
       <p>
         For any document that was already completed, we keep a <strong>fingerprint</strong>: a
-        64-character SHA-256 hash of the finished file, the number of signers, and the date it
-        completed. There is no name in it, no email address, and none of the document text. It
-        cannot be reversed back into any of those.
+        64-character SHA-256 hash of the PDF, the number of signers, and the date it completed.
+        There is no name in it, no email address, and none of the document text. It cannot be
+        reversed back into any of those.
       </p>
       <p>
-        We keep it because a contract has more than one party. If you and a client both signed
-        something, that client may still be holding their copy, and the fingerprint is what lets
-        them prove it is genuine and unaltered. Deleting it would let one side of an agreement
-        destroy the other side's evidence. Anonymous records like this are exactly what data
-        protection law expects to remain after personal data is erased.
+        We keep it because a contract has more than one party. Deleting it would let one side of
+        an agreement remove the record that the agreement was completed at all. Anonymous records
+        like this are what data protection law expects to remain once personal data is erased.
       </p>
       <p>
-        We also keep billing and tax records, which we are legally required to retain and which
-        the right to erasure specifically does not cover.
+        We also keep <strong>billing and tax records</strong>, which we are legally required to
+        retain and which the right to erasure specifically does not cover. We strip your email
+        address, name, and city out of them, keeping only the financial fields.
+      </p>
+      <p>
+        If you were an <strong>ambassador</strong>, we keep the payout and tax history for the same
+        reason, with your email address removed and both lookup indexes deleted, so the record is
+        no longer traceable back to you.
+      </p>
+      <p>
+        Finally, if a signed document was already emailed to you or to a counterparty, that email
+        and anything either of you downloaded is yours and theirs. We cannot reach into anyone's
+        inbox or hard drive.
       </p>
 
       <h2>Things worth knowing first.</h2>

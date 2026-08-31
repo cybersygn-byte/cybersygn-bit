@@ -75,7 +75,7 @@ import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill
 // handleEvent for the legacy /api/event queue endpoint below.
 import { handleEvent as handleFunnelEvent, handleOwnerFunnel, countCrawler } from './events.js';
 import { AtomicCounter } from './atomic-do.js';
-import { mintErasureToken, consumeErasureToken, eraseIdentity, writeErasureReceipt, normalizeEmail } from './erasure.js';
+import { mintErasureToken, consumeErasureToken, eraseIdentity, writeErasureReceipt, normalizeEmail, emailHashOf } from './erasure.js';
 import {
   TIERS,
   getSubscription,
@@ -431,7 +431,21 @@ const worker = {
 
       // Always the same answer, whether or not this email owns anything.
       // Otherwise the endpoint becomes an account-existence oracle.
-      const token = await mintErasureToken(env, email, scope).catch(() => null);
+      // Per-EMAIL limit as well as per-IP. Without it, anyone who knows an
+      // address can have deletion emails sent to that person from a rotating
+      // set of IPs. auth.js already does this for magic links and says why.
+      // Keyed on the hash so no address is written into a rate-limit key.
+      const emailKey = (await emailHashOf(email)).slice(0, 32);
+      const perEmail = await checkRateLimit(env, `erasemail:${emailKey}`, [
+        { windowSec: 60 * 15, max: 3 },
+        { windowSec: 60 * 60 * 24, max: 8 },
+      ]);
+      // Answer identically whether the limit tripped or not: a distinguishable
+      // 429 would reveal that this address has been targeted, which is itself
+      // a signal about whether the account exists.
+      const token = perEmail.ok
+        ? await mintErasureToken(env, email, scope).catch(() => null)
+        : null;
       if (token) {
         const base = (env.CYBERSYGN_APP_URL || 'https://cybersygn.io').replace(/\/+$/, '');
         const link = `${base}/erase/?token=${token}`;
@@ -456,7 +470,7 @@ const worker = {
       const claim = await consumeErasureToken(env, String((body.value && body.value.token) || ''));
       if (!claim) return jsonResponse(400, { error: 'invalid_or_expired' });
 
-      const tally = await eraseIdentity(env, claim);
+      const tally = await eraseIdentity(env, claim);  // claim carries emailHash + senderIds + scope
       const receipt = await writeErasureReceipt(env, {
         emailHash: claim.emailHash, scope: claim.scope, tally,
       });

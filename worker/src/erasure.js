@@ -61,18 +61,79 @@ export async function emailHashOf(email) {
  * still answer identically either way, so the endpoint cannot be used to test
  * whether an account exists).
  */
+/**
+ * Find EVERY senderId this email address owns.
+ *
+ * The first version read only the magic-link binding, which meant a free-tier
+ * user (who has no binding until they use a login link) resolved to
+ * senderId:null. Erasure then skipped every document and still answered
+ * "Done. It is gone." Measured: 1 document in, 0 deleted, success reported.
+ * A deletion feature that lies is worse than no deletion feature.
+ *
+ * Three independent sources, because the product binds identity three ways:
+ *  - login:email:<hash>      the magic-link workspace binding
+ *  - sender-email:<senderId> the reverse map written when a doc is created,
+ *                            which is the ONLY link a free-tier sender has
+ *  - sub:<senderId>.email    a paying customer who never used a login link
+ *
+ * Returns a de-duplicated array. One address really can own several senderIds
+ * (a person who used two browsers before ever logging in), and erasing one of
+ * them while reporting success would be the same lie in a smaller costume.
+ */
+export async function resolveSenderIds(env, emailHash) {
+  const kv = store(env);
+  const found = new Set();
+
+  try {
+    const bound = await kv.get(`login:email:${emailHash}`, { json: true });
+    if (bound && bound.senderId) found.add(String(bound.senderId));
+  } catch (e) {}
+
+  // Reverse index + billing records. Both need a scan, which is acceptable
+  // here: erasure is rare, and correctness outranks a few extra reads.
+  for (const [prefix, match] of [['sender-email:', 'reverse'], ['sub:', 'billing']]) {
+    let cursor;
+    let pages = 0;
+    try {
+      do {
+        const page = await kv.list({ prefix, limit: 1000, cursor });
+        for (const entry of (page.keys || [])) {
+          const key = entry.name;
+          if (!key.startsWith(prefix)) continue;
+          const sid = key.slice(prefix.length);
+          if (!/^[A-Za-z0-9_-]{1,128}$/.test(sid)) continue;
+          if (match === 'reverse') {
+            const v = await kv.get(key);
+            if (typeof v === 'string' && v.trim().toLowerCase() === emailHash) found.add(sid);
+          } else {
+            const sub = await kv.get(key, { json: true });
+            if (sub && typeof sub.email === 'string' && sub.email) {
+              const h = await emailHashOf(sub.email);
+              if (h === emailHash) found.add(sid);
+            }
+          }
+        }
+        cursor = page.list_complete ? null : page.cursor;
+        pages++;
+      } while (cursor && pages < 20);
+    } catch (e) { /* a failed source must not hide the ones that worked */ }
+  }
+
+  return [...found];
+}
+
 export async function mintErasureToken(env, email, scope) {
   const emailHash = await emailHashOf(email);
-  const bound = await store(env).get(`login:email:${emailHash}`, { json: true });
+  const senderIds = await resolveSenderIds(env, emailHash);
   const freeRec = await store(env).get(`free:${emailHash}`);
-  // Nothing to erase: no workspace binding and no free-tier record.
-  if (!bound && !freeRec) return null;
+  const dripRec = await store(env).get(`drip:${emailHash}`);
+  if (!senderIds.length && !freeRec && !dripRec) return null;
 
   const token = randomToken();
   await store(env).put(TOKEN_KEY + token, JSON.stringify({
-    v: 1,
+    v: 2,
     emailHash,
-    senderId: (bound && bound.senderId) || null,
+    senderIds,
     scope: scope === 'documents' ? 'documents' : 'account',
     createdAt: new Date().toISOString(),
   }), { expirationTtl: TOKEN_TTL });
@@ -103,59 +164,65 @@ async function safeDelete(kv, key, tally) {
  * document index rather than scanning by prefix, so a bug here can only ever
  * delete documents that index already claimed belonged to this person.
  */
-export async function eraseIdentity(env, { emailHash, senderId, scope }) {
+export async function eraseIdentity(env, claim) {
   const kv = store(env);
-  const tally = { documents: 0, deleted: 0, keptVerifyRecords: 0, errors: [] };
+  const emailHash = claim.emailHash;
+  const scope = claim.scope;
+  // v1 tokens carried a single senderId; v2 carries the full set.
+  const senderIds = Array.isArray(claim.senderIds)
+    ? claim.senderIds
+    : (claim.senderId ? [claim.senderId] : []);
 
-  // 1. Documents owned by this sender.
-  if (senderId) {
+  const tally = {
+    documents: 0, deleted: 0, keptVerifyRecords: 0,
+    errors: [], scanComplete: true, senderIds: senderIds.length,
+  };
+
+  // A missing PDF namespace must NOT be silently skipped while still
+  // reporting a clean erasure: the signed PDFs and audit certificates live
+  // there, and "complete" would be a lie without them.
+  if (!env.CYBERSYGN_PDFS) tally.errors.push('pdfs_binding_missing');
+
+  for (const senderId of senderIds) {
     const idx = (await kv.get(`sender:${senderId}:docs`, { json: true })) || { docs: [] };
     for (const docId of (idx.docs || [])) {
+      if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(docId || ''))) continue;
       let doc = null;
       try { doc = await kv.get(`doc:${docId}`, { json: true }); } catch (e) {}
-      // Ownership re-check. The index is a convenience, not an authority.
-      if (doc && doc.senderId && senderId && doc.senderId !== senderId) continue;
-
-      if (doc && doc.pdfSha256) tally.keptVerifyRecords++;  // verify: record stays, it is PII-free
-      await safeDelete(kv, `doc:${docId}`, tally);
-      await safeDelete(kv, `meta:doc-complete-fired:${docId}`, tally);
-      if (env.CYBERSYGN_PDFS) {
-        try { await env.CYBERSYGN_PDFS.delete(`pdf:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`pdf:${docId}`); }
-        try { await env.CYBERSYGN_PDFS.delete(`audit:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`audit:${docId}`); }
-      }
-      for (const s of ((doc && doc.signers) || [])) {
-        await safeDelete(kv, `signer-fills:${docId}:${s.id}`, tally);
-      }
-      tally.documents++;
+      // Fail CLOSED on ownership, matching the sweep. A record with no
+      // senderId is not provably this person's, so it is left alone.
+      if (!doc || doc.senderId !== senderId) continue;
+      await eraseOneDoc(kv, env, docId, doc, tally);
     }
     await safeDelete(kv, `sender:${senderId}:docs`, tally);
 
-    // SAFETY NET. The index above is a convenience that addToSenderIndex caps
-    // at 200 entries, so a heavy sender's older documents are not listed in it
-    // at all. Walking only the index therefore deletes the newest 200 and
-    // reports success while the rest quietly survive, which is the single
-    // worst failure this feature can have: telling someone their data is gone
-    // when it is not. Verified before this existed: 250 documents in, 200
-    // deleted, 50 left behind, ok:true returned.
-    //
-    // So after the index pass, scan the doc: prefix and delete anything else
-    // that actually belongs to this sender. Ownership is re-checked per record,
-    // so the scan can only ever remove documents this sender owns.
     const scan = await sweepOrphanedDocs(kv, env, senderId, tally);
-    tally.scanComplete = scan.complete;
-    if (!scan.complete) tally.errors.push('scan_incomplete');
+    if (!scan.complete) { tally.scanComplete = false; tally.errors.push('scan_incomplete'); }
   }
 
   if (scope === 'documents') return tally;
 
-  // 2. Account-level personal data.
-  if (senderId) {
+  // ---- Account scope: every namespace that holds personal data ------------
+  for (const senderId of senderIds) {
     await safeDelete(kv, `brand:${senderId}`, tally);
     await safeDelete(kv, `webhook:${senderId}`, tally);
+    // The saved address book: counterparty names and emails. This is other
+    // people's personal data, and it was readable with only the senderId.
+    await safeDelete(kv, `contacts:${senderId}`, tally);
+    // The REVERSE email map. Deleting only login:email: left this behind with
+    // a five year TTL, while the page claimed the link was destroyed.
+    await safeDelete(kv, `sender-email:${senderId}`, tally);
+    await revokeApiKeysFor(kv, senderId, tally);
+    await scrubBillingRecord(kv, senderId, tally);
+    await scrubAmbassadorRecord(kv, senderId, emailHash, tally);
   }
-  await safeDelete(kv, `login:email:${emailHash}`, tally);
 
-  // Free-tier record plus every token pointing at it.
+  await safeDelete(kv, `login:email:${emailHash}`, tally);
+  // The cleartext marketing record. Leaving it meant the drip cron kept
+  // emailing someone who had just been told their data was deleted.
+  await safeDelete(kv, `drip:${emailHash}`, tally);
+  await safeDelete(kv, `drip-sent:${emailHash}`, tally);
+
   const freeRaw = await kv.get(`free:${emailHash}`);
   if (freeRaw) {
     let rec = null;
@@ -165,6 +232,87 @@ export async function eraseIdentity(env, { emailHash, senderId, scope }) {
   }
 
   return tally;
+}
+
+/** Delete one document and everything derived from it. */
+async function eraseOneDoc(kv, env, docId, doc, tally) {
+  if (doc && doc.pdfSha256) tally.keptVerifyRecords++;
+  await safeDelete(kv, `doc:${docId}`, tally);
+  await safeDelete(kv, `meta:doc-complete-fired:${docId}`, tally);
+  if (env.CYBERSYGN_PDFS) {
+    try { await env.CYBERSYGN_PDFS.delete(`pdf:${docId}`); tally.deleted++; }
+    catch (e) { tally.errors.push(`pdf:${docId}`); }
+    try { await env.CYBERSYGN_PDFS.delete(`audit:${docId}`); tally.deleted++; }
+    catch (e) { tally.errors.push(`audit:${docId}`); }
+  }
+  for (const sg of ((doc && doc.signers) || [])) {
+    await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);
+  }
+  tally.documents++;
+}
+
+/**
+ * Revoke every API key bound to this sender. An un-revoked key keeps
+ * authenticating AS the deleted identity, so the subject deletes their account
+ * while a credential that acts as them stays valid.
+ */
+async function revokeApiKeysFor(kv, senderId, tally) {
+  try {
+    const idx = await kv.get(`apikeys:${senderId}`, { json: true });
+    const hashes = (idx && (idx.keys || idx.hashes)) || [];
+    for (const h of hashes) {
+      const hash = typeof h === 'string' ? h : (h && h.hash);
+      if (!hash || !/^[a-f0-9]{64}$/.test(hash)) continue;
+      await safeDelete(kv, `apikey:${hash}`, tally);
+    }
+    await safeDelete(kv, `apikeys:${senderId}`, tally);
+  } catch (e) { tally.errors.push(`apikeys:${senderId}`); }
+}
+
+/**
+ * Billing records are retained under the Article 17(3)(b) legal-obligation
+ * carve-out, but the plaintext email inside them is not required by tax law
+ * and it also keeps the subject's name and city on the public Origin wall.
+ * Strip the personal fields, keep the financial ones.
+ */
+async function scrubBillingRecord(kv, senderId, tally) {
+  try {
+    const sub = await kv.get(`sub:${senderId}`, { json: true });
+    if (!sub) return;
+    let touched = false;
+    for (const f of ['email', 'name', 'displayName', 'city', 'originName', 'originCity', 'handle']) {
+      if (sub[f] !== undefined) { delete sub[f]; touched = true; }
+    }
+    sub.erasedAt = new Date().toISOString();
+    if (touched || !sub.erasedAt) { await kv.put(`sub:${senderId}`, JSON.stringify(sub)); tally.deleted++; }
+  } catch (e) { tally.errors.push(`sub:${senderId}`); }
+}
+
+/**
+ * Ambassador records keep payout and tax history, which has its own lawful
+ * basis, but must not keep the person's address or remain resolvable from
+ * either identity index.
+ */
+async function scrubAmbassadorRecord(kv, senderId, emailHash, tally) {
+  try {
+    let code = await kv.get(`affiliate:sender:${senderId}`);
+    if (!code) code = await kv.get(`affiliate:email:${emailHash}`);
+    if (code && typeof code === 'string') {
+      const safe = code.trim();
+      if (/^[a-z0-9]{1,32}$/i.test(safe)) {
+        const rec = await kv.get(`affiliate:code:${safe}`, { json: true });
+        if (rec) {
+          delete rec.email;
+          delete rec.emailHash;
+          rec.erasedAt = new Date().toISOString();
+          await kv.put(`affiliate:code:${safe}`, JSON.stringify(rec));
+          tally.deleted++;
+        }
+      }
+    }
+    await safeDelete(kv, `affiliate:sender:${senderId}`, tally);
+    await safeDelete(kv, `affiliate:email:${emailHash}`, tally);
+  } catch (e) { tally.errors.push(`affiliate:${senderId}`); }
 }
 
 /**

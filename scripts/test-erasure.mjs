@@ -197,6 +197,123 @@ await t('the sweep ignores non-document keys even if the listing misbehaves', as
   assert.equal(kv.has('doc:../../etc/passwd'), true, 'a traversal-shaped id is skipped, not processed');
 });
 
+// -------------------------------------------- completeness across namespaces
+// Every case below is a namespace an adversarial review found SURVIVING a
+// "delete everything" request while the page said it was gone.
+
+function fullEnv(h) {
+  const kv = new Map([
+    [`free:${h}`, JSON.stringify({ used: 2, tokens: ['t1'] })],
+    [`drip:${h}`, JSON.stringify({ email: 'v@x.com', firstName: 'V' })],
+    [`drip-sent:${h}`, '1'],
+    [`login:email:${h}`, JSON.stringify({ senderId: 'snd_1' })],
+    ['sender:snd_1:docs', JSON.stringify({ docs: ['d1'] })],
+    ['doc:d1', JSON.stringify({ senderId: 'snd_1', pdfSha256: 'a'.repeat(64), signers: [{ id: 's1' }] })],
+    ['contacts:snd_1', JSON.stringify({ contacts: [{ name: 'Jane', email: 'jane@c.com' }] })],
+    ['sender-email:snd_1', h],
+    ['brand:snd_1', '{}'],
+    ['webhook:snd_1', '{}'],
+    ['sub:snd_1', JSON.stringify({ tier: 'solo', email: 'v@x.com', city: 'Denver', stripeCustomerId: 'cus_1' })],
+    ['apikeys:snd_1', JSON.stringify({ keys: ['b'.repeat(64)] })],
+    [`apikey:${'b'.repeat(64)}`, JSON.stringify({ senderId: 'snd_1' })],
+    ['affiliate:sender:snd_1', 'abcd'],
+    [`affiliate:email:${h}`, 'abcd'],
+    ['affiliate:code:abcd', JSON.stringify({ code: 'abcd', email: 'v@x.com', emailHash: h, earnedUsd: 40 })],
+  ]);
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  return { env: { CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(new Map()) }, kv };
+}
+
+await t('a FREE-TIER user with no magic-link binding still has their documents erased', async () => {
+  // Regression: mintErasureToken resolved senderId only from login:email:,
+  // so a free-tier user got senderId:null, zero documents deleted, and
+  // "Done. It is gone."
+  const h = await emailHashOf('free@x.com');
+  const { env, kv } = fullEnv(h);
+  kv.delete(`login:email:${h}`);            // exactly the free-tier shape
+  const tally = await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.equal(tally.documents, 1, 'the document must actually be deleted');
+  assert.equal(kv.has('doc:d1'), false);
+});
+
+await t('the cleartext marketing record is deleted so the drip cron stops emailing', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.equal(kv.has(`drip:${h}`), false, 'cleartext email and name gone');
+  assert.equal(kv.has(`drip-sent:${h}`), false);
+});
+
+await t('saved contacts (other peoples data) are deleted', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.equal(kv.has('contacts:snd_1'), false);
+});
+
+await t('BOTH directions of the email-to-workspace link are deleted', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.equal(kv.has(`login:email:${h}`), false, 'forward');
+  assert.equal(kv.has('sender-email:snd_1'), false, 'reverse, which had a five year ttl');
+});
+
+await t('API keys are revoked so no credential keeps acting as the deleted account', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.equal(kv.has(`apikey:${'b'.repeat(64)}`), false);
+  assert.equal(kv.has('apikeys:snd_1'), false);
+});
+
+await t('billing keeps its financial fields but loses the personal ones', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  const sub = JSON.parse(kv.get('sub:snd_1'));
+  assert.equal(sub.email, undefined, 'plaintext email removed');
+  assert.equal(sub.city, undefined, 'city removed, it was published on the Origin wall');
+  assert.equal(sub.tier, 'solo', 'financial fields retained under the tax carve-out');
+  assert.ok(sub.erasedAt, 'and the scrub is recorded');
+});
+
+await t('the ambassador record loses the email and both lookup indexes', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  const rec = JSON.parse(kv.get('affiliate:code:abcd'));
+  assert.equal(rec.email, undefined);
+  assert.equal(rec.emailHash, undefined);
+  assert.equal(rec.earnedUsd, 40, 'payout history kept, it has its own lawful basis');
+  assert.equal(kv.has('affiliate:sender:snd_1'), false, 'no longer resolvable by senderId');
+  assert.equal(kv.has(`affiliate:email:${h}`), false, 'no longer resolvable by email hash');
+});
+
+await t('a missing PDF namespace is reported, not silently skipped', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env } = fullEnv(h);
+  delete env.CYBERSYGN_PDFS;
+  const tally = await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1'], scope: 'account' });
+  assert.ok(tally.errors.includes('pdfs_binding_missing'),
+    'complete:true must not be reported when PDFs and certificates were never touched');
+});
+
+await t('one email owning SEVERAL senderIds erases all of them', async () => {
+  const h = await emailHashOf('v@x.com');
+  const { env, kv } = fullEnv(h);
+  kv.set('sender:snd_2:docs', JSON.stringify({ docs: ['d2'] }));
+  kv.set('doc:d2', JSON.stringify({ senderId: 'snd_2', signers: [] }));
+  const tally = await eraseIdentity(env, { emailHash: h, senderIds: ['snd_1', 'snd_2'], scope: 'account' });
+  assert.equal(tally.documents, 2);
+  assert.equal(kv.has('doc:d2'), false, 'a second browser identity is not left behind');
+});
+
 // ---------------------------------------------------------------- backups
 await t('backup pruning deletes only snapshots past the retention window', async () => {
   const objects = [
