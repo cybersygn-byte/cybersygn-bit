@@ -59,7 +59,7 @@ import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry } from './sentry.js';
-import { runDailyKvBackup, shouldRunKvBackup } from './kv-backup.js';
+import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
 import { sweepWebhookQueue } from './webhook-retry.js';
@@ -74,6 +74,7 @@ import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill
 // Funnel instrument. Aliased because index.js already declares its own
 // handleEvent for the legacy /api/event queue endpoint below.
 import { handleEvent as handleFunnelEvent, handleOwnerFunnel, countCrawler } from './events.js';
+import { AtomicCounter } from './atomic-do.js';
 import {
   TIERS,
   getSubscription,
@@ -134,6 +135,28 @@ const MAX_JSON_BYTES = 256 * 1024; // default for small JSON endpoints
 // (This cap must be a NUMBER, readJsonBody(request, maxBytes) ignores objects.)
 const MAX_DOC_JSON_BYTES = 36 * 1024 * 1024;
 const DOC_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+/**
+ * Retention policy for a document record.
+ *
+ * IN FLIGHT: 30 days. An abandoned draft that nobody ever signed should not
+ * live forever, and expiring it is good hygiene rather than a broken promise.
+ *
+ * COMPLETED: kept, no TTL. The audit certificate we hand every signer states
+ * "CyberSygn retains an immutable copy of the signed document for the life of
+ * your account." The 30 day expiry silently broke that promise on day 31, in
+ * the one artifact a counterparty relies on as evidence. For a signature
+ * product that is the worst possible failure: the proof of a contract vanishes
+ * exactly when a dispute is most likely to surface.
+ *
+ * Retention is deliberately NOT tier-aware. The promise is made to the SIGNER,
+ * who never chose our plan and may not even know which one the sender is on.
+ * A free-tier sender's counterparty received the same certificate and the same
+ * words, so they get the same guarantee.
+ */
+function docRetention(doc) {
+  return (doc && doc.completedAt) ? {} : { expirationTtl: DOC_TTL_SECONDS };
+}
 
 const worker = {
   async fetch(request, env, ctx) {
@@ -386,6 +409,23 @@ const worker = {
 
     if (request.method === 'GET' && url.pathname === '/api/owner/funnel') {
       return await handleOwnerFunnel(request, env, url);
+    }
+
+    // Run the KV backup on demand, and read the last result. The backup fires
+    // from a daily cron, so without this a failure stays invisible for a day
+    // and "we have backups" is an assumption rather than a checked fact. It
+    // shipped for months with no R2 binding at all: it wrote nothing, every
+    // single day, and reported that to nobody.
+    if (request.method === 'POST' && url.pathname === '/api/owner/backup/run') {
+      const owner = await getOwnerForRequest(request, env, url);
+      if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+      const result = await runDailyKvBackup(env);
+      return jsonResponse(result && result.ok ? 200 : 500, result);
+    }
+    if (request.method === 'GET' && url.pathname === '/api/owner/backup') {
+      const owner = await getOwnerForRequest(request, env, url);
+      if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+      return jsonResponse(200, { latest: await getLatestKvBackup(env) });
     }
 
     // ---- Ambassador program, owner only ------------------------------
@@ -4313,7 +4353,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   }
 
   try {
-    await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
+    await storage.docs.put(`doc:${docId}`, docRecord, docRetention(docRecord));
     await storage.pdfs.put(`pdf:${docId}`, pdfBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
   } catch (e) {
     if (freeGate) await freeRefund(env, freeGate.token).catch(() => {});
@@ -4407,7 +4447,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   // Persist the notifiedAt stamps set during dispatch (the doc was written
   // before sending so the records existed; this re-write captures who was
   // actually invited, which sequential routing reads on each completion).
-  await storage.docs.put(`doc:${docId}`, docRecord, { expirationTtl: DOC_TTL_SECONDS });
+  await storage.docs.put(`doc:${docId}`, docRecord, docRetention(docRecord));
 
   // Fire doc.created webhook (slice 91). Studio-only, fireWebhook
   // returns early if the sender has no config. waitUntil hands the
@@ -4453,7 +4493,7 @@ async function handleHydrateSigner(request, env, docId, token) {
   const dedupeWindowMs = 5 * 60 * 1000;
   if (!last || (Date.now() - new Date(last.at).getTime()) > dedupeWindowMs) {
     recordEvent(doc, { type: 'viewed', signerId: signer.id, request });
-    await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
+    await storage.docs.put(`doc:${docId}`, doc, docRetention(doc));
   }
 
   const ownedFieldIds = new Set(
@@ -4685,7 +4725,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     docJustCompleted = true;
   }
 
-  await storage.docs.put(`doc:${docId}`, final, { expirationTtl: DOC_TTL_SECONDS });
+  await storage.docs.put(`doc:${docId}`, final, docRetention(final));
 
   // Completion side effects (webhook + emails + audit cert) fire exactly
   // once, gated by a KV marker so concurrent finishers cannot both blast.
@@ -4722,9 +4762,24 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   if (fireCompletion) {
     try {
       const certBytes = await renderAuditCertificate({ doc: final, pdfSha256: final.pdfSha256 });
-      await storage.pdfs.put(`audit:${docId}`, certBytes.buffer, { expirationTtl: DOC_TTL_SECONDS });
+      await storage.pdfs.put(`audit:${docId}`, certBytes.buffer); // permanent: see docRetention
     } catch (err) {
       console.error('[audit] render failed:', err && err.message);
+    }
+
+    // Lift the TTL off the document itself. The PDF is written once at
+    // creation, when the doc is still in flight and correctly carries the 30
+    // day expiry, and is never rewritten afterwards. Without this rewrite the
+    // record and the certificate would be retained while the actual file they
+    // describe silently expired, which is a worse outcome than deleting all
+    // three: the audit trail would point at a document that no longer exists.
+    // Best effort. A failure here leaves the old TTL in place and is logged,
+    // never surfaced, because completion must not fail on a storage retry.
+    try {
+      const pdfBytes = await storage.pdfs.get(`pdf:${docId}`, { arrayBuffer: true });
+      if (pdfBytes) await storage.pdfs.put(`pdf:${docId}`, pdfBytes);
+    } catch (err) {
+      console.error('[retention] could not lift PDF ttl:', err && err.message);
     }
 
     // F4: write the PII-FREE public verify record so a recipient can later
@@ -4852,7 +4907,7 @@ async function handleGetAudit(request, env, docId, url) {
     try {
       const bytes = await renderAuditCertificate({ doc, pdfSha256: pdfSha || '(unavailable)' });
       cert = bytes.buffer;
-      await storage.pdfs.put(`audit:${docId}`, cert, { expirationTtl: DOC_TTL_SECONDS });
+      await storage.pdfs.put(`audit:${docId}`, cert); // permanent: see docRetention
     } catch (err) {
       console.error('[audit] on-demand render failed:', err && err.message);
       return jsonResponse(500, { error: 'render_failed', message: 'Could not render the audit certificate.' });
@@ -5015,7 +5070,7 @@ async function handleRemind(request, env, docId, signerId, url) {
       request,
       meta: { tone, source: 'manual', count: signer.reminderCount },
     });
-    await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
+    await storage.docs.put(`doc:${docId}`, doc, docRetention(doc));
   }
 
   return jsonResponse(result.delivered ? 200 : 502, {
@@ -5102,7 +5157,7 @@ async function handleDeclineSign(request, env, docId, token, url) {
     }
   }
 
-  await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
+  await storage.docs.put(`doc:${docId}`, doc, docRetention(doc));
 
   return jsonResponse(200, { ok: true, declinedAt: now, senderNotified });
 }
@@ -5355,7 +5410,7 @@ export async function runReminderSweep(env) {
       }
 
       if (mutated) {
-        await storage.docs.put(`doc:${docId}`, doc, { expirationTtl: DOC_TTL_SECONDS });
+        await storage.docs.put(`doc:${docId}`, doc, docRetention(doc));
       }
       stillActive.push(docId);
     }
@@ -6010,3 +6065,6 @@ async function readJsonBody(request, maxBytes) {
 function isValidEmail(s) {
   return typeof s === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 }
+
+// Durable Object class, re-exported so the runtime can instantiate it.
+export { AtomicCounter };

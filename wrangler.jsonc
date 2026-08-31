@@ -58,6 +58,41 @@
     { "binding": "CYBERSYGN_PDFS", "id": "1246e5be8c8a496795d2817959bce9fe" }
   ],
 
+  "//r2": [
+    "Independent backup storage for the daily KV snapshot. KV is the source of",
+    "truth and R2 is the backup, deliberately separate: writing backups INTO KV",
+    "would mean a KV corruption destroys the backup with the original.",
+    "",
+    "worker/src/kv-backup.js was written to use this and shipped for months with",
+    "no binding declared here, so the daily job wrote nothing every single day.",
+    "It now matters more, not less: completed documents are retained for the life",
+    "of the account rather than expiring after 30 days, so KV holds evidence that",
+    "cannot be regenerated from anywhere else."
+  ],
+  "r2_buckets": [
+    { "binding": "CYBERSYGN_BACKUPS", "bucket_name": "cybersygn-backups" }
+  ],
+
+  "//durable_objects": [
+    "AtomicCounter gives the two paths that cannot tolerate a race a real",
+    "compare-and-set: the free-tier document cap (the only gate on the free",
+    "tier) and the at-most-once guard in front of ambassador emails.",
+    "KV has no CAS, so both were read-check-write and both could double-fire",
+    "under concurrency or a duplicate cron delivery.",
+    "",
+    "SQLite-backed so it runs on every Workers plan. Callers fall back to the",
+    "old KV behavior if this binding is ever absent, so removing it degrades",
+    "rather than breaks."
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "ATOMIC", "class_name": "AtomicCounter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["AtomicCounter"] }
+  ],
+
   "//analytics_engine": [
     "First-party event analytics. Free tier 10M writes/day, no cookies,",
     "no third-party vendor. Worker writes via env.CYBERSYGN_EVENTS.writeDataPoint().",

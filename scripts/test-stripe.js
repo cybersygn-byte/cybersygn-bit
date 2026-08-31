@@ -36,6 +36,11 @@ function ok(condition, msg) {
   else           { failed++; console.error(`  FAIL ${msg}`); }
 }
 
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 async function call(method, path, body, extraHeaders, env) {
   const headers = { 'accept': 'application/json', ...(extraHeaders || {}) };
   let init = { method, headers };
@@ -114,8 +119,26 @@ async function main() {
   ok(freeTier.status === 400, 'free tier rejected (not purchasable)');
 
   // 5. Owner short-circuit on checkout
+  //
+  // This block used to claim owner with the literal phrase 'cybersygn-dev-owner'.
+  // That phrase was a hardcoded fallback in owner.js, in a PUBLIC repo, which
+  // any reader could use to become owner on any deployment whose secret was
+  // unset or malformed. It was removed, owner.js now fails closed, and these
+  // tests correctly started failing because they were asserting the backdoor
+  // still worked. The fix is to configure a real owner hash for the test env,
+  // exactly as production does, and to pin the removal so it cannot come back.
   console.log('\n5. Owner mode skips Stripe');
-  const ownerClaim = await call('POST', '/api/owner/claim', { phrase: 'cybersygn-dev-owner' });
+  const OWNER_PHRASE = 'test-only-owner-phrase-not-a-real-secret';
+  const ownerEnv = { CYBERSYGN_OWNER_HASH: await sha256Hex(OWNER_PHRASE) };
+
+  // REGRESSION GUARD: the retired dev phrase must never claim owner again.
+  const devPhrase = await call('POST', '/api/owner/claim', { phrase: 'cybersygn-dev-owner' }, null, ownerEnv);
+  ok(devPhrase.status !== 200, 'the retired dev phrase cannot claim owner');
+  // And with no hash configured at all, nothing can claim owner.
+  const noHash = await call('POST', '/api/owner/claim', { phrase: OWNER_PHRASE }, null, {});
+  ok(noHash.status !== 200, 'no configured hash means no owner claim (fails closed)');
+
+  const ownerClaim = await call('POST', '/api/owner/claim', { phrase: OWNER_PHRASE }, null, ownerEnv);
   ok(ownerClaim.status === 200, 'owner claim succeeded');
   const ownerToken = ownerClaim.json && ownerClaim.json.token;
   ok(typeof ownerToken === 'string' && ownerToken.length === 64, 'owner token returned');
@@ -125,6 +148,7 @@ async function main() {
     '/api/checkout/create-session',
     { tier: 'solo', senderId: 'sender-owner' },
     { 'x-cybersygn-owner': ownerToken },
+    ownerEnv,
   );
   ok(ownerCheckout.status === 200, 'owner checkout 200');
   ok(ownerCheckout.json && ownerCheckout.json.owner === true, 'response flags owner=true');

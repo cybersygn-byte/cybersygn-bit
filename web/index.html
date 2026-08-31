@@ -214,7 +214,7 @@
             "name": "What happens to my PDF after I upload it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you invite remote signers, the original PDF is stored in Cloudflare KV for 30 days, encrypted at rest, then deleted automatically. Downloading does not extend that window, so keep your own copy. The verification record that proves the document was completed here is kept permanently, so cybersygn.io/verify still works after the file is gone."
+              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you invite remote signers, the PDF is stored in Cloudflare KV, encrypted at rest. A document that is never completed is deleted 30 days after it was created. Once every signer finishes, CyberSygn keeps the signed document and its audit certificate for the life of your account, which is what the certificate we hand each signer promises. The PII-free verification record is kept permanently, so cybersygn.io/verify works even if the file is later removed."
             }
           },
           {
@@ -1209,11 +1209,12 @@
           <div class="faq__a">
             <p>
               Detection runs in your browser. The PDF never leaves your device during the
-              detection step. When you invite remote signers, the original PDF is stored in
-              Cloudflare KV for 30 days, encrypted at rest, then deleted automatically.
-              Downloading does not extend that window, so keep your own copy. The verification
-              record that proves the document was completed here is kept permanently, so
-              cybersygn.io/verify still works after the file is gone.
+              detection step. When you invite remote signers, the PDF is stored in Cloudflare KV,
+              encrypted at rest. A document nobody finishes signing is deleted 30 days after it
+              was created. Once every signer finishes, we keep the signed document and its audit
+              certificate for the life of your account, which is exactly what the certificate
+              handed to each signer promises. The PII-free verification record is kept
+              permanently, so cybersygn.io/verify works even if the file is later removed.
             </p>
           </div>
         </details>

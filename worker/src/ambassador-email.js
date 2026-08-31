@@ -21,6 +21,7 @@
  */
 
 import { deliver } from './email.js';
+import { atomicClaim } from './atomic.js';
 
 const GUARD = 'ambmail:';
 const GUARD_TTL = 60 * 60 * 24 * 400;   // outlives a yearly cycle
@@ -56,6 +57,15 @@ function esc(s) {
  */
 async function claimGuard(env, key) {
   if (!env || !env.CYBERSYGN_DOCS) return 'claimed';   // dev/test: do not block
+
+  // ATOMIC PATH. A duplicate cron fire is explicitly allowed by Cloudflare, and
+  // the KV fallback below can let two invocations both observe "not claimed"
+  // and both send. The Durable Object serializes the claim, so exactly one
+  // caller can ever win. An email cannot be recalled, which is why this is
+  // worth an extra round trip.
+  const atomic = await atomicClaim(env, key, GUARD_TTL * 1000);
+  if (atomic) return atomic.claimed ? 'claimed' : 'already_sent';
+
   const k = GUARD + key;
   const nonce = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 12)}`;
   try {

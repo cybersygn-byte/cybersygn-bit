@@ -1,3 +1,4 @@
+import { atomicConsume } from './atomic.js';
 /**
  * Free tier: 3 documents lifetime per email, lead capture, dataset
  * consent, server-side counter that survives localStorage clears.
@@ -174,6 +175,42 @@ export async function freeConsume(env, token) {
   const { emailHash, record } = resolved;
   const userKey = KV_PREFIX_USER + emailHash;
 
+  // ATOMIC PATH. The cap is the free tier's only real gate, and a plain
+  // read-check-write against KV lets two concurrent sends both observe used=2
+  // and both write used=3, giving away a fourth document. The Durable Object
+  // serializes the whole check-and-increment, so the cap actually holds.
+  const atomic = await atomicConsume(env, emailHash, FREE_LIFETIME_LIMIT);
+  if (atomic) {
+    if (!atomic.ok) {
+      return {
+        ok: false,
+        error: 'free_cap_reached',
+        used: atomic.used,
+        cap: atomic.cap,
+        emailHash,
+      };
+    }
+    // The DO owns the count now. Mirror it into KV so every existing reader
+    // (dashboard, owner panel, peek) keeps working unchanged, and so the count
+    // survives even if the DO namespace is ever removed.
+    record.used = atomic.used;
+    record.lastConsumedAt = new Date().toISOString();
+    try {
+      await store(env).put(userKey, JSON.stringify(record), { expirationTtl: TOKEN_TTL_SECONDS });
+    } catch (e) { /* the DO is authoritative; a mirror failure must not refuse a granted send */ }
+    await incrementDatasetCounter(env, atomic.used === 1).catch(() => {});
+    return {
+      ok: true,
+      used: atomic.used,
+      cap: atomic.cap,
+      remaining: Math.max(0, atomic.cap - atomic.used),
+      emailHash,
+    };
+  }
+
+  // FALLBACK, DO unavailable. Same logic as before, still racy by one under
+  // concurrency. Over-granting a single free document is the better error than
+  // refusing a legitimate send because a binding is missing.
   if ((record.used || 0) >= FREE_LIFETIME_LIMIT) {
     return {
       ok: false,
