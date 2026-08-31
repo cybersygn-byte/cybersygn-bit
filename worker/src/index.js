@@ -34,7 +34,7 @@
 import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder, deliver as deliverEmail } from './email.js';
-import { setEmailBusinessAddress } from './email-html.js';
+import { setEmailBusinessAddress, renderErasureHtml } from './email-html.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
 import { trackEvent, trackError, summary as analyticsSummary } from './analytics.js';
@@ -59,7 +59,7 @@ import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry } from './sentry.js';
-import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup } from './kv-backup.js';
+import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
 import { sweepWebhookQueue } from './webhook-retry.js';
@@ -75,6 +75,7 @@ import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill
 // handleEvent for the legacy /api/event queue endpoint below.
 import { handleEvent as handleFunnelEvent, handleOwnerFunnel, countCrawler } from './events.js';
 import { AtomicCounter } from './atomic-do.js';
+import { mintErasureToken, consumeErasureToken, eraseIdentity, writeErasureReceipt, normalizeEmail } from './erasure.js';
 import {
   TIERS,
   getSubscription,
@@ -405,6 +406,68 @@ const worker = {
       if (request.method === 'GET' && m) {
         return await handleAffiliateStats(request, env, url, m[1]);
       }
+    }
+
+    // ---- Self-serve erasure (GDPR Art. 17) ---------------------------
+    //
+    // Two steps on purpose. Step one proves control of the mailbox, step two
+    // does the destroying. senderId identifies but does not authenticate (it
+    // is a localStorage value sent on ordinary calls), so it can never be the
+    // thing that authorizes an irreversible delete.
+    if (request.method === 'POST' && url.pathname === '/api/erase/request') {
+      const rl = await checkRateLimit(env, `erasereq:${ipKey(request)}`, [
+        { windowSec: 60 * 15, max: 5 },
+        { windowSec: 60 * 60 * 24, max: 20 },
+      ]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/erase/request' });
+
+      const body = await readJsonBody(request, 4096);
+      if (body.error) return jsonResponse(400, body.error);
+      const email = normalizeEmail(body.value && body.value.email);
+      const scope = (body.value && body.value.scope) === 'documents' ? 'documents' : 'account';
+      if (!email || email.length > 200 || !email.includes('@')) {
+        return jsonResponse(400, { error: 'invalid_email' });
+      }
+
+      // Always the same answer, whether or not this email owns anything.
+      // Otherwise the endpoint becomes an account-existence oracle.
+      const token = await mintErasureToken(env, email, scope).catch(() => null);
+      if (token) {
+        const base = (env.CYBERSYGN_APP_URL || 'https://cybersygn.io').replace(/\/+$/, '');
+        const link = `${base}/erase/?token=${token}`;
+        ctx.waitUntil(deliverEmail(env, {
+          to: email,
+          subject: 'Confirm you want your CyberSygn data deleted',
+          html: renderErasureHtml({ link, scope }),
+        }).catch(() => {}));
+      }
+      return jsonResponse(200, {
+        ok: true,
+        message: 'If that address has data with us, a confirmation link is on its way. It expires in 30 minutes.',
+      });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/erase/confirm') {
+      const rl = await checkRateLimit(env, `erasecfm:${ipKey(request)}`, [{ windowSec: 60 * 15, max: 10 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/erase/confirm' });
+
+      const body = await readJsonBody(request, 4096);
+      if (body.error) return jsonResponse(400, body.error);
+      const claim = await consumeErasureToken(env, String((body.value && body.value.token) || ''));
+      if (!claim) return jsonResponse(400, { error: 'invalid_or_expired' });
+
+      const tally = await eraseIdentity(env, claim);
+      const receipt = await writeErasureReceipt(env, {
+        emailHash: claim.emailHash, scope: claim.scope, tally,
+      });
+      return jsonResponse(200, {
+        ok: true,
+        scope: claim.scope,
+        documentsDeleted: tally.documents,
+        verifyRecordsKept: tally.keptVerifyRecords,
+        receiptId: receipt.id,
+        note: 'Verification records are anonymous fingerprints with no personal data. They are kept so anyone holding a copy of a signed document can still prove it is genuine.',
+      });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/owner/funnel') {
@@ -882,7 +945,9 @@ const worker = {
     // Daily KV to R2 backup at 03:00 UTC (slice 100). No-op if R2
     // binding isn't configured.
     if (shouldRunKvBackup(event)) {
-      ctx.waitUntil(runDailyKvBackup(env));
+      // Back up, then prune. Pruning is what makes an erasure request actually
+      // propagate out of the snapshots instead of living in them forever.
+      ctx.waitUntil(runDailyKvBackup(env).then(() => pruneOldBackups(env)).catch(() => {}));
     }
     // Sweep the durable webhook retry queue every hour: any Studio delivery
     // that failed both inline attempts gets redelivered with exponential

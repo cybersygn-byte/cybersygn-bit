@@ -395,6 +395,20 @@ async function main() {
     }
   }
 
+  // /erase/: self-serve GDPR erasure. Static index.html + erase.js (plain
+  // module, no imports to rewrite). This page is the only route by which a
+  // person can delete their own data without a human, so a build that quietly
+  // omits it turns a published promise into a 404.
+  const eraseSrc = join(SRC, 'erase');
+  if (await exists(eraseSrc)) {
+    const eraseOut = join(OUT, 'erase');
+    await mkdir(eraseOut, { recursive: true });
+    for (const f of ['index.html', 'erase.js']) {
+      await copyFile(join(eraseSrc, f), join(eraseOut, f));
+      console.log(`  wrote dist/erase/${f}`);
+    }
+  }
+
   // /draft/: AI contract drafting wedge landing (Solo/Studio funnel). Static
   // index.html + app.js (ES module importing ../preview/identity.js, which the
   // dist tree already ships) + draft.css. Mirror the dashboard copy block.

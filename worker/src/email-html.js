@@ -498,3 +498,29 @@ export function renderAmbassadorHtml({ preheader, body }) {
     body: styled,
   });
 }
+
+/**
+ * Erasure confirmation. Deliberately plain and slightly cold: this email is a
+ * destructive-action confirmation, not marketing, and it is also the email a
+ * victim would receive if someone else typed their address into the form. It
+ * therefore has to make clear that NOTHING has happened yet and that ignoring
+ * it is a safe and complete response.
+ */
+export function renderErasureHtml({ link, scope }) {
+  const isAccount = scope !== 'documents';
+  const what = isAccount
+    ? 'your CyberSygn account and every document you have sent'
+    : 'every document you have sent, keeping your account itself';
+  return shell({
+    preheader: 'Confirm you want your CyberSygn data deleted. Nothing has happened yet.',
+    body: `
+      <p style="margin:0 0 16px;">Someone asked us to permanently delete ${esc(what)}.</p>
+      <p style="margin:0 0 16px;"><strong>Nothing has been deleted yet.</strong> If that was not you, ignore this email and nothing will happen. There is no need to reply or tell us.</p>
+      ${ctaButton({ url: link, label: 'Delete my data permanently', color: '#B3261E' })}
+      <p style="margin:16px 0 0;">This link works once and expires in 30 minutes.</p>
+      <p style="margin:16px 0 0;">This cannot be undone. We cannot recover a deleted document for you afterwards, so download anything you still need first.</p>
+      <p style="margin:16px 0 0;">One thing is kept on purpose: the anonymous fingerprint of any document you already completed. It is a one-way hash with no name, no email, and no content in it, and it exists so that anyone still holding a signed copy can prove it is genuine. Deleting it would let one party destroy the other party's evidence.</p>
+    `,
+    footer: 'You are receiving this because this address was entered into the data deletion form at cybersygn.io.',
+  });
+}

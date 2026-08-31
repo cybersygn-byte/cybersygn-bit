@@ -153,6 +153,47 @@ export async function runDailyKvBackup(env) {
  * for all US/EU timezones, won't compete with the drip campaign (14:00)
  * or the monthly owner report (1st @ 00:00).
  */
+/**
+ * Delete backups older than RETENTION_DAYS.
+ *
+ * Without this, backups accumulate forever and a self-serve erasure becomes a
+ * half-truth: the personal data is gone from KV but still sitting in every
+ * daily snapshot ever taken. A bounded window is what makes deletion actually
+ * propagate, and it is what /erase/ tells people (up to 35 days).
+ *
+ * 35 days, not 30: it leaves a few days of slack so a run that fails for a
+ * week does not leave us with no usable backup at all.
+ */
+export const BACKUP_RETENTION_DAYS = 35;
+
+export async function pruneOldBackups(env, now = new Date()) {
+  const r2 = env && env.CYBERSYGN_BACKUPS;
+  if (!r2 || typeof r2.list !== 'function') return { ok: false, reason: 'r2_unbound', pruned: 0 };
+  const cutoff = new Date(now.getTime() - BACKUP_RETENTION_DAYS * 86400000)
+    .toISOString().slice(0, 10);
+  let pruned = 0;
+  const errors = [];
+  try {
+    let cursor;
+    do {
+      const page = await r2.list({ prefix: 'backups/', cursor });
+      for (const obj of (page.objects || [])) {
+        // backups/YYYY-MM-DD.ndjson -> lexical compare is a date compare.
+        const m = /^backups\/(\d{4}-\d{2}-\d{2})\.ndjson$/.exec(obj.key);
+        if (!m) continue;
+        if (m[1] < cutoff) {
+          try { await r2.delete(obj.key); pruned++; }
+          catch (e) { errors.push(obj.key); }
+        }
+      }
+      cursor = page.truncated ? page.cursor : null;
+    } while (cursor);
+  } catch (e) {
+    return { ok: false, reason: 'list_failed', pruned, errors };
+  }
+  return { ok: true, pruned, cutoff, errors };
+}
+
 export function shouldRunKvBackup(event) {
   try {
     const now = event && event.scheduledTime ? new Date(event.scheduledTime) : new Date();

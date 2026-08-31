@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delete your data. CyberSygn.</title>
+  <meta name="description" content="Permanently delete your CyberSygn documents or your whole account, yourself, without emailing anyone. Confirmed by email, takes about a minute." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://cybersygn.io/erase/" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="../brand/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="../brand/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="../brand/favicon-180.png" />
+  <link rel="stylesheet" href="../vendor/fonts.css" />
+  <link rel="stylesheet" href="../styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="../" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" />
+      </a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <a class="masthead__link" href="/privacy/">Privacy</a>
+        <a class="masthead__link" href="/terms/">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="legal">
+    <div class="container legal__container">
+      <p class="kicker">Delete your data.</p>
+      <h1 class="h-display legal__title">Your data, gone. <em>Without asking us.</em></h1>
+
+      <p class="lede">
+        You do not need to email anyone or wait for a human. Enter your address, click the link we
+        send, and it is done. We confirm by email because deleting is permanent and because
+        otherwise anyone who knew your address could erase your contracts.
+      </p>
+
+      <section id="erase-form-wrap">
+        <form id="erase-form" class="free-gate" autocomplete="on">
+          <h2 class="free-gate__title">What should we delete?</h2>
+
+          <div class="field">
+            <input class="field__input" id="erase-email" name="email" type="email" placeholder=" " autocomplete="email" required />
+            <label class="field__label" for="erase-email">Your email address</label>
+          </div>
+
+          <fieldset class="erase-scope">
+            <legend class="erase-scope__legend">Scope</legend>
+            <label class="erase-scope__opt">
+              <input type="radio" name="scope" value="account" checked />
+              <span><strong>Everything.</strong> My account, my documents, my branding, my settings.</span>
+            </label>
+            <label class="erase-scope__opt">
+              <input type="radio" name="scope" value="documents" />
+              <span><strong>Just my documents.</strong> Keep the account, delete every document I have sent.</span>
+            </label>
+          </fieldset>
+
+          <button class="btn btn--primary btn--block btn--lg" type="submit">
+            Email me a deletion link
+            <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+          </button>
+          <p class="free-gate__small" id="erase-status">Nothing is deleted until you click the link.</p>
+        </form>
+      </section>
+
+      <h2>What gets deleted.</h2>
+      <ul class="legal__list">
+        <li>Every document you sent, including the original PDF, the signed PDF, and the audit certificate.</li>
+        <li>Anything each signer typed into those documents.</li>
+        <li>Your logo and branding, your webhook endpoints, and your saved settings.</li>
+        <li>The link between your email address and your workspace, and your free-plan record.</li>
+      </ul>
+
+      <h2>What we keep, and why.</h2>
+      <p>
+        For any document that was already completed, we keep a <strong>fingerprint</strong>: a
+        64-character SHA-256 hash of the finished file, the number of signers, and the date it
+        completed. There is no name in it, no email address, and none of the document text. It
+        cannot be reversed back into any of those.
+      </p>
+      <p>
+        We keep it because a contract has more than one party. If you and a client both signed
+        something, that client may still be holding their copy, and the fingerprint is what lets
+        them prove it is genuine and unaltered. Deleting it would let one side of an agreement
+        destroy the other side's evidence. Anonymous records like this are exactly what data
+        protection law expects to remain after personal data is erased.
+      </p>
+      <p>
+        We also keep billing and tax records, which we are legally required to retain and which
+        the right to erasure specifically does not cover.
+      </p>
+
+      <h2>Things worth knowing first.</h2>
+      <ul class="legal__list">
+        <li><strong>It cannot be undone.</strong> Download anything you still need before you confirm.</li>
+        <li><strong>Signers lose access too.</strong> Anyone you sent a document to will no longer be able to open it from our link, so tell them to save their copy first.</li>
+        <li><strong>Emails already sent stay sent.</strong> We cannot reach into anyone's inbox.</li>
+        <li><strong>Backups.</strong> Deleted data can persist in our encrypted daily backups until they age out, which takes up to 35 days. They are never restored selectively.</li>
+        <li><strong>Deleting your data does not cancel a paid plan.</strong> Cancel billing from your dashboard first, or you will keep being charged for an empty account.</li>
+      </ul>
+
+      <p class="legal__meta">
+        Prefer a human? <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> still works.
+        This page just means you do not have to wait for one.
+      </p>
+    </div>
+  </main>
+
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="../">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/compliance/">Compliance</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script type="module" src="./erase.js"></script>
+</body>
+</html>
