@@ -3,7 +3,7 @@
  * Em-dash lint (brand rule enforcement).
  *
  * CyberSygn's own voice rule, inherited from the Vyan spine CONTRACT
- * (section 7.2), is: NO em-dashes (U+2014, ", ") on any customer-facing
+ * (section 7.2), is: NO em-dashes (U+2014) on any customer-facing
  * surface. En-dashes (U+2013) in numeric ranges are allowed; only the em-dash
  * is banned. The launch audit found em-dashes had shipped against this rule,
  * so this lint exists to catch them before they go out again.
@@ -39,7 +39,14 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const EM_DASH = ', '; //, 
+// The banned glyph, written as an escape ON PURPOSE. A literal em-dash here
+// would be stripped by the very cleanup passes this tool exists to police:
+// that is exactly what happened before, when a blanket em-dash-to-comma
+// sweep rewrote this constant to a comma-space. The linter then counted
+// every comma in the repo and reported 59,113 false violations, which read
+// as an unfixable pre-existing failure and got ignored. An escape sequence
+// contains no em-dash, so no future sweep can corrupt it.
+const EM_DASH = '\u2014';
 
 const args = new Set(process.argv.slice(2));
 const COUNT_ONLY = args.has('--count-only');

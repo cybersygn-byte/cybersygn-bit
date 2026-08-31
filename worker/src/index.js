@@ -195,7 +195,7 @@ const worker = {
     // handler here or the status page shows a false "degraded".
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return handleHealth(env);
+      return await handleHealth(env);
     }
 
     // 301 redirects: Origin tier rename. Anyone with a /charter/* link
@@ -225,114 +225,114 @@ const worker = {
         { windowSec: 3600, max: 200 },
       ]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/detect' });
-      return handleDetect(request);
+      return await handleDetect(request);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/detect-vision') {
-      return handleDetectVision(request, env);
+      return await handleDetectVision(request, env);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/templates') {
       const rl = await checkRateLimit(env, `tpl-save:${ipKey(request)}`, [{ windowSec: 600, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/templates' });
-      return handleSaveTemplate(request, env, url);
+      return await handleSaveTemplate(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/templates') {
-      return handleLookupTemplate(request, env, url);
+      return await handleLookupTemplate(request, env, url);
     }
 
     // Free tier (3 docs lifetime per email, lead capture, dataset consent)
     if (request.method === 'POST' && url.pathname === '/api/free/signup') {
-      return handleFreeSignup(request, env);
+      return await handleFreeSignup(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/free/consume') {
-      return handleFreeConsume(request, env);
+      return await handleFreeConsume(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/free/email-signed-pdf') {
-      return handleEmailSignedPdf(request, env);
+      return await handleEmailSignedPdf(request, env);
     }
 
     // Cross-device sign-in: email magic link (the sign-in key path is
     // client-side only). See worker/src/auth.js + docs/STANDALONE-APP.md.
     if (request.method === 'POST' && url.pathname === '/api/auth/request-link') {
-      return handleRequestLink(request, env);
+      return await handleRequestLink(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/auth/verify') {
-      return handleVerifyLink(request, env);
+      return await handleVerifyLink(request, env);
     }
     if (request.method === 'GET' && url.pathname === '/api/dataset/count') {
-      return handleDatasetCount(env);
+      return await handleDatasetCount(env);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/drip-list') {
-      return handleOwnerDripList(request, env, url);
+      return await handleOwnerDripList(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/dataset/export') {
-      return handleOwnerDatasetExport(request, env, url);
+      return await handleOwnerDatasetExport(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/dataset/stats') {
-      return handleOwnerDatasetStats(request, env, url);
+      return await handleOwnerDatasetStats(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/report/preview') {
-      return handleOwnerReportPreview(request, env, url);
+      return await handleOwnerReportPreview(request, env, url);
     }
     if (url.pathname === '/api/owner/security-check') {
-      return handleOwnerSecurityCheck(request, env, url, ctx);
+      return await handleOwnerSecurityCheck(request, env, url, ctx);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/drip/run') {
-      return handleOwnerDripRun(request, env, url);
+      return await handleOwnerDripRun(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/signup') {
       const rl = await checkRateLimit(env, `signup:${ipKey(request)}`, [{ windowSec: 600, max: 8 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/signup' });
-      return handleSignup(request, env);
+      return await handleSignup(request, env);
     }
 
     // ---- Owner backdoor ------------------------------------------------
     // POST /api/owner/claim  body: { phrase: "..." } -> { ok, token } or 401
     // GET  /api/owner/verify  with X-CyberSygn-Owner header -> { ok, owner }
     if (request.method === 'POST' && url.pathname === '/api/owner/claim') {
-      return handleOwnerClaim(request, env);
+      return await handleOwnerClaim(request, env);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/verify') {
-      return handleOwnerVerify(request, env, url);
+      return await handleOwnerVerify(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/login') {
-      return handleOwnerLogin(request, env);
+      return await handleOwnerLogin(request, env);
     }
     // Email-gated owner password reset. request -> emails a one-time link ONLY
     // to the configured OWNER_EMAIL; confirm -> sets a new KV-stored credential.
     if (request.method === 'POST' && url.pathname === '/api/owner/reset/request') {
-      return handleOwnerResetRequest(request, env, url);
+      return await handleOwnerResetRequest(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/reset/confirm') {
-      return handleOwnerResetConfirm(request, env);
+      return await handleOwnerResetConfirm(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/test-email') {
-      return handleOwnerTestEmail(request, env, url);
+      return await handleOwnerTestEmail(request, env, url);
     }
 
     if (request.method === 'POST' && url.pathname === '/api/event') {
-      return handleEvent(request, env, url);
+      return await handleEvent(request, env, url);
     }
     // The canonical 11-step funnel. Separate from /api/event: this one also
     // writes permanent KV counters that outlive the Analytics Engine window.
     if (request.method === 'POST' && url.pathname === '/api/e') {
-      return handleFunnelEvent(request, env);
+      return await handleFunnelEvent(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/error') {
       // Tight rate limit on client-error reports, bug-spam is a real
       // failure mode and we don't want it to hot-spot Resend.
       const rl = await checkRateLimit(env, `err:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/error' });
-      return handleClientError(request, env);
+      return await handleClientError(request, env);
     }
     if (request.method === 'POST' && url.pathname === '/api/contact') {
-      return handleContact(request, env, url);
+      return await handleContact(request, env, url);
     }
 
     if (request.method === 'GET' && url.pathname === '/api/status') {
-      return handleStatus(request, env, url);
+      return await handleStatus(request, env, url);
     }
 
     // Public roadmap with voting.
@@ -354,58 +354,58 @@ const worker = {
     if (request.method === 'POST' && url.pathname === '/api/affiliate/register') {
       const rl = await checkRateLimit(env, `aff-reg:${ipKey(request)}`, [{ windowSec: 3600, max: 10 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/register' });
-      return handleAffiliateRegister(request, env, url);
+      return await handleAffiliateRegister(request, env, url);
     }
     // Ambassador dashboard payload: everything the page needs in one response.
     if (request.method === 'GET' && url.pathname === '/api/ambassador/me') {
       const rl = await checkRateLimit(env, `ambme:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/me' });
-      return handleAmbassadorMe(request, env, url);
+      return await handleAmbassadorMe(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/ambassador/learn') {
       const rl = await checkRateLimit(env, `amblearn:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/learn' });
-      return handleAmbassadorLearn(request, env, url);
+      return await handleAmbassadorLearn(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/ambassador/accept-terms') {
       const rl = await checkRateLimit(env, `ambterms:${ipKey(request)}`, [{ windowSec: 60, max: 20 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/ambassador/accept-terms' });
-      return handleAmbassadorAcceptTerms(request, env, url);
+      return await handleAmbassadorAcceptTerms(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/affiliate/click') {
       const rl = await checkRateLimit(env, `aff-click:${ipKey(request)}`, [{ windowSec: 60, max: 30 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/affiliate/click' });
-      return handleAffiliateClick(request, env, url);
+      return await handleAffiliateClick(request, env, url);
     }
     {
       const m = url.pathname.match(/^\/api\/affiliate\/([a-z0-9]{4,16})$/);
       if (request.method === 'GET' && m) {
-        return handleAffiliateStats(request, env, url, m[1]);
+        return await handleAffiliateStats(request, env, url, m[1]);
       }
     }
 
     if (request.method === 'GET' && url.pathname === '/api/owner/funnel') {
-      return handleOwnerFunnel(request, env, url);
+      return await handleOwnerFunnel(request, env, url);
     }
 
     // ---- Ambassador program, owner only ------------------------------
     if (request.method === 'GET' && url.pathname === '/api/owner/ambassadors') {
-      return handleOwnerAmbassadors(request, env, url);
+      return await handleOwnerAmbassadors(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/payout') {
-      return handleOwnerAmbassadorPayout(request, env, url);
+      return await handleOwnerAmbassadorPayout(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/taxdoc') {
-      return handleOwnerAmbassadorTaxDoc(request, env, url);
+      return await handleOwnerAmbassadorTaxDoc(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/revoke') {
-      return handleOwnerAmbassadorRevoke(request, env, url);
+      return await handleOwnerAmbassadorRevoke(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/test-email') {
-      return handleOwnerAmbassadorTestEmail(request, env, url);
+      return await handleOwnerAmbassadorTestEmail(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/owner/metrics/dashboard') {
-      return handleMetricsDashboard(request, env, url);
+      return await handleMetricsDashboard(request, env, url);
     }
 
     // ---- Vyan Control metrics (spine CONTRACT §6) ----------------------
@@ -416,7 +416,7 @@ const worker = {
       if (!metricsAuthorized(request, env)) {
         return jsonResponse(401, { error: 'unauthorized', message: 'House key required (Authorization: Bearer <VYAN_METRICS_KEY>).' });
       }
-      return handleMetrics(env, url);
+      return await handleMetrics(env, url);
     }
 
     // ---- Public-API keys (owner-only): mint / list / revoke -------------
@@ -455,7 +455,7 @@ const worker = {
     }
 
     if (request.method === 'GET' && url.pathname === '/api/analytics/summary') {
-      return handleAnalyticsSummary(request, env, url);
+      return await handleAnalyticsSummary(request, env, url);
     }
 
     // ---- Billing -------------------------------------------------------
@@ -465,49 +465,49 @@ const worker = {
     // GET  /api/billing/subscription?senderId=...                      -> { tier, status, usage, founding }
     // GET  /api/billing/founding-count                                 -> { taken, cap, remaining }
     if (request.method === 'POST' && url.pathname === '/api/checkout/create-session') {
-      return handleCheckoutCreateSession(request, env, url);
+      return await handleCheckoutCreateSession(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/stripe/webhook') {
-      return handleStripeWebhook(request, env);
+      return await handleStripeWebhook(request, env);
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/portal') {
-      return handleBillingPortal(request, env, url);
+      return await handleBillingPortal(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/subscription') {
-      return handleBillingSubscription(request, env, url);
+      return await handleBillingSubscription(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/founding-count') {
-      return handleFoundingCount(env);
+      return await handleFoundingCount(env);
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/lifetime-count') {
-      return handleLifetimeCount(env);
+      return await handleLifetimeCount(env);
     }
     if (request.method === 'GET' && url.pathname === '/api/billing/config') {
       return jsonResponse(200, { purchasable: purchasableTiers(env) }, { 'cache-control': 'public, max-age=120' });
     }
     if (request.method === 'GET' && url.pathname === '/api/status/uptime') {
-      return handleUptimeRead(env, url);
+      return await handleUptimeRead(env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/testimonial') {
-      return handleTestimonialSubmit(request, env, url);
+      return await handleTestimonialSubmit(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/testimonials') {
-      return handleTestimonialsList(env);
+      return await handleTestimonialsList(env);
     }
     if (request.method === 'POST' && url.pathname === '/api/draft/generate') {
-      return handleDraftGenerate(request, env, url);
+      return await handleDraftGenerate(request, env, url);
     }
     // Template library (slice 105).
     if (request.method === 'GET' && url.pathname === '/api/templates/list') {
       return jsonResponse(200, { templates: listTemplates() });
     }
     if (request.method === 'POST' && url.pathname === '/api/templates/send') {
-      return handleTemplateSend(request, env, url);
+      return await handleTemplateSend(request, env, url);
     }
     {
       const m = url.pathname.match(/^\/api\/templates\/download\/([a-z0-9-]+)$/);
       if (m && request.method === 'GET') {
-        return handleTemplateDownload(request, env, url, m[1]);
+        return await handleTemplateDownload(request, env, url, m[1]);
       }
     }
 
@@ -518,10 +518,10 @@ const worker = {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/gdpr-export(\/request|\/confirm)?$/);
       if (m) {
         if (request.method === 'POST' && m[2] === '/request') {
-          return handleGdprExportRequest(request, env, m[1]);
+          return await handleGdprExportRequest(request, env, m[1]);
         }
         if (request.method === 'POST' && m[2] === '/confirm') {
-          return handleGdprExportConfirm(request, env, m[1]);
+          return await handleGdprExportConfirm(request, env, m[1]);
         }
         if (request.method === 'GET' && !m[2]) {
           // The old single-GET export is gone: it authenticated with the
@@ -542,10 +542,10 @@ const worker = {
         { windowSec: 3600, max: 300 },
       ]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/origin/wall' });
-      return handleOriginWall(env);
+      return await handleOriginWall(env);
     }
     if (request.method === 'POST' && url.pathname === '/api/origin/profile') {
-      return handleOriginProfile(request, env, url);
+      return await handleOriginProfile(request, env, url);
     }
 
     // ---- Multi-signer routes ------------------------------------------
@@ -553,14 +553,14 @@ const worker = {
     // Create a document: persist PDF + signers + assignments, mint per-signer
     // tokens, and email each signer their magic link.
     if (request.method === 'POST' && url.pathname === '/api/docs/bulk') {
-      return handleBulkSend(request, env, url);
+      return await handleBulkSend(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/docs') {
       // Generous rate limit on doc creation, paid customers send
       // dozens a day, but a flood-loop should still be capped.
       const rl = await checkRateLimit(env, `docs:${ipKey(request)}`, [{ windowSec: 600, max: 60 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs' });
-      return handleCreateDoc(request, env, url, ctx);
+      return await handleCreateDoc(request, env, url, ctx);
     }
 
     // Per-signer hydration: GET /api/docs/:docId/signer/:token
@@ -568,13 +568,13 @@ const worker = {
     // pointer to the original PDF.
     const signerMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signer\/([^/]+)$/);
     if (request.method === 'GET' && signerMatch) {
-      return handleHydrateSigner(request, env, signerMatch[1], signerMatch[2]);
+      return await handleHydrateSigner(request, env, signerMatch[1], signerMatch[2]);
     }
 
     // Signer submits their fills.
     const fillsMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signer\/([^/]+)\/fills$/);
     if (request.method === 'POST' && fillsMatch) {
-      return handleSubmitFills(request, env, fillsMatch[1], fillsMatch[2], url, ctx);
+      return await handleSubmitFills(request, env, fillsMatch[1], fillsMatch[2], url, ctx);
     }
 
     // Signer declines to sign. Marks declinedAt, halts further reminders,
@@ -582,7 +582,7 @@ const worker = {
     // the sender has to send a new doc.
     const declineMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signer\/([^/]+)\/decline$/);
     if (request.method === 'POST' && declineMatch) {
-      return handleDeclineSign(request, env, declineMatch[1], declineMatch[2], url);
+      return await handleDeclineSign(request, env, declineMatch[1], declineMatch[2], url);
     }
 
     // Direct PDF-to-CC email. Used by single-signer flows that want to
@@ -590,13 +590,13 @@ const worker = {
     // signing flow. Sender uploads the flattened PDF as base64; worker
     // emails it with attachment via Resend to each recipient.
     if (request.method === 'POST' && url.pathname === '/api/snapshot/email') {
-      return handleSnapshotEmail(request, env, url);
+      return await handleSnapshotEmail(request, env, url);
     }
 
     // Fetch the original PDF for an authenticated signer.
     const pdfMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/pdf$/);
     if (request.method === 'GET' && pdfMatch) {
-      return handleGetPdf(request, env, pdfMatch[1], url);
+      return await handleGetPdf(request, env, pdfMatch[1], url);
     }
 
     // Fetch the audit-certificate PDF. Same token auth as the PDF
@@ -604,7 +604,7 @@ const worker = {
     // the sender's account would also unlock it.
     const auditMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/audit$/);
     if (request.method === 'GET' && auditMatch) {
-      return handleGetAudit(request, env, auditMatch[1], url);
+      return await handleGetAudit(request, env, auditMatch[1], url);
     }
 
     // ---- Workspaces ----------------------------------------------------
@@ -613,19 +613,19 @@ const worker = {
     if (request.method === 'POST' && url.pathname === '/api/workspaces') {
       const rl = await checkRateLimit(env, `ws-create:${ipKey(request)}`, [{ windowSec: 3600, max: 10 }]);
       if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/workspaces' });
-      return handleCreateWorkspace(request, env);
+      return await handleCreateWorkspace(request, env);
     }
 
     // Workspace doc list. GET /api/workspaces/:wsId/docs?w=workspaceToken
     const wsDocsMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/docs$/);
     if (request.method === 'GET' && wsDocsMatch) {
-      return handleListWorkspaceDocs(env, wsDocsMatch[1], url);
+      return await handleListWorkspaceDocs(env, wsDocsMatch[1], url);
     }
 
     // Member list. GET /api/workspaces/:wsId/members?w=workspaceToken
     const wsMembersMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/members$/);
     if (request.method === 'GET' && wsMembersMatch) {
-      return handleListWorkspaceMembers(env, wsMembersMatch[1], url);
+      return await handleListWorkspaceMembers(env, wsMembersMatch[1], url);
     }
 
     // Create an invite. POST /api/workspaces/:wsId/invites?w=workspaceToken
@@ -633,7 +633,7 @@ const worker = {
     //   returns: { inviteId, inviteUrl }
     const wsInviteMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/invites$/);
     if (request.method === 'POST' && wsInviteMatch) {
-      return handleCreateInvite(request, env, wsInviteMatch[1], url);
+      return await handleCreateInvite(request, env, wsInviteMatch[1], url);
     }
 
     // Accept an invite. POST /api/invites/:inviteId
@@ -641,13 +641,13 @@ const worker = {
     //   returns: { workspaceId, workspaceToken, memberId, name }
     const acceptMatch = url.pathname.match(/^\/api\/invites\/([^/]+)$/);
     if (request.method === 'POST' && acceptMatch) {
-      return handleAcceptInvite(request, env, acceptMatch[1]);
+      return await handleAcceptInvite(request, env, acceptMatch[1]);
     }
 
     // Read an invite (so the join page can render workspace name).
     // GET /api/invites/:inviteId
     if (request.method === 'GET' && acceptMatch) {
-      return handleGetInvite(env, acceptMatch[1]);
+      return await handleGetInvite(env, acceptMatch[1]);
     }
 
     // Sender dashboard: list every doc this sender has created.
@@ -655,10 +655,10 @@ const worker = {
     {
       const m = url.pathname.match(/^\/api\/docs\/([a-f0-9]{32,64})\/live$/);
       if (request.method === 'GET' && m) {
-        return handleDocLive(request, env, url, m[1]);
+        return await handleDocLive(request, env, url, m[1]);
       }
       if (request.method === 'POST' && m) {
-        return handleDocPresenceUpdate(request, env, url, m[1]);
+        return await handleDocPresenceUpdate(request, env, url, m[1]);
       }
     }
 
@@ -666,7 +666,7 @@ const worker = {
     {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/templates$/);
       if (request.method === 'GET' && m) {
-        return handleSenderTemplatesCount(request, env, url, m[1]);
+        return await handleSenderTemplatesCount(request, env, url, m[1]);
       }
     }
 
@@ -676,10 +676,10 @@ const worker = {
     {
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/brand$/);
       if (m && request.method === 'GET') {
-        return handleBrandRead(request, env, m[1]);
+        return await handleBrandRead(request, env, m[1]);
       }
       if (m && request.method === 'POST') {
-        return handleBrandWrite(request, env, url, m[1]);
+        return await handleBrandWrite(request, env, url, m[1]);
       }
     }
 
@@ -696,7 +696,7 @@ const worker = {
     // GET /api/sender/:senderId/docs
     const senderListMatch = url.pathname.match(/^\/api\/sender\/([^/]+)\/docs$/);
     if (request.method === 'GET' && senderListMatch) {
-      return handleListSenderDocs(env, senderListMatch[1]);
+      return await handleListSenderDocs(env, senderListMatch[1]);
     }
 
     // F5 saved contacts. Same senderId-capability posture as /docs above:
@@ -713,27 +713,27 @@ const worker = {
     // F4 public verification. GET /api/verify/:hash: PII-free, cache 300s.
     const verifyMatch = url.pathname.match(/^\/api\/verify\/([^/]+)$/);
     if (request.method === 'GET' && verifyMatch) {
-      return handleVerify(env, verifyMatch[1]);
+      return await handleVerify(env, verifyMatch[1]);
     }
 
     // F3 AI summary of a completed doc. POST /api/docs/:id/summary?t=<senderToken>
     const summaryMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/summary$/);
     if (request.method === 'POST' && summaryMatch) {
-      return handleDocSummary(request, env, summaryMatch[1], url);
+      return await handleDocSummary(request, env, summaryMatch[1], url);
     }
 
     // Sender-triggered reminder for a specific signer.
     // POST /api/docs/:docId/remind/:signerId
     const remindMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/remind\/([^/]+)$/);
     if (request.method === 'POST' && remindMatch) {
-      return handleRemind(request, env, remindMatch[1], remindMatch[2], url);
+      return await handleRemind(request, env, remindMatch[1], remindMatch[2], url);
     }
 
     // Sender's view of progress for one of their docs (no auth in
     // Phase 1; in production this is keyed on the sender's account).
     const docMatch = url.pathname.match(/^\/api\/docs\/([^/]+)$/);
     if (request.method === 'GET' && docMatch) {
-      return handleGetDocProgress(env, docMatch[1], url);
+      return await handleGetDocProgress(env, docMatch[1], url);
     }
 
     // ---- Static assets fall-through ----------------------------------
@@ -3341,11 +3341,23 @@ async function overlaySignerState(storage, doc, docId) {
   return doc;
 }
 
-/** Load a doc record with the per-signer overlay applied. */
+/**
+ * Load a doc record with the per-signer overlay applied.
+ *
+ * Guards the id BEFORE it reaches KV. Cloudflare caps a KV key at 512 bytes
+ * and THROWS above it, so an oversized path segment used to escape as an
+ * unhandled rejection and render a raw Cloudflare 1101 page on an
+ * unauthenticated GET. Ids are minted by randomId(16), so anything long or
+ * exotic is malformed by construction and deserves a clean not-found rather
+ * than a crash.
+ */
+const DOC_ID_MAX = 128;
 async function loadDocMerged(storage, docId) {
-  const doc = await storage.docs.get(`doc:${docId}`, { json: true });
+  const id = String(docId || '');
+  if (!id || id.length > DOC_ID_MAX) return null;
+  const doc = await storage.docs.get(`doc:${id}`, { json: true });
   if (!doc) return null;
-  return overlaySignerState(storage, doc, docId);
+  return overlaySignerState(storage, doc, id);
 }
 
 async function handleDocLive(request, env, url, docId) {

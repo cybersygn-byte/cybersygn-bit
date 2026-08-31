@@ -35,7 +35,7 @@
     "lint:css": "node scripts/css-check.mjs",
     "eval:check": "node docs/evals/run-evals.mjs && node docs/evals/guardrails.test.mjs",
     "eval:run": "node docs/evals/run-evals.mjs --run",
-    "lint": "npm run smoke && npm run lint:css && npm run eval:check",
+    "lint": "npm run smoke && npm run lint:css && npm run lint:emdash && npm run eval:check",
     "lint:emdash": "node tools/emdash-lint.mjs",
     "lint:emdash:dist": "node tools/emdash-lint.mjs --dist-only",
     "deploy": "npm run lint && npm run build && npm run test:worker && npm run test:payout && npm run test:events && npx wrangler deploy",

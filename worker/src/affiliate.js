@@ -343,6 +343,8 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   const at = new Date().toISOString();
   const clearsAt = new Date(Date.now() + HOLD_DAYS * DAY_MS).toISOString();
   const planId = String(tier || '').toLowerCase() || null;
+  // The bounty ALONE, captured before any bonus is folded into `credit`.
+  const bountyOnly = credit;
   const entries = [{
     id: ledgerId(), at, clearsAt, type: 'bounty', planId, customerId,
     amount: credit, what: `${tier} sale`,
@@ -421,6 +423,12 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   const dedupeValue = JSON.stringify({
     at, tier, planId,
     creditTotal: credit,
+    // The bounty WITHOUT any milestone or sprint bonus this sale happened to
+    // trigger. A reversal claws back only this, because bonuses are owned
+    // entirely by the canonical reconcile in reverseConversion. Subtracting
+    // the bundled creditTotal double-withdraws any bonus the reconcile has
+    // already removed, which is how unwinding 5 sales left minus $40.
+    bountyUsd: bountyOnly,
     entryIds: entries.map(e => e.id),
     month: monthKey,
   });
@@ -442,7 +450,7 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
 /**
  * Reverse a previously-credited conversion (refund, dispute, chargeback).
  *
- * Backs out the EXACT amount this sale credited, read from creditTotal on the
+ * Backs out this sale's BOUNTY, read from bountyUsd on the
  * per-customer dedupe record, including any milestone or sprint bonus the sale
  * triggered. It deliberately does not use a flat figure: a flat $20 was wrong
  * in both directions, leaving $71 of unearned commission on a clawed-back Gold
@@ -469,11 +477,23 @@ export async function reverseConversion(env, code, customerId, reason) {
     try { conv = JSON.parse(raw); } catch (e) { conv = {}; }
     if (conv.reversed || conv.blocked) return { ok: true, alreadyHandled: true };
 
-    // Legacy records (written before creditTotal existed) carry no credit, so
-    // the flat figure is the only number available. Fall back to it ONLY there.
+    // Claw back the BOUNTY ONLY. Bonuses (milestone, sprint) are owned end to
+    // end by the canonical reconcile below, which recomputes entitlement from
+    // the surviving counts. Subtracting the bundled creditTotal here made both
+    // paths withdraw the same bonus: unwinding 5 solo sales peaked at $102 and
+    // finished at MINUS $40, because the sprint was withdrawn once by the
+    // reconcile (when sales fell under 5) and again by the clawback on the
+    // sale that happened to carry it.
+    //
+    // Fallback order matters for records written before bountyUsd existed:
+    // creditTotal is closer to correct than the legacy flat figure, and for
+    // any sale that triggered no bonus the two are identical anyway.
+    const bounty = Number(conv.bountyUsd);
     const credited = Number(conv.creditTotal);
-    const clawback = Number.isFinite(credited) ? credited : PAYOUT_USD;
-    const legacy = !Number.isFinite(credited);
+    const clawback = Number.isFinite(bounty) ? bounty
+                   : Number.isFinite(credited) ? credited
+                   : PAYOUT_USD;
+    const legacy = !Number.isFinite(bounty) && !Number.isFinite(credited);
 
     const rec = await loadCode(env, code);
     // No record means we cannot apply the debit. Marking the dedupe key
@@ -502,21 +522,15 @@ export async function reverseConversion(env, code, customerId, reason) {
       legacyFlatClawback: legacy || undefined,
     }];
 
-    // Clear any bonus flag whose entry was inside this sale's creditTotal. The
-    // money is already backed out above, so the flag must stop claiming it is
-    // paid. Reconciliation below then decides whether it is re-earned.
+    // Bonus flags are NOT cleared here any more. The clawback above no longer
+    // removes bonus money, so a flag that still says "paid" is telling the
+    // truth: that bonus is still on the books. The reconcile below is the one
+    // authority that decides, from the surviving counts, whether it stays.
+    // Clearing flags here as well is what let a bonus be withdrawn twice.
     rec.milestonesPaid = (rec.milestonesPaid && typeof rec.milestonesPaid === 'object')
       ? rec.milestonesPaid : {};
-    for (const m of MILESTONES) {
-      const paidId = rec.milestonesPaid[m.at];
-      if (paidId && reversedIds.includes(paidId)) delete rec.milestonesPaid[m.at];
-    }
     if (rec.monthly && rec.monthly.month === conv.month) {
       rec.monthly.sales = Math.max(0, (rec.monthly.sales || 0) - 1);
-      if (rec.monthly.sprintEntryId && reversedIds.includes(rec.monthly.sprintEntryId)) {
-        rec.monthly.sprintPaid = false;
-        rec.monthly.sprintEntryId = null;
-      }
     }
 
     // CANONICAL RECONCILE. Entitlement is recomputed from the surviving counts,
