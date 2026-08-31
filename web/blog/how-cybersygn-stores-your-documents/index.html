@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>How CyberSygn Data Storage Works: Where Your Contracts Actually Live, CyberSygn</title>
-  <meta name="description" content="CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare&#39;s edge in three places at once. See how your contracts are stored and protected." />
-  <meta name="keywords" content="CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, Cloudflare edge storage, encrypted contract storage" />
+  <title>How CyberSygn Data Storage Works: Where Your Contracts Live</title>
+  <meta name="description" content="CyberSygn stores every document in encrypted Cloudflare KV for 30 days. Download your signed PDF and audit certificate before that timer runs out." />
+  <meta name="keywords" content="CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, document retention 30 days, encrypted contract storage" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" />
   <meta name="color-scheme" content="light dark" />
@@ -14,8 +14,8 @@
   <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
-  <meta property="og:title" content="How CyberSygn Data Storage Works: Where Your Contracts Actually Live" />
-  <meta property="og:description" content="CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare&#39;s edge in three places at once. See how your contracts are stored and protected." />
+  <meta property="og:title" content="How CyberSygn Data Storage Works: Where Your Contracts Live" />
+  <meta property="og:description" content="CyberSygn stores every document in encrypted Cloudflare KV for 30 days. Download your signed PDF and audit certificate before that timer runs out." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" />
   <meta property="og:type" content="article" />
@@ -45,15 +45,15 @@
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "How CyberSygn Data Storage Works: Where Your Contracts Actually Live",
+          "name": "How CyberSygn Data Storage Works: Where Your Contracts Live",
           "item": "https://cybersygn.io/blog/how-cybersygn-stores-your-documents/"
         }
       ]
     },
     {
       "@type": "Article",
-      "headline": "How CyberSygn Data Storage Works: Where Your Contracts Actually Live",
-      "description": "CyberSygn data storage keeps your signed PDFs encrypted across Cloudflare's edge in three places at once. See how your contracts are stored and protected.",
+      "headline": "How CyberSygn Data Storage Works: Where Your Contracts Live",
+      "description": "CyberSygn stores every document in encrypted Cloudflare KV for 30 days. Download your signed PDF and audit certificate before that timer runs out.",
       "datePublished": "2026-05-26T12:00:00Z",
       "dateModified": "2026-05-26T12:00:00Z",
       "author": {
@@ -71,7 +71,7 @@
       },
       "mainEntityOfPage": "https://cybersygn.io/blog/how-cybersygn-stores-your-documents/",
       "articleSection": "security",
-      "keywords": "CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, Cloudflare edge storage, encrypted contract storage"
+      "keywords": "CyberSygn data storage, where contracts stored, CyberSygn security architecture, KV signed PDF storage, document retention 30 days, encrypted contract storage"
     }
   ]
 }
@@ -98,59 +98,63 @@
     <article class="post__article">
       <div class="container container--prose">
         <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">security</span></p>
-        <h1 class="post__title">How CyberSygn Data Storage Works: Where Your Contracts Actually Live</h1>
+        <h1 class="post__title">How CyberSygn Data Storage Works: Where Your Contracts Live</h1>
         <div class="post__meta">
           <span class="post__meta-item post__meta-cat">security</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <time class="post__meta-item" datetime="2026-05-26">May 26, 2026</time>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">6 min read</span>
+          <span class="post__meta-item">5 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">1,111 words</span>
+          <span class="post__meta-item">1,082 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
       <span class="post__share-label">Share</span>
-      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-cybersygn-stores-your-documents%2F&amp;text=How%20CyberSygn%20Data%20Storage%20Works%3A%20Where%20Your%20Contracts%20Actually%20Live" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-cybersygn-stores-your-documents%2F&amp;text=How%20CyberSygn%20Data%20Storage%20Works%3A%20Where%20Your%20Contracts%20Live" target="_blank" rel="noopener" aria-label="Share on X">X</a>
       <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fhow-cybersygn-stores-your-documents%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
       <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/how-cybersygn-stores-your-documents/" aria-label="Copy link to this article">Copy link</button>
     </div>
         <div class="post__body">
-          <p class="post__hook">Where does a signed contract actually go once you hit send? The honest answer is more interesting than the vague reassurances most signing tools tend to give you.</p>
-          <p class="post__intro">You just signed a contract worth real money, and now it lives somewhere specific, but where exactly, and what stops it from vanishing the moment a server fails? Most signing tools wave their hands and say something about &quot;the cloud,&quot; which is not a real answer to a question this important. CyberSygn data storage runs on Cloudflare Workers, the same global edge network that powers a large portion of the modern internet, so your signed PDFs and audit certificates are encrypted and copied across many data centers at once rather than parked on a single fragile machine. In this post you will see precisely how CyberSygn data storage works, from where a contract sits while it is being signed to where it goes for the long haul, and why losing it would take a disaster on a scale that almost never happens.</p>
+          <p class="post__hook">Where does a signed contract actually go once you hit send, and how long does it stay there? The honest answer is thirty days, and knowing that changes what you do next.</p>
+          <p class="post__intro">You just signed a contract worth real money, and now it lives somewhere specific, but where exactly, and for how long? Most signing tools wave at &quot;the cloud,&quot; which is not a real answer to a question this important. CyberSygn data storage runs on Cloudflare Workers and Cloudflare KV, encrypted at rest, and every record carries a thirty-day timer counted from the last time it was written. That timer is the single most important fact about where your contracts live, because it makes the download step yours to take rather than something you can put off forever. In this post you will see precisely how CyberSygn data storage works, what the thirty days cover, what outlives them, and what to do the day a contract completes.</p>
           <h2 class="post__h2">Where Your Contract Lives While Someone Is Signing It</h2>
 <p class="post__p">Let me walk you through the first stage, which covers the window after you send a contract but before your signer has finished their part of it.
 
 During this window the unsigned PDF lives in **Cloudflare KV**, a fast key-value store positioned at the edge and physically close to your signer no matter where they are. This is Cloudflare edge storage doing its core job: keeping the document near the person who needs it, rather than across an ocean. So when your signer in Berlin opens the link, the file loads from a nearby server instead of a distant one, and the signing feels quick. KV holds far more than the document itself, because it also tracks the signer&#39;s progress, including half-filled fields, the magic-link token, and the active session. That means if they step away and come back later, nothing is lost.
 
 Here is a smart touch worth knowing. **Each unsigned file in KV carries a thirty-day timer**, called a TTL, or time to live, which means the system cleans up after itself once that window expires. If a signer never finishes, the leftover data clears on its own after thirty days, so there is no clutter and no stale files piling up in your account. This is CyberSygn data storage handling the housekeeping so you never have to, and it answers the first question about where contracts stored mid-signature actually reside.</p>
-<h2 class="post__h2">Where Signed Contracts Go for the Long Haul</h2>
-<p class="post__p">Once the signing is done, you reach the moment that truly counts.
+<h2 class="post__h2">Where Signed Contracts Go When the Signing Finishes</h2>
+<p class="post__p">Once the signing is done you reach the moment that truly counts, and this is the part where CyberSygn probably differs from what you assumed.
 
-The signed PDF and its audit certificate move to **Cloudflare R2**, object storage built to hold files at scale for as long as your account stays active, which means your signed contracts live there not for thirty days but for as long as you need them. Everything stored in R2 is **encrypted at rest**, so the underlying bytes are scrambled and useless to anyone who is not you, and that encrypted contract storage is not an optional add-on but simply the default way every signed file is held.
+The signed PDF and its audit certificate are written back into **Cloudflare KV**, the same encrypted store that held the document during signing, in a namespace reserved for PDF bytes. There is no second, permanent archive underneath it. **Both files carry the same thirty-day timer** as the rest of the record, counted from the last write, so a contract that completes today stays retrievable for roughly thirty days and then it is gone. CyberSygn does not keep a copy after that, and there is no button that brings it back.
 
-Here is a detail worth knowing. Whenever you download a contract from your dashboard, CyberSygn builds a fresh signed URL on each request, and that URL expires fast on a deliberately short timer. So what threat does this neutralize? A leaked link, because a URL someone grabbed yesterday becomes a dead end today, leaving them unable to reach your file.
+So the practical rule is short enough to remember: **download the signed PDF and the audit certificate when the deal closes.** Your dashboard links both the moment the last signer finishes, and the completion email carries the same two links. Drop the pair into the folder where you already keep that client&#39;s paperwork and the thirty-day window stops being something you have to think about.
 
-Why does CyberSygn rely on R2 for the permanent copy rather than leaving everything in KV? Because the two systems are built for very different jobs: KV is tuned for fast, small reads at the edge, while R2 is tuned to hold large files cheaply for years. Using each system for the task it does best is exactly what keeps CyberSygn data storage both quick and durable, and this KV signed PDF storage handoff is the quiet part that keeps your contracts private.</p>
-<h2 class="post__h2">Why CyberSygn Data Storage Survives a Real Disaster</h2>
-<p class="post__p">Here is the question that should keep you up at night, except it really should not: what happens if an entire data center burns to the ground? Your contracts survive intact, and the architecture explains exactly why.
+One detail about those links, since it matters for how you share them. The download URL carries the signer&#39;s own per-document token rather than a freshly minted short-lived URL, so treat it exactly the way you treat the signing link: anyone holding it can use it for as long as the record lives.</p>
+<h2 class="post__h2">What Outlives the Thirty Days</h2>
+<p class="post__p">Something does survive the timer, and it happens to be the piece that matters in a dispute.
 
-**R2 copies every object across many Cloudflare data centers** on its own, so a single copy is never the only copy. CyberSygn then adds a second layer, because a backup job runs every single day, exporting the KV namespace to R2 for safekeeping. So count the copies. Your signed PDF exists in active R2, it exists in replicated R2 across other data centers, and it exists in the daily backup archive. That is three separate places at any given moment. If one data center goes dark, your contracts are still there and availability never flickers.
+When a document completes, CyberSygn writes a **verification record keyed by the SHA-256 fingerprint** of the document that was signed, and that record is stored with no expiry at all. It holds the fingerprint, the number of signers, and the created and completed timestamps. It holds no name, no email, no title, and none of the document&#39;s content, which is exactly why it is safe to keep forever.
 
-Compare that resilience to the old way, where a signed contract on your laptop is one spilled coffee away from gone, and a single file in one folder has no backup at all. CyberSygn data storage removes that single point of failure entirely, and that redundancy sits at the heart of the CyberSygn security architecture. The same durable Cloudflare edge storage the platform trusts for its own data is the storage holding your signed contracts, so you inherit that level of safety without arranging it yourself.</p>
-<h2 class="post__h2">The Bottom Line on Where Your Contracts Live</h2>
-<p class="post__p">So here is the practical summary of where your contracts ultimately reside, and why each layer is there.
+That fingerprint is printed on your audit certificate. Years later you can paste it into the checker at /verify/ and get back confirmation that a document with that fingerprint reached completion on CyberSygn, along with the signer count and the timestamps. Because the fingerprint is derived from the file itself, a match also tells you the copy in your hands is the one that was signed.
 
-You get active R2 for the working copy, the version you open and download every day from your dashboard. You get replicated R2 spread across other data centers, the safety copies that step in the instant one location fails. And you get a daily backup archive reserved for the genuine worst case, the scenario that should never arrive but is covered anyway. That arrangement adds up to three independent layers, all encrypted at rest, all running on their own without a single button for you to press.
+So here is the honest division of labour: **CyberSygn keeps the proof, you keep the paper.** The fingerprint record is tiny and permanent because it is cheap to hold and carries no personal data. The PDF is yours to store, wherever you already trust your contracts to live.</p>
+<h2 class="post__h2">What CyberSygn Does Not Do, Stated Plainly</h2>
+<p class="post__p">Here is the part most storage pages leave out, so let me put it in writing.
 
-The quiet brilliance of this design is that you never have to think about any of it. Most people who sign a contract assume the storage question is somebody else&#39;s problem, and with CyberSygn data storage that assumption finally holds true. The platform inherits the same edge infrastructure that keeps massive websites online, then applies it to the far smaller but far more personal job of protecting your signed agreements. Your responsibility shrinks to a single action: sign and send. Where contracts stored on flimsier systems quietly disappear, yours are held in encrypted contract storage that simply refuses to lose them, and the whole apparatus takes care of itself.</p>
+There is **no long-term object archive** behind CyberSygn today. A daily export job exists in the codebase, but no storage bucket is attached to it, so it has never run and nothing is being copied anywhere. There is **no separate CyberSygn archive of your files** beyond whatever Cloudflare does internally to keep KV itself available, and there is no recovery path that reaches back past the thirty-day expiry. If a document is deleted, or its timer runs out, neither you nor we can bring it back.
+
+An earlier version of this page said your signed PDFs moved to permanent object storage and were mirrored across data centers for as long as your account stayed active. None of that was true, and this rewrite exists to correct it rather than to soften it.
+
+Why publish the gap instead of glossing over it? Because the alternative is letting you plan around a safety net that is not there and discovering the truth at the worst possible moment. The design is deliberate for a solo-operated product: hold less, promise less, and be exact about the window. Your side of it is one small habit, downloading the signed PDF and its audit certificate when a deal closes, and in exchange you get storage claims you can actually check.</p>
           
         </div>
 
         <section class="post__cta">
           <p class="kicker">Ready to try it?</p>
           <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
-          <p>Your signed contracts deserve infrastructure that refuses to lose them. CyberSygn data storage keeps every PDF encrypted and replicated across Cloudflare&#39;s edge in three separate places simultaneously. Begin with Solo at twelve dollars a month for unlimited signed contracts, retained with the same durability the platform trusts for its own data, or step up to Studio at twenty-nine dollars a month when your team needs additional room to grow. Send your first document completely free.</p>
+          <p>Your signed contracts deserve claims you can check. CyberSygn keeps every document encrypted on Cloudflare KV for thirty days, links the signed PDF and its audit certificate the moment the last signer finishes, and keeps a permanent fingerprint record so you can verify that file long afterwards. Start free: your first three documents need no card, and Solo is twelve dollars a month after that.</p>
           <a class="btn btn--primary btn--lg" href="/preview/">
             Try It Out →
           </a>
@@ -161,22 +165,22 @@ The quiet brilliance of this design is that you never have to think about any of
     <section class="post__related" aria-label="Related reading">
       <p class="kicker kicker--muted">Related reading</p>
       <ul class="post__related-list">
-        <li><a href="/blog/initial-blocks-vs-signature-blocks/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Initial vs Signature: When to Use Each One on a Contract</strong>
-            <span class="post__related-desc">Initial vs signature: initials prove you read a page, signatures seal the whole deal. Learn when each earns it</span>
+        <li><a href="/blog/texas-uniform-electronic-transactions-act/">
+            <span class="post__related-cat">compliance</span>
+            <strong>Texas UETA: How the Lone Star State Handles E-Signatures</strong>
+            <span class="post__related-desc">Texas UETA makes electronic signatures fully legal, with a few twists for real estate and oil-and-gas. Here is</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/new-york-electronic-signature-rules/">
+            <span class="post__related-cat">compliance</span>
+            <strong>New York Electronic Signature Law: The One State That Went Its Own Way</strong>
+            <span class="post__related-desc">New York electronic signature law skips UETA for its own statute, ESRA. Different name, same result. Here is w</span>
             <span class="post__related-meta">5 min read</span>
           </a></li>
-<li><a href="/blog/checkbox-fields-legal-weight/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Checkbox Legal Binding: Does a Checked Box Hold Up in Court?</strong>
-            <span class="post__related-desc">Checkbox legal binding, explained: a checked box in a signed contract is part of the deal. See when it holds u</span>
-            <span class="post__related-meta">5 min read</span>
-          </a></li>
-<li><a href="/blog/date-fields-and-timestamp-rules/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Signature Timestamp: How CyberSygn Handles Time</strong>
-            <span class="post__related-desc">Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here </span>
+<li><a href="/blog/california-electronic-signature-law/">
+            <span class="post__related-cat">compliance</span>
+            <strong>California Electronic Signature Law: UETA Plus Extra Rules</strong>
+            <span class="post__related-desc">California electronic signature law uses UETA plus a privacy layer. Learn what changes when a Californian sign</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
       </ul>

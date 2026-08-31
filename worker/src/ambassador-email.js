@@ -4,9 +4,11 @@
  * Four sends, all on the existing email shell (email-html.js) and the existing
  * Resend delivery path (email.js). Nothing new was invented for transport.
  *
- * AT-MOST-ONCE. Every automated send to a real person claims its KV guard
- * BEFORE the send, never after. A duplicate email is worse than a missed one,
- * so a crash between claim and send loses that one message rather than looping.
+ * AT-MOST-ONCE, AS CLOSE AS KV GETS. Every automated send to a real person
+ * claims its KV guard BEFORE the send, never after. A duplicate email is worse
+ * than a missed one, so a crash between claim and send loses that one message
+ * rather than looping. The claim is get-then-put plus a nonce read-back, not a
+ * true compare-and-set; see claimGuard for what that does and does not cover.
  *
  * HONEST NUMBERS. Every figure comes from the ambassador record. There are no
  * projected earnings anywhere: we say what each sale paid, never what someone
@@ -24,8 +26,11 @@ const GUARD = 'ambmail:';
 const GUARD_TTL = 60 * 60 * 24 * 400;   // outlives a yearly cycle
 
 function money(n) {
-  const v = Number(n) || 0;
-  return '$' + (Math.round(v * 100) / 100).toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const v = Math.round((Number(n) || 0) * 100) / 100;
+  // The minus sign belongs OUTSIDE the dollar sign. Formatting the signed
+  // number put it inside, and a real cron run produced the subject line
+  // "Your week: 1 sale, $-20."
+  return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
 }
 
 function esc(s) {
@@ -35,20 +40,39 @@ function esc(s) {
 }
 
 /**
- * Claim a one-time guard. Returns true only if THIS call won the claim.
- * Claimed before every send, per Law 4.
+ * Claim a one-time guard. Returns 'claimed' only if THIS call won the claim,
+ * 'already_sent' if another run holds it, 'guard_unavailable' if KV would not
+ * answer. Claimed before every send, per Law 4.
+ *
+ * NOT ATOMIC, and this comment is the honest version. KV has no
+ * compare-and-set, so get-then-put has a window where two cron fires both read
+ * an empty key and both claim. The write-then-confirm below closes the half of
+ * that window we can close: after writing our own random nonce we read the key
+ * back, and if someone else's nonce is sitting there we stand down. What it
+ * cannot cover is the read-back returning null or a stale miss (KV caches
+ * lookups, including misses, for up to a minute), and in that case we proceed,
+ * which is exactly today's behavior and no worse. Real at-most-once needs a
+ * Durable Object; until there is one, this is a narrowed race, not a solved one.
  */
 async function claimGuard(env, key) {
-  if (!env || !env.CYBERSYGN_DOCS) return true;   // dev/test: do not block
+  if (!env || !env.CYBERSYGN_DOCS) return 'claimed';   // dev/test: do not block
   const k = GUARD + key;
+  const nonce = `${Date.now().toString(36)}.${Math.random().toString(36).slice(2, 12)}`;
   try {
     const seen = await env.CYBERSYGN_DOCS.get(k);
-    if (seen) return false;
-    await env.CYBERSYGN_DOCS.put(k, new Date().toISOString(), { expirationTtl: GUARD_TTL });
-    return true;
+    if (seen) return 'already_sent';
+    await env.CYBERSYGN_DOCS.put(k, JSON.stringify({ at: new Date().toISOString(), nonce }),
+      { expirationTtl: GUARD_TTL });
+    const back = await env.CYBERSYGN_DOCS.get(k);
+    if (back) {
+      let winner = null;
+      try { winner = JSON.parse(back).nonce; } catch (e) { /* legacy timestamp value */ }
+      if (winner && winner !== nonce) return 'already_sent';
+    }
+    return 'claimed';
   } catch (e) {
     // If KV is unreachable we cannot prove at-most-once, so we do NOT send.
-    return false;
+    return 'guard_unavailable';
   }
 }
 
@@ -69,7 +93,8 @@ async function shellHtml({ preheader, body }) {
  */
 export async function sendYouAreLive(env, { to, code, shareUrl, discount, signedInUrl, bounty }) {
   if (!to || !code) return { delivered: false, reason: 'missing_fields' };
-  if (!await claimGuard(env, `live:${code}`)) return { delivered: false, reason: 'already_sent' };
+  const claim = await claimGuard(env, `live:${code}`);
+  if (claim !== 'claimed') return { delivered: false, reason: claim };
 
   const subject = 'You are live. Here is your CyberSygn code.';
   const text = [
@@ -108,7 +133,8 @@ export async function sendYouAreLive(env, { to, code, shareUrl, discount, signed
 /** Fires per qualifying sale. Guarded per conversion so a webhook retry cannot double-send. */
 export async function sendSaleAlert(env, { to, code, guardKey, amount, bonuses, tierLabel, totalSales, dashUrl }) {
   if (!to) return { delivered: false, reason: 'missing_to' };
-  if (!await claimGuard(env, `sale:${guardKey}`)) return { delivered: false, reason: 'already_sent' };
+  const claim = await claimGuard(env, `sale:${guardKey}`);
+  if (claim !== 'claimed') return { delivered: false, reason: claim };
 
   const bonusLine = (bonuses && bonuses.length)
     ? `Includes a bonus for ${bonuses.join(' and ')}.`
@@ -140,26 +166,59 @@ export async function sendSaleAlert(env, { to, code, guardKey, amount, bonuses, 
 /**
  * Quiet weeks send NOTHING. An ambassador with no sales this week does not
  * need a weekly reminder that they had no sales this week.
+ *
+ * A week can hold a sale AND a clawback: a refund or a chargeback on an older
+ * sale writes a negative ledger entry dated today, so the net for the window
+ * can be zero or below. That week is not a "Good week" and saying so was a
+ * false claim, so the copy branches on the net instead of assuming it is up.
  */
-export async function sendWeeklyDigest(env, { to, code, weekKey, sales, earned, dashUrl }) {
-  if (!to || !sales || sales < 1) return { delivered: false, reason: 'no_sales_this_week' };
-  if (!await claimGuard(env, `weekly:${code}:${weekKey}`)) return { delivered: false, reason: 'already_sent' };
+export async function sendWeeklyDigest(env, { to, code, weekKey, sales, earned, reversed, dashUrl, redirectTo }) {
+  const recipient = redirectTo || to;
+  if (!recipient || !sales || sales < 1) return { delivered: false, reason: 'no_sales_this_week' };
+  // In redirect (owner test) mode the guard is skipped so the owner can send
+  // repeatedly. Claiming it would burn the REAL ambassador's weekly guard and
+  // silently suppress the digest they were owed. Mirrors sendMonthlyScoreboard.
+  if (!redirectTo) {
+    const claim = await claimGuard(env, `weekly:${code}:${weekKey}`);
+    if (claim !== 'claimed') return { delivered: false, reason: claim };
+  }
 
-  const subject = `Your week: ${sales} ${sales === 1 ? 'sale' : 'sales'}, ${money(earned)}.`;
+  const saleWord = sales === 1 ? 'sale' : 'sales';
+  const net = Math.round((Number(earned) || 0) * 100) / 100;
+  const clawedBack = Math.abs(Math.round((Number(reversed) || 0) * 100) / 100);
+  const up = net > 0;
+
+  const subject = up
+    ? `Your week: ${sales} ${saleWord}, ${money(net)}.`
+    : `Your week: ${sales} ${saleWord}, and a reversal.`;
+  const headline = up ? 'Good week.' : 'A sale, and a reversal.';
+  const explain = up
+    ? ''
+    : `You made ${sales} ${saleWord} this week. A refund or chargeback on an earlier sale`
+      + `${clawedBack ? ` clawed back ${money(clawedBack)}` : ' was also clawed back'}`
+      + `, so the week nets ${money(net)}. Nothing is owed back to us; it comes off the running total.`;
+
   const text = [
-    `Good week. ${sales} ${sales === 1 ? 'sale' : 'sales'}, ${money(earned)} earned.`,
+    up ? `Good week. ${sales} ${saleWord}, ${money(net)} earned.` : `${headline} ${explain}`,
     '',
     dashUrl,
     '',
     'CyberSygn',
   ].join('\n');
   const body =
-    `<h1 class="cs-title">Good week.</h1>` +
+    `<h1 class="cs-title">${esc(headline)}</h1>` +
+    (explain ? `<p class="cs-text">${esc(explain)}</p>` : '') +
     `<div class="cs-kv"><span class="cs-kv-key">Sales</span><span class="cs-kv-val">${sales}</span></div>` +
-    `<div class="cs-kv"><span class="cs-kv-key">Earned</span><span class="cs-kv-val">${esc(money(earned))}</span></div>` +
-    `<p class="cs-text"><a href="${esc(dashUrl)}">Open your dashboard</a>.</p>`;
+    `<div class="cs-kv"><span class="cs-kv-key">${up ? 'Earned' : 'Net for the week'}</span><span class="cs-kv-val">${esc(money(net))}</span></div>` +
+    `<p class="cs-text"><a href="${esc(dashUrl)}">Open your dashboard</a>.</p>` +
+    (redirectTo ? `<p class="cs-muted">Test send. The real recipient would be ${esc(to || 'the ambassador')}.</p>` : '');
 
-  return deliver(env, { to, subject, text, html: await shellHtml({ preheader: `${sales} sales, ${money(earned)}.`, body }) });
+  return deliver(env, {
+    to: recipient,
+    subject: redirectTo ? `[test] ${subject}` : subject,
+    text,
+    html: await shellHtml({ preheader: `${sales} ${saleWord}, ${money(net)}.`, body }),
+  });
 }
 
 // ---- 4. Monthly scoreboard -----------------------------------------------
@@ -206,8 +265,9 @@ export async function sendMonthlyScoreboard(env, opts) {
   if (!recipient) return { delivered: false, reason: 'missing_to' };
   // In redirect (owner test) mode the guard is skipped so the owner can send
   // repeatedly, but the recipient is ALWAYS the owner, never the ambassador.
-  if (!redirectTo && !await claimGuard(env, `monthly:${code}:${monthKey}`)) {
-    return { delivered: false, reason: 'already_sent' };
+  if (!redirectTo) {
+    const claim = await claimGuard(env, `monthly:${code}:${monthKey}`);
+    if (claim !== 'claimed') return { delivered: false, reason: claim };
   }
 
   const nudge = monthlyNudge({ clicks, sales, code, shareUrl, nextTier, bounty });
@@ -325,7 +385,12 @@ export async function runMonthlyScoreboard(env, { redirectTo, limit } = {}) {
       if (r && r.delivered) {
         out.sent += 1;
         out.branches[r.branch] = (out.branches[r.branch] || 0) + 1;
-      } else { out.skipped += 1; }
+      } else {
+        out.skipped += 1;
+        // A KV outage during the guard claim is not a skip. Reporting it as
+        // one made a total email outage read exactly like a quiet, healthy run.
+        if (r && r.reason === 'guard_unavailable') out.errors.push(`guard_unavailable:${rec.code}`);
+      }
     } catch (e) { out.errors.push(String(e && e.message).slice(0, 120)); }
   }, limit || 500);
 
@@ -338,7 +403,7 @@ export async function runWeeklyDigest(env, { redirectTo } = {}) {
   const now = new Date();
   const weekKey = `${now.getUTCFullYear()}-w${Math.ceil((((now - new Date(Date.UTC(now.getUTCFullYear(), 0, 1))) / 86400000) + 1) / 7)}`;
   const since = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const out = { weekKey, sent: 0, quiet: 0 };
+  const out = { weekKey, sent: 0, quiet: 0, errors: [] };
 
   await eachAmbassador(env, async (rec) => {
     const week = (rec.ledger || []).filter(e => Date.parse(e.at || 0) >= since);
@@ -350,12 +415,18 @@ export async function runWeeklyDigest(env, { redirectTo } = {}) {
     // Earnings still sum EVERY entry, including negatives, so a week with a
     // refund reports the true net rather than an inflated gross.
     const earned = Math.round(week.reduce((s, e) => s + (Number(e.amount) || 0), 0) * 100) / 100;
+    // What came back off the total, so the copy can name the number instead of
+    // leaving the reader to work out why a week with a sale went backwards.
+    const reversed = Math.round(week.reduce((s, e) => s + Math.min(0, Number(e.amount) || 0), 0) * 100) / 100;
     const r = await sendWeeklyDigest(env, {
-      to: redirectTo || rec.email,
-      code: rec.code, weekKey, sales, earned,
+      to: rec.email,
+      code: rec.code, weekKey, sales, earned, reversed,
       dashUrl: `${base}/ambassador/`,
+      // Threaded through, so a test send never claims the real guard.
+      redirectTo,
     });
     if (r && r.delivered) out.sent += 1;
+    else if (r && r.reason === 'guard_unavailable') out.errors.push(`guard_unavailable:${rec.code}`);
   });
   return out;
 }

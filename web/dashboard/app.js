@@ -413,8 +413,8 @@ async function ensureWebhookPanel() {
 }
 
 /**
- * Add-ons panel. Visible to any paying subscriber (tier not free/owner).
- * Two a-la-carte add-ons that attach to the current plan:
+ * Add-ons panel. Visible to any paying subscriber (tier not free/owner) who
+ * has at least one add-on actually for sale.
  *   - Extra seats: number input (1..25) + a checkout that carries the
  *     quantity. The checkout helper cannot pass quantity, so this POSTs
  *     /api/checkout/create-session {tier:'seat', senderId, quantity} and
@@ -423,11 +423,14 @@ async function ensureWebhookPanel() {
  *     bind it (which would fire a second, quantity-less session).
  *   - White-label: a flat $19/mo add-on wired through checkout.js via its
  *     data-checkout-tier="whitelabel".
- * Purchasability-aware: /api/billing/config reports which add-ons have a
- * Stripe price; a not-yet-priced add-on disables its control and reads
- * "Opening soon" so a click never dead-ends.
+ * An add-on /api/billing/config does not offer is REMOVED from the panel, and
+ * the panel hides itself when nothing is left. It used to read "Opening soon"
+ * instead, which was a promise: both add-ons are marked retired in the tier
+ * table, checkout refuses them with tier_retired, and nothing enforces a seat
+ * count anywhere. Nothing is coming, so nothing is advertised.
  */
 let addonsWired = false;
+let addonsOffered = false;
 async function ensureAddonsPanel() {
   const panel = document.getElementById('addons-panel');
   if (!panel) return;
@@ -441,23 +444,25 @@ async function ensureAddonsPanel() {
     if (sub && sub.tier && sub.tier !== 'free' && sub.tier !== 'owner') paying = true;
   } catch (e) {}
   if (!paying) { panel.hidden = true; return; }
-  panel.hidden = false;
 
-  // Wire once. Re-entrant calls (load + the cybersygn:sub event) just toggle
-  // visibility above.
-  if (addonsWired) return;
+  // Wire once. Re-entrant calls (load + the cybersygn:sub event) fall through
+  // to the visibility decision at the bottom. The panel stays hidden while the
+  // first pass is still in flight, so a dead control never flashes.
+  if (addonsWired) { panel.hidden = !addonsOffered; return; }
   addonsWired = true;
 
   const seatBtn = document.getElementById('addon-seat-btn');
   const seatQty = document.getElementById('addon-seat-qty');
+  const seatRow = document.getElementById('addon-seat-row');
   const wlBtn = document.getElementById('addon-whitelabel-btn');
+  const wlRow = document.getElementById('addon-whitelabel-row');
   const statusEl = document.getElementById('addon-status');
 
-  // Purchasability. Default optimistic; only the config explicitly saying an
-  // add-on is not purchasable downgrades it to "Opening soon". If the fetch
-  // fails we leave the controls live: the checkout endpoint itself returns a
-  // clean error the handler surfaces, so no click silently dead-ends.
-  let purchasable = { seat: true, whitelabel: true };
+  // Purchasability. Default to NOTHING offered: the config is the only thing
+  // that can put an add-on on sale. Guessing optimistically here is what put
+  // a retired SKU in front of paying customers, and a failed fetch is not
+  // evidence that something is for sale.
+  let purchasable = { seat: false, whitelabel: false };
   try {
     const res = await fetch('/api/billing/config');
     if (res.ok) {
@@ -469,9 +474,7 @@ async function ensureAddonsPanel() {
   // Extra seats.
   if (seatBtn) {
     if (!purchasable.seat) {
-      seatBtn.disabled = true;
-      seatBtn.textContent = 'Opening soon';
-      if (seatQty) seatQty.disabled = true;
+      if (seatRow) seatRow.remove();
     } else {
       seatBtn.addEventListener('click', async () => {
         let qty = parseInt(seatQty && seatQty.value, 10);
@@ -507,12 +510,14 @@ async function ensureAddonsPanel() {
   // mounted after checkout.js auto-init ran.
   if (wlBtn) {
     if (!purchasable.whitelabel) {
-      wlBtn.disabled = true;
-      wlBtn.textContent = 'Opening soon';
+      if (wlRow) wlRow.remove();
     } else {
       import('../checkout.js').then(mod => mod.initCheckoutButtons(panel)).catch(() => {});
     }
   }
+
+  addonsOffered = !!(purchasable.seat || purchasable.whitelabel);
+  panel.hidden = !addonsOffered;
 }
 
 /**
@@ -526,6 +531,15 @@ async function ensureAddonsPanel() {
 const UPSELL_SEEN_KEY = 'cybersygn.upsell.whitelabel.seen';
 let upsellSettled = false;
 async function maybeShowWhitelabelUpsell() {
+  // WHITE-LABEL IS RETIRED. worker/src/stripe.js marks the SKU retired:true and
+  // checkout refuses it, so every path through this upsell ended at a dead
+  // offer. The old guard defaulted `purchasable = true` and only downgraded if
+  // a /api/billing/config fetch succeeded, so a slow or failed request showed a
+  // storefront for something that cannot be bought. Returning early is the only
+  // honest state until the capability actually ships.
+  return;
+
+  /* eslint-disable no-unreachable */
   if (upsellSettled) return;
   const card = document.getElementById('whitelabel-upsell');
   if (!card) return;

@@ -9,9 +9,10 @@
  * Two windows can be stacked (per-IP daily AND per-IP weekly) so a
  * burst-tolerant policy is expressible: "allow N per hour, M per day."
  *
- * Failure mode: if KV is unreachable, we ALLOW the request. Better to
- * serve a real user than to fail-closed on infrastructure flakiness.
- * Logged so we can see it in tail.
+ * Failure mode: FAIL CLOSED. This limiter guards owner login and
+ * magic-link sends, so a counter it cannot read OR cannot write is
+ * treated as "at the ceiling". The burst big enough to break KV is
+ * exactly the burst that must not be waved through.
  *
  * Owner bypass: if the request carries a valid owner token, the
  * limiter short-circuits to { ok: true, owner: true }. Owner-bypass
@@ -27,18 +28,63 @@
 
 const PREFIX = 'ratelimit:';
 
+/* Counter of last resort, used only when no KV namespace is bound.
+   wrangler.jsonc declares CYBERSYGN_DOCS with a real namespace id, so the
+   unbound case is local dev and the node harness, never production. Counting
+   in-process is weaker than KV (it is per-isolate), but the choice there is
+   between a limiter and no limiter at all: the old branch returned ok:true
+   unconditionally, so anything running without a binding had no ceiling. A
+   blanket 429 would instead brick every dev box and the test suite, which is
+   an outage we would be inventing rather than preventing. */
+const memoryBuckets = new Map();
+const MEMORY_MAX_KEYS = 5000;
+let warnedUnbound = false;
+
+function pruneMemoryBuckets() {
+  const now = Date.now();
+  for (const [k, e] of memoryBuckets) {
+    if (e.expiresAtMs <= now) memoryBuckets.delete(k);
+  }
+  // Map preserves insertion order, so dropping from the front evicts the
+  // oldest buckets if pruning expired entries did not free enough room.
+  while (memoryBuckets.size >= MEMORY_MAX_KEYS) {
+    const oldest = memoryBuckets.keys().next();
+    if (oldest.done) break;
+    memoryBuckets.delete(oldest.value);
+  }
+}
+
+const memoryStore = {
+  async get(key) {
+    const e = memoryBuckets.get(key);
+    if (!e) return null;
+    if (e.expiresAtMs <= Date.now()) { memoryBuckets.delete(key); return null; }
+    return e.value;
+  },
+  async put(key, value, opts = {}) {
+    if (memoryBuckets.size >= MEMORY_MAX_KEYS) pruneMemoryBuckets();
+    const ttl = Number(opts.expirationTtl) || 60;
+    memoryBuckets.set(key, { value, expiresAtMs: Date.now() + ttl * 1000 });
+  },
+};
+
 /**
  * Compute the rate-limit verdict for a given subject key against one
  * or more time windows. Returns the verdict + headers to set on the
  * response.
  */
 export async function checkRateLimit(env, key, policies) {
-  if (!env || !env.CYBERSYGN_DOCS) {
-    // No KV bound, fail-open. Log only the limiter family (the part before the
-    // subject), never the full key: keys embed the client IP or an email hash,
-    // which must not land in logs.
-    console.warn('[rate-limit] KV unbound, allowing', String(key || '').split(':')[0] || 'unknown');
-    return { ok: true, hits: [], headers: {} };
+  let store = env && env.CYBERSYGN_DOCS;
+  if (!store) {
+    // Once per isolate. The binding is either there or it is not, so one line
+    // says everything and a per-request warning would bury the tail. Log only
+    // the limiter family (the part before the subject), never the full key:
+    // keys embed the client IP or an email hash, which must not land in logs.
+    if (!warnedUnbound) {
+      warnedUnbound = true;
+      console.warn('[rate-limit] KV unbound, counting in-process', String(key || '').split(':')[0] || 'unknown');
+    }
+    store = memoryStore;
   }
   if (!Array.isArray(policies) || policies.length === 0) {
     return { ok: true, hits: [], headers: {} };
@@ -49,13 +95,17 @@ export async function checkRateLimit(env, key, policies) {
   const verdicts = [];
 
   for (const policy of policies) {
+    // A null entry is a caller bug, not a policy. Reading .windowSec off it
+    // threw straight out of the limiter, which the callers turn into a 500.
+    if (!policy) continue;
     const windowSec = Math.max(1, Number(policy.windowSec) | 0);
     const max = Math.max(1, Number(policy.max) | 0);
     const windowId = Math.floor(now / windowSec);
+    const resetSec = (windowId + 1) * windowSec - now;
     const bucketKey = `${PREFIX}${key}:${windowSec}:${windowId}`;
     let raw = null;
     try {
-      raw = await env.CYBERSYGN_DOCS.get(bucketKey);
+      raw = await store.get(bucketKey);
     } catch (e) {
       /* FAIL CLOSED. This limiter guards magic-link requests and owner login;
          a limiter that cannot read its own counter must not hand out unlimited
@@ -75,13 +125,19 @@ export async function checkRateLimit(env, key, policies) {
     try {
       // TTL ~2x window so a stale bucket can't accidentally allow a
       // burst into the next window.
-      await env.CYBERSYGN_DOCS.put(bucketKey, String(next), { expirationTtl: windowSec * 2 + 5 });
+      await store.put(bucketKey, String(next), { expirationTtl: windowSec * 2 + 5 });
     } catch (e) {
-      console.warn('[rate-limit] kv put failed', e && e.message);
+      /* Same fail-closed rule as the read above. A counter that cannot be
+         incremented never advances, so every subsequent request re-reads the
+         same value and the ceiling is never reached: reads succeeding while
+         writes fail was the shape that still handed out unlimited attempts. */
+      console.warn('[rate-limit] kv put failed, failing closed', e && e.message);
+      hits.push({ windowSec, max, current: next, remaining: 0, resetSec });
+      verdicts.push({ exceeded: true, retryAfterSec: resetSec });
+      continue;
     }
 
     const remaining = Math.max(0, max - next);
-    const resetSec = (windowId + 1) * windowSec - now;
     hits.push({ windowSec, max, current: next, remaining, resetSec });
     verdicts.push({ exceeded: next > max, retryAfterSec: resetSec });
   }

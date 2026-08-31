@@ -280,6 +280,15 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
     }
   }
 
+  // A PLAN CHANGE IS AN UPGRADE, NOT A SECOND SUBSCRIPTION.
+  //
+  // Sending an existing subscriber back through hosted Checkout opens a second
+  // Stripe subscription alongside the one they already hold: they are billed
+  // for both, and when the old one is finally cancelled its deleted event is
+  // what used to strip the account back to free. Swap the price on the live
+  // subscription instead, so a customer only ever has one, and Stripe prorates
+  // the difference. Anything unclean falls through to Checkout below, because a
+  // failed upgrade must never block a sale.
   const reUseCustomer = await maybeExistingCustomer(env, senderId);
 
   const body = new URLSearchParams();
@@ -367,6 +376,99 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
 }
 
 /**
+ * Move an existing subscriber to a different recurring plan by swapping the
+ * price on their live Stripe subscription. Returns a value shaped like a
+ * checkout session (the caller only reads `url`), or null to fall through to
+ * hosted Checkout.
+ *
+ * Deliberately NOT used for Origin or Lifetime in either direction: both hand
+ * out a numbered seat that is only ever issued in the checkout.session.completed
+ * handler, so buying one has to go through Checkout, and swapping away from one
+ * would silently retire a number we promised was theirs for life.
+ */
+// DELIBERATELY NOT WIRED UP. An in-place plan swap was written here to stop a
+// second subscription being created on upgrade, but it turned
+// POST /api/checkout/create-session from "mint a Checkout URL the customer
+// reviews" into an immediate, irreversible billing mutation with prorations
+// and no confirmation screen. Clicking Upgrade would charge you before you saw
+// a price. The entitlement bug it was meant to help with is fully fixed by the
+// staleSubscriptionEvent guard below, which is the actual defect: cancelling a
+// superseded subscription no longer wipes access.
+//
+// If single-subscription upgrades are wanted, they need a confirmation step
+// (a Stripe Billing Portal flow, or a preview-then-confirm endpoint), which is
+// a product decision, not a bug fix. See HANDOFF.md.
+async function maybeChangePlanInPlace(env, { tier, tierConf, priceId, senderId, origin, source }) {
+  if (!senderId || !origin) return null;
+  if (tierConf.addon || tierConf.oneTime) return null;
+  const NUMBERED = ['founding', 'founding_annual', 'lifetime'];
+  if (NUMBERED.includes(tier)) return null;
+
+  const existing = await getSubscription(env, senderId);
+  if (!existing.stripeSubscriptionId || !existing.stripeCustomerId) return null;
+  if (NUMBERED.includes(existing.tier)) return null;
+  // Only a running subscription can be swapped. A cancelled or unpaid one has
+  // no live item to prorate against, so that buyer starts a fresh one.
+  if (existing.status !== 'active' && existing.status !== 'trialing') return null;
+  if (existing.tier === tier) return null;
+
+  try {
+    const live = await stripeFetch(env, 'GET', `/subscriptions/${existing.stripeSubscriptionId}`, null);
+    if (!live || (live.status !== 'active' && live.status !== 'trialing')) return null;
+    const items = (live.items && live.items.data) || [];
+    // More than one line means an add-on rides this same subscription and we
+    // cannot tell which line is the plan. Let Checkout handle that account.
+    if (items.length !== 1 || !items[0].id) return null;
+
+    const body = new URLSearchParams();
+    body.set('items[0][id]', items[0].id);
+    body.set('items[0][price]', priceId);
+    body.set('proration_behavior', 'create_prorations');
+    // The subscription.updated this triggers reads metadata.tier, so it has to
+    // name the NEW plan or the webhook writes the old tier straight back.
+    body.set('metadata[tier]', tier);
+    body.set('metadata[senderId]', senderId);
+    if (existing.ref) body.set('metadata[ref]', existing.ref);
+    const keepSource = source || existing.source;
+    if (keepSource) body.set('metadata[source]', String(keepSource).slice(0, 40));
+    const updated = await stripeFetch(env, 'POST', `/subscriptions/${existing.stripeSubscriptionId}`, body);
+    if (!updated || !updated.id) return null;
+
+    // Write entitlement now instead of waiting on the webhook: the browser is
+    // being redirected to the dashboard in the next few hundred milliseconds
+    // and the plan they just paid for has to be live when they land.
+    const storage = pickStorage(env);
+    const record = {
+      ...existing,
+      tier,
+      status: updated.status || existing.status,
+      stripeSubscriptionId: updated.id,
+      priceId: updated.items?.data?.[0]?.price?.id || priceId,
+      currentPeriodEnd: updated.current_period_end
+        ? new Date(updated.current_period_end * 1000).toISOString()
+        : existing.currentPeriodEnd,
+      cancelAt: updated.cancel_at
+        ? new Date(updated.cancel_at * 1000).toISOString()
+        : null,
+      planChangedFrom: existing.tier,
+      planChangedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await storage.put(`sub:${senderId}`, JSON.stringify(record));
+    await recordSubForMetrics(env, senderId, record).catch(() => {});
+    return {
+      planChanged: true,
+      from: existing.tier,
+      tier,
+      url: `${origin}/dashboard/?checkout=success&tier=${encodeURIComponent(tier)}`,
+    };
+  } catch (err) {
+    console.error('[stripe] in-place plan change failed:', err && err.message);
+    return null;
+  }
+}
+
+/**
  * Create a Customer Portal session so the user can manage billing.
  * Returns the portal URL. Caller validates the senderId out of band.
  */
@@ -429,8 +531,28 @@ export async function verifyStripeSignature({ payload, header, secret, tolerance
 }
 
 /**
+ * Reasons a miss is RECOVERABLE, meaning the event was well formed and we
+ * simply did not hold the state to apply it yet. The commonest is the race
+ * between checkout.session.completed (which writes stripe:customer:<id>) and
+ * the subscription event that needs that mapping to resolve a sender.
+ *
+ * Stripe's retry ladder is the only recovery path here, and it runs on a 5xx
+ * and nothing else, so applyStripeEvent throws for these instead of returning
+ * a tidy result the caller answers 200 to. A 200 spends the retry budget on
+ * nothing and the customer stays unentitled forever.
+ */
+const RETRYABLE_MISSES = new Set([
+  'no_sender_for_customer',
+  'missing_link_fields',
+  'unknown_tier',
+]);
+
+/**
  * Apply a verified webhook event to KV. Idempotent: replaying the same
  * event id is a no-op (we record processed event ids with a short TTL).
+ *
+ * Throws on a recoverable miss (see RETRYABLE_MISSES). The webhook route turns
+ * a throw into a 500, which is what asks Stripe to redeliver.
  */
 export async function applyStripeEvent(env, event) {
   if (!event || typeof event !== 'object') return { applied: false, reason: 'invalid_event' };
@@ -444,6 +566,10 @@ export async function applyStripeEvent(env, event) {
   const type = event.type;
   const obj = event.data && event.data.object;
   if (!obj) return { applied: false, reason: 'no_object' };
+  // Stripe's own emission time. Neither webhook delivery nor KV gives us any
+  // ordering guarantee, so this is the only way to tell a fresh subscription
+  // event from a redelivery of an older one.
+  const eventCreated = Number.isFinite(event.created) ? event.created : null;
 
   // Apply BEFORE marking seen. All our handlers are idempotent
   // (sub:<senderId> is an upsert; the founding-number assignment is gated
@@ -457,10 +583,10 @@ export async function applyStripeEvent(env, event) {
       break;
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
-      result = await onSubscriptionUpserted(env, obj);
+      result = await onSubscriptionUpserted(env, obj, eventCreated);
       break;
     case 'customer.subscription.deleted':
-      result = await onSubscriptionDeleted(env, obj);
+      result = await onSubscriptionDeleted(env, obj, eventCreated);
       break;
     case 'invoice.payment_failed':
       result = await onPaymentFailed(env, obj);
@@ -475,13 +601,20 @@ export async function applyStripeEvent(env, event) {
       return { applied: false, reason: `unhandled:${type}` };
   }
 
-  if (eventId) {
+  // ONLY a real apply earns the marker. Marking a failed event processed makes
+  // the failure permanent: the marker suppresses the redelivery that would have
+  // fixed it, so the customer who paid never gets their tier.
+  if (eventId && result && result.applied === true) {
     // TTL outlasts Stripe's 3-day retry window with safety margin.
     try {
       await storage.put(`stripe:event:${eventId}`, '1', { expirationTtl: 14 * 24 * 3600 });
     } catch (err) {
       console.error('[stripe] event-seen mark failed:', err && err.message);
     }
+  }
+
+  if (result && result.applied !== true && RETRYABLE_MISSES.has(result.reason)) {
+    throw stripeError('event_retryable', result.reason);
   }
 
   return result;
@@ -497,6 +630,13 @@ async function onCheckoutCompleted(env, session) {
   const ref = session.metadata && session.metadata.ref;
   if (!senderId || !tier || !customerId) {
     return { applied: false, reason: 'missing_link_fields' };
+  }
+  // A tier we do not define is not a tier. metadata[tier] is set at checkout
+  // and echoed back here, and every entitlement check asks only "is it not
+  // free", so writing an arbitrary string granted unlimited docs under a plan
+  // name that exists nowhere in the code and bills nothing.
+  if (!TIERS[tier]) {
+    return { applied: false, reason: 'unknown_tier' };
   }
 
   // Affiliate attribution. Credit the conversion exactly once per
@@ -705,7 +845,49 @@ async function maybeSendOriginWelcome(env, { senderId, customerId, foundingNumbe
   return { sent: true, deliveryResult: result };
 }
 
-async function onSubscriptionUpserted(env, sub) {
+/**
+ * Should this subscription.* event be ignored for the BASE plan record?
+ *
+ * Two independent ways an event can be about something other than the plan
+ * that currently owns this account's entitlement, both of which used to
+ * overwrite it:
+ *
+ *  - a SIBLING subscription. One Stripe customer can hold several at once, and
+ *    a plan change bought through Checkout is exactly how the second one
+ *    appears. Acting on the old one's cancellation dropped an account that had
+ *    just upgraded straight back to free.
+ *  - a STALE redelivery. Stripe retries out of order, so an `updated` emitted
+ *    BEFORE a `deleted` can arrive after it. Applying it resurrected paid
+ *    access permanently, because nothing downstream ever revisits the record.
+ *
+ * Returns the reason to skip, or null to apply.
+ */
+function staleSubscriptionEvent(existing, sub, eventCreated, opts = {}) {
+  // The sibling guard applies to DELETES ONLY.
+  //
+  // On a delete it is essential: cancelling a superseded subscription must not
+  // wipe entitlement for a customer who is still paying on the live one.
+  //
+  // On an upsert it is actively harmful. A brand new subscription always has an
+  // id that differs from the bound one, so applying the guard there rejects the
+  // customer's CURRENT plan as "not the active subscription": an upgrade would
+  // be ignored, the record would keep the old tier, and cancelling the old
+  // subscription would then drop them to free. The newest active subscription
+  // is by definition the live one, so an upsert rebinds. Ordering is still
+  // protected by the timestamp check below.
+  if (opts.isDelete && existing.stripeSubscriptionId && sub.id && sub.id !== existing.stripeSubscriptionId) {
+    return 'not_the_active_subscription';
+  }
+  const seen = Number(existing.lastSubEventAt);
+  // Strictly older only: Stripe stamps several events in the same second and
+  // those are legitimate, in-order deliveries.
+  if (Number.isFinite(seen) && Number.isFinite(eventCreated) && eventCreated < seen) {
+    return 'older_than_last_applied_event';
+  }
+  return null;
+}
+
+async function onSubscriptionUpserted(env, sub, eventCreated) {
   const storage = pickStorage(env);
   const customerId = sub.customer;
   const senderId = await senderIdForCustomer(env, customerId);
@@ -713,6 +895,9 @@ async function onSubscriptionUpserted(env, sub) {
 
   const existing = await getSubscription(env, senderId);
   const tier = (sub.metadata && sub.metadata.tier) || existing.tier || 'free';
+  // Same reasoning as onCheckoutCompleted: an undefined tier is not a plan and
+  // must never be written into a record that grants unlimited access.
+  if (!TIERS[tier]) return { applied: false, reason: 'unknown_tier' };
 
   // Add-on subscriptions (seat, white-label) live under one Stripe customer
   // alongside the base plan. Their lifecycle events must NEVER touch
@@ -732,6 +917,13 @@ async function onSubscriptionUpserted(env, sub) {
     await storage.put(`addons:${senderId}`, JSON.stringify(addons));
     return { applied: true, addon: tier, status: sub.status };
   }
+
+  // Guard the base plan only. Add-ons keep their own record and their own
+  // lifecycle, so folding their event times into the base plan's high-water
+  // mark would let an add-on event silence a real plan event.
+  const skip = staleSubscriptionEvent(existing, sub, eventCreated);
+  if (skip) return { applied: true, senderId, noop: skip };
+
   const next = {
     ...existing,
     senderId,
@@ -750,6 +942,8 @@ async function onSubscriptionUpserted(env, sub) {
     cancelAt: sub.cancel_at
       ? new Date(sub.cancel_at * 1000).toISOString()
       : null,
+    // High-water mark for the ordering guard above.
+    lastSubEventAt: Number.isFinite(eventCreated) ? eventCreated : existing.lastSubEventAt || null,
     updatedAt: new Date().toISOString(),
   };
   await storage.put(`sub:${senderId}`, JSON.stringify(next));
@@ -757,7 +951,7 @@ async function onSubscriptionUpserted(env, sub) {
   return { applied: true, senderId, tier, status: sub.status };
 }
 
-async function onSubscriptionDeleted(env, sub) {
+async function onSubscriptionDeleted(env, sub, eventCreated) {
   const storage = pickStorage(env);
   const customerId = sub.customer;
   const senderId = await senderIdForCustomer(env, customerId);
@@ -775,11 +969,28 @@ async function onSubscriptionDeleted(env, sub) {
   }
 
   const existing = await getSubscription(env, senderId);
+  // The one that matters. Cancelling ANY of a customer's subscriptions used to
+  // wipe entitlement for the whole customer, and the upgrade path is what
+  // creates the second subscription, so upgrading and then losing the old plan
+  // downgraded a paying customer to free.
+  const skip = staleSubscriptionEvent(existing, sub, eventCreated, { isDelete: true });
+  if (skip) return { applied: true, senderId, noop: skip };
+
   const next = {
     ...existing,
     tier: 'free',
     status: 'canceled',
+    // UNBIND the dead subscription. The record spread above carries
+    // stripeSubscriptionId forward, and staleSubscriptionEvent refuses any
+    // event whose sub.id differs from it. Leaving a cancelled record pointing
+    // at the cancelled subscription therefore means the customer's NEXT
+    // subscription is rejected as "not_the_active_subscription" forever: they
+    // pay and never regain access. A cancelled record owns no live
+    // subscription, so it must claim none.
+    stripeSubscriptionId: null,
+    canceledSubscriptionId: existing.stripeSubscriptionId || null,
     canceledAt: new Date().toISOString(),
+    lastSubEventAt: Number.isFinite(eventCreated) ? eventCreated : existing.lastSubEventAt || null,
     updatedAt: new Date().toISOString(),
   };
   await storage.put(`sub:${senderId}`, JSON.stringify(next));

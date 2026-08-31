@@ -81,7 +81,7 @@
 
       <h2>1. What we collect.</h2>
       <p><strong>Account data.</strong> Name, email, password hash (if you create a paid account), and a stable sender ID we generate in your browser localStorage. Used to identify you in the dashboard and tie documents to your account.</p>
-      <p><strong>Document data.</strong> Uploaded PDFs and Word documents when you invite remote signers. Stored encrypted at rest in Cloudflare KV with a thirty-day TTL, then auto-deleted unless you download them. Detection itself runs in your browser; the document does not leave your device during detection.</p>
+      <p><strong>Document data.</strong> Uploaded PDFs and Word documents when you invite remote signers. Stored encrypted at rest in Cloudflare KV for thirty days, then deleted automatically. Downloading does not extend that window, so keep your own copy. The PII-free verification record (a SHA-256 fingerprint, a signer count, and a completion timestamp) is retained permanently so a finished document can still be verified after the file is deleted. Detection itself runs in your browser; the document does not leave your device during detection.</p>
       <p><strong>Signer data.</strong> Names and email addresses of people you route documents to. Stored on the document record. Signers themselves do not need a CyberSygn account.</p>
       <p><strong>Audit metadata.</strong> Every signing event captures a timestamp, the signer's IP address, and their user agent string. This is what makes the signed document evidentiary. The audit certificate page includes this data.</p>
       <p><strong>Payment data.</strong> When you pay, your card information goes directly to Stripe. We never see card numbers or CVCs. We do see your subscription tier, status, current period end, and a Stripe customer ID.</p>
@@ -117,7 +117,7 @@
 
       <h2>5. How long we keep it.</h2>
       <ul class="legal__list">
-        <li>Account data: until you ask us to delete it. Within thirty days of deletion request, removed from production systems; encrypted backups roll off after ninety days.</li>
+        <li>Account data: until you ask us to delete it. Within thirty days of a deletion request, removed from production systems. There is no backup archive, so there is no secondary copy for it to survive in.</li>
         <li>Document files: thirty days after upload, then auto-deleted. You can delete sooner from the dashboard.</li>
         <li>Audit metadata: kept with the document record; deleted when the document record is deleted.</li>
         <li>Payment records: as long as Stripe and our accountants need them for tax law (typically seven years).</li>

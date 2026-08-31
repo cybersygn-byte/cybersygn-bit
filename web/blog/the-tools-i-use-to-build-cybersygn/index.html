@@ -106,7 +106,7 @@
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <span class="post__meta-item">5 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">982 words</span>
+          <span class="post__meta-item">1,007 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
@@ -119,7 +119,7 @@
           <p class="post__hook">Most SaaS stacks are bloated with tools that just sounded impressive. Here is the small one I actually ship with, every day, alone.</p>
           <p class="post__intro">Pick the wrong tools to build SaaS and you end up spending more time managing your stack than building the product, which is a lesson I learned the slow and expensive way. CyberSygn now runs on a deliberately small set of tools, and every single one earns its place by being something I genuinely open and use rather than something that merely looked impressive on a conference slide. Over the first year I swapped out several pieces as the real constraints made themselves known, and what survived is lean by design instead of by accident. In this post you will get the complete CyberSygn stack broken into runtime, payments, and frontend, along with the honest reason each piece made the cut. If you are building a solo SaaS and want a map you can actually copy, this is it.</p>
           <h2 class="post__h2">Runtime and storage: one platform that costs almost nothing</h2>
-<p class="post__p">Start with where the code actually lives, because that one decision shapes almost everything downstream. CyberSygn runs on Cloudflare Workers. The code executes at the edge, close to the user, deploys in seconds, and at the volume I handle it costs almost nothing. For short-term state I use Cloudflare KV, a simple key-value store. You can picture it as a fast notepad the application reads from and writes to constantly. For the heavy files, meaning the signed PDFs and audit certificates, I use R2. That is long-term blob storage, which just describes big files that need to sit somewhere safe for years. The metrics dashboard runs on Analytics Engine, so even my reporting stays inside the same family of tools. The key choice underneath all of this is that everything lives inside the Cloudflare ecosystem. That gives me one platform, one bill, and one place to operate. As a solo founder, that single-vendor simplicity is worth far more than squeezing out a theoretically perfect component for each job, and it forms the backbone of a clean Cloudflare Workers stack. One more point is worth making about cost, because people assume a real product demands a fat server bill when it genuinely does not. Workers bills by actual use, so a quiet hour costs nothing while a busy hour costs only cents. That pricing model is precisely what lets one person run a full e-signature service without a single machine to patch or reboot, and it shapes every other choice in my list of tools to build SaaS.</p>
+<p class="post__p">Start with where the code actually lives, because that one decision shapes almost everything downstream. CyberSygn runs on Cloudflare Workers. The code executes at the edge, close to the user, deploys in seconds, and at the volume I handle it costs almost nothing. For short-term state I use Cloudflare KV, a simple key-value store. You can picture it as a fast notepad the application reads from and writes to constantly. For the heavy files, meaning the signed PDFs and audit certificates, I use a second KV namespace on the same thirty-day timer as everything else. R2, Cloudflare&#39;s long-term blob storage, is the obvious next step and the export job is already written against it, but no bucket is attached yet, so today KV holds all of it. The metrics dashboard runs on Analytics Engine, so even my reporting stays inside the same family of tools. The key choice underneath all of this is that everything lives inside the Cloudflare ecosystem. That gives me one platform, one bill, and one place to operate. As a solo founder, that single-vendor simplicity is worth far more than squeezing out a theoretically perfect component for each job, and it forms the backbone of a clean Cloudflare Workers stack. One more point is worth making about cost, because people assume a real product demands a fat server bill when it genuinely does not. Workers bills by actual use, so a quiet hour costs nothing while a busy hour costs only cents. That pricing model is precisely what lets one person run a full e-signature service without a single machine to patch or reboot, and it shapes every other choice in my list of tools to build SaaS.</p>
 <h2 class="post__h2">Payments and email: the two systems you cannot get wrong</h2>
 <p class="post__p">Two parts of any SaaS simply have to work, namely taking money and sending mail, so I refuse to improvise anywhere near either one. For billing I use Stripe, which handles both the monthly Solo subscription and the higher-volume Studio plan, while the Stripe Customer Portal lets customers manage their own plan so I never have to touch a billing change by hand. For email I use Resend, which sends every transactional message the product produces, from the signing-flow emails to the welcome drip to the monthly owner report. Deliverability is the part most founders quietly skip and then come to regret, so I set up DKIM, SPF, and DMARC from the very start, three email security records that prove your mail is genuinely from you and keep it landing in the inbox rather than the spam folder. Resend handles the difficult mechanics of actually getting mail delivered, which means I do not have to babysit it, and for an indie SaaS stack that kind of boring reliability is exactly what you want. The broader lesson here is really about knowing where to be cheap and where not to be. I am perfectly happy to hand-write a frontend to save money, but I am not willing to roll my own billing or run my own mail server, because money and email are the two systems where a small bug turns directly into a lost customer or a missed payment. Those areas get paid, trusted tools, and everything else gets the lean treatment.</p>
 <h2 class="post__h2">Frontend and dev tools to build SaaS without a framework</h2>
@@ -141,22 +141,22 @@
     <section class="post__related" aria-label="Related reading">
       <p class="kicker kicker--muted">Related reading</p>
       <ul class="post__related-list">
-        <li><a href="/blog/initial-blocks-vs-signature-blocks/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Initial vs Signature: When to Use Each One on a Contract</strong>
-            <span class="post__related-desc">Initial vs signature: initials prove you read a page, signatures seal the whole deal. Learn when each earns it</span>
+        <li><a href="/blog/texas-uniform-electronic-transactions-act/">
+            <span class="post__related-cat">compliance</span>
+            <strong>Texas UETA: How the Lone Star State Handles E-Signatures</strong>
+            <span class="post__related-desc">Texas UETA makes electronic signatures fully legal, with a few twists for real estate and oil-and-gas. Here is</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/new-york-electronic-signature-rules/">
+            <span class="post__related-cat">compliance</span>
+            <strong>New York Electronic Signature Law: The One State That Went Its Own Way</strong>
+            <span class="post__related-desc">New York electronic signature law skips UETA for its own statute, ESRA. Different name, same result. Here is w</span>
             <span class="post__related-meta">5 min read</span>
           </a></li>
-<li><a href="/blog/checkbox-fields-legal-weight/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Checkbox Legal Binding: Does a Checked Box Hold Up in Court?</strong>
-            <span class="post__related-desc">Checkbox legal binding, explained: a checked box in a signed contract is part of the deal. See when it holds u</span>
-            <span class="post__related-meta">5 min read</span>
-          </a></li>
-<li><a href="/blog/date-fields-and-timestamp-rules/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Signature Timestamp: How CyberSygn Handles Time</strong>
-            <span class="post__related-desc">Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here </span>
+<li><a href="/blog/california-electronic-signature-law/">
+            <span class="post__related-cat">compliance</span>
+            <strong>California Electronic Signature Law: UETA Plus Extra Rules</strong>
+            <span class="post__related-desc">California electronic signature law uses UETA plus a privacy layer. Learn what changes when a Californian sign</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
       </ul>

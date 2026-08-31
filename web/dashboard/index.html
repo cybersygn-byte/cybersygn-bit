@@ -21,7 +21,8 @@
 
   <meta property="og:title" content="CyberSygn dashboard." />
   <meta property="og:description" content="Track the documents you have routed through CyberSygn, remind pending signers, and download signed PDFs and audit certificates." />
-  <meta property="og:image" content="../brand/og-image.png" />
+  <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
+  <meta property="og:url" content="https://cybersygn.io/dashboard/" />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
 
@@ -147,7 +148,7 @@
               <span aria-hidden="true">▾</span>
             </button>
             <div class="cmd-more__menu" hidden>
-              <a class="cmd-more__item" href="./bulk-send.html">Bulk send</a>
+              <a class="cmd-more__item" href="./bulk-send">Bulk send</a>
               <button id="billing-portal" class="cmd-more__item" type="button" hidden>Manage billing</button>
               <button id="identity-toggle" class="cmd-more__item" type="button">Backup identity</button>
               <!--
@@ -412,39 +413,19 @@
           </section>
 
           <!-- Add-ons panel. Shown by app.js only to a paying subscriber
-               (tier not free/owner). Two purchasable add-ons, each
-               purchasability-aware: if its Stripe price is not configured the
-               control disables and reads "Opening soon" so no click dead-ends.
+               (tier not free/owner). Every row is purchasability-aware: an
+               add-on the billing config does not offer is REMOVED by app.js,
+               not relabelled, because both current add-ons are retired rather
+               than pending, and the panel hides itself when nothing is left.
                The seat button pre-sets data-checkout-bound="1" so checkout.js
                skips it; app.js owns its click to pass the seat quantity. -->
-          <section id="addons-panel" class="addons-panel settings-panel" hidden aria-live="polite">
-            <div class="settings-panel__head">
-              <p class="settings-panel__title">Add-ons</p>
-              <p class="settings-panel__note">
-                Bolt extra seats or white-label onto your plan. Billed alongside your subscription.
-              </p>
-            </div>
-            <div class="addons-panel__row" style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;padding:var(--s-3) 0;border-top:1px solid var(--line,rgba(0,0,0,.08));">
-              <div style="min-width:0;flex:1 1 220px;">
-                <p class="settings-panel__title" style="margin:0;">Extra seats</p>
-                <p class="settings-panel__note" style="margin:0;">Add teammates to your workspace, $9 each per month.</p>
-              </div>
-              <div style="display:flex;gap:var(--s-2);align-items:center;flex-wrap:wrap;">
-                <input id="addon-seat-qty" type="number" min="1" max="25" step="1" value="1" inputmode="numeric" aria-label="Number of seats to add" style="width:72px;padding:8px 10px;border:1px solid var(--line,rgba(0,0,0,.15));border-radius:8px;font:inherit;" />
-                <button id="addon-seat-btn" class="btn btn--ink btn--sm" type="button" data-checkout-tier="seat" data-checkout-bound="1">Add seats, $9 each</button>
-              </div>
-            </div>
-            <div class="addons-panel__row" style="display:flex;flex-wrap:wrap;gap:var(--s-3);align-items:center;justify-content:space-between;padding:var(--s-3) 0;border-top:1px solid var(--line,rgba(0,0,0,.08));">
-              <div style="min-width:0;flex:1 1 220px;">
-                <p class="settings-panel__title" style="margin:0;">White-label</p>
-                <p class="settings-panel__note" style="margin:0;">Remove the CyberSygn mark, use your domain, $19/mo.</p>
-              </div>
-              <div style="display:flex;gap:var(--s-2);align-items:center;">
-                <button id="addon-whitelabel-btn" class="btn btn--ink btn--sm" type="button" data-checkout-tier="whitelabel">Add white-label</button>
-              </div>
-            </div>
-            <p id="addon-status" class="caption" role="status" aria-live="polite" style="margin-top:var(--s-2);"></p>
-          </section>
+          <!-- ADD-ONS PANEL REMOVED. Both SKUs it sold are retired in
+               worker/src/stripe.js (seat and whitelabel carry retired:true) and
+               checkout REFUSES them, so every button here took the customer to a
+               dead end. Extra seats were never enforced by any code path and
+               white-label wrote an entitlement that nothing reads. The markup is
+               deleted rather than hidden so no future change can un-hide a
+               storefront for things that do not exist. -->
 
           <!-- Affiliate panel (slice 84). Every paying customer has a
                referral code; here's the proof + their stats + share

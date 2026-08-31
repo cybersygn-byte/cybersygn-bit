@@ -17,6 +17,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fitTitle, fitDescription } from './seo-meta.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -49,8 +50,10 @@ const RELATED_READING = [
 function renderPage(v) {
   const slug = `best-e-signature-for-${v.slug}`;
   const canonical = `https://cybersygn.io/alternatives/${slug}/`;
-  const title = `The best e-signature for ${v.name}. CyberSygn.`;
-  const description = `Why CyberSygn is the e-signature tool built for ${v.name}: it finds every signature, date, and initial field automatically, signers need no account, and every completed document carries a tamper-evident audit trail.`;
+  // Vertical names run from "lawyers" to "interior designers", so the copy is
+  // written short and fitTitle / fitDescription enforce the SERP ceiling.
+  const title = fitTitle(`The best e-signature for ${v.name}`, { suffix: '. CyberSygn.' });
+  const description = fitDescription(`The e-signature tool built for ${v.name}. Every signature, date, and initial field found automatically. No signer account, audit trail on every document.`);
 
   const whyCards = (v.whyPoints || []).map(p => `
           <article class="doc-card">

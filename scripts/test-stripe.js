@@ -243,6 +243,92 @@ async function main() {
   const d6 = await call('POST', '/api/docs', newDocBody(senderId), {}, envWithSecret);
   ok(d6.status === 201, 'solo subscriber bypasses free-tier gate');
 
+  // Sign and POST an event through the real webhook route.
+  async function webhook(event) {
+    const body = JSON.stringify(event);
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = await signPayload(body, 'whsec_test_local_secret', ts);
+    return call('POST', '/api/stripe/webhook', body,
+      { 'stripe-signature': sig, 'content-type': 'application/json' }, envWithSecret);
+  }
+  function subEvent(type, { id, subId, customer, tier, created, status }) {
+    return {
+      id, type, created,
+      data: { object: {
+        id: subId, customer, status: status || 'active',
+        metadata: { tier },
+        items: { data: [{ id: 'si_1', price: { id: 'price_x' } }] },
+        current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
+      } },
+    };
+  }
+
+  // 9. A recoverable miss must answer 5xx, because Stripe's retry is the only
+  // recovery path and a 200 spends it on nothing.
+  console.log('\n9. Unappliable events ask Stripe to retry');
+  const retryEvt = subEvent('customer.subscription.updated', {
+    id: 'evt_retry_1', subId: 'sub_retry', customer: 'cus_retry', tier: 'solo', created: 1000,
+  });
+  const miss = await webhook(retryEvt);
+  ok(miss.status === 500, 'unknown customer answers 500 so Stripe redelivers');
+  ok(miss.json && miss.json.error === 'no_sender_for_customer', 'reports the reason');
+
+  // The customer mapping arrives (checkout landed second), then the SAME event
+  // id is redelivered. It must apply, which it cannot do if the failed first
+  // delivery marked the id processed.
+  const linkEvt = {
+    id: 'evt_retry_link', type: 'checkout.session.completed',
+    data: { object: {
+      id: 'cs_retry', client_reference_id: 'sender-retry', customer: 'cus_retry',
+      subscription: null, metadata: { tier: 'solo', senderId: 'sender-retry' },
+    } },
+  };
+  const linked = await webhook(linkEvt);
+  ok(linked.status === 200 && linked.json.applied === true, 'the linking checkout event applies');
+  const redeliver = await webhook(retryEvt);
+  ok(redeliver.status === 200 && redeliver.json.applied === true,
+     'the redelivered event applies (the failed delivery was never marked seen)');
+
+  // 10. Cancelling a sibling subscription must not strip the live plan.
+  console.log('\n10. Sibling subscription cancellation');
+  const upSender = 'sender-upgrade';
+  await webhook({
+    id: 'evt_up_checkout', type: 'checkout.session.completed',
+    data: { object: {
+      id: 'cs_up', client_reference_id: upSender, customer: 'cus_up',
+      subscription: null, metadata: { tier: 'solo', senderId: upSender },
+    } },
+  });
+  await webhook(subEvent('customer.subscription.updated', {
+    id: 'evt_up_a', subId: 'sub_A', customer: 'cus_up', tier: 'pro', created: 2000,
+  }));
+  const liveSub = await getSubscription(envWithSecret, upSender);
+  ok(liveSub.tier === 'pro' && liveSub.stripeSubscriptionId === 'sub_A', 'live plan is pro on sub_A');
+
+  const sibling = await webhook(subEvent('customer.subscription.deleted', {
+    id: 'evt_up_b_del', subId: 'sub_B', customer: 'cus_up', tier: 'solo', created: 2100,
+  }));
+  ok(sibling.status === 200 && sibling.json.noop === 'not_the_active_subscription',
+     'a sibling cancellation is a no-op');
+  const stillPaid = await getSubscription(envWithSecret, upSender);
+  ok(stillPaid.tier === 'pro' && stillPaid.status === 'active', 'the upgraded plan survived');
+  const upGate = await checkFreeTierAllowance(envWithSecret, upSender);
+  ok(upGate.remaining === Infinity, 'entitlement survived the sibling cancellation');
+
+  const real = await webhook(subEvent('customer.subscription.deleted', {
+    id: 'evt_up_a_del', subId: 'sub_A', customer: 'cus_up', tier: 'pro', created: 2200,
+  }));
+  ok(real.status === 200 && real.json.applied === true, 'cancelling the LIVE subscription applies');
+  ok((await getSubscription(envWithSecret, upSender)).tier === 'free', 'and downgrades to free');
+
+  // A stale update emitted before that delete must not resurrect the plan.
+  const stale = await webhook(subEvent('customer.subscription.updated', {
+    id: 'evt_up_a_stale', subId: 'sub_A', customer: 'cus_up', tier: 'pro', created: 2150,
+  }));
+  ok(stale.status === 200 && stale.json.noop === 'older_than_last_applied_event',
+     'a stale update after the delete is dropped');
+  ok((await getSubscription(envWithSecret, upSender)).tier === 'free', 'access stayed cancelled');
+
   console.log('\n=======================================');
   console.log(`  ${passed} passed, ${failed} failed`);
   process.exit(failed === 0 ? 0 : 1);

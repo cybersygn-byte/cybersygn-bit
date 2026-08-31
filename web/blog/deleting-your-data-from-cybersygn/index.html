@@ -106,7 +106,7 @@
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <span class="post__meta-item">5 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">1,003 words</span>
+          <span class="post__meta-item">1,034 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
@@ -141,7 +141,7 @@ One note worth keeping in mind: this is general information, not legal advice, s
 
 Open your dashboard, go to Settings, and open **GDPR Tools**, the same place you find the export tools. Search for the signer by email, then click **&quot;Delete this signer&#39;s data.&quot;** Here is the step that builds real trust: before anything is removed, CyberSygn shows you a clear preview that lists what will be deleted and what will be preserved as immutable evidence, meaning a record that cannot be changed afterward. So you are never guessing, because you see the exact result before you confirm it, with no surprise gaps and no accidental erasure of a contract you actually needed.
 
-Click confirm, and the deletion runs quietly in the background, completing within twenty-four hours. Does it reach the backups too? Yes, because the deletion flows into the daily backup archives going forward, which means the data does not quietly live on in some forgotten copy somewhere. That is a detail many competing tools skip entirely, and it is precisely the detail an auditor eventually asks about.
+Click confirm, and the deletion runs quietly in the background, completing within twenty-four hours. Does a copy linger in a backup somewhere? No, and the reason is plainer than you might like: CyberSygn runs no backup archive today, so there is no secondary copy for deleted data to survive in. Everything the platform holds sits in one encrypted Cloudflare KV store under a thirty-day timer, which means a deletion has exactly one place it needs to reach. That is a detail many competing tools skip entirely, and it is precisely the detail an auditor eventually asks about.
 
 That is the full picture of how you delete data CyberSygn holds: strip away whatever you can, keep only the evidence, and confirm with your eyes open, so a right-to-be-forgotten request becomes a one-minute task you can handle with genuine confidence.</p>
 <h2 class="post__h2">Document Each Deletion So You Never Have to Defend It</h2>
@@ -167,22 +167,22 @@ The broader principle is that any signer data deletion conducted in the open, wi
     <section class="post__related" aria-label="Related reading">
       <p class="kicker kicker--muted">Related reading</p>
       <ul class="post__related-list">
-        <li><a href="/blog/initial-blocks-vs-signature-blocks/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Initial vs Signature: When to Use Each One on a Contract</strong>
-            <span class="post__related-desc">Initial vs signature: initials prove you read a page, signatures seal the whole deal. Learn when each earns it</span>
+        <li><a href="/blog/texas-uniform-electronic-transactions-act/">
+            <span class="post__related-cat">compliance</span>
+            <strong>Texas UETA: How the Lone Star State Handles E-Signatures</strong>
+            <span class="post__related-desc">Texas UETA makes electronic signatures fully legal, with a few twists for real estate and oil-and-gas. Here is</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/new-york-electronic-signature-rules/">
+            <span class="post__related-cat">compliance</span>
+            <strong>New York Electronic Signature Law: The One State That Went Its Own Way</strong>
+            <span class="post__related-desc">New York electronic signature law skips UETA for its own statute, ESRA. Different name, same result. Here is w</span>
             <span class="post__related-meta">5 min read</span>
           </a></li>
-<li><a href="/blog/checkbox-fields-legal-weight/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Checkbox Legal Binding: Does a Checked Box Hold Up in Court?</strong>
-            <span class="post__related-desc">Checkbox legal binding, explained: a checked box in a signed contract is part of the deal. See when it holds u</span>
-            <span class="post__related-meta">5 min read</span>
-          </a></li>
-<li><a href="/blog/date-fields-and-timestamp-rules/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Signature Timestamp: How CyberSygn Handles Time</strong>
-            <span class="post__related-desc">Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here </span>
+<li><a href="/blog/california-electronic-signature-law/">
+            <span class="post__related-cat">compliance</span>
+            <strong>California Electronic Signature Law: UETA Plus Extra Rules</strong>
+            <span class="post__related-desc">California electronic signature law uses UETA plus a privacy layer. Learn what changes when a Californian sign</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
       </ul>

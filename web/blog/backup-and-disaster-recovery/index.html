@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CyberSygn Backup and Disaster Recovery, Explained Simply, CyberSygn</title>
-  <meta name="description" content="CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap." />
-  <meta name="keywords" content="CyberSygn backup, e-signature backup, CyberSygn disaster recovery, KV backup R2, data recovery, document durability" />
+  <title>CyberSygn Backup and Recovery: The Honest Version, CyberSygn</title>
+  <meta name="description" content="There is no CyberSygn backup running today. Documents live in encrypted Cloudflare KV for 30 days. Here is what exists, and how to keep your own copies." />
+  <meta name="keywords" content="CyberSygn backup, e-signature backup, CyberSygn disaster recovery, document retention 30 days, data recovery, signed PDF backup" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/blog/backup-and-disaster-recovery/" />
   <meta name="color-scheme" content="light dark" />
@@ -14,8 +14,8 @@
   <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
-  <meta property="og:title" content="CyberSygn Backup and Disaster Recovery, Explained Simply" />
-  <meta property="og:description" content="CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap." />
+  <meta property="og:title" content="CyberSygn Backup and Recovery: The Honest Version" />
+  <meta property="og:description" content="There is no CyberSygn backup running today. Documents live in encrypted Cloudflare KV for 30 days. Here is what exists, and how to keep your own copies." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/blog/backup-and-disaster-recovery/" />
   <meta property="og:type" content="article" />
@@ -45,15 +45,15 @@
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "CyberSygn Backup and Disaster Recovery, Explained Simply",
+          "name": "CyberSygn Backup and Recovery: The Honest Version",
           "item": "https://cybersygn.io/blog/backup-and-disaster-recovery/"
         }
       ]
     },
     {
       "@type": "Article",
-      "headline": "CyberSygn Backup and Disaster Recovery, Explained Simply",
-      "description": "CyberSygn backup runs daily, copying KV to R2 across data centers. See how your signed documents survive deletes, attacks, and outages, plus the one gap.",
+      "headline": "CyberSygn Backup and Recovery: The Honest Version",
+      "description": "There is no CyberSygn backup running today. Documents live in encrypted Cloudflare KV for 30 days. Here is what exists, and how to keep your own copies.",
       "datePublished": "2026-05-26T12:00:00Z",
       "dateModified": "2026-05-26T12:00:00Z",
       "author": {
@@ -71,7 +71,7 @@
       },
       "mainEntityOfPage": "https://cybersygn.io/blog/backup-and-disaster-recovery/",
       "articleSection": "security",
-      "keywords": "CyberSygn backup, e-signature backup, CyberSygn disaster recovery, KV backup R2, data recovery, document durability"
+      "keywords": "CyberSygn backup, e-signature backup, CyberSygn disaster recovery, document retention 30 days, data recovery, signed PDF backup"
     }
   ]
 }
@@ -98,7 +98,7 @@
     <article class="post__article">
       <div class="container container--prose">
         <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">security</span></p>
-        <h1 class="post__title">CyberSygn Backup and Disaster Recovery, Explained Simply</h1>
+        <h1 class="post__title">CyberSygn Backup and Recovery: The Honest Version</h1>
         <div class="post__meta">
           <span class="post__meta-item post__meta-cat">security</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
@@ -106,45 +106,49 @@
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <span class="post__meta-item">4 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">864 words</span>
+          <span class="post__meta-item">709 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
       <span class="post__share-label">Share</span>
-      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fbackup-and-disaster-recovery%2F&amp;text=CyberSygn%20Backup%20and%20Disaster%20Recovery%2C%20Explained%20Simply" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fbackup-and-disaster-recovery%2F&amp;text=CyberSygn%20Backup%20and%20Recovery%3A%20The%20Honest%20Version" target="_blank" rel="noopener" aria-label="Share on X">X</a>
       <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fbackup-and-disaster-recovery%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
       <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/backup-and-disaster-recovery/" aria-label="Copy link to this article">Copy link</button>
     </div>
         <div class="post__body">
-          <p class="post__hook">Your signed contracts live in the cloud, but what happens the day the cloud has a genuinely bad day?</p>
-          <p class="post__intro">Most people never think about backups until something breaks, and by then it is already too late, so let me show you the safety net before you ever need it. CyberSygn backup runs every single day, copying your data from one storage system to another across many data centers, and on top of that every signed PDF is already mirrored in multiple locations the moment it is created. The result is a system built to survive bad days rather than merely hope they never come. Over the next two minutes you will see exactly how the daily CyberSygn backup works, the three disasters it protects you from, and the one gap worth knowing about so that nothing surprises you later.</p>
-          <h2 class="post__h2">How the Daily CyberSygn Backup Actually Works</h2>
-<p class="post__p">Let me walk you through what happens behind the scenes every night, because the process is more deliberate than it looks.
+          <p class="post__hook">Most backup pages tell you what a system promises. This one tells you what CyberSygn actually has, which is less than you would probably guess.</p>
+          <p class="post__intro">Backups are the thing nobody thinks about until something breaks, and by then a vague promise is worse than no promise at all. So here is the state of CyberSygn backup on the day you are reading this: there is no automated backup running. A daily export job is written and sitting in the codebase, but no storage bucket is attached to it, so it has never executed once. Your documents live in encrypted Cloudflare KV under a thirty-day timer, and nothing is copied anywhere else. Over the next two minutes you will see exactly what that covers, what it does not, and the two habits that give you a recovery story you actually control.</p>
+          <h2 class="post__h2">What Actually Exists Today</h2>
+<p class="post__p">Let me give you the whole inventory, because it is short.
 
-At 03:00 UTC, a worker wakes up and scans the KV namespace, which is the fast storage that holds your live data, and it copies every entry into a dated R2 bucket, the durable storage built to keep files safe for the long haul. So what gets copied in the CyberSygn backup? Signing sessions in progress, signer state, magic-link tokens, and your account settings, which together make up the entire working picture of your account at that moment.
+Every document record, every signer state, and the signed PDF and audit certificate all live in **Cloudflare KV**, encrypted at rest, each carrying a **thirty-day expiry** measured from the last write. Cloudflare replicates KV internally so the service stays available, and that is worth having, but it is Cloudflare keeping its own store online rather than CyberSygn holding a second copy of your contract on your behalf. Those two things are easy to blur and they are not the same.
 
-This KV backup R2 job runs hands-off, every single day, with no action required from you, so you never have to remember to press anything, and these backups are kept for ninety days before they roll off to keep storage clean and current. Here is a detail that should reassure you: your finished signed PDFs and audit certificates do not even depend on this backup, because they land in R2 the instant they are completed and stay mirrored across multiple data centers on their own, which means that built-in document durability keeps the most important files safe by default.
+One thing is permanent. When a document completes, CyberSygn writes a verification record keyed by the SHA-256 fingerprint of the signed document, with no expiry. It stores the fingerprint, the signer count, and the created and completed timestamps, and nothing else: no name, no email, no content. That record is what lets you prove a saved PDF is the file that was signed, long after the thirty days have run out.
 
-So two layers really work together here. The signed documents are already durable on their own, and the daily job adds a second safety net underneath everything else, which is belt and suspenders running quietly while you sleep.</p>
-<h2 class="post__h2">The Three Disasters This Backup Saves You From</h2>
-<p class="post__p">So why does any of this matter to you in practice? Because three real things can go wrong, and the e-signature backup covers all of them.
+That is the complete list. There is no object archive, no nightly export, and no restore procedure, because today there is nothing to restore from.</p>
+<h2 class="post__h2">The Job That Has Never Run</h2>
+<p class="post__p">I would rather you read this here than discover it.
 
-First, operator error, where you delete an active signing session by accident, something most of us have done a version of, and the backup has yesterday&#39;s copy waiting for you. Second, account compromise, where an attacker gets in and deletes your data on purpose, yet the backup sits safely in separate storage they cannot easily reach, so a destructive attack does not turn into a permanent loss. Third, platform-level loss, where a regional issue hits Cloudflare KV, which is rare but possible, and the most recent daily backup becomes your recovery point. For any of these the answer is the same, because the latest daily CyberSygn disaster recovery copy gets you back on your feet.
+There is a scheduled function in the codebase that would, at 03:00 UTC, walk the KV namespace and write every entry into a dated file in object storage. It is real code. What it does not have is a bucket bound to the Worker, so the first thing it does on every invocation is report that storage is unbound and stop. It has never written a byte.
 
-One honest note on how data recovery actually happens: it is hands-on rather than a one-click button, so it needs CyberSygn support to step in, and the time depends on how much needs restoring. Why be upfront about that? Because a vague promise of instant recovery would be a lie, and you deserve the real picture instead. The important part is simple: the data is there, in separate storage, ready to be restored, which is what truly counts when a bad day finally hits.</p>
-<h2 class="post__h2">The One Gap You Should Plan Around</h2>
-<p class="post__p">I will be straight with you, because every honest backup story has a limit worth naming.
+Even once a bucket is attached, it would not cover the files you care about most. The list of key prefixes it walks does not include the namespace that holds signed PDFs and audit certificates, so those would sit outside the export until that list is fixed too.
 
-The daily job runs once a day, so it cannot save something that was created and lost inside the same day before the backup ran. Here is a concrete example: a signing session deleted at 02:50 UTC, just ten minutes before the 03:00 run, would not be in that night&#39;s backup yet, so the window is real even though it is small. Does that worry you? For most operators it should not, because the odds of losing exactly the wrong thing in exactly that ten-minute window are low, and remember that finished signed documents are never at risk here, since they live in R2 the moment they complete, which is the document durability piece doing its quiet work.
+An earlier version of this page described that job as running nightly and described your signed documents as mirrored across data centers forever. Both claims were false. If and when the bucket is attached and the prefix list is corrected, this page changes, and the change ships with the feature rather than ahead of it.</p>
+<h2 class="post__h2">The Two Habits That Give You a Real Recovery Story</h2>
+<p class="post__p">So what should you actually do? Two things, and neither takes a minute.
 
-But if your work demands tighter protection, you have a move available: run your own export through the GDPR and data-export flow whenever you want, whether that is daily, hourly, or on whatever schedule fits your risk. That puts a second copy for data recovery in your own hands, on your own clock, so you are never waiting on anyone else. For nearly everyone the daily cadence is plenty, and for the cautious there is a self-serve backup lever you fully control. Either way the point of any CyberSygn backup is the same: your signed work survives the bad day, and you sleep fine on the good ones.</p>
+First, **download the signed PDF and the audit certificate the day a deal closes.** Your dashboard links both as soon as the last signer finishes, and the completion email carries the same links. Filed alongside the rest of that client&#39;s paperwork, your copy becomes the authoritative one and the thirty-day window stops being a risk you are carrying.
+
+Second, **keep the pair together.** The PDF is the contract; the audit certificate is the record of who signed it, when, and from where, and it carries the fingerprint. If a dispute ever arrives, paste that fingerprint into the checker at /verify/ and the permanent record confirms the document completed, with the signer count and the timestamps. That still works long after the document record itself has expired, which is the whole reason the fingerprint is kept permanently and the file is left with you.
+
+Between those two habits you have a recovery story that depends on nothing CyberSygn has not built yet, which is the only kind worth relying on.</p>
           
         </div>
 
         <section class="post__cta">
           <p class="kicker">Ready to try it?</p>
           <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
-          <p>You should never lose a signed deal to a bad day in the cloud. CyberSygn backup and recovery is built in, with daily exports and signed PDFs mirrored across data centers automatically. Start with Solo: twelve dollars a month for the platform with resilience built in. Send your first document free.</p>
+          <p>Send a document, then download the signed PDF and its audit certificate when it completes. That gives you a recovery story you control instead of a promise you cannot check. Start free: three documents, no card, and Solo is twelve dollars a month after that.</p>
           <a class="btn btn--primary btn--lg" href="/preview/">
             Try It Out →
           </a>
@@ -155,22 +159,22 @@ But if your work demands tighter protection, you have a move available: run your
     <section class="post__related" aria-label="Related reading">
       <p class="kicker kicker--muted">Related reading</p>
       <ul class="post__related-list">
-        <li><a href="/blog/initial-blocks-vs-signature-blocks/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Initial vs Signature: When to Use Each One on a Contract</strong>
-            <span class="post__related-desc">Initial vs signature: initials prove you read a page, signatures seal the whole deal. Learn when each earns it</span>
+        <li><a href="/blog/texas-uniform-electronic-transactions-act/">
+            <span class="post__related-cat">compliance</span>
+            <strong>Texas UETA: How the Lone Star State Handles E-Signatures</strong>
+            <span class="post__related-desc">Texas UETA makes electronic signatures fully legal, with a few twists for real estate and oil-and-gas. Here is</span>
+            <span class="post__related-meta">4 min read</span>
+          </a></li>
+<li><a href="/blog/new-york-electronic-signature-rules/">
+            <span class="post__related-cat">compliance</span>
+            <strong>New York Electronic Signature Law: The One State That Went Its Own Way</strong>
+            <span class="post__related-desc">New York electronic signature law skips UETA for its own statute, ESRA. Different name, same result. Here is w</span>
             <span class="post__related-meta">5 min read</span>
           </a></li>
-<li><a href="/blog/checkbox-fields-legal-weight/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Checkbox Legal Binding: Does a Checked Box Hold Up in Court?</strong>
-            <span class="post__related-desc">Checkbox legal binding, explained: a checked box in a signed contract is part of the deal. See when it holds u</span>
-            <span class="post__related-meta">5 min read</span>
-          </a></li>
-<li><a href="/blog/date-fields-and-timestamp-rules/">
-            <span class="post__related-cat">fundamentals</span>
-            <strong>Signature Timestamp: How CyberSygn Handles Time</strong>
-            <span class="post__related-desc">Every signature timestamp is recorded to the second in UTC. Date fields show in the signer&#39;s local time. Here </span>
+<li><a href="/blog/california-electronic-signature-law/">
+            <span class="post__related-cat">compliance</span>
+            <strong>California Electronic Signature Law: UETA Plus Extra Rules</strong>
+            <span class="post__related-desc">California electronic signature law uses UETA plus a privacy layer. Learn what changes when a Californian sign</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
       </ul>

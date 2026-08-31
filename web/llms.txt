@@ -11,11 +11,11 @@ Annual billing is shown by default and saves 2 months (the yearly figures below 
 - Free: 3 documents lifetime per email, single signer per document, no card required.
 - Solo: $12 per month ($10 per month billed yearly), unlimited documents, multi-signer routing, in-person mode, camera scan upload, audit certificate.
 - Pro: $19 per month ($15 per month billed yearly), everything in Solo plus the AI co-pilot (draft a contract from a sentence, plain-language summaries), bulk send, and priority.
-- Studio: $29 per month ($23 per month billed yearly) for 3 seats, shared workspace, member roles, aggregated dashboard, bulk send.
-- Business: $79 per month ($65 per month billed yearly), white-label, SSO, and REST API.
+- Studio: $29 per month ($23 per month billed yearly) for a shared team workspace, member roles, aggregated dashboard, bulk send. Flat price, no per-seat billing.
+- Business: $79 per month ($65 per month billed yearly), REST API, higher rate limits, outbound webhooks. White-label and SSO are not sold: neither is enforced.
 - Origin (early adopter): $9 per month locked for the life of the account, first 100 customers only, monthly billing only, everything in Solo plus a direct line to the founder.
 - Lifetime (early adopter): $299 one-time, no recurring fees, first 50 customers only, every Solo feature for the life of the product.
-- Add-ons: extra seat $9 per month, white-label $19 per month.
+- Add-ons: none. The extra-seat and white-label add-ons are retired and checkout refuses both.
 
 Cancel anytime. No refunds are promised.
 

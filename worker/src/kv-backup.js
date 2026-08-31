@@ -6,7 +6,12 @@
  * records) into a single newline-delimited JSON object and writes it to
  * R2 at `backups/YYYY-MM-DD.ndjson`.
  *
- * R2 not configured (no env.CYBERSYGN_BACKUPS binding) → no-op.
+ * R2 not configured (no env.CYBERSYGN_BACKUPS binding) → a LOUD, REPORTED
+ * failure, not a no-op. wrangler.jsonc declares no r2_buckets, so as shipped
+ * this job writes nothing, and it announced that to nobody: the scheduled
+ * handler drops the return value. Every run now logs its outcome and stores it
+ * at meta:kv-backup:latest, so "we have backups" is a checkable claim instead
+ * of an assumption.
  *
  * Restore: download the latest .ndjson, parse each line, push back via
  * `wrangler kv key put` (single bash script wraps it).
@@ -33,13 +38,48 @@ const BACKUP_PREFIXES = [
 const PAGE_LIMIT = 1000;
 const HARD_KEY_CAP = 50_000;  // worst-case fan-out guard
 
+const RESULT_KEY = 'meta:kv-backup:latest';
+const RESULT_TTL_SECONDS = 60 * 60 * 24 * 40;
+
+/**
+ * Log the outcome and store it where the owner panel can read it. Returning a
+ * structured result is not enough on its own: the cron call site discards it,
+ * so an outcome nobody records is an outcome nobody has.
+ */
+async function report(env, outcome) {
+  const rec = { ...outcome, ranAt: new Date().toISOString() };
+  if (rec.ok) console.log('[kv-backup]', JSON.stringify(rec));
+  else console.error('[kv-backup] FAILED', JSON.stringify(rec));
+  try {
+    if (env && env.CYBERSYGN_DOCS) {
+      await env.CYBERSYGN_DOCS.put(RESULT_KEY, JSON.stringify(rec), { expirationTtl: RESULT_TTL_SECONDS });
+    }
+  } catch (e) { /* the log line above is still the record of what happened */ }
+  return rec;
+}
+
+/** Last stored backup outcome, or null if this job has never reported one. */
+export async function getLatestKvBackup(env) {
+  try {
+    if (!env || !env.CYBERSYGN_DOCS) return null;
+    const raw = await env.CYBERSYGN_DOCS.get(RESULT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
 export async function runDailyKvBackup(env) {
   if (!env || !env.CYBERSYGN_DOCS) {
-    return { ok: false, reason: 'kv_unavailable' };
+    // Nowhere to record this one; the console line is the whole report.
+    console.error('[kv-backup] FAILED: no CYBERSYGN_DOCS binding, nothing to back up');
+    return { ok: false, reason: 'kv_unavailable', ranAt: new Date().toISOString() };
   }
   const r2 = env.CYBERSYGN_BACKUPS;
   if (!r2 || typeof r2.put !== 'function') {
-    return { ok: false, reason: 'r2_unbound', note: 'Set CYBERSYGN_BACKUPS R2 binding in wrangler.jsonc to enable.' };
+    return report(env, {
+      ok: false,
+      reason: 'r2_unbound',
+      note: 'No CYBERSYGN_BACKUPS R2 binding, so NO backup exists. Bind an R2 bucket in wrangler.jsonc to enable.',
+    });
   }
 
   const now = new Date();
@@ -49,18 +89,26 @@ export async function runDailyKvBackup(env) {
   // Idempotency: if the backup for today already exists, skip.
   try {
     const existing = await r2.head(objectKey);
-    if (existing) return { ok: true, skipped: 'already_exists', objectKey };
+    if (existing) return report(env, { ok: true, reason: 'already_exists', objectKey });
   } catch (e) {}
 
   let written = 0;
+  let skipped = 0;
   let lines = '';
+  // A prefix that fails to list is a HOLE in the backup, not a detail. The
+  // old bare `break` produced a file that looked complete and silently held
+  // none of, say, the subscription records.
+  const errors = [];
   for (const prefix of BACKUP_PREFIXES) {
     let cursor = undefined;
     while (true) {
       let listed;
       try {
         listed = await env.CYBERSYGN_DOCS.list({ prefix, limit: PAGE_LIMIT, cursor });
-      } catch (e) { break; }
+      } catch (e) {
+        errors.push(`list_failed:${prefix}:${(e && e.message) || 'unknown'}`);
+        break;
+      }
       for (const entry of listed.keys) {
         if (written >= HARD_KEY_CAP) break;
         try {
@@ -68,13 +116,17 @@ export async function runDailyKvBackup(env) {
           if (raw === null) continue;
           lines += JSON.stringify({ k: entry.name, v: raw }) + '\n';
           written += 1;
-        } catch (e) { /* skip individual key */ }
+        } catch (e) {
+          skipped += 1;
+          if (errors.length < 20) errors.push(`read_failed:${entry.name}:${(e && e.message) || 'unknown'}`);
+        }
       }
       if (written >= HARD_KEY_CAP) break;
       if (listed.list_complete || !listed.cursor) break;
       cursor = listed.cursor;
     }
   }
+  if (written >= HARD_KEY_CAP) errors.push(`hard_key_cap_hit:${HARD_KEY_CAP}`);
 
   try {
     await r2.put(objectKey, lines, {
@@ -82,9 +134,18 @@ export async function runDailyKvBackup(env) {
       customMetadata: { date: dayKey, keyCount: String(written) },
     });
   } catch (e) {
-    return { ok: false, error: e && e.message };
+    return report(env, { ok: false, reason: 'r2_put_failed', error: (e && e.message) || 'unknown', objectKey, keyCount: written, errors });
   }
-  return { ok: true, objectKey, keyCount: written };
+  // A backup with holes in it is not a green run: say so, and keep the object,
+  // since a partial backup still beats none when it is labelled partial.
+  return report(env, {
+    ok: errors.length === 0,
+    reason: errors.length ? 'partial' : undefined,
+    objectKey,
+    keyCount: written,
+    skipped,
+    errors,
+  });
 }
 
 /**

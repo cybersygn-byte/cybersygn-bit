@@ -25,6 +25,7 @@
 import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fitTitle, fitDescription } from './seo-meta.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -46,8 +47,10 @@ function esc(s) {
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 function renderPage(doc, vert) {
-  const title = `${cap(doc.name)} e-signature for ${vert.name}. CyberSygn.`;
-  const description = `Send and sign ${doc.indefinite || 'a'} ${doc.name} in minutes, not days. CyberSygn finds every signature line, initial, date, and checkbox for ${vert.name}. No manual placement, no signer accounts.`;
+  // Doc and vertical names vary a lot in length, so the template is written
+  // short and fitTitle / fitDescription enforce the SERP ceiling on the tail.
+  const title = fitTitle(`${cap(doc.name)} e-signature for ${vert.name}`, { suffix: '. CyberSygn.' });
+  const description = fitDescription(`Send and sign ${doc.indefinite || 'a'} ${doc.name} in minutes. CyberSygn finds every signature, initial, date, and checkbox for ${vert.name}.`);
   const canonical = `https://cybersygn.io/use-cases/${doc.slug}/${vert.slug}/`;
   const h1 = `The fastest way for ${vert.name} to sign ${doc.indefinite || 'a'} ${doc.name}.`;
   const ogImage = 'https://cybersygn.io/brand/og-image.png';
@@ -69,7 +72,7 @@ function renderPage(doc, vert) {
     },
     {
       q: 'What does this cost?',
-      a: 'Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 a month. Pro is $19 a month and adds an AI co-pilot that drafts a contract from a sentence and summarizes any signed document in plain language. Studio is $29 a month for a 3-seat team. Business is $79 a month with white-label, SSO, and a full REST API. Annual billing saves two months. Early adopters can lock Origin at $9 a month for life or take Lifetime for $299 once, while founding spots remain.',
+      a: 'Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 a month. Pro is $19 a month and adds an AI co-pilot that drafts a contract from a sentence and summarizes any signed document in plain language. Studio is $29 a month for a shared team workspace, flat, with no per-seat billing. Business is $79 a month with a full REST API, higher rate limits, and outbound webhooks. Annual billing saves two months. Early adopters can lock Origin at $9 a month for life or take Lifetime for $299 once, while founding spots remain.',
     },
   ];
 
@@ -218,8 +221,8 @@ function renderPage(doc, vert) {
           <p class="lede section__lede">
             Your first one's on us (every plan starts with three free documents, no card). Solo is $12 a month.
             Pro is $19 a month and adds an AI co-pilot that drafts contracts and summarizes signed
-            documents in plain language. Studio is $29 a month for three seats. Business is $79 a month
-            with white-label, SSO, and a full API. Annual billing saves two months, and early-adopter
+            documents in plain language. Studio is $29 a month for a shared team workspace, flat. Business is $79 a month
+            with a full REST API, higher rate limits, and outbound webhooks. Annual billing saves two months, and early-adopter
             Origin ($9 a month for life) and Lifetime ($299 once) tiers are open while founding spots remain.
           </p>
         </header>

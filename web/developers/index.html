@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CyberSygn API. The v1 REST reference for developers.</title>
-  <meta name="description" content="The CyberSygn v1 REST API. Create and send documents for signature, auto-detect fields, download signed PDFs and audit certificates, configure webhooks, and embed signing in your own app." />
+  <meta name="description" content="The CyberSygn v1 REST API. Create and send documents for signature, auto-detect fields, download signed PDFs and audit certificates, configure webhooks." />
   <meta name="keywords" content="e-signature API, signature API, REST API, document signing API, webhooks, embedded signing, field detection API, CyberSygn API" />
   <meta name="author" content="CyberSygn" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -134,13 +134,14 @@
       <div class="container">
         <p class="kicker">Embed</p>
         <h2>Add signing in five lines.</h2>
-        <p class="fl__lede">One script tag, one attribute. Any element with <code>data-cybersygn-sign</code> opens the full CyberSygn signing flow in an iframe modal on your own page. Point it at a PDF URL, or at a <code>signing_url</code> from the <a href="#create">create endpoint</a> to have an API-created document signed in place. No SDK, no build step, no dependencies.</p>
+        <p class="fl__lede">One script tag, one attribute. Any element with <code>data-cybersygn-sign</code> opens the full CyberSygn signing flow in an iframe modal on your own page. Point it at a <code>signing_url</code> from the <a href="#create">create endpoint</a> to have an API-created document signed in place, or at a PDF we host. No SDK, no build step, no dependencies.</p>
+        <p class="fl__lede"><strong>The URL must be on cybersygn.io.</strong> The signing page fetches the document from our origin, and our <code>connect-src 'self'</code> policy blocks a PDF served from your own domain before the request leaves the browser. There is no proxy endpoint yet, so create the document through the API and embed the <code>signing_url</code> it returns.</p>
 
         <div class="fl__grid">
           <div class="fl__snippet">
             <button class="fl__copy" id="fl-copy" type="button" aria-label="Copy the snippet">Copy</button>
 <pre><code id="fl-code">&lt;script src="https://cybersygn.io/embed.js"&gt;&lt;/script&gt;
-&lt;button data-cybersygn-sign="https://your-site.com/contract.pdf"
+&lt;button data-cybersygn-sign="https://cybersygn.io/preview/?doc=DOC_ID&amp;t=TOKEN"
         data-cybersygn-source="your-app"&gt;
   Sign this document
 &lt;/button&gt;</code></pre>
@@ -160,7 +161,7 @@
           <div>
             <ol class="fl__steps">
               <li><strong>Get a key.</strong> Keys are issued by hand today: email <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> from your account email. The widget itself loads without one; the key is for <a href="#create">POST /api/v1/documents</a>, which returns the <code>signing_url</code> you hand to the button.</li>
-              <li><strong>Paste the snippet.</strong> Set <code>data-cybersygn-sign</code> to a signer's <code>signing_url</code> (signs that document in place) or to any PDF URL (opens the send flow with the document preloaded).</li>
+              <li><strong>Paste the snippet.</strong> Set <code>data-cybersygn-sign</code> to a signer's <code>signing_url</code> (signs that document in place) or to a PDF URL on cybersygn.io, such as a template under <code>/templates-pdf/</code> (opens the send flow with the document preloaded). A PDF on your own domain will not load.</li>
               <li><strong>Listen for completion.</strong> When the signer finishes, the widget fires a DOM event on <code>window</code> with the same payload the signing page posts:</li>
             </ol>
 <pre><code>window.addEventListener("cybersygn:complete", (e) =&gt; {

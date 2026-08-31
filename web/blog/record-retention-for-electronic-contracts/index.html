@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Electronic Contract Retention: How Long to Keep Signed Contracts (and Why), CyberSygn</title>
+  <title>Electronic Contract Retention: How Long to Keep Signed Contracts</title>
   <meta name="description" content="Electronic contract retention made simple. The statute of limitations sets the floor, tax rules raise the ceiling. Here is a practical map to follow." />
   <meta name="keywords" content="electronic contract retention, signed PDF retention, contract storage period, how long keep contracts, record retention schedule" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -106,7 +106,7 @@
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <span class="post__meta-item">5 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">978 words</span>
+          <span class="post__meta-item">940 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
@@ -136,16 +136,16 @@ Some industries reach much further. Healthcare and finance can require you to ke
 The cleanest way to organize this is to sort your contracts into three buckets, after which your record retention schedule essentially writes itself. The first bucket holds routine agreements, which you keep for six years from termination. The second bucket holds anything tied to taxes or 1099 payments, which you keep for seven years. The third bucket holds regulated work in healthcare or finance, which you keep for the long horizon those rules demand.
 
 Label each contract with its bucket the day you file it, and your future self will know exactly when, if ever, a document becomes safe to delete. No guessing, no last-minute panic, and no shredding something you turn out to need.</p>
-<h2 class="post__h2">Signed PDF retention CyberSygn handles for you</h2>
-<p class="post__p">Here is the genuinely good news: with CyberSygn, signed PDF retention and most of your broader electronic contract retention largely take care of themselves. On a paid account, CyberSygn stores your signed PDFs and audit certificates indefinitely, and they remain yours for as long as your account stays active. There is no annual cleanup ritual and no auto-delete waiting to wipe out your proof.
+<h2 class="post__h2">Where CyberSygn Fits in Your Retention Schedule</h2>
+<p class="post__p">Here is where CyberSygn fits, and just as importantly, where it does not.
 
-The only short-lived file is the original unsigned PDF, which sits in Cloudflare KV for 30 days to run the signing flow and is then deleted. You do not need it afterward, because the signed version replaces it entirely. The signed result and the audit certificate are yours to keep, and you can export them at any time from the dashboard into your own archive, whether that is a cloud drive or a simple backup folder.
+CyberSygn is the signing layer, not your archive. Every document, including the signed PDF and its audit certificate, sits in encrypted Cloudflare KV under a **thirty-day timer** and is then removed. Thirty days is shorter than every retention rule above, by years, so the schedule you just built is one you keep on your own storage rather than on ours.
 
-The principle here is straightforward: you own the document, and CyberSygn is the storage layer that holds it safely and returns it on demand. That arrangement makes your signed PDF retention dependable without requiring any ongoing effort from you.
+The habit that makes this painless takes about a minute per deal. When the last signer finishes, your dashboard links the signed PDF and the audit certificate side by side, and the completion email carries the same two links. Download both, file them under the client, and your six-year or seven-year clock is running on files you control.
 
-One smart move is to keep two copies. Let CyberSygn hold the live, retrievable original, then export a backup to your own drive once a quarter. With that habit in place, your electronic contract retention no longer depends on any single system, and you sleep better knowing the proof exists in two separate places. Pair that routine with the record retention schedule above, and you will never again wonder how long keep contracts that still matter.
+Keep the pair, not just the PDF. The certificate carries the SHA-256 fingerprint of the document that was signed, and CyberSygn keeps a permanent, PII-free record of that fingerprint. Years later you can paste it into the checker at /verify/ and confirm the file in your archive is the one that completed, along with the signer count and the timestamps. That record is the piece that outlives the thirty days, and it is what turns your own folder into defensible evidence.
 
-This is general information, not legal advice. Confirm your retention schedule with a licensed attorney or accountant for your situation.</p>
+So the division is clean: you own the document and the retention schedule, and CyberSygn owns the signing and the permanent proof that it happened.</p>
           
   <aside class="post__disclaimer">
     <strong>Not legal advice.</strong> This article describes how e-signature workflows
@@ -158,7 +158,7 @@ This is general information, not legal advice. Confirm your retention schedule w
         <section class="post__cta">
           <p class="kicker">Ready to try it?</p>
           <h3 class="post__cta-title">CyberSygn Solo. $12/month. Unlimited.</h3>
-          <p>CyberSygn keeps your signed contracts available indefinitely on a paid plan, and you can export anytime to your own archive. Stop worrying about lost proof. Solo is $12 a month for unlimited documents and storage. Try it free.</p>
+          <p>A retention schedule only works if the files are somewhere you control. CyberSygn links the signed PDF and its audit certificate the moment a deal closes, so filing them takes a minute, and it keeps a permanent fingerprint record so you can verify them years later. Solo is $12 a month for unlimited documents. Your first three are free, no card.</p>
           <a class="btn btn--primary btn--lg" href="/preview/">
             Try It Out →
           </a>
@@ -169,22 +169,22 @@ This is general information, not legal advice. Confirm your retention schedule w
     <section class="post__related" aria-label="Related reading">
       <p class="kicker kicker--muted">Related reading</p>
       <ul class="post__related-list">
-        <li><a href="/blog/ueta-vs-esign/">
+        <li><a href="/blog/texas-uniform-electronic-transactions-act/">
             <span class="post__related-cat">compliance</span>
-            <strong>UETA vs ESIGN: Which One Applies to Your Contract?</strong>
-            <span class="post__related-desc">UETA vs ESIGN explained in plain English. Learn which electronic signature law governs your contract, where th</span>
-            <span class="post__related-meta">5 min read</span>
-          </a></li>
-<li><a href="/blog/esign-act-overview/">
-            <span class="post__related-cat">compliance</span>
-            <strong>The ESIGN Act, Explained in 5 Minutes (Plain English)</strong>
-            <span class="post__related-desc">The ESIGN Act explained: the 2000 US law that gives e-signatures the same force as ink. What it covers, the 4 </span>
+            <strong>Texas UETA: How the Lone Star State Handles E-Signatures</strong>
+            <span class="post__related-desc">Texas UETA makes electronic signatures fully legal, with a few twists for real estate and oil-and-gas. Here is</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
-<li><a href="/blog/are-electronic-signatures-legally-binding/">
+<li><a href="/blog/new-york-electronic-signature-rules/">
             <span class="post__related-cat">compliance</span>
-            <strong>Are Electronic Signatures Legally Binding? Yes, and Here Is Why</strong>
-            <span class="post__related-desc">Are electronic signatures legally binding? Yes, since 2000 under US law. Here is the law, the 4 rules that mak</span>
+            <strong>New York Electronic Signature Law: The One State That Went Its Own Way</strong>
+            <span class="post__related-desc">New York electronic signature law skips UETA for its own statute, ESRA. Different name, same result. Here is w</span>
+            <span class="post__related-meta">5 min read</span>
+          </a></li>
+<li><a href="/blog/california-electronic-signature-law/">
+            <span class="post__related-cat">compliance</span>
+            <strong>California Electronic Signature Law: UETA Plus Extra Rules</strong>
+            <span class="post__related-desc">California electronic signature law uses UETA plus a privacy layer. Learn what changes when a Californian sign</span>
             <span class="post__related-meta">4 min read</span>
           </a></li>
       </ul>

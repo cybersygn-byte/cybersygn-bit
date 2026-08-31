@@ -164,7 +164,7 @@
               "priceCurrency": "USD",
               "billingDuration": "P1M"
             },
-            "description": "3 seats, shared workspace, member roles, bulk template library"
+            "description": "Shared workspace, member roles, bulk template library"
           },
           {
             "@type": "Offer",
@@ -214,7 +214,7 @@
             "name": "What happens to my PDF after I upload it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you invite remote signers, the original PDF is stored in Cloudflare KV with a 30-day TTL, encrypted at rest, and auto-deleted after 30 days unless you download it."
+              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you invite remote signers, the original PDF is stored in Cloudflare KV for 30 days, encrypted at rest, then deleted automatically. Downloading does not extend that window, so keep your own copy. The verification record that proves the document was completed here is kept permanently, so cybersygn.io/verify still works after the file is gone."
             }
           },
           {
@@ -230,7 +230,7 @@
             "name": "What does it cost?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that drafts and summarizes contracts, plus bulk send and priority support. Studio is $29 per month for a 3-seat team. Business is $79 per month for a whole team, adding the REST API, webhooks, and bulk send. Annual billing saves two months. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
+              "text": "Every plan is unlimited and starts with 3 free documents, no credit card. Solo is $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that drafts and summarizes contracts, plus bulk send and priority support. Studio is $29 per month for a shared team workspace. Business is $79 per month for a whole team, adding the REST API, webhooks, and bulk send. Annual billing saves two months. Two early-adopter options exist while founding spots remain: Origin at $9 per month locked for life (first 100 customers) and Lifetime at $299 one-time (first 50 customers)."
             }
           },
           {
@@ -962,11 +962,14 @@
             <span class="tier__price-num">$23</span>
             <span class="tier__price-unit">/mo billed yearly</span>
           </div>
-          <p class="tier__hook">Three seats, one shared workspace, every send in view.</p>
+          <p class="tier__hook">One shared workspace, every send in view.</p>
+          <!-- No seat counts here. There is a single flat 25-member workspace
+               cap on every plan and the extra-seat SKU is retired, so any
+               per-seat number or price on this card would be fiction. -->
           <ul class="tier__list">
             <li>Everything in Pro, for your whole team</li>
-            <li>Three seats included, add more at $9 each</li>
-            <li>Shared workspace and aggregated dashboard</li>
+            <li>One shared workspace for the team, no per-seat pricing</li>
+            <li>Aggregated dashboard across everyone's sends</li>
             <li>Member roles: who can send, sign, and audit</li>
             <li>Webhooks to wire signing into your stack</li>
           </ul>
@@ -1207,8 +1210,10 @@
             <p>
               Detection runs in your browser. The PDF never leaves your device during the
               detection step. When you invite remote signers, the original PDF is stored in
-              Cloudflare KV with a 30-day TTL, encrypted at rest, and auto-deleted after 30 days
-              unless you download it.
+              Cloudflare KV for 30 days, encrypted at rest, then deleted automatically.
+              Downloading does not extend that window, so keep your own copy. The verification
+              record that proves the document was completed here is kept permanently, so
+              cybersygn.io/verify still works after the file is gone.
             </p>
           </div>
         </details>
@@ -1229,7 +1234,7 @@
               Every plan is unlimited and starts with 3 free documents, no card required. Solo is
               $12 per month for the essentials. Pro is $19 per month and adds the AI co-pilot that
               drafts and reads your contracts, plus bulk send and priority support. Studio is $29
-              per month for a 3-seat team. Business is $79 per month for a whole team, adding the
+              per month for a shared team workspace. Business is $79 per month for a whole team, adding the
               REST API, webhooks, and bulk send. Annual billing saves two months. Two early-adopter
               options remain while spots last: Origin at $9 per month locked for the life of your
               account (first 100 customers) and Lifetime at $299 one-time (first 50 customers).

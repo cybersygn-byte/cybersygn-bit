@@ -1,18 +1,32 @@
 /**
- * Real uptime tracking (slice 99).
+ * Uptime tracking (slice 99).
  *
- * The cron handler probes /api/health every run, records pass/fail in a
- * compact KV blob keyed by day. The /status/ page fetches a 30-day
- * window via GET /api/status/uptime and renders the actual measured
- * record instead of hardcoded values.
+ * runUptimeProbe records one sample. Handed the in-process dispatcher
+ * (index.js selfDispatch, the same one the security self-check uses,
+ * because a Worker cannot fetch its own public hostname from
+ * scheduled() without Cloudflare timing the self-subrequest out at
+ * 522), it dispatches a real GET /api/health and records that verdict.
+ * Without a dispatcher it degrades to a KV round trip, which proves
+ * only that the binding answers, and the day record says which of the
+ * two produced the sample.
+ *
+ * WHAT THIS NUMBER IS, EXACTLY. It is "when the cron ran, the worker
+ * answered its own health endpoint", which covers the worker, its KV
+ * binding, and its routing. It is NOT an outside-in measurement of
+ * cybersygn.io: a DNS failure, an edge outage, a bad TLS cert, or a
+ * deploy that never went live cannot be seen from in here, because the
+ * same broken deploy is not running this probe either. Nothing that
+ * renders this number may call it third-party or external monitoring.
+ *
+ * The window is readable at GET /api/status/uptime. As of today no page
+ * renders it; the /status/ page shows live subsystem state from
+ * /api/status instead.
  *
  * Storage shape:
- *   uptime:day:YYYY-MM-DD   →   { date, ok, fail, lastProbeAt }
+ *   uptime:day:YYYY-MM-DD   →   { date, ok, fail, lastProbeAt, lastProbeVia }
  *
- * The probe is internal (the worker calls its own /api/health), so it
- * costs zero outbound bandwidth and zero auth. KV writes are
- * idempotent, each day's record updates in place as the day's probes
- * accumulate.
+ * KV writes are idempotent, each day's record updates in place as the
+ * day's probes accumulate.
  */
 
 const KEY_PREFIX = 'uptime:day:';
@@ -22,7 +36,7 @@ const RETAIN_DAYS = 60;  // store more than we display so we have window flexibi
  * Record a single probe sample for the current UTC day. Called from
  * the scheduled handler each run.
  */
-export async function recordUptimeProbe(env, isOk) {
+export async function recordUptimeProbe(env, isOk, meta = {}) {
   if (!env || !env.CYBERSYGN_DOCS) return;
   const now = new Date();
   const dayKey = now.toISOString().slice(0, 10);
@@ -38,11 +52,54 @@ export async function recordUptimeProbe(env, isOk) {
   if (isOk) rec.ok = (rec.ok || 0) + 1;
   else      rec.fail = (rec.fail || 0) + 1;
   rec.lastProbeAt = now.toISOString();
+  // Which probe produced the day's most recent sample, so a day measured by
+  // the weaker KV fallback is not silently reported as a health-check day.
+  if (meta && meta.via) rec.lastProbeVia = meta.via;
   try {
     await env.CYBERSYGN_DOCS.put(k, JSON.stringify(rec), {
       expirationTtl: 60 * 60 * 24 * RETAIN_DAYS,
     });
   } catch (e) { /* tolerated */ }
+}
+
+/**
+ * Run one probe and record it. Pass `dispatch` (index.js selfDispatch) to
+ * measure the real GET /api/health handler; without one this degrades to a KV
+ * round trip, which only proves the binding answers.
+ *
+ * Returns { ok, via, status } so the caller can log what was actually measured.
+ */
+export async function runUptimeProbe(env, { dispatch, origin } = {}) {
+  const base = (origin || (env && env.CYBERSYGN_APP_URL) || 'https://cybersygn.io').replace(/\/$/, '');
+  let ok = false;
+  let via = 'kv';
+  let status = null;
+
+  if (typeof dispatch === 'function') {
+    via = 'health';
+    try {
+      const res = await dispatch(new Request(`${base}/api/health`, {
+        method: 'GET',
+        headers: { 'user-agent': 'cybersygn-uptime-probe' },
+      }));
+      status = res ? res.status : null;
+      // handleHealth answers 200 when KV round-trips and 503 when it does not.
+      ok = status === 200;
+    } catch (e) {
+      ok = false;
+    }
+  } else {
+    try {
+      if (env && env.CYBERSYGN_DOCS) {
+        const probeKey = `uptime:probe:${Date.now()}`;
+        await env.CYBERSYGN_DOCS.put(probeKey, '1', { expirationTtl: 60 });
+        ok = (await env.CYBERSYGN_DOCS.get(probeKey)) === '1';
+      }
+    } catch (e) { ok = false; }
+  }
+
+  await recordUptimeProbe(env, ok, { via });
+  return { ok, via, status };
 }
 
 /**

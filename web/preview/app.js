@@ -3208,11 +3208,15 @@ async function onSignClick() {
 // POST /api/docs), must not double-bill. We remember which docIds already
 // consumed a credit this session.
 //
-// KNOWN LIMIT, stated rather than papered over: this dedupe only covers
-// orders that pass through the client. Downloading FIRST and then sending
-// the same document still bills twice, because handleCreateDoc consumes
-// unconditionally server-side and has no way to learn the client already
-// consumed. Fixing that needs a server-side marker keyed on the PDF hash.
+// The session-local set below only covers orders that pass through this
+// page. Downloading FIRST and then sending the same document billed twice,
+// because POST /api/docs consumes unconditionally server-side and had no way
+// to learn the client already consumed: three free documents bought one
+// complete workflow instead of three. So both billing call sites now carry
+// the document's SHA-256, which is the one identity the two paths share, and
+// the Worker dedupes on a free-doc:<emailHash>:<sha256> marker. The client
+// set stays as the cheap first line: it saves the round trip and it is what
+// keeps a re-download of the same doc from even asking.
 //
 // docId is null when the sha256 could not be computed or a restored draft
 // carries none. A shared 'unknown' sentinel would make document B inherit
@@ -3230,6 +3234,17 @@ function freeCreditKey() {
     _unkeyedDocIds.set(docState, `unkeyed:${++_unkeyedDocSeq}`);
   }
   return _unkeyedDocIds.get(docState);
+}
+
+/**
+ * The document hash the Worker bills against, or null when we do not have
+ * one. Shape-checked so the per-load 'unkeyed:N' sentinel above, which means
+ * "this document has no stable identity", can never be sent as if it were a
+ * hash and make two different documents look like one.
+ */
+function billingDocSha() {
+  const id = docState.docId;
+  return typeof id === 'string' && /^[0-9a-f]{64}$/.test(id) ? id : null;
 }
 
 function markFreeCreditConsumedForCurrentDoc() {
@@ -3255,9 +3270,16 @@ async function ensureFreeDownloadCredit() {
   if (freeToken.indexOf('paid:') === 0) return true;
   if (_freeConsumedDocs.has(freeCreditKey())) return true;
   try {
+    // The download path is the only one of the two that does not hand the
+    // Worker the PDF, so it has to name the document itself. Same hash the
+    // send path carries, so a download after a send of this exact PDF (and
+    // the reverse) settles against one marker and bills once.
+    const headers = { 'X-CyberSygn-Free': freeToken };
+    const sha = billingDocSha();
+    if (sha) headers['X-CyberSygn-Doc-Sha'] = sha;
     const res = await fetch('/api/free/consume', {
       method: 'POST',
-      headers: { 'X-CyberSygn-Free': freeToken },
+      headers,
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 402 || data.error === 'free_cap_reached') {
@@ -4625,16 +4647,24 @@ function openSendModal() {
   const right = document.createElement('div');
   right.className = 'modal-card__footer-right';
 
-  // Send via Worker: appears whenever the Worker is reachable, for any
-  // signer count. Routing a single-signer document through the Worker is
-  // what creates the server-side doc record, the audit trail, and the
-  // SHA-256 certificate at /verify/, so the product's core action leaves
-  // a verifiable trace instead of only a browser-side flatten.
-  if (workerStatus.ok && list.length === 1) {
-    const sendBtn = document.createElement('button');
-    sendBtn.type = 'button';
-    sendBtn.className = 'btn btn--ink';
-    sendBtn.textContent = 'Send for signature';
+  // Send via Worker: always on screen, for any signer count. Routing a
+  // single-signer document through the Worker is what creates the
+  // server-side doc record, the audit trail, and the SHA-256 certificate at
+  // /verify/, so the product's core action leaves a verifiable trace
+  // instead of only a browser-side flatten.
+  //
+  // It used to appear only when the load-time status probe had succeeded.
+  // That probe gives up after 2.5s and its result is cached for the page
+  // life, so one slow moment removed the button for good while the lede two
+  // inches above still promised "Two ways to finish". Now the button is
+  // always here: disabled with a reason and a retry while the Worker is
+  // unreachable, and re-probed the moment this modal opens.
+  const sendBtn = document.createElement('button');
+  sendBtn.type = 'button';
+  sendBtn.className = 'btn btn--ink';
+  const sendLabel = list.length === 1 ? 'Send for signature' : 'Send by email';
+  sendBtn.textContent = sendLabel;
+  if (list.length === 1) {
     sendBtn.addEventListener('click', () => {
       close();
       // Carry any CC the user typed in this modal. Without this the CC
@@ -4642,13 +4672,7 @@ function openSendModal() {
       // signer path, so nobody they listed is ever notified.
       openSingleSendModal(parseCcEmails(ccInput ? ccInput.value : ''));
     });
-    right.appendChild(sendBtn);
-  }
-  if (workerStatus.ok && list.length > 1) {
-    const sendBtn = document.createElement('button');
-    sendBtn.type = 'button';
-    sendBtn.className = 'btn btn--ink';
-    sendBtn.textContent = 'Send by email';
+  } else {
     sendBtn.addEventListener('click', async () => {
       // Pre-send email validation: bail before any network call if a
       // signer email is malformed. Empty emails are allowed (sender's
@@ -4688,6 +4712,10 @@ function openSendModal() {
           senderId: getSenderId(),
           workspaceId: activeWs ? activeWs.id : null,
           mode: docState.mode || 'send',
+          // Second half of the double-bill fix: the same document hash the
+          // download path sends, so the Worker can settle both against one
+          // free-doc marker instead of charging this document twice.
+          sha256: billingDocSha(),
         });
         if (!sendResult.ok) {
           // Free-tier gates come back as 402 with a machine-readable code.
@@ -4722,8 +4750,57 @@ function openSendModal() {
         showToast(`Could not send the document: ${err.message}`);
       }
     });
-    right.appendChild(sendBtn);
   }
+  right.appendChild(sendBtn);
+
+  // Offline treatment for the send half of "two ways to finish".
+  const sendNote = document.createElement('div');
+  sendNote.className = 'send-note';
+  sendNote.hidden = true;
+  const sendNoteBody = document.createElement('p');
+  sendNoteBody.className = 'send-note__body';
+  sendNote.appendChild(sendNoteBody);
+  body.appendChild(sendNote);
+
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'btn btn--ghost btn--sm';
+  retryBtn.textContent = 'Retry connection';
+  retryBtn.hidden = true;
+
+  function paintSendAvailability(state, reason) {
+    const offline = state !== 'online';
+    sendBtn.disabled = offline;
+    sendBtn.textContent = offline && state === 'checking'
+      ? 'Checking connection.'
+      : sendLabel;
+    sendNote.hidden = !offline;
+    retryBtn.hidden = state !== 'offline';
+    if (state === 'checking') {
+      sendNoteBody.textContent =
+        'Checking whether we can reach cybersygn.io. Sending needs that connection; '
+        + 'downloading the signed copy does not and is ready now.';
+    } else if (state === 'offline') {
+      sendNoteBody.textContent =
+        'We cannot reach cybersygn.io right now'
+        + (reason ? ` (${reason})` : '')
+        + ', so sending for signature is unavailable until the connection comes back. '
+        + 'Downloading the signed copy still works and needs nothing but this browser.';
+    }
+  }
+
+  async function probeSendAvailability() {
+    paintSendAvailability('checking');
+    const status = await refreshWorkerStatus();
+    paintSendAvailability(status.ok ? 'online' : 'offline', status.reason);
+  }
+  retryBtn.addEventListener('click', probeSendAvailability);
+  right.appendChild(retryBtn);
+
+  // A failed load-time probe is not a verdict: re-ask now, with a budget
+  // that a slow connection can actually meet.
+  if (workerStatus.ok) paintSendAvailability('online');
+  else probeSendAvailability();
 
   const downloadBtn = document.createElement('button');
   downloadBtn.type = 'button';
@@ -4952,6 +5029,9 @@ function openSingleSendModal(ccList = []) {
         senderId: getSenderId(),
         workspaceId: activeWs ? activeWs.id : null,
         mode: docState.mode || 'send',
+        // Same document hash the download path sends, so a send after a
+        // download of this exact PDF settles against one free-doc marker.
+        sha256: billingDocSha(),
       });
       if (!sendResult.ok) {
         if (sendResult.code === 'free_signup_required') {
@@ -5157,6 +5237,48 @@ function openLinksModal(payload) {
 
 const workerStatus = { ok: false, mode: 'memory', email: 'console' };
 
+// Budget for an on-demand re-probe. The load-time probe in api.js gives up
+// after 2.5s because nothing is blocked on it; this one runs while the user
+// waits for an answer that decides what they are offered, so it can afford
+// to wait out a slow first byte.
+const STATUS_REPROBE_MS = 8000;
+
+let _statusReprobe = null;
+
+/**
+ * Ask the Worker again whether it is there.
+ *
+ * checkWorker() memoizes its result for the life of the page, failures
+ * included, so a single 2.5s timeout on load used to be permanent: the
+ * finishing modal dropped "Send for signature" for the rest of the session
+ * on a connection that had since recovered. This bypasses that cache.
+ * Concurrent callers share one in-flight request; a failure is never cached,
+ * so the next caller (a Retry click) really does re-ask.
+ */
+async function refreshWorkerStatus() {
+  if (_statusReprobe) return _statusReprobe;
+  _statusReprobe = (async () => {
+    try {
+      const res = await fetch('/api/status', {
+        headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(STATUS_REPROBE_MS),
+      });
+      if (!res.ok) return { ok: false, reason: `HTTP ${res.status}` };
+      const data = await res.json();
+      return { ok: true, ...data };
+    } catch (err) {
+      return { ok: false, reason: String((err && err.message) || err) };
+    }
+  })();
+  try {
+    const status = await _statusReprobe;
+    if (status.ok) Object.assign(workerStatus, status);
+    return status;
+  } finally {
+    _statusReprobe = null;
+  }
+}
+
 async function boot() {
   emitEvent('app_open');
 
@@ -5294,12 +5416,18 @@ async function enterEmbedMode(pdfUrl, source) {
     pdfLoadSource = source === 'sample' ? 'sample' : 'embed';
     await handleFiles([file]);
   } catch (err) {
-    setStatus('error', 'Could not load PDF.');
-    showError(
-      'Could not load that PDF.',
-      'The document URL returned ' + (err.message || 'an error') + '. Drop a file here to continue.',
-    );
+    // resetApp() ends with hideError() + setStatus('idle'), so it has to run
+    // BEFORE the failure is written or it wipes it on the next line and the
+    // user is left staring at an empty dropzone with no idea why. This is the
+    // homepage's primary CTA path; a silent dead end here is the whole visit.
     resetApp();
+    setStatus('error', 'Could not load PDF.');
+    // showError takes one string. The second argument this used to pass was
+    // dropped on the floor, which is where the reason went with it.
+    showError(
+      'Could not load that PDF. The document URL returned '
+      + (err.message || 'an error') + '. Drop a file here to continue.',
+    );
   }
 }
 

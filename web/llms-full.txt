@@ -32,15 +32,15 @@ Solo: $12 per month, or $10 per month billed yearly. Unlimited documents. Multi-
 
 Pro: $19 per month, or $15 per month billed yearly. Everything in Solo, plus the AI co-pilot: draft a contract from a single sentence and get plain-language summaries of any document. Also includes bulk send and priority.
 
-Studio: $29 per month, or $23 per month billed yearly, for 3 seats. Shared workspace with aggregated dashboard. Member roles. Bulk send. Webhooks for automation. Everything in Solo for each seat. Add additional seats at $9 per seat per month.
+Studio: $29 per month, or $23 per month billed yearly, for a shared team workspace. Aggregated dashboard. Member roles. Bulk send. Webhooks for automation. Everything in Solo, for everyone in the workspace. Flat price, no per-seat billing: one workspace holds up to 25 members at the same price.
 
-Business: $79 per month, or $65 per month billed yearly. Everything in Studio, plus white-label, SSO, and a REST API.
+Business: $79 per month, or $65 per month billed yearly. Everything in Studio, plus a REST API, higher rate limits, and outbound webhooks. White-label and SSO are not sold: neither is enforced in the product.
 
 Origin (early adopter): $9 per month, locked for the life of the account. Monthly billing only (not part of the annual toggle). First 100 customers only, and only a few of those spots are taken so far. Everything in Solo, plus a direct email line to the founder and the first look at every new feature. Once 100 spots are taken, the option closes and new customers move to Solo pricing.
 
 Lifetime (early adopter): $299 one-time. No recurring charge. First 50 customers only. Every Solo feature for the life of the product. After 50, the option closes.
 
-Add-ons: extra seat $9 per month, white-label $19 per month.
+Add-ons: none. The extra-seat and white-label add-ons are retired and checkout refuses both.
 
 Cancel anytime. We do not promise refunds; cancel whenever you like instead.
 
@@ -88,7 +88,7 @@ What if a field is missed or wrong? Click any field to adjust it, or click empty
 
 Does the signer need an account? No. Signers click their magic link and sign in the browser. No signup, no password.
 
-What happens to the PDF? Stored in Cloudflare KV with a 30-day TTL. Encrypted at rest. Auto-deleted after 30 days unless the sender downloads it.
+What happens to the PDF? Stored in Cloudflare KV with a 30-day TTL. Encrypted at rest. Auto-deleted 30 days after the last write, whether or not it was downloaded. The signed PDF and audit certificate carry the same 30-day expiry, so download both when a document completes.
 
 Is the audit certificate legally binding? It documents the audit trail (every event, timestamp, IP, user agent, and a SHA-256 of the original PDF). Legal weight depends on jurisdiction. We are not lawyers; the certificate is evidence, not a guarantee.
 

@@ -183,6 +183,10 @@ export async function detectFields(pdfData, opts = {}) {
         const viewport = page.getViewport({ scale: 1 });
         const pageHeight = viewport.height;
         const pageWidth = viewport.width;
+        // Every coordinate we emit lives in unrotated user space, so the
+        // clamp box has to come from page.view (the crop box) rather than
+        // the viewport, whose width/height are swapped on a /Rotate 90 page.
+        const pageBox = userSpaceBox(page, viewport);
 
         // Pass 1: AcroForm widget annotations.
         let annotations = [];
@@ -190,7 +194,7 @@ export async function detectFields(pdfData, opts = {}) {
         const widgetFields = [];
         for (const a of annotations) {
           if (!a || a.subtype !== 'Widget') continue;
-          const f = widgetToField(a, pageNum);
+          const f = widgetToField(a, pageNum, pageBox);
           if (f) widgetFields.push(f);
         }
 
@@ -258,9 +262,19 @@ export async function detectFields(pdfData, opts = {}) {
           ? mergePageFields([...merged, ...implicit])
           : merged;
 
-        allFields.push(...mergedWithImplicit);
+        // A field the caller cannot draw is worse than no field: it renders
+        // nowhere and the flatten step stamps nowhere. A malformed op stream
+        // or annotation can put geometry a mile off the sheet, so the last
+        // act of the page is to put every field back on it. The re-merge is
+        // there because clamping can slide two far-flung strays onto the same
+        // edge, and two identical boxes are two sidebar rows the user cannot
+        // tell apart. On a well-formed page nothing moves and both steps are
+        // no-ops.
+        const onPage = mergePageFields(clampFieldsToPage(mergedWithImplicit, pageBox));
 
-        const bottomLabels = findOrphanLabels(items, mergedWithImplicit, pageNum, pageHeight);
+        allFields.push(...onPage);
+
+        const bottomLabels = findOrphanLabels(items, onPage, pageNum, pageHeight);
         if (bottomLabels.length > 0) {
           orphanLabelsByPage.set(pageNum, bottomLabels);
         }
@@ -297,15 +311,77 @@ export async function detectFields(pdfData, opts = {}) {
 function safeMax(arr) { let m = -Infinity; for (let i = 0; i < arr.length; i++) if (arr[i] > m) m = arr[i]; return m; }
 function safeMin(arr) { let m = Infinity; for (let i = 0; i < arr.length; i++) if (arr[i] < m) m = arr[i]; return m; }
 
+// ---- Page box + clamping -----------------------------------------------------
+
+/**
+ * The page rectangle in unrotated user space: [x0, y0, x1, y1].
+ *
+ * page.view is the crop box and is what every coordinate in this module is
+ * expressed against, including a page whose origin is not (0, 0). The
+ * viewport is only the fallback for a document where pdf.js hands us no
+ * usable view, and a page with no sane box at all reports null so the clamp
+ * degrades to a no-op instead of erasing the whole page's fields.
+ */
+function userSpaceBox(page, viewport) {
+  const v = page && page.view;
+  if (Array.isArray(v) && v.length === 4 && v.every(Number.isFinite)
+    && v[2] > v[0] && v[3] > v[1]) {
+    return [v[0], v[1], v[2], v[3]];
+  }
+  const w = viewport && viewport.width;
+  const h = viewport && viewport.height;
+  if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) return [0, 0, w, h];
+  return null;
+}
+
+/**
+ * Intersect a box with the page. Returns null when nothing survives, which
+ * is the honest answer for geometry that never touched the page: a zero-area
+ * field would still show up in the count and in the sidebar as something the
+ * user could click, and it would point at nothing.
+ */
+function clampBox(x, y, width, height, pageBox) {
+  if (!Number.isFinite(x) || !Number.isFinite(y)
+    || !Number.isFinite(width) || !Number.isFinite(height)) return null;
+  if (!pageBox) return { x, y, width, height };
+  const [px0, py0, px1, py1] = pageBox;
+  const x0 = Math.min(Math.max(x, px0), px1);
+  const y0 = Math.min(Math.max(y, py0), py1);
+  const x1 = Math.min(Math.max(x + width, px0), px1);
+  const y1 = Math.min(Math.max(y + height, py0), py1);
+  if (!(x1 > x0) || !(y1 > y0)) return null;
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
+
+/** Clamp a page's finished fields onto the page box, dropping the strays. */
+function clampFieldsToPage(fields, pageBox) {
+  const out = [];
+  for (const f of fields) {
+    const box = clampBox(f.x, f.y, f.width, f.height, pageBox);
+    if (!box) continue;
+    f.x = round(box.x);
+    f.y = round(box.y);
+    f.width = round(box.width);
+    f.height = round(box.height);
+    out.push(f);
+  }
+  return out;
+}
+
 // ---- Widget annotations ------------------------------------------------------
 
-function widgetToField(a, pageNum) {
+function widgetToField(a, pageNum, pageBox) {
   if (!a.rect || a.rect.length !== 4) return null;
   const [x1, y1, x2, y2] = a.rect;
-  const x = Math.min(x1, x2);
-  const y = Math.min(y1, y2);
-  const width = Math.abs(x2 - x1);
-  const height = Math.abs(y2 - y1);
+  // A /Rect entry that is not a number (a Name, a string, a nested array, a
+  // null) arrives here verbatim from pdf.js and turns every coordinate into
+  // NaN, which JSON serializes as null and the renderer draws nowhere. Such
+  // an annotation is malformed, not a field.
+  const box = clampBox(
+    Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1), pageBox,
+  );
+  if (!box) return null;
+  const { x, y, width, height } = box;
 
   const name = (a.fieldName || '').toLowerCase();
   let type = 'text';

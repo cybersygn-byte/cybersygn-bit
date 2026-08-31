@@ -25,6 +25,7 @@
 import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fitTitle, fitDescription } from './seo-meta.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -88,8 +89,11 @@ function buildCta(post) {
   if (post.audienceTier === 'studio') {
     return {
       kicker: 'For teams that sign together.',
-      title: 'Studio plan, $29/month, 3 seats included.',
-      body: post.cta || 'CyberSygn Studio gives 3 partners or staff a shared workspace, member roles, and an aggregated dashboard across every signer. Built for firms that send 50+ documents a month.',
+      // No seat count: there is one flat 25-member workspace cap on every
+      // plan and the extra-seat SKU is retired, so a number here would sell
+      // something that is neither enforced nor purchasable.
+      title: 'Studio plan, $29/month, one shared workspace.',
+      body: post.cta || 'CyberSygn Studio gives your partners and staff a shared workspace, member roles, and an aggregated dashboard across every signer. Built for firms that send 50+ documents a month.',
       href: '/#pricing',
       label: 'See Studio pricing →',
     };
@@ -200,13 +204,17 @@ function renderPost(post, published) {
   const canonical = `https://cybersygn.io/blog/${post.slug}/`;
   const cta = buildCta(post);
   const words = countWords(post);
+  // Trimmed once here so the <title>, the OpenGraph pair, and the Article
+  // JSON-LD all carry the same string a search engine will actually show.
+  const seoTitle = fitTitle(post.title, { suffix: ', CyberSygn' });
+  const seoDescription = fitDescription(post.metaDescription);
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${esc(post.title)}, CyberSygn</title>
-  <meta name="description" content="${esc(post.metaDescription)}" />
+  <title>${esc(seoTitle)}</title>
+  <meta name="description" content="${esc(seoDescription)}" />
   <meta name="keywords" content="${esc([post.primaryKeyword, ...(post.secondaryKeywords || [])].join(', '))}" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="${esc(canonical)}" />
@@ -217,7 +225,7 @@ function renderPost(post, published) {
   <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
   <meta property="og:title" content="${esc(post.title)}" />
-  <meta property="og:description" content="${esc(post.metaDescription)}" />
+  <meta property="og:description" content="${esc(seoDescription)}" />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="${esc(canonical)}" />
   <meta property="og:type" content="article" />
@@ -240,7 +248,7 @@ ${JSON.stringify({
     {
       "@type": "Article",
       "headline": post.title,
-      "description": post.metaDescription,
+      "description": seoDescription,
       "datePublished": displayDate(post.publishDate) + 'T12:00:00Z',
       "dateModified": displayDate(post.publishDate) + 'T12:00:00Z',
       "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
@@ -440,8 +448,8 @@ function renderIndex(published) {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CyberSygn blog. Sharper signatures. Faster contracts. Fewer surprises.</title>
-  <meta name="description" content="Field guides, compliance deep-dives, and contract workflow playbooks for independent operators and small teams. Read the post, ship the contract, get back to work." />
+  <title>CyberSygn blog. Sharper signatures, faster contracts.</title>
+  <meta name="description" content="Field guides, compliance deep-dives, and contract workflow playbooks for independent operators and small teams. Read the post, then ship the contract." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/blog/" />
   <meta name="color-scheme" content="light dark" />

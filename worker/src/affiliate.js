@@ -305,7 +305,15 @@ export async function recordConversion(env, code, customerId, tier, buyerSenderI
   const dedupeKey = `${KV_PREFIX}conv:${code}:${customerId}`;
   try {
     const seen = await env.CYBERSYGN_DOCS.get(dedupeKey);
-    if (seen) return { ok: true, alreadyCounted: true };
+    if (seen) {
+      // A tombstone means the refund for this sale was delivered BEFORE the
+      // conversion it undoes. Crediting now would mint a bounty that nothing
+      // will ever reverse, because the reversal has already been consumed.
+      let prior = null;
+      try { prior = JSON.parse(seen); } catch (e) {}
+      if (prior && prior.reversedEarly) return { ok: false, error: 'reversed_before_credit' };
+      return { ok: true, alreadyCounted: true };
+    }
   } catch (e) {}
   const rec = await loadCode(env, code);
   if (!rec) return { ok: false, error: 'unknown_code' };
@@ -472,10 +480,30 @@ export async function reverseConversion(env, code, customerId, reason) {
   const dedupeKey = `${KV_PREFIX}conv:${code}:${customerId}`;
   try {
     const raw = await env.CYBERSYGN_DOCS.get(dedupeKey);
-    if (!raw) return { ok: true, nothingToReverse: true };
+    if (!raw) {
+      // Nothing to claw back YET. Stripe does not order its deliveries, so a
+      // refund can land before the conversion it undoes, and simply returning
+      // here left the later conversion free to credit a bounty that no second
+      // refund would ever arrive to reverse. Leave a tombstone at the dedupe
+      // key that recordConversion already reads first, so the credit never
+      // happens rather than happening and standing forever.
+      const at = new Date().toISOString();
+      try {
+        await env.CYBERSYGN_DOCS.put(dedupeKey, JSON.stringify({
+          reversedEarly: true, at, reason: reason || 'reversed',
+        }), { expirationTtl: 60 * 60 * 24 * 365 * 5 });
+      } catch (e) {
+        return { ok: false, error: 'tombstone_write_failed' };
+      }
+      return { ok: true, nothingToReverse: true, tombstoned: true };
+    }
     let conv;
     try { conv = JSON.parse(raw); } catch (e) { conv = {}; }
-    if (conv.reversed || conv.blocked) return { ok: true, alreadyHandled: true };
+    // reversedEarly is the tombstone written below when a refund beat its
+    // conversion. It carries no amount, so a redelivered refund that fell
+    // through here would claw back the legacy flat figure from an ambassador
+    // who was never credited a cent.
+    if (conv.reversed || conv.blocked || conv.reversedEarly) return { ok: true, alreadyHandled: true };
 
     // Claw back the BOUNTY ONLY. Bonuses (milestone, sprint) are owned end to
     // end by the canonical reconcile below, which recomputes entitlement from

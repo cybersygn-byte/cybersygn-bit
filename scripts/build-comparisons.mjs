@@ -12,6 +12,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fitTitle, fitDescription } from './seo-meta.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -328,8 +329,10 @@ const COMPETITORS = [
 
 function renderPage(c) {
   const canonical = `https://cybersygn.io/alternatives/cybersygn-vs-${c.slug}/`;
-  const title = `CyberSygn vs ${c.name}. Side by side.`;
-  const description = `How CyberSygn compares to ${c.name} on speed, price, signer experience, and field placement. Automatic field detection vs. drag-and-drop, all the trade-offs honestly.`;
+  // Competitor names vary in length, so the copy is written short and
+  // fitTitle / fitDescription enforce the SERP ceiling on the tail.
+  const title = fitTitle(`CyberSygn vs ${c.name}`, { suffix: '. Side by side.' });
+  const description = fitDescription(`How CyberSygn compares to ${c.name} on speed, price, and signer experience. Automatic field detection vs drag-and-drop, trade-offs included.`);
 
   // Single source of truth for the FAQ: rendered visibly on the page AND
   // emitted as FAQPage JSON-LD (Google requires marked-up FAQs to be visible).
@@ -340,7 +343,7 @@ function renderPage(c) {
     },
     {
       q: `Is CyberSygn cheaper than ${c.name}?`,
-      a: `CyberSygn is unlimited at every plan, from $12 (Solo), $19 (Pro, with the AI co-pilot), $29 (Studio, 3 seats), to $79 (Business, white-label + SSO + API). ${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. Every CyberSygn plan starts with 3 free documents and no card. Origin is $9/month locked for the life of your account for the first 100 founders, and that rate disappears once the cap is filled.`,
+      a: `CyberSygn is unlimited at every plan, from $12 (Solo), $19 (Pro, with the AI co-pilot), $29 (Studio, a shared team workspace), to $79 (Business, REST API + webhooks). ${c.name} starts at ${c.soloPrice}${c.soloPriceUnit}. Every CyberSygn plan starts with 3 free documents and no card. Origin is $9/month locked for the life of your account for the first 100 founders, and that rate disappears once the cap is filled.`,
     },
     {
       q: `Can I migrate from ${c.name} to CyberSygn?`,
@@ -490,7 +493,7 @@ function renderPage(c) {
               </tr>
               <tr>
                 <th scope="row">Plan pricing</th>
-                <td class="compare__us">Unlimited at every plan: $12 Solo, $19 Pro (AI co-pilot), $29 Studio (3 seats), $79 Business (white-label, SSO, API)</td>
+                <td class="compare__us">Unlimited at every plan: $12 Solo, $19 Pro (AI co-pilot), $29 Studio (shared team workspace), $79 Business (REST API, webhooks)</td>
                 <td>${esc(c.soloPrice)}${esc(c.soloPriceUnit)} <small>(${esc(c.soloPriceNotes)})</small></td>
               </tr>
               <tr>

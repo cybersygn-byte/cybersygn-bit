@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Security and compliance. CyberSygn.</title>
-  <meta name="description" content="CyberSygn's security posture. ESIGN + UETA compliant. An independent, solo-operated product, not SOC 2 certified. Built on Cloudflare, our sole infrastructure provider, with documents encrypted in transit and at rest." />
+  <meta name="description" content="CyberSygn's security posture. ESIGN + UETA compliant, not SOC 2 certified. Built on Cloudflare alone, with documents encrypted in transit and at rest." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://cybersygn.io/compliance/" />
   <meta name="color-scheme" content="light dark" />
@@ -75,7 +75,7 @@
         <h2 class="h-section">Data flow.</h2>
         <ul>
           <li><strong>Detection runs in your browser.</strong> The first pass of field detection executes entirely in JavaScript on the visitor's device. The PDF does not leave the page until the sender clicks Send.</li>
-          <li><strong>Storage is Cloudflare KV + R2.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. KV encrypts at rest. R2 encrypts at rest.</li>
+          <li><strong>Storage is Cloudflare KV.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. There is no object store or long-term archive behind KV today.</li>
           <li><strong>Transit is TLS 1.3.</strong> Every connection from browser to worker is encrypted in transit. We enforce HSTS.</li>
           <li><strong>Email delivery is Resend.</strong> Magic links to signers travel through Resend's infrastructure. DKIM + SPF + DMARC fully configured on cybersygn.io.</li>
         </ul>
@@ -97,8 +97,10 @@
 
         <h2 class="h-section">Data retention.</h2>
         <ul>
-          <li><strong>Active documents</strong> remain accessible for 30 days after creation. After that, magic links 404 unless the sender extends.</li>
+          <li><strong>Every document</strong> carries a 30-day KV expiry, counted from the last write. That covers the unsigned PDF, the signing record, and, after completion, the signed PDF and its audit certificate. When it expires the record is gone: magic links 404 and there is no restore. Download the signed PDF and the audit certificate when a document completes.</li>
           <li><strong>Audit certificates</strong> are immutable once generated. We do not modify them in-place.</li>
+          <li><strong>Verification records</strong> are permanent. On completion we store the SHA-256 fingerprint, signer count, and timestamps, with no name, email, title, or document content, so a saved PDF stays verifiable at /verify/ after the 30 days.</li>
+          <li><strong>There is no backup archive.</strong> Nothing is copied to secondary storage today, so there is no backup for us to restore from and none for deleted data to survive in.</li>
           <li><strong>Free tier</strong> drip records retain email + name for 5 years for transactional drip. Deletable on request (see GDPR below).</li>
           <li><strong>Owner-only datasets:</strong> we retain a labeled-PDF training corpus from free-tier consent, used for improving detection. No document content; positions and types only.</li>
         </ul>
@@ -116,7 +118,7 @@
             <tr><th>Service</th><th>Purpose</th><th>Data category</th></tr>
           </thead>
           <tbody>
-            <tr><td>Cloudflare</td><td>Hosting, KV, R2, Workers</td><td>PDFs, fills, audit cert, signer records</td></tr>
+            <tr><td>Cloudflare</td><td>Hosting, KV, Workers</td><td>PDFs, fills, audit cert, signer records</td></tr>
             <tr><td>Stripe</td><td>Payments + customer portal</td><td>Email, name, subscription state</td></tr>
             <tr><td>Resend</td><td>Transactional email</td><td>Email recipient, magic link</td></tr>
             <tr><td>Anthropic</td><td>Optional vision detection (Phase 2b)</td><td>Page bitmap (opt-in only)</td></tr>
