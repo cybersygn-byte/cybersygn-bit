@@ -8,7 +8,9 @@
  *   - the document title and ID
  *   - each signer's name, email, and identifier
  *   - the timestamp, IP address, and user-agent for each event
- *   - the SHA-256 of the original PDF, as evidence of what was signed
+ *   - a fingerprint for every file that actually exists for the signing:
+ *     the SHA-256 of the uploaded original, and, when the Worker produced
+ *     a signed PDF of its own at completion, the SHA-256 of that file too
  *
  * The certificate is generated server-side so it cannot be tampered
  * with by a malicious sender, and so the final email always carries the
@@ -20,6 +22,9 @@
  */
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+
+/** A SHA-256 digest as we print and store it: 64 lowercase hex characters. */
+const HEX64 = /^[0-9a-f]{64}$/;
 
 // ---------------------------------------------------------------------------
 // Event recording
@@ -69,8 +74,18 @@ export async function sha256Hex(bytes) {
  * Layout: one page, top-of-page CyberSygn wordmark, title block, document
  * identity table, signer table, full event log, document fingerprint
  * footer. Sized for US Letter so it pairs cleanly with most contracts.
+ *
+ * @param {object} args
+ * @param {object} args.doc              the completed doc record
+ * @param {string} args.pdfSha256        SHA-256 of the uploaded ORIGINAL PDF
+ * @param {string|null} [args.signedPdfSha256]
+ *   SHA-256 of the signed PDF the Worker produced at completion, when one
+ *   exists. Falls back to doc.signedPdfSha256 so an on-demand re-render picks
+ *   it up from the record. Anything that is not a 64-hex digest is treated as
+ *   absent: section 04 then prints the original fingerprint only and says in
+ *   words that no signed file was produced, never a blank or a placeholder.
  */
-export async function renderAuditCertificate({ doc, pdfSha256 }) {
+export async function renderAuditCertificate({ doc, pdfSha256, signedPdfSha256 = null }) {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Audit certificate. ${doc.title || 'CyberSygn document'}.`);
   pdf.setCreator('CyberSygn');
@@ -309,34 +324,81 @@ export async function renderAuditCertificate({ doc, pdfSha256 }) {
   }
 
   // ---- 5. Document fingerprint footer -----------------------------------
-  // Reserve enough vertical room for the whole block (rule + heading + hash
-  // rows + two explanatory paragraphs including the verify line) so it never
-  // straddles a page break.
-  newPageIfNeeded(160);
+  // Two different files can exist for one signing: the ORIGINAL that was put
+  // in front of the signers, and the SIGNED PDF the Worker flattened at
+  // completion. Print a fingerprint for every file that actually exists, each
+  // labelled with the file it belongs to, so a reader knows which file to
+  // hash. When no signed artifact was produced (an older document, or the
+  // flatten was skipped) say that in words: never a blank, never a
+  // placeholder hash, and never a label that promises a file we do not have.
+  // The explicit argument wins. The doc record is the fallback so an
+  // on-demand re-render (which has the record but not the caller's context)
+  // still prints the signed fingerprint. `signedSha256` is accepted as an
+  // alias for the same value; anything not 64-hex counts as absent.
+  const signedHash = [signedPdfSha256, doc.signedPdfSha256, doc.signedSha256]
+    .map(v => String(v == null ? '' : v))
+    .find(v => HEX64.test(v)) || null;
+
+  // Reserve enough vertical room for the whole block (rule + heading + every
+  // hash row + the explanatory paragraphs including the verify line) so it
+  // never straddles a page break. Measured against the drawn heights below.
+  newPageIfNeeded(signedHash ? 268 : 220);
   y -= 12;
   page.drawRectangle({ x: MARGIN, y, width: COL_W, height: 0.6, color: RULE });
   y -= 18;
   drawSectionHead(page, MARGIN, y, '04.', 'Document fingerprint.', serifBold, monoBold, ACCENT, INK);
   y -= 20;
-  page.drawText('SHA-256 of the original PDF signed by every party:', {
-    x: MARGIN, y, size: 10, font: serif, color: INK_SOFT,
-  });
-  y -= 14;
-  // Split the hash so it always fits the page width.
-  const hashParts = chunk(pdfSha256, 16);
-  page.drawText(hashParts.slice(0, 2).join(' '), { x: MARGIN, y, size: 10, font: monoBold, color: INK });
-  y -= 14;
-  page.drawText(hashParts.slice(2).join(' '), { x: MARGIN, y, size: 10, font: monoBold, color: INK });
-  y -= 24;
+
+  // One labelled fingerprint: the label, then the hash split across two rows
+  // so it always fits the column width. Leaves the cursor on the last row.
+  function drawFingerprint(label, value) {
+    page.drawText(label, { x: MARGIN, y, size: 10, font: serif, color: INK_SOFT });
+    y -= 14;
+    const text = String(value == null ? '' : value);
+    if (HEX64.test(text)) {
+      const parts = chunk(text, 16);
+      page.drawText(parts.slice(0, 2).join(' '), { x: MARGIN, y, size: 10, font: monoBold, color: INK });
+      y -= 14;
+      page.drawText(parts.slice(2).join(' '), { x: MARGIN, y, size: 10, font: monoBold, color: INK });
+    } else {
+      // The on-demand re-render passes a placeholder when the stored hash is
+      // gone. Print that plainly rather than chunking a non-hash into rows.
+      page.drawText(text || 'Not recorded.', { x: MARGIN, y, size: 10, font: monoBold, color: INK });
+    }
+  }
+
+  if (signedHash) {
+    drawFingerprint('SHA-256 of the signed PDF CyberSygn issued. Hash this file:', signedHash);
+    y -= 22;
+    drawFingerprint('SHA-256 of the original PDF, as uploaded before any signature:', pdfSha256);
+    y -= 26;
+    page.drawText(
+      'CyberSygn produced and stored that signed PDF when this document completed, with every ' +
+      'signature already drawn into it. A copy that another tool re-saved, re-exported, or ' +
+      'flattened again is a different file and will not reproduce the first fingerprint. The ' +
+      'second fingerprint identifies the document that was put in front of the signers.',
+      { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
+    );
+    y -= 52;
+  } else {
+    // Unchanged wording, and still the honest line: with no server-side
+    // flatten the only file CyberSygn can fingerprint is the one uploaded.
+    drawFingerprint('SHA-256 of the original PDF signed by every party:', pdfSha256);
+    y -= 26;
+    page.drawText(
+      'CyberSygn did not produce a signed file of its own for this document, so there is no ' +
+      'fingerprint for a signed copy here. The signatures were drawn into the PDF in the browser ' +
+      'of each party, and two such copies can differ byte for byte. Hash the original PDF to ' +
+      'reproduce the fingerprint above.',
+      { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
+    );
+    y -= 52;
+  }
+
   page.drawText(
-    'Any modification to the signed PDF after issuance will change this hash. ' +
-    'CyberSygn retains an immutable copy of the signed document for the life of your account.',
-    { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
-  );
-  y -= 28;
-  page.drawText(
-    'Verify this document at cybersygn.io/verify (fingerprint above). ' +
-    'Verification confirms this fingerprint matches a completed CyberSygn signing.',
+    'Check ' + (signedHash ? 'either fingerprint' : 'that fingerprint') + ' at cybersygn.io/verify. ' +
+    'A match confirms the fingerprint belongs to a completed CyberSygn signing. Any change to a ' +
+    'file after issuance changes its fingerprint.',
     { x: MARGIN, y, size: 9, font: serif, color: INK_FAINT, maxWidth: COL_W, lineHeight: 12 },
   );
 

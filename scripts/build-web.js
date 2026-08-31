@@ -173,11 +173,25 @@ async function main() {
   if (await exists(ucSrc)) {
     await mkdir(ucOut, { recursive: true });
     let count = 0;
+    // HUB FILES FIRST. This loop used to descend straight to the vertical
+    // level and copy only the leaves, so the root hub (web/use-cases/
+    // index.html) and every document hub were silently dropped from dist and
+    // 404'd in production. That is what made all 48 leaf pages orphans with
+    // no internal links, which Google Search Console reports as "Referring
+    // page: None detected". Copy files at every level, not just the deepest.
+    for (const f of await readdir(ucSrc, { withFileTypes: true })) {
+      if (f.isDirectory()) continue;
+      await copyFile(join(ucSrc, f.name), join(ucOut, f.name));
+    }
     for (const docEntry of await readdir(ucSrc, { withFileTypes: true })) {
       if (!docEntry.isDirectory()) continue;
       const docDir = join(ucSrc, docEntry.name);
       const docOut = join(ucOut, docEntry.name);
       await mkdir(docOut, { recursive: true });
+      for (const f of await readdir(docDir, { withFileTypes: true })) {
+        if (f.isDirectory()) continue;
+        await copyFile(join(docDir, f.name), join(docOut, f.name));
+      }
       for (const vertEntry of await readdir(docDir, { withFileTypes: true })) {
         if (!vertEntry.isDirectory()) continue;
         const vertDir = join(docDir, vertEntry.name);

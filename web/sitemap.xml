@@ -1054,6 +1054,61 @@
 
 <!-- USE_CASES_OPEN -->
   <url>
+    <loc>https://cybersygn.io/use-cases/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/freelance-contract/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/nda/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/contractor-agreement/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/consulting-agreement/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/msa/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/coaching-agreement/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/photography-contract/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/model-release/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/employment-agreement/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cybersygn.io/use-cases/rental-lease/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://cybersygn.io/use-cases/freelance-contract/freelancers/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -299,6 +299,114 @@ ${faqs.map(f => `          <details class="faq__item">
 `;
 }
 
+/**
+ * HUB PAGES. Without these, every generated use-case page is an orphan: it
+ * exists, it is in the sitemap, and NOTHING on the site links to it. Google
+ * Search Console reports exactly that as "Referring page: None detected",
+ * which is how this was found. A sitemap makes a page discoverable; internal
+ * links are what make it worth crawling and what pass any authority to it.
+ *
+ * Two levels, mirroring the URL shape:
+ *   /use-cases/                      lists every document type
+ *   /use-cases/<doc-slug>/           lists every vertical for that document
+ */
+function renderHubShell({ title, description, canonical, h1, lede, body, crumbs }) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(description)}" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="${esc(canonical)}" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#F7F8FB" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#011434" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="/brand/favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="/vendor/fonts.css" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="/telemetry.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <a class="wordmark" href="/" aria-label="CyberSygn home">
+        <img class="wordmark__img" src="/brand/lockup-navy@2x.png" alt="CYBERSYGN" />
+      </a>
+      <nav class="masthead__nav" aria-label="Primary">
+        <a class="masthead__link" href="/#pricing">Pricing</a>
+        <a class="masthead__link" href="/templates/">Templates</a>
+        <a class="masthead__link masthead__link--cta" href="/preview/">Try it out</a>
+      </nav>
+    </div>
+  </header>
+  <nav class="breadcrumb container" aria-label="Breadcrumb">${crumbs}</nav>
+  <main>
+    <section class="hero">
+      <div class="container">
+        <p class="kicker hero__kicker">Use cases.</p>
+        <h1 class="h-display hero__title">${esc(h1)}</h1>
+        <p class="lede hero__lede">${esc(lede)}</p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container">${body}</div>
+    </section>
+  </main>
+  <footer class="colophon">
+    <div class="container colophon__inner">
+      <span>CyberSygn. Built in Colorado.</span>
+      <nav class="colophon__links" aria-label="Legal">
+        <a href="/">Home</a>
+        <a href="/use-cases/">Use cases</a>
+        <a href="/templates/">Templates</a>
+        <a href="/blog/">Blog</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>
+`;
+}
+
+function renderRootHub(groups) {
+  const body = '<ul class="tmpl-grid">' + groups.map(({ doc, verts }) =>
+    `<li class="tmpl-card"><a class="tmpl-card__btn" href="/use-cases/${esc(doc.slug)}/">
+      <h2 class="tmpl-card__title">${esc(cap(doc.name))}</h2>
+      <p class="tmpl-card__short">${esc(doc.description)}</p>
+      <p class="tmpl-card__short"><small>${verts.length} ${verts.length === 1 ? 'profession' : 'professions'}</small></p>
+    </a></li>`).join('') + '</ul>';
+  return renderHubShell({
+    title: fitTitle('E-signature use cases by document and profession', { suffix: '. CyberSygn.' }),
+    description: fitDescription('Every document type CyberSygn is built for, and the professions that send each one. Field detection, magic-link signing, and a SHA-256 audit certificate on every completed document.'),
+    canonical: 'https://cybersygn.io/use-cases/',
+    h1: 'Find your document, and your line of work.',
+    lede: 'Pick the document you send most. Each page covers how that document gets signed in a specific profession, which fields CyberSygn finds automatically, and what the finished record proves.',
+    body,
+    crumbs: '<a href="/">CyberSygn</a><span aria-hidden="true">/</span><span aria-current="page">Use cases</span>',
+  });
+}
+
+function renderDocHub(doc, verts) {
+  const body = '<ul class="tmpl-grid">' + verts.map(v =>
+    `<li class="tmpl-card"><a class="tmpl-card__btn" href="/use-cases/${esc(doc.slug)}/${esc(v.slug)}/">
+      <h2 class="tmpl-card__title">${esc(cap(v.name))}</h2>
+      <p class="tmpl-card__short">${esc(v.audienceLine || `${cap(doc.name)} signing for ${v.name}.`)}</p>
+    </a></li>`).join('') + '</ul>';
+  return renderHubShell({
+    title: fitTitle(`${cap(doc.name)} e-signature by profession`, { suffix: '. CyberSygn.' }),
+    description: fitDescription(`Who sends ${doc.indefinite || 'a'} ${doc.name}, and how CyberSygn signs it. ${cap(doc.description)}`),
+    canonical: `https://cybersygn.io/use-cases/${doc.slug}/`,
+    h1: `Who sends ${doc.indefinite || 'a'} ${doc.name}.`,
+    lede: `${cap(doc.description)} Pick your line of work to see how the signing flow fits it.`,
+    body,
+    crumbs: `<a href="/">CyberSygn</a><span aria-hidden="true">/</span><a href="/use-cases/">Use cases</a><span aria-hidden="true">/</span><span aria-current="page">${esc(cap(doc.name))}</span>`,
+  });
+}
+
 async function main() {
   const raw = await readFile(MATRIX, 'utf8');
   const matrix = JSON.parse(raw);
@@ -319,6 +427,25 @@ async function main() {
   try { await rm(OUT_ROOT, { recursive: true, force: true }); } catch (e) {}
 
   const sitemapUrls = [];
+
+  // Hubs first, so the leaf pages below always have a parent that links them.
+  const byDoc = new Map();
+  for (const { doc, vert } of pairs) {
+    if (!byDoc.has(doc.slug)) byDoc.set(doc.slug, { doc, verts: [] });
+    byDoc.get(doc.slug).verts.push(vert);
+  }
+  const groups = [...byDoc.values()];
+  await mkdir(OUT_ROOT, { recursive: true });
+  await writeFile(join(OUT_ROOT, 'index.html'), renderRootHub(groups), 'utf8');
+  sitemapUrls.push('https://cybersygn.io/use-cases/');
+  for (const { doc, verts } of groups) {
+    const dhDir = join(OUT_ROOT, doc.slug);
+    await mkdir(dhDir, { recursive: true });
+    await writeFile(join(dhDir, 'index.html'), renderDocHub(doc, verts), 'utf8');
+    sitemapUrls.push(`https://cybersygn.io/use-cases/${doc.slug}/`);
+  }
+  console.log(`  hubs: /use-cases/ + ${groups.length} document hubs`);
+
   for (const { doc, vert } of pairs) {
     const dir = join(OUT_ROOT, doc.slug, vert.slug);
     await mkdir(dir, { recursive: true });

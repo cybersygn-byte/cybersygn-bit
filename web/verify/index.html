@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Verify any CyberSygn signature. CyberSygn.</title>
-  <meta name="description" content="Paste a document fingerprint or open the link from a signed PDF to confirm it was signed on CyberSygn. Verification checks integrity, it is not a legal opinion." />
+  <meta name="description" content="Paste a SHA-256 fingerprint to check it against the public record of completed CyberSygn signings. The result names which file it identifies. Integrity check, not a legal opinion." />
   <meta name="keywords" content="verify electronic signature, document fingerprint, tamper-evident audit trail, verify signed PDF, CyberSygn verify" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/verify/" />
@@ -19,15 +19,15 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="CyberSygn" />
   <meta property="og:title" content="Verify any CyberSygn signature." />
-  <meta property="og:description" content="Paste a document fingerprint or open the link from a signed PDF to confirm it was signed on CyberSygn. Integrity check, not a legal opinion." />
+  <meta property="og:description" content="Paste a SHA-256 fingerprint to check it against the public record of completed CyberSygn signings. Integrity check, not a legal opinion." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-certificate.png" />
   <meta property="og:url" content="https://cybersygn.io/verify/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Verify any CyberSygn signature." />
-  <meta name="twitter:description" content="Paste a document fingerprint or open the link from a signed PDF to confirm it was signed on CyberSygn." />
+  <meta name="twitter:description" content="Paste a SHA-256 fingerprint to check it against the public record of completed CyberSygn signings." />
   <meta name="twitter:image" content="https://cybersygn.io/brand/og-certificate.png" />
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebApplication","name":"CyberSygn signature verification","url":"https://cybersygn.io/verify/","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Confirm that a document was signed on CyberSygn by its SHA-256 fingerprint. An integrity check, not a legal opinion."}
+  {"@context":"https://schema.org","@type":"WebApplication","name":"CyberSygn signature verification","url":"https://cybersygn.io/verify/","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Check a SHA-256 fingerprint against the public record of completed CyberSygn signings. The result names which file the fingerprint identifies. An integrity check, not a legal opinion."}
   </script>
   <link rel="stylesheet" href="../vendor/fonts.css" />
   <link rel="stylesheet" href="../styles.css" />
@@ -54,7 +54,7 @@
       <div class="container">
         <p class="kicker hero__kicker">Public signature check.</p>
         <h1 class="h-display hero__title">Verify any CyberSygn signature.</h1>
-        <p class="lede hero__lede">Every completed document gets a tamper-evident fingerprint, a 64-character code derived from the signed PDF. Paste the fingerprint below, or open the verify link printed on a signed document, to confirm it was completed on CyberSygn.</p>
+        <p class="lede hero__lede">A fingerprint is the SHA-256 of a file, 64 hexadecimal characters. Paste one below to check it against the public record of completed CyberSygn signings. Hashing your own copy of a document is the point of this page, so the section under the form tells you exactly which file to hash and how.</p>
       </div>
     </section>
 
@@ -75,17 +75,30 @@
             enterkeyhint="go"
             placeholder="Paste the 64-character fingerprint"
             aria-describedby="verify-help"></textarea>
-          <p id="verify-help" class="verify-help caption">64 hexadecimal characters (0 to 9, a to f). Spaces are ignored.</p>
+          <p id="verify-help" class="verify-help caption">64 hexadecimal characters (0 to 9, a to f). Spaces and line breaks are ignored, so the two rows printed on an audit certificate paste in as they are. A full verify link, or a whole line of <code>shasum</code> output, works too.</p>
           <button id="verify-submit" class="btn btn--primary btn--lg btn--block" type="submit">Verify signature</button>
         </form>
 
         <!-- Result region. Politely announced to assistive tech; starts empty. -->
         <div id="verify-result" class="verify-result" role="status" aria-live="polite" hidden></div>
 
+        <div class="verify-explainer" id="how-to-hash">
+          <h2 class="verify-explainer__title">Which file to hash</h2>
+          <p>A signing can have two fingerprints, and they are not interchangeable. The <strong>signed PDF</strong> is the copy CyberSygn produced when the last signer finished, with every signature drawn into it. The <strong>original</strong> is the file as it was uploaded, before anyone signed. If you are not sure which one you are holding, paste it and see.</p>
+          <p>Hash the copy you downloaded from CyberSygn, exactly as you downloaded it. Re-saving, re-exporting, printing to PDF, or flattening the document again in another tool rewrites the bytes and produces a different fingerprint, which is not a sign of tampering, just a different file.</p>
+          <p>To fingerprint a file on your own machine:</p>
+          <p class="verify-scope">
+            macOS or Linux: <code>shasum -a 256 your-document.pdf</code><br />
+            Windows PowerShell: <code>Get-FileHash your-document.pdf -Algorithm SHA256</code>
+          </p>
+          <p>The audit certificate for a document prints every fingerprint that exists for it, each one labelled with the file it belongs to. If a document has no signed PDF of its own, the certificate says so in words, and the original fingerprint is the only one to check.</p>
+        </div>
+
         <div class="verify-explainer">
           <h2 class="verify-explainer__title">What this proves</h2>
-          <p>A match confirms the fingerprint corresponds to a document that reached completion on CyberSygn, and that the signed file has not changed since. That is an integrity check, not a legal opinion on the agreement itself.</p>
+          <p>A match confirms the fingerprint corresponds to a document that reached completion on CyberSygn, and that the file carrying that fingerprint has not changed by a single byte since. That is an integrity check, not a legal opinion on the agreement itself.</p>
           <p>The public record is deliberately minimal. It shows the fingerprint, how many people signed, and when signing finished. It never exposes names, email addresses, document titles, or any of the content.</p>
+          <p>A document signed by one person alone in the browser is flattened on that device and never reaches our servers, so it has no public record here and never will.</p>
           <p><a href="../compliance/">Read how the tamper-evident audit trail works.</a></p>
         </div>
 

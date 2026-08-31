@@ -1,16 +1,24 @@
 /**
  * CyberSygn verify page (/verify/) client.
  *
- * A public "verify a signature" surface. It takes a 64-hex document
- * fingerprint, either pasted into the field or passed as ?h=<hash> in the
- * URL (the form the verify link on a signed PDF uses), and calls the
- * public GET /api/verify/:hash endpoint.
+ * A public "verify a signature" surface. It takes a 64-hex fingerprint,
+ * either pasted into the field or passed as ?h=<hash> in the URL (the form
+ * the verify link on an audit certificate uses), and calls the public
+ * GET /api/verify/:hash endpoint.
  *
- * The endpoint returns PII-FREE facts only:
- *   { found:true, fingerprint, signerCount, completedAt, status } | { found:false }
- * so this client never has a name, email, title, or content to display, and
- * never fabricates any. It renders one of three honest states: verified,
- * no-record, or a friendly retry on a transport error.
+ * TWO FILES, TWO FINGERPRINTS. A completed multi-signer document can have a
+ * fingerprint for the ORIGINAL that was put in front of the signers, and one
+ * for the SIGNED PDF the Worker produced at completion. The endpoint may
+ * report which of the two the queried hash is, and what the other one is:
+ *   { found:true, fingerprint, signerCount, createdAt, completedAt, status,
+ *     matched?: 'signed'|'original', signedSha256?: string|null,
+ *     originalSha256?: string|null }
+ * Those three fields are OPTIONAL. An older Worker returns only the first
+ * six, in which case this client says a record matched and does NOT claim to
+ * know which file it belongs to. It never guesses and never fabricates.
+ *
+ * Everything the endpoint returns is PII-FREE: no name, email, title, or
+ * content, so this client has none to display.
  *
  * No imports: same-origin fetch, no build-time rewrites, degrades to a
  * calm error if the Worker is unreachable.
@@ -21,7 +29,7 @@ const input = document.getElementById('verify-hash');
 const submitBtn = document.getElementById('verify-submit');
 const result = document.getElementById('verify-result');
 
-// A fingerprint is exactly 64 lowercase hex characters (SHA-256 of the PDF).
+// A fingerprint is exactly 64 lowercase hex characters (SHA-256 of a file).
 const HASH_RE = /^[a-f0-9]{64}$/;
 
 /** Escape user-influenced text before HTML insertion. */
@@ -34,8 +42,19 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
-/** Normalise a pasted fingerprint: strip whitespace, lowercase. Accepts a
- *  full verify URL too, pulling ?h= out of it so a pasted link just works. */
+/** A 64-hex string, lowercased, or '' when the value is not one. */
+function asHash(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase();
+  return HASH_RE.test(s) ? s : '';
+}
+
+/** Normalise a pasted fingerprint. Accepts, in order of preference:
+ *   - a full verify URL, pulling ?h= out of it so a pasted link just works
+ *   - a line of tool output ("<hash>  file.pdf" from shasum, or the Hash
+ *     column of Get-FileHash), by taking the standalone 64-hex token
+ *   - the hash printed on the audit certificate in spaced groups across two
+ *     rows, by stripping whitespace
+ */
 function normalizeHash(raw) {
   let v = String(raw || '').trim();
   if (!v) return '';
@@ -49,6 +68,10 @@ function normalizeHash(raw) {
       if (m) v = decodeURIComponent(m[1]);
     }
   }
+  // A 64-hex run bounded by whitespace or string edges is the hash itself,
+  // even when a filename or a column header rode along with it.
+  const token = v.match(/(^|\s)([0-9a-fA-F]{64})(\s|$)/);
+  if (token) return token[2].toLowerCase();
   return v.replace(/\s+/g, '').toLowerCase();
 }
 
@@ -78,6 +101,14 @@ function setBusy(busy) {
   submitBtn.textContent = busy ? 'Verifying...' : 'Verify signature';
 }
 
+/** One label/value row in the facts list. */
+function fact(label, value, hash) {
+  return '<li class="verify-fact">' +
+    '<span class="verify-fact__label">' + esc(label) + '</span>' +
+    '<span class="' + (hash ? 'verify-fact__value--hash' : 'verify-fact__value') + '">' + esc(value) + '</span>' +
+  '</li>';
+}
+
 /** Loading state while the request is in flight. */
 function renderLoading(hash) {
   show(
@@ -91,8 +122,22 @@ function renderLoading(hash) {
   );
 }
 
+/**
+ * Which file the queried hash identifies: 'signed', 'original', or '' when
+ * the record does not say. Trusts an explicit label from the endpoint first,
+ * then falls back to comparing the queried hash against the two hashes the
+ * record carries. Never guesses beyond that.
+ */
+function whichFile(data, queried) {
+  const label = String(data.matched || data.kind || '');
+  if (label === 'signed' || label === 'original') return label;
+  if (asHash(data.signedSha256) && asHash(data.signedSha256) === queried) return 'signed';
+  if (asHash(data.originalSha256) && asHash(data.originalSha256) === queried) return 'original';
+  return '';
+}
+
 /** Verified: a confident, honest found state. All fields are PII-free. */
-function renderFound(data) {
+function renderFound(data, queried) {
   // Funnel instrument: a certificate successfully rendered. The transport
   // (telemetry.js) is loaded on this page; guard anyway and never throw.
   try {
@@ -105,7 +150,49 @@ function renderFound(data) {
     ? (signers === 1 ? '1 signer' : signers + ' signers')
     : 'Not reported';
   const when = formatDate(data.completedAt);
-  const fingerprint = typeof data.fingerprint === 'string' ? data.fingerprint : '';
+  // Echo back what the visitor actually checked. The record's own
+  // `fingerprint` is the same value on every current Worker, but the queried
+  // hash is the one the visitor can compare against their file.
+  const fingerprint = queried || asHash(data.fingerprint);
+
+  const signedHash = asHash(data.signedSha256);
+  const originalHash = asHash(data.originalSha256);
+  const matched = whichFile(data, fingerprint);
+
+  // The body sentence has to be true in all three cases, including the case
+  // where an older Worker tells us only that a record exists.
+  let body;
+  if (matched === 'signed') {
+    body = 'You checked the signed PDF that CyberSygn issued for this document, the copy with every ' +
+      'signature drawn into it. It matches the record byte for byte, so the file has not changed since ' +
+      'signing completed.';
+  } else if (matched === 'original') {
+    body = 'You checked the original document, the file as it was uploaded before anyone signed it. ' +
+      'A document with this fingerprint was completed on CyberSygn, and the original has not changed ' +
+      'by a byte since.';
+    body += signedHash
+      ? ' CyberSygn also issued a signed PDF for it, with a different fingerprint, shown below. If you ' +
+        'are holding a signed copy, check that fingerprint instead.'
+      : ' CyberSygn did not produce a signed file of its own for this document, so this original ' +
+        'fingerprint is the only one on record. A signed copy of it will not match anything here.';
+  } else {
+    body = 'This fingerprint matches a document that was completed on CyberSygn, and the file carrying ' +
+      'it has not changed by a byte since. The record does not say which of the two files it is, the ' +
+      'original or the signed copy.';
+  }
+
+  const identifies = matched === 'signed'
+    ? 'The signed PDF CyberSygn issued'
+    : (matched === 'original' ? 'The original document, before signatures' : '');
+
+  let facts = fact('Fingerprint you checked', fingerprint, true);
+  if (identifies) facts += fact('Identifies', identifies, false);
+  if (matched === 'original' && signedHash) facts += fact('Signed PDF fingerprint', signedHash, true);
+  if (matched === 'signed' && originalHash && originalHash !== fingerprint) {
+    facts += fact('Original PDF fingerprint', originalHash, true);
+  }
+  facts += fact('Signers', signerText, false);
+  facts += fact('Completed', when || 'Not reported', false);
 
   show(
     '<div class="verify-card verify-card--found">' +
@@ -113,22 +200,9 @@ function renderFound(data) {
         '<span class="verify-card__badge" aria-hidden="true">&#10003;</span>' +
         '<h2 class="verify-card__title">Signed on CyberSygn</h2>' +
       '</div>' +
-      '<p class="verify-card__body">This fingerprint matches a document that was completed on CyberSygn. The signed file has not changed since.</p>' +
-      '<ul class="verify-facts">' +
-        '<li class="verify-fact">' +
-          '<span class="verify-fact__label">Fingerprint</span>' +
-          '<span class="verify-fact__value--hash">' + esc(fingerprint) + '</span>' +
-        '</li>' +
-        '<li class="verify-fact">' +
-          '<span class="verify-fact__label">Signers</span>' +
-          '<span class="verify-fact__value">' + esc(signerText) + '</span>' +
-        '</li>' +
-        '<li class="verify-fact">' +
-          '<span class="verify-fact__label">Completed</span>' +
-          '<span class="verify-fact__value">' + esc(when || 'Not reported') + '</span>' +
-        '</li>' +
-      '</ul>' +
-      '<p class="verify-scope">This confirms integrity: the document reached completion on CyberSygn and its fingerprint still matches. It is not a legal opinion on the agreement.</p>' +
+      '<p class="verify-card__body">' + esc(body) + '</p>' +
+      '<ul class="verify-facts">' + facts + '</ul>' +
+      '<p class="verify-scope">This confirms integrity: a document reached completion on CyberSygn and the file with this fingerprint still matches the record. It is not a legal opinion on the agreement, and the record carries no names, addresses, or content.</p>' +
       '<div class="verify-card__actions">' +
         '<button type="button" class="btn btn--primary" id="verify-share">Share this certificate</button>' +
         '<a class="btn btn--ghost" href="/preview/?src=verify-share" rel="noopener">Sign your own document</a>' +
@@ -164,7 +238,13 @@ function renderFound(data) {
   }
 }
 
-/** No record: a calm, non-alarming state with practical guidance. */
+/**
+ * No record. The endpoint cannot tell "wrong file" from "not ours", so this
+ * splits the guidance into those two situations and lets the visitor place
+ * themselves. The wrong-file case comes first because it is the likelier one
+ * for anyone who hashed a PDF: any tool that re-saves the file changes its
+ * bytes, and older documents are on record under the original only.
+ */
 function renderNotFound(hash) {
   show(
     '<div class="verify-card verify-card--none">' +
@@ -172,12 +252,20 @@ function renderNotFound(hash) {
         '<span class="verify-card__badge" aria-hidden="true">?</span>' +
         '<h2 class="verify-card__title">No record found</h2>' +
       '</div>' +
-      '<p class="verify-card__body">We have no completed signing on file for that fingerprint.</p>' +
+      '<p class="verify-card__body">No completed CyberSygn signing is on record under that fingerprint. That means one of two things, and they are worth telling apart.</p>' +
       (hash ? '<p class="verify-scope"><span class="verify-fact__value--hash">' + esc(hash) + '</span></p>' : '') +
+      '<p class="verify-card__body"><strong>You may have hashed a different file than the one on record.</strong></p>' +
       '<ul class="verify-guidance">' +
-        '<li>Check that you copied the full 64-character fingerprint, with nothing missing or added.</li>' +
-        '<li>The fingerprint comes from a completed document. A document still awaiting signatures will not have one yet.</li>' +
-        '<li>If you opened this from a signed PDF, use the exact verify link printed on it.</li>' +
+        '<li>Hash the copy exactly as you downloaded it from CyberSygn. Re-saving, re-exporting, printing to PDF, or flattening the document again in another tool rewrites the bytes and changes the fingerprint.</li>' +
+        '<li>Older documents, and documents where CyberSygn produced no signed file of its own, are on record under the fingerprint of the ORIGINAL upload only. For those, a signed copy will never match. Check the original file instead.</li>' +
+        '<li>The audit certificate prints every fingerprint on record for its document, each labelled with the file it belongs to. Those are the values that will match.</li>' +
+        '<li>Check you copied all 64 characters, with nothing missing or added. <a href="#how-to-hash">How to fingerprint a file.</a></li>' +
+      '</ul>' +
+      '<p class="verify-card__body"><strong>Or the document was never completed on CyberSygn.</strong></p>' +
+      '<ul class="verify-guidance">' +
+        '<li>The record is written the moment the last signer finishes. A document still waiting on a signature does not have one yet.</li>' +
+        '<li>A document signed by one person alone in the browser is flattened on that device and never reaches our servers, so it has no public record.</li>' +
+        '<li>If none of these fit, then no document with that fingerprint was completed on CyberSygn.</li>' +
       '</ul>' +
     '</div>'
   );
@@ -191,7 +279,7 @@ function renderInvalid() {
         '<span class="verify-card__badge" aria-hidden="true">?</span>' +
         '<h2 class="verify-card__title">That is not a fingerprint</h2>' +
       '</div>' +
-      '<p class="verify-card__body">A CyberSygn fingerprint is exactly 64 characters, each one 0 to 9 or a to f. Paste the whole code, or open the verify link from a signed document.</p>' +
+      '<p class="verify-card__body">A fingerprint is exactly 64 characters, each one 0 to 9 or a to f. Paste the whole code, the verify link from an audit certificate, or a line of <code>shasum -a 256</code> output. <a href="#how-to-hash">How to fingerprint a file.</a></p>' +
     '</div>'
   );
 }
@@ -235,7 +323,7 @@ async function run(raw) {
       return;
     }
     if (data.found) {
-      renderFound(data);
+      renderFound(data, hash);
     } else {
       renderNotFound(hash);
     }
@@ -264,7 +352,7 @@ if (input) {
   });
 }
 
-// Auto-run when the URL carries ?h=<hash> (the signed-PDF verify link).
+// Auto-run when the URL carries ?h=<hash> (the verify link on a certificate).
 (function bootFromURL() {
   const wanted = new URLSearchParams(location.search).get('h');
   if (!wanted) return;
