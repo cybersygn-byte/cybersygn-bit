@@ -42,6 +42,7 @@ import { detectFieldsViaVision, checkAndIncrementVisionUsage } from './vision.js
 import { generateDraft } from './ai-draft.js';
 import { generateSummary, mergeSignerFills } from './ai-summary.js';
 import { writeVerifyRecord, getVerifyRecord, isValidFingerprint } from './verify.js';
+import { ensureSignedPdf, signedPdfKey } from './signed-pdf.js';
 import { handleRequestLink, handleVerifyLink } from './auth.js';
 import { listContacts, upsertContact, upsertContacts, removeContact, sanitizeSenderId, isValidContactEmail } from './contacts.js';
 import { saveTemplate, lookupTemplate } from './templates.js';
@@ -721,6 +722,16 @@ const worker = {
     const pdfMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/pdf$/);
     if (request.method === 'GET' && pdfMatch) {
       return await handleGetPdf(request, env, pdfMatch[1], url);
+    }
+
+    // Fetch the CANONICAL SIGNED document. Separate from /pdf on purpose:
+    // /pdf must keep returning the ORIGINAL because the signing canvas loads
+    // those bytes and draws live field boxes over them. Returning flattened
+    // bytes there would render baked signatures underneath live inputs and
+    // double-draw on download.
+    const signedMatch = url.pathname.match(/^\/api\/docs\/([^/]+)\/signed$/);
+    if (request.method === 'GET' && signedMatch) {
+      return await handleGetSignedPdf(request, env, signedMatch[1], url);
     }
 
     // Fetch the audit-certificate PDF. Same token auth as the PDF
@@ -4846,8 +4857,37 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
   // demand if that single render failed. Everything reads the FINAL state.
   let auditUrl = allDone ? `/api/docs/${docId}/audit?t=${final.signers[0].token}` : null;
   if (fireCompletion) {
+    // Build the CANONICAL signed artifact first: the certificate below prints
+    // its hash and the verify record stores it, so both need it in hand.
+    // final is the loadDocMerged copy, so per-signer subkeys are overlaid and
+    // this is the authoritative fill set. Never throws, and a failure only
+    // means the document has no signed hash, which every downstream reader
+    // and every line of copy is written to handle.
+    let signedSha = null;
     try {
-      const certBytes = await renderAuditCertificate({ doc: final, pdfSha256: final.pdfSha256 });
+      const signedRes = await ensureSignedPdf(env, { ...final, id: docId });
+      if (signedRes.ok) {
+        signedSha = signedRes.sha256;
+        // Graft the hash onto the stored record so a later on-demand render
+        // or a /signed request can report it without rebuilding.
+        try {
+          const fresh = await storage.docs.get(`doc:${docId}`, { json: true });
+          if (fresh) {
+            fresh.signedPdfSha256 = signedSha;
+            await storage.docs.put(`doc:${docId}`, fresh, docRetention(fresh));
+          }
+        } catch (e) { /* the artifact exists either way */ }
+      } else {
+        console.error('[signed-pdf] not produced:', signedRes.reason);
+      }
+    } catch (err) {
+      console.error('[signed-pdf] failed:', err && err.message);
+    }
+
+    try {
+      const certBytes = await renderAuditCertificate({
+        doc: final, pdfSha256: final.pdfSha256, signedPdfSha256: signedSha,
+      });
       await storage.pdfs.put(`audit:${docId}`, certBytes.buffer); // permanent: see docRetention
     } catch (err) {
       console.error('[audit] render failed:', err && err.message);
@@ -4874,6 +4914,10 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     try {
       await writeVerifyRecord(env, {
         pdfSha256: final.pdfSha256,
+        // Lets a holder of the SIGNED file verify the bytes they actually
+        // have, which is the whole point: hashing your signed PDF used to
+        // return "no record found" every single time.
+        signedPdfSha256: signedSha,
         signerCount: Array.isArray(final.signers) ? final.signers.length : 0,
         createdAt: final.createdAt,
         completedAt: final.completedAt,
@@ -4942,6 +4986,77 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
  * Stream the original PDF back to an authenticated signer.
  * Validates the token against the persisted doc.
  */
+/**
+ * Stream the canonical signed document to any party to it.
+ *
+ * This is what makes every signer hold the SAME bytes. Before it existed the
+ * only signed artifact was whatever each browser happened to flatten, so no
+ * shared value existed to publish or verify.
+ *
+ * Documents completed before this shipped have no stored artifact. Rather than
+ * a migration job, the first request builds it, stores it, and backfills the
+ * hash, which is safe precisely because the build is deterministic: the bytes
+ * produced now are the bytes that would have been produced then.
+ */
+async function handleGetSignedPdf(request, env, docId, url) {
+  const token = url.searchParams.get('t');
+  if (!token) return jsonResponse(400, { error: 'missing_token', message: 'A signing token is required.' });
+
+  const storage = getStorage(env);
+  const doc = await loadDocMerged(storage, docId);
+  if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
+
+  // Any party to the document may fetch it: they all already hold the file.
+  const signer = doc.signers.find(s => ctEqHex(s.token, token));
+  if (!signer) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });
+
+  if (!doc.completedAt) {
+    return jsonResponse(409, {
+      error: 'not_completed',
+      message: 'The signed document is issued once every signer has finished.',
+    });
+  }
+
+  const res = await ensureSignedPdf(env, { ...doc, id: docId });
+  if (!res.ok) {
+    // Honest failure. The client falls back to its own local flatten, which
+    // still produces a usable file, just not the canonical one.
+    return jsonResponse(409, {
+      error: 'signed_unavailable',
+      reason: res.reason,
+      message: 'The canonical signed copy could not be produced for this document.',
+    });
+  }
+
+  // Backfill the hash and the second verify key for a document that completed
+  // before this feature existed, so /verify/ resolves the bytes just served.
+  if (!doc.signedPdfSha256) {
+    try {
+      const fresh = await storage.docs.get(`doc:${docId}`, { json: true });
+      if (fresh && !fresh.signedPdfSha256) {
+        fresh.signedPdfSha256 = res.sha256;
+        await storage.docs.put(`doc:${docId}`, fresh, docRetention(fresh));
+        await writeVerifyRecord(env, {
+          pdfSha256: fresh.pdfSha256,
+          signedPdfSha256: res.sha256,
+          signerCount: Array.isArray(fresh.signers) ? fresh.signers.length : 0,
+          createdAt: fresh.createdAt,
+          completedAt: fresh.completedAt,
+        });
+      }
+    } catch (e) { /* serving the file matters more than the backfill */ }
+  }
+
+  return new Response(res.bytes, {
+    status: 200,
+    headers: {
+      'content-type': 'application/pdf',
+      'cache-control': 'private, no-store',
+      'x-cybersygn-signed-sha256': res.sha256,
+    },
+  });
+}
+
 async function handleGetPdf(request, env, docId, url) {
   const token = url.searchParams.get('t');
   if (!token) return jsonResponse(400, { error: 'missing_token', message: 'A signing token is required.' });

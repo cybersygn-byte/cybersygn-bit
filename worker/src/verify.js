@@ -43,27 +43,53 @@ export function isValidFingerprint(hash) {
  * @param {string} rec.completedAt ISO timestamp the doc completed.
  * @returns {Promise<boolean>}
  */
-export async function writeVerifyRecord(env, { pdfSha256, signerCount, createdAt, completedAt } = {}) {
+export async function writeVerifyRecord(env, {
+  pdfSha256, signedPdfSha256 = null, signerCount, createdAt, completedAt,
+} = {}) {
   if (!isValidFingerprint(pdfSha256)) return false;
 
-  // Zero PII by construction: only the fingerprint, a count, timestamps, and
-  // a fixed status. No name, email, title, or content ever lands here.
-  const record = {
-    v: 1,
-    fingerprint: pdfSha256,
+  // TWO KEYS, TWO NEAR-IDENTICAL RECORDS.
+  //
+  // A holder of a signed document will hash the file in their hand, which is
+  // the SIGNED artifact. A holder of the source will hash the ORIGINAL. Both
+  // are legitimate questions and both must resolve, so the record is written
+  // under each hash.
+  //
+  // Two full records rather than an alias pointer: every existing reader
+  // (and scripts/test-erasure.mjs) relies on record.fingerprint equalling the
+  // hash in its own key, and an alias would add a second KV read on a public
+  // endpoint plus a dangling-pointer state where a half-written pair returns
+  // "found" with no data. Each record is about 200 bytes and PII-free.
+  //
+  // The record must NEVER gain a docId: the doc id is a capability that other
+  // endpoints accept, so putting one here would turn an anonymous fingerprint
+  // into a lookup for signer names and emails.
+  const signed = isValidFingerprint(signedPdfSha256) ? signedPdfSha256 : null;
+  const base = {
+    v: 2,
     signerCount: Number.isFinite(signerCount) ? signerCount : 0,
     createdAt: typeof createdAt === 'string' ? createdAt : null,
     completedAt: typeof completedAt === 'string' ? completedAt : null,
     status: 'completed',
+    originalSha256: pdfSha256,
+    signedSha256: signed,
   };
 
+  const wrote = [];
   try {
     const storage = getStorage(env);
     // No expirationTtl: verify records are permanent by design (see header).
-    await storage.docs.put(`verify:${pdfSha256}`, record);
+    await storage.docs.put(`verify:${pdfSha256}`, { ...base, fingerprint: pdfSha256, kind: 'original' });
+    wrote.push(pdfSha256);
+    // Skip when equal, so a degenerate case can never write a contradictory
+    // record under the same key.
+    if (signed && signed !== pdfSha256) {
+      await storage.docs.put(`verify:${signed}`, { ...base, fingerprint: signed, kind: 'signed' });
+      wrote.push(signed);
+    }
     return true;
   } catch (e) {
-    return false;
+    return wrote.length > 0;
   }
 }
 
