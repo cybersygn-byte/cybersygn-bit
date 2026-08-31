@@ -4833,7 +4833,33 @@ function openSendModal() {
     downloadBtn.disabled = true;
     downloadBtn.textContent = 'Preparing your PDF.';
     try {
-      await flattenAndDownload({
+      // CANONICAL COPY FIRST. When the document is routed and complete, the
+      // server has built one signed artifact and published its SHA-256. Every
+      // party must download THOSE bytes, or each browser produces its own
+      // rendering and the fingerprint on the certificate matches nobody's
+      // file, which is the exact defect this endpoint exists to fix.
+      // Falls back to the local flatten on any failure, so a document is
+      // always downloadable even when the canonical build is unavailable.
+      let servedCanonical = false;
+      if (allComplete && docState.serverDocId && docState.serverToken) {
+        try {
+          const res = await fetch(
+            `/api/docs/${encodeURIComponent(docState.serverDocId)}/signed?t=${encodeURIComponent(docState.serverToken)}`,
+          );
+          if (res.ok) {
+            const blob = await res.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (docState.filename || 'document').replace(/\.pdf$/i, '') + '-signed.pdf';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            servedCanonical = true;
+          }
+        } catch (e) { /* fall through to the local flatten below */ }
+      }
+      if (!servedCanonical) await flattenAndDownload({
         originalBytes: freshCopy(docState.originalBytes),
         fields: docState.fields,
         fillStore,
@@ -5468,6 +5494,12 @@ async function enterSignerMode(docId, token) {
   // Configure the app exactly as if the user had uploaded the file and we
   // were just rendering the fields they own.
   emitEvent('pdf_loaded', { source: 'signer' });
+  // The SERVER document id and this signer's token, kept separate from
+  // docState.docId, which is the SHA-256 of the uploaded file used for
+  // free-credit dedupe. Confusing the two would build a /signed URL out of a
+  // content hash and silently 404 on every request.
+  docState.serverDocId = docId;
+  docState.serverToken = token;
   docState.filename = session.title;
   docState.originalBytes = pdfResult.bytes;
   docState.fields = session.fields;
