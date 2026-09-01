@@ -68,6 +68,21 @@ export const TIERS = {
  * degrades to "notify me" instead of dead-ending on a checkout error.
  * Annual variants fold into their base id.
  */
+/**
+ * Tiers that include the AI co-pilot.
+ *
+ * Pro's pricing copy is "Everything in Solo, plus the AI co-pilot that drafts
+ * and reads your contracts for you", so Solo is deliberately NOT in this set.
+ * Anything at or above Pro is, including the annual variants and the
+ * grandfathered lifetime/founding tiers.
+ */
+const AI_TIER_BASES = new Set(['pro', 'team', 'business', 'founding', 'lifetime', 'whitelabel']);
+
+export function tierIncludesAi(tier) {
+  if (!tier) return false;
+  return AI_TIER_BASES.has(String(tier).replace(/_annual$/, ''));
+}
+
 export function purchasableTiers(env) {
   const priced = (id) => {
     const conf = TIERS[id];

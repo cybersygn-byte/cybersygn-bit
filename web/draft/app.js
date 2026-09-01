@@ -130,7 +130,17 @@ async function onSubmit(e) {
   try {
     const res = await fetch('/api/draft/generate', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'accept': 'application/json' },
+      // The free signup token identifies the account the quota is charged to.
+      // Without it the Worker cannot tell one visitor from another and the
+      // endpoint was open to anyone with an IP address.
+      headers: (() => {
+        const h = { 'content-type': 'application/json', 'accept': 'application/json' };
+        try {
+          const ft = localStorage.getItem('cybersygn.freeToken');
+          if (ft) h['X-CyberSygn-Free'] = ft;
+        } catch (e) { /* private mode: the Worker will ask them to sign up */ }
+        return h;
+      })(),
       body: JSON.stringify({
         kind,
         description,
@@ -155,10 +165,34 @@ async function onSubmit(e) {
 
   setLoading(false);
 
-  if (payload && payload.ok && payload.draft && typeof payload.draft.body === 'string') {
+  // The Worker returns the draft FLAT: { ok, kind, title, body, disclaimer }.
+  // This used to require payload.draft.body, a wrapper the endpoint has never
+  // sent, so every successful generation fell through to the retry screen
+  // below. The draft page has never once displayed a draft, while each attempt
+  // still spent a real Anthropic call.
+  if (payload && payload.ok && typeof payload.body === 'string') {
     // activation: a real draft came back. durationMs = time to first draft.
     track('draft_generated', { source: 'draft', durationMs: Date.now() - startedAt });
-    renderDraft(payload.draft, { kind, yourName, otherParty, description });
+    renderDraft(payload, { kind, yourName, otherParty, description });
+    return;
+  }
+
+  // Signed-out visitor, or a free account that has used its allowance.
+  if (payload && (payload.error === 'free_signup_required' || payload.error === 'ai_cap_reached')) {
+    const capped = payload.error === 'ai_cap_reached';
+    track(capped ? 'draft_cap_reached' : 'draft_signup_required', { source: 'draft' });
+    output.innerHTML =
+      '<div class="draft-result">' +
+        '<div class="draft-result__head">' +
+          '<p class="kicker kicker--muted">' + (capped ? 'Free drafts used' : 'One step first') + '</p>' +
+          '<h2 class="draft-result__title">' + esc(payload.message || 'Create a free account to generate a draft.') + '</h2>' +
+        '</div>' +
+        '<div class="draft-result__actions">' +
+          '<a class="btn btn--primary" href="' + (capped ? '/#pricing' : '/preview/') + '">' +
+            (capped ? 'See Pro' : 'Get your free account') +
+          '</a>' +
+        '</div>' +
+      '</div>';
     return;
   }
 

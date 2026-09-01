@@ -18,6 +18,7 @@
  * cannot claim a document was already paid for.
  */
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 import { freeSignup, freeConsume } from '../worker/src/free-tier.js';
 
 let pass = 0, fail = 0; const out = [];
@@ -92,6 +93,122 @@ await t('the marker is scoped to the user, not global', async () => {
   const other = await freeConsume(env, tok2, sha('a'));
   assert.ok(!other.deduped, 'another user signing the same document pays their own credit');
   assert.equal(other.used, 1);
+});
+
+// ---- AI entitlement --------------------------------------------------------
+
+function aiEnv() {
+  const kv = new Map();
+  const st = {
+    get: async (k, ty) => { const v = kv.get(k); if (v == null) return null; return (ty === 'json' || (ty && ty.type === 'json')) ? JSON.parse(v) : v; },
+    put: async (k, v) => { kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => kv.delete(k),
+    list: async () => ({ keys: [], list_complete: true }),
+  };
+  return { env: { CYBERSYGN_DOCS: st, CYBERSYGN_PDFS: st, ANTHROPIC_API_KEY: 'sk-test' }, kv };
+}
+let ipCounter = 0;
+async function draft(worker, env, headers = {}, body = {}) {
+  ipCounter += 1;
+  return worker.fetch(new Request('https://x/api/draft/generate', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': `9.9.${Math.floor(ipCounter / 250)}.${ipCounter % 250}`, ...headers },
+    body: JSON.stringify({ kind: 'freelance', description: 'Build a website for 5k', ...body }),
+  }), env, { waitUntil() {} });
+}
+function stubProvider() {
+  const real = globalThis.fetch;
+  globalThis.fetch = async (u) => String(u).includes('anthropic')
+    ? new Response(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ title: 'Freelance Agreement', body: 'AGREEMENT terms' }) }] }), { status: 200 })
+    : new Response('{}', { status: 200 });
+  return () => { globalThis.fetch = real; };
+}
+
+await t('an anonymous stranger cannot spend the AI budget', async () => {
+  // The endpoint ran on an IP rate limit alone: no account, no tier, no
+  // identity. Anyone could POST and bill us for an Anthropic call.
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env } = aiEnv();
+  const restore = stubProvider();
+  try {
+    const res = await draft(worker, env);
+    assert.equal(res.status, 402);
+    assert.equal((await res.json()).error, 'free_signup_required');
+  } finally { restore(); }
+});
+
+await t('a free account gets three AI drafts, then is asked to upgrade', async () => {
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env } = aiEnv();
+  const restore = stubProvider();
+  try {
+    const tok = (await freeSignup(env, { email: 'a@b.com', firstName: 'A', lastName: 'B', consent: true })).freeToken;
+    for (let i = 1; i <= 3; i++) {
+      const j = await (await draft(worker, env, { 'X-CyberSygn-Free': tok })).json();
+      assert.equal(j.ok, true, `draft ${i} must succeed`);
+      assert.equal(j.aiUsage.used, i);
+    }
+    const res = await draft(worker, env, { 'X-CyberSygn-Free': tok });
+    assert.equal(res.status, 402);
+    const j = await res.json();
+    assert.equal(j.error, 'ai_cap_reached');
+    assert.ok(j.upgrade && j.upgrade.tiers.includes('pro'), 'and must point at Pro');
+  } finally { restore(); }
+});
+
+await t('Pro gets the AI co-pilot unmetered, which is what it is sold as', async () => {
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env, kv } = aiEnv();
+  const restore = stubProvider();
+  try {
+    kv.set('sub:snd_pro', JSON.stringify({ tier: 'pro', status: 'active' }));
+    for (let i = 0; i < 5; i++) {
+      const j = await (await draft(worker, env, {}, { senderId: 'snd_pro' })).json();
+      assert.equal(j.ok, true, 'a Pro subscriber is never capped');
+      assert.deepEqual(j.aiUsage, { unmetered: true });
+    }
+  } finally { restore(); }
+});
+
+await t('the draft response is FLAT, which is the shape the page reads', async () => {
+  // web/draft/app.js required payload.draft.body, a wrapper the Worker has
+  // never sent, so every successful generation fell through to the retry
+  // screen and the page never once displayed a draft.
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env } = aiEnv();
+  const restore = stubProvider();
+  try {
+    const tok = (await freeSignup(env, { email: 'c@d.com', firstName: 'C', lastName: 'D', consent: true })).freeToken;
+    const j = await (await draft(worker, env, { 'X-CyberSygn-Free': tok })).json();
+    assert.equal(typeof j.body, 'string', 'body must be top level');
+    assert.equal(j.draft, undefined, 'there is no draft wrapper');
+    // Strip comments first: the fix documents the old wrong shape in prose,
+    // and an assertion that cannot tell code from a comment is not an
+    // assertion about behaviour.
+    const app = readFileSync(new URL('../web/draft/app.js', import.meta.url), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+    assert.ok(!/payload\.draft\.body/.test(app), 'the page must not read a wrapper that does not exist');
+    assert.ok(/typeof payload\.body === 'string'/.test(app), 'and must read the flat shape the Worker sends');
+  } finally { restore(); }
+});
+
+await t('a failed generation costs no credit', async () => {
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env } = aiEnv();
+  const real = globalThis.fetch;
+  globalThis.fetch = async (u) => String(u).includes('anthropic')
+    ? new Response('upstream on fire', { status: 500 })
+    : new Response('{}', { status: 200 });
+  try {
+    const tok = (await freeSignup(env, { email: 'e@f.com', firstName: 'E', lastName: 'F', consent: true })).freeToken;
+    await draft(worker, env, { 'X-CyberSygn-Free': tok });
+    globalThis.fetch = async (u) => String(u).includes('anthropic')
+      ? new Response(JSON.stringify({ content: [{ type: 'text', text: JSON.stringify({ title: 'T', body: 'B' }) }] }), { status: 200 })
+      : new Response('{}', { status: 200 });
+    const j = await (await draft(worker, env, { 'X-CyberSygn-Free': tok })).json();
+    assert.equal(j.aiUsage.used, 1, 'the failed attempt must not have been billed');
+  } finally { globalThis.fetch = real; }
 });
 
 console.log(out.join('\n'));

@@ -94,6 +94,7 @@ import {
   verifyStripeSignature,
   applyStripeEvent,
   purchasableTiers,
+  tierIncludesAi,
 } from './stripe.js';
 
 const VERSION = '0.2.0';
@@ -2056,6 +2057,85 @@ async function handleTestimonialsList(env) {
  *     rides on every ok response.
  *   - Provider errors and the API key never reach the client.
  */
+// Free accounts get a taste of the AI co-pilot; Pro and up get it unmetered.
+const FREE_AI_LIFETIME = 3;
+const KV_PREFIX_AI = 'ai-used:';
+
+/**
+ * Decide whether this caller may spend an AI generation.
+ *
+ * Both AI endpoints used to run on an IP rate limit alone, with no account and
+ * no tier check, so anyone at all could POST and spend our Anthropic budget,
+ * and a Pro subscriber received nothing they were not already getting for free.
+ * Pro's headline bullets are the AI co-pilot, so this is the gate that makes
+ * the price honest in both directions.
+ *
+ * Identity is the signed-up email hash, not senderId: senderIds live in
+ * localStorage and can be rotated at will, which would make any per-sender
+ * quota a per-incognito-window quota.
+ */
+async function checkAiAllowance(env, request, payload, opts = {}) {
+  const owner = opts.owner;
+  if (owner) return { ok: true, unmetered: true, reason: 'owner' };
+
+  const senderId = String((payload && payload.senderId) || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (senderId) {
+    try {
+      const sub = await getSubscription(env, senderId);
+      if (sub && tierIncludesAi(sub.tier)) return { ok: true, unmetered: true, tier: sub.tier };
+    } catch (e) { /* fall through to the free quota rather than refuse a paying customer's peer */ }
+  }
+
+  const token = request.headers.get('x-cybersygn-free')
+    || String((payload && payload.freeToken) || '');
+  const peek = await freePeek(env, token);
+  // opts.quotaId lets an ALREADY-AUTHENTICATED caller be metered without a free
+  // token. The summary endpoint proves identity with the document's sender
+  // token, so demanding a separate free-signup token there would lock out a
+  // legitimate sender rather than gate a stranger.
+  const quotaKey = peek.ok ? peek.emailHash : (opts.quotaId || null);
+  if (!quotaKey) {
+    return {
+      ok: false,
+      status: 402,
+      body: {
+        error: 'free_signup_required',
+        message: 'Create a free account to generate a draft. No card needed.',
+        aiUsage: { used: 0, cap: FREE_AI_LIFETIME },
+      },
+    };
+  }
+
+  let used = 0;
+  try { used = parseInt((await env.CYBERSYGN_DOCS.get(KV_PREFIX_AI + quotaKey)) || '0', 10) || 0; }
+  catch (e) { used = 0; }
+  if (used >= FREE_AI_LIFETIME) {
+    return {
+      ok: false,
+      status: 402,
+      body: {
+        error: 'ai_cap_reached',
+        message: `You have used all ${FREE_AI_LIFETIME} free AI drafts. Pro adds the AI co-pilot, unmetered.`,
+        aiUsage: { used, cap: FREE_AI_LIFETIME },
+        upgrade: { tiers: ['pro', 'team', 'business'] },
+      },
+    };
+  }
+  return { ok: true, emailHash: quotaKey, used, cap: FREE_AI_LIFETIME };
+}
+
+/** Burn one free AI generation. Only called after the work actually succeeded. */
+async function burnAiCredit(env, allow) {
+  if (!allow || allow.unmetered || !allow.emailHash) return;
+  try {
+    await env.CYBERSYGN_DOCS.put(
+      KV_PREFIX_AI + allow.emailHash,
+      String((allow.used || 0) + 1),
+      { expirationTtl: 60 * 60 * 24 * 365 * 5 },
+    );
+  } catch (e) { /* a failed write risks one extra free draft, never a refusal */ }
+}
+
 async function handleDraftGenerate(request, env, url) {
   const limit = await checkRateLimit(env, `draft:${ipKey(request)}`, [
     { windowSec: 60 * 60, max: 5 },
@@ -2066,6 +2146,13 @@ async function handleDraftGenerate(request, env, url) {
   const parsed = await readJsonBody(request);
   if (parsed.error) return jsonResponse(400, parsed.error);
   const payload = parsed.value || {};
+
+  // Account + tier gate. The IP rate limit above is an abuse brake, not an
+  // entitlement: without this anyone could spend the Anthropic budget with no
+  // account at all, and Pro's headline feature was free to everyone.
+  const owner = await getOwnerForRequest(request, env, url);
+  const allow = await checkAiAllowance(env, request, payload, { owner });
+  if (!allow.ok) return jsonResponse(allow.status, allow.body);
 
   const parties = payload.parties && typeof payload.parties === 'object' ? payload.parties : {};
 
@@ -2096,11 +2183,19 @@ async function handleDraftGenerate(request, env, url) {
     });
   }
 
+  // Charge only for work that actually produced a draft. Every failure path
+  // above returns before this, so an unconfigured key or a provider error can
+  // never cost someone one of their three.
+  await burnAiCredit(env, allow);
+
   return jsonResponse(200, {
     ok: true,
     kind: result.kind,
     title: result.title,
     body: result.body,
+    aiUsage: allow.unmetered
+      ? { unmetered: true }
+      : { used: (allow.used || 0) + 1, cap: allow.cap },
     disclaimer: 'This is a starting draft, not legal advice. Review it (ideally with a licensed attorney) before you send.',
   });
 }
@@ -6212,6 +6307,17 @@ async function handleDocSummary(request, env, docId, url) {
   ]);
   if (!docRl.ok) return rateLimitedResponse(docRl, { endpoint: '/api/docs/summary' });
 
+  // Same entitlement as drafting: metered on free and Solo, unmetered from Pro
+  // up, which is what the pricing page sells. The caller is already
+  // authenticated by the sender token above, so the document's own identity is
+  // the quota key rather than a separate free-signup token.
+  const owner = await getOwnerForRequest(request, env, url);
+  const allow = await checkAiAllowance(env, request, { senderId: doc.senderId }, {
+    owner,
+    quotaId: doc.senderEmailHash || doc.senderId || null,
+  });
+  if (!allow.ok) return jsonResponse(allow.status, allow.body);
+
   const values = mergeSignerFills(doc.signers);
 
   let result;
@@ -6240,9 +6346,12 @@ async function handleDocSummary(request, env, docId, url) {
     });
   }
 
+  await burnAiCredit(env, allow);
+
   return jsonResponse(200, {
     ok: true,
     summary: result.summary,
+    aiUsage: allow.unmetered ? { unmetered: true } : { used: (allow.used || 0) + 1, cap: allow.cap },
     disclaimer: 'This is a plain-English summary for convenience, not legal advice.',
   });
 }
