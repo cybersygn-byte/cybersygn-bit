@@ -87,6 +87,45 @@ await t('the signer is never told of a notification that did not happen', () => 
     'the toast must branch on result.senderNotified rather than always claiming success');
 });
 
+await t('email a copy actually sends, and attaches the FILLED pdf', async () => {
+  // Two separate faults on one feature. deliverSnapshot was called in index.js
+  // and imported nowhere, so /api/snapshot/email threw a ReferenceError before
+  // Promise.all was even built and the feature had never sent a single email.
+  // Underneath that, the client attached docState.originalBytes, the UNFILLED
+  // original, so the day the send started working it would have mailed a blank
+  // contract to the counterparty.
+  const worker = (await import('../worker/src/index.js')).default;
+  const sent = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => {
+    if (String(u).includes('resend')) { sent.push(JSON.parse(o.body)); return new Response(JSON.stringify({ id: 'e1' }), { status: 200 }); }
+    return new Response('{}', { status: 200 });
+  };
+  try {
+    const kv = new Map();
+    const st = {
+      get: async (k, ty) => { const v = kv.get(k); if (v == null) return null; return ty === 'json' ? JSON.parse(v) : v; },
+      put: async (k, v) => { kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+      delete: async (k) => kv.delete(k), list: async () => ({ keys: [], list_complete: true }),
+    };
+    const env = { CYBERSYGN_DOCS: st, CYBERSYGN_PDFS: st, RESEND_API_KEY: 're_test', CYBERSYGN_FROM: 'hello@cybersygn.io' };
+    const pdf = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(400, 0x20), Buffer.from('\n%%EOF')]);
+    const res = await worker.fetch(new Request('https://x/api/snapshot/email', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' },
+      body: JSON.stringify({ pdfBase64: pdf.toString('base64'), filename: 'nda.pdf', recipients: ['legal@example.com'], senderName: 'N', senderId: 'snd_1' }),
+    }), env, { waitUntil() {} });
+    assert.equal(res.status, 200, 'the endpoint must not throw');
+    assert.equal(sent.length, 1, 'the copy must actually be emailed');
+  } finally { globalThis.fetch = realFetch; }
+
+  // And the client must hand it flattened bytes, not the original.
+  const app = readFileSync(new URL('../web/preview/app.js', import.meta.url), 'utf8');
+  const call = app.slice(app.indexOf('const pdfBytes = await flattenToBytes'), app.indexOf('const sendersList'));
+  assert.ok(/flattenToBytes\(/.test(call), 'email a copy must flatten before sending');
+  assert.ok(!/pdfBytes = new Uint8Array\(freshCopy\(docState\.originalBytes\)\)/.test(app),
+    'it must never attach the unfilled original again');
+});
+
 console.log(out.join('\n'));
 console.log(`\ndecline notice: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

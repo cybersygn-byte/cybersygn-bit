@@ -33,7 +33,7 @@
 
 import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
-import { sendInvite, sendCompletion, sendReminder, deliverDeclineNotice, deliver as deliverEmail } from './email.js';
+import { sendInvite, sendCompletion, sendReminder, deliverDeclineNotice, deliverSnapshot, deliver as deliverEmail } from './email.js';
 import { setEmailBusinessAddress, renderErasureHtml } from './email-html.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
