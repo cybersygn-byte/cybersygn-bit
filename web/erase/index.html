@@ -84,10 +84,12 @@
 
       <h2>What we keep, and why.</h2>
       <p>
-        For any document that was already completed, we keep a <strong>fingerprint</strong>: a
-        64-character SHA-256 hash of the PDF, the number of signers, and the date it completed.
-        There is no name in it, no email address, and none of the document text. It cannot be
-        reversed back into any of those.
+        For any document that was already completed, we keep a <strong>verification record</strong>:
+        the 64-character SHA-256 fingerprint of the document as it was sent for signature, the
+        fingerprint of the signed PDF we issued for it when one was produced, the number of
+        signers, and the dates it was created and completed. There is no name in it, no email
+        address, and none of the document text, and a hash cannot be reversed back into any of
+        those.
       </p>
       <p>
         We keep it because a contract has more than one party. Deleting it would let one side of

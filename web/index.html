@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>CyberSygn. Private signing. Proof anyone can check.</title>
-  <meta name="description" content="Your document stays in your browser until you send it. Sent documents finish with a tamper-evident SHA-256 certificate anyone can verify for free." />
+  <meta name="description" content="Your document stays in your browser until you send it. Send it and every signer ends up with the same signed PDF, with a SHA-256 fingerprint anyone can check for free." />
   <meta name="keywords" content="e-signature, electronic signature, DocuSign alternative, Dropbox Sign alternative, SignWell alternative, PDF signing, signature detection, contract signing, field detection, in-person signing" />
   <meta name="author" content="CyberSygn" />
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -29,7 +29,7 @@
   <meta name="apple-mobile-web-app-title" content="CyberSygn" />
 
   <meta property="og:title" content="CyberSygn. Private signing. Proof anyone can check." />
-  <meta property="og:description" content="Your document stays in your browser until you send it. Sent documents finish with a tamper-evident SHA-256 certificate anyone can verify for free." />
+  <meta property="og:description" content="Your document stays in your browser until you send it. Send it and every signer ends up with the same signed PDF, with a SHA-256 fingerprint anyone can check for free." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
@@ -39,7 +39,7 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="CyberSygn. Private signing. Proof anyone can check." />
-  <meta name="twitter:description" content="Your document stays in your browser until you send it. Sent documents finish with a tamper-evident SHA-256 certificate anyone can verify for free." />
+  <meta name="twitter:description" content="Your document stays in your browser until you send it. Send it and every signer ends up with the same signed PDF, with a SHA-256 fingerprint anyone can check for free." />
   <meta name="twitter:image" content="https://cybersygn.io/brand/og-image.png" />
 
   <script type="application/ld+json">
@@ -66,7 +66,7 @@
         "@id": "https://cybersygn.io/#website",
         "url": "https://cybersygn.io/",
         "name": "CyberSygn",
-        "description": "E-signature that keeps your document in your browser until you choose to send it, with a tamper-evident SHA-256 certificate on every completed document.",
+        "description": "E-signature that keeps your document in your browser until you choose to send it, then issues one signed PDF whose SHA-256 fingerprint anyone can check for free.",
         "publisher": { "@id": "https://cybersygn.io/#organization" },
         "inLanguage": "en-US"
       },
@@ -78,14 +78,16 @@
         "applicationCategory": "BusinessApplication",
         "applicationSubCategory": "Electronic Signature Software",
         "operatingSystem": "Web",
-        "description": "E-signature service where field detection runs in your browser and your document is not uploaded until you choose to send it. Every completed document carries a tamper-evident SHA-256 certificate anyone can check at cybersygn.io/verify. Sign in person or route private links to remote signers.",
+        "description": "E-signature service where field detection runs in your browser and your document is not uploaded until you choose to send it. When every signer on a sent document finishes, CyberSygn flattens the signatures into one signed PDF, gives that same file to every party, and records its SHA-256 fingerprint in a PII-free record anyone can check at cybersygn.io/verify. Sign in person or route private links to remote signers.",
         "featureList": [
           "Automatic signature field detection",
           "PDF and Word document support",
           "Multi-signer routing with magic links",
           "In-person shared-device signing",
           "Camera scan upload for paper documents",
-          "Tamper-evident audit certificate with SHA-256 fingerprint",
+          "One signed PDF issued per completed document, identical for every party",
+          "Tamper-evident audit certificate carrying the SHA-256 fingerprint of that file",
+          "Free public fingerprint check at cybersygn.io/verify, no account needed",
           "No signer account required"
         ],
         "offers": [
@@ -214,7 +216,15 @@
             "name": "What happens to my PDF after I upload it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you invite remote signers, the PDF is stored in Cloudflare KV, encrypted at rest. A document that is never completed is deleted 30 days after it was created. Once every signer finishes, CyberSygn keeps the signed document and its audit certificate for the life of your account, which is what the certificate we hand each signer promises. The PII-free verification record is kept permanently, so cybersygn.io/verify works even if the file is later removed."
+              "text": "Detection runs in your browser. The PDF never leaves your device during the detection step. When you send it for signature, the PDF is stored in Cloudflare KV, encrypted at rest. A document that is never completed is deleted 30 days after it was created. Once every signer finishes, CyberSygn builds the signed PDF and keeps it, the original, and the audit certificate for the life of your account, which is what the certificate we hand each signer promises. The PII-free verification record is kept permanently, so cybersygn.io/verify works even if the files are later removed."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does the fingerprint actually prove?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "That the file you are holding is byte for byte the file CyberSygn issued when the document completed, and that a document with that fingerprint was completed on CyberSygn by that many signers on that date. Change one byte of the PDF and the fingerprint no longer matches. It does not prove who the signers were: the verification record is PII-free on purpose and holds no name, email, or document text. Names, emails, IP addresses, and timestamps live on the audit certificate, which only the parties to the document receive."
             }
           },
           {
@@ -222,7 +232,7 @@
             "name": "Is the audit certificate legally binding?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "It documents the audit trail (every event timestamp, IP, user agent, and a SHA-256 fingerprint of the original PDF). Legal weight depends on jurisdiction. We are not lawyers. The certificate is evidence, not a guarantee."
+              "text": "It documents the audit trail: every event timestamp, IP, user agent, and a SHA-256 fingerprint for every file that exists for the signing, normally the signed PDF CyberSygn issued and the original it was built from. The certificate names which file each fingerprint was taken from, so you always know what to hash. Legal weight depends on jurisdiction. We are not lawyers. The certificate is evidence, not a guarantee."
             }
           },
           {
@@ -388,9 +398,9 @@
           <p class="lede hero__lede">
             Drop a PDF and everything happens on your device: CyberSygn finds every signature
             line right in your browser, and your document is not uploaded until you choose to
-            send it. Send it for signature and, when the last signer finishes, the finished
-            document comes with a tamper-evident SHA-256 certificate anyone can check, free,
-            at cybersygn.io/verify.
+            send it. Send it for signature and, when the last signer finishes, CyberSygn issues
+            one signed PDF to every party and records its SHA-256 fingerprint, which anyone can
+            check, free, at cybersygn.io/verify.
           </p>
           <div class="hero__actions">
             <!-- The primary CTA now carries a sample document. "Try it out"
@@ -497,7 +507,7 @@
         </li>
         <li class="trustbar__item">
           <span class="trustbar__fig trustbar__fig--word">Tamper-evident</span>
-          <span class="trustbar__label">Audit trail on every completed document</span>
+          <span class="trustbar__label">Audit trail on every document you send for signature</span>
         </li>
         <!-- Live: labeled documents in the consented dataset. Hidden until a
              real /api/dataset/count response arrives. -->
@@ -571,8 +581,10 @@
         <li class="valuestrip__item">
           <p class="valuestrip__head">Proof anyone can check</p>
           <p class="valuestrip__body">
-            Every document sent for signature finishes with a tamper-evident SHA-256
-            certificate. Anyone can confirm it at cybersygn.io/verify. No account, no login, free.
+            Send a document and every party ends up with the same signed PDF, the one CyberSygn
+            issued, not a copy each browser made for itself. Its SHA-256 fingerprint is printed on
+            the audit certificate, and anyone holding the file can check that fingerprint at
+            cybersygn.io/verify. No account, no login, free.
           </p>
         </li>
         <li class="valuestrip__item">
@@ -634,7 +646,7 @@
         </div>
         <p class="lede section__lede">
           Upload a PDF. CyberSygn finds the fields. Pick in-person signing on the spot, or send private links to remote signers.
-          You get the signed PDF and a tamper-evident audit certificate the moment the last signer completes.
+          Send it, and the moment the last signer completes CyberSygn issues the signed PDF and a tamper-evident audit certificate to every party.
         </p>
       </header>
 
@@ -671,8 +683,11 @@
           <span class="step__num">03 · Close</span>
           <h3 class="h-card step__title">Get the signed PDF and proof.</h3>
           <p class="step__body">
-            You get the flattened PDF plus a tamper-evident audit certificate with every event,
-            IP, and a SHA-256 fingerprint, the moment the last signer completes.
+            On a document you sent, the moment the last signer completes CyberSygn flattens the
+            signatures into one signed PDF and gives that same file to everyone, with an audit
+            certificate listing every event, every IP, and the SHA-256 fingerprint of that file.
+            Signing in person and downloading here instead gives you the flattened PDF straight
+            from your browser; sending is what produces the certificate and the public fingerprint.
           </p>
         </li>
       </ol>
@@ -788,7 +803,7 @@
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <p class="trust-tile__title">SHA-256 audit cert</p>
-          <p class="trust-tile__sub">Court-ready evidence: every signing event, IP, timestamp, and a fingerprint anyone can check at cybersygn.io/verify.</p>
+          <p class="trust-tile__sub">Every signing event, IP, and timestamp, plus a SHA-256 fingerprint for each file the signing produced, labeled with the file it covers. Anyone holding that file can check its fingerprint at cybersygn.io/verify.</p>
         </li>
         <li class="trust-tile">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -861,11 +876,11 @@
         </details>
         <details class="faq-pre__item">
           <summary><strong>Is it legally binding?</strong></summary>
-          <p>Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and the SHA-256 fingerprint of the original document. Same legal weight as DocuSign or HelloSign in any U.S. jurisdiction.</p>
+          <p>Yes. CyberSygn is ESIGN Act (United States) and UETA-compliant. The audit certificate captures every signing event, IP address, timestamp, and a SHA-256 fingerprint for every file that exists for the signing, each one labeled with the file it covers. Same legal weight as DocuSign or HelloSign in any U.S. jurisdiction.</p>
         </details>
         <details class="faq-pre__item">
           <summary><strong>Will my data be sold?</strong></summary>
-          <p>No, ever. Here is the plain deal: free documents may be used, without any personal content, to improve our field detection. Paid documents never are. Signed PDFs are stored long enough for the signing flow to complete, then expire.</p>
+          <p>No, ever. Here is the plain deal: free documents may be used, without any personal content, to improve our field detection. Paid documents never are. A document nobody finishes signing is deleted 30 days after it was created. A completed one, and the signed PDF we issue for it, is kept for the life of your account, and you can erase all of it yourself at cybersygn.io/erase.</p>
         </details>
         <details class="faq-pre__item">
           <summary><strong>Do signers need an account?</strong></summary>
@@ -926,7 +941,7 @@
             <li>Templates auto-apply to every repeat upload</li>
             <li>In-person mode for closing meetings</li>
             <li>Camera scan turns paper into a signable PDF</li>
-            <li>SHA-256 audit certificate on every signed doc</li>
+            <li>SHA-256 audit certificate on every document you send</li>
           </ul>
           <button class="btn btn--ghost btn--block" type="button" data-checkout-tier="solo">
             Go unlimited →
@@ -1209,12 +1224,30 @@
           <div class="faq__a">
             <p>
               Detection runs in your browser. The PDF never leaves your device during the
-              detection step. When you invite remote signers, the PDF is stored in Cloudflare KV,
+              detection step. When you send it for signature, the PDF is stored in Cloudflare KV,
               encrypted at rest. A document nobody finishes signing is deleted 30 days after it
-              was created. Once every signer finishes, we keep the signed document and its audit
-              certificate for the life of your account, which is exactly what the certificate
-              handed to each signer promises. The PII-free verification record is kept
-              permanently, so cybersygn.io/verify works even if the file is later removed.
+              was created. Once every signer finishes, we build the signed PDF and keep it, the
+              original, and the audit certificate for the life of your account, which is exactly
+              what the certificate handed to each signer promises. The PII-free verification
+              record is kept permanently, so cybersygn.io/verify works even if the files are
+              later removed.
+            </p>
+          </div>
+        </details>
+        <details class="faq__item">
+          <summary class="faq__q">What does the fingerprint actually prove?</summary>
+          <div class="faq__a">
+            <p>
+              That the file you are holding is byte for byte the file CyberSygn issued when the
+              document completed, and that a document with that fingerprint was completed on
+              CyberSygn by that many signers on that date. Change one byte of the PDF and the
+              fingerprint no longer matches.
+            </p>
+            <p>
+              It does not prove who the signers were. The verification record is PII-free on
+              purpose: no name, no email, no document text, nothing that can be reversed back
+              into any of those. Names, emails, IP addresses, and the full event timeline live on
+              the audit certificate, which only the parties to the document receive.
             </p>
           </div>
         </details>
@@ -1222,9 +1255,12 @@
           <summary class="faq__q">Is the audit certificate legally binding?</summary>
           <div class="faq__a">
             <p>
-              It documents the audit trail (every event timestamp, IP, user agent, and a SHA-256
-              fingerprint of the original PDF). Legal weight depends on jurisdiction. We are not
-              lawyers. The certificate is evidence, not a guarantee.
+              It documents the audit trail: every event timestamp, IP, user agent, and a SHA-256
+              fingerprint for every file that exists for the signing, normally the signed PDF
+              CyberSygn issued and the original it was built from. The certificate names which
+              file each fingerprint was taken from, so you always know what to hash. Legal weight
+              depends on jurisdiction. We are not lawyers. The certificate is evidence, not a
+              guarantee.
             </p>
           </div>
         </details>
