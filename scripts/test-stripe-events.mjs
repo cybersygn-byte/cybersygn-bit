@@ -259,37 +259,42 @@ await t('an undefined tier on a subscription event is refused too', async () => 
 });
 
 // ---------------------------------------------------------------- upgrade
-await t('BLOCKER: a plan change swaps the price in place, no second subscription', async () => {
+await t('a plan change goes through Checkout, it never silently charges the card', async () => {
+  // This test previously asserted an IN-PLACE price swap on the existing
+  // subscription. That implementation was deliberately reverted: it turned
+  // POST /api/checkout/create-session from "mint a Checkout URL the customer
+  // reviews" into an immediate, irreversible billing mutation with prorations
+  // and no confirmation screen, so clicking Upgrade charged you before you saw
+  // a price. maybeChangePlanInPlace still exists in worker/src/stripe.js,
+  // unwired, with the reasoning written above it.
+  //
+  // The entitlement bug that motivated it is fixed properly by
+  // staleSubscriptionEvent instead: cancelling a superseded subscription no
+  // longer wipes access, and a dead sibling cannot downgrade a live plan.
+  //
+  // What this now asserts is the DECISION: an upgrade must reach a page where
+  // the customer sees the price first.
   const env = makeEnv();
   await stripe.applyStripeEvent(env, evt('checkout.session.completed', session({ tier: 'solo', sub: null })));
   await stripe.applyStripeEvent(env, evt('customer.subscription.updated', subObj({ id: 'sub_1' }), { created: 10 }));
 
   const calls = mockStripe([
-    { method: 'GET', path: '/subscriptions/sub_1', json: subObj({ id: 'sub_1' }) },
-    { method: 'POST', path: '/subscriptions/sub_1', json: (body) => ({
-      id: 'sub_1', status: 'active',
-      items: { data: [{ id: 'si_1', price: { id: body['items[0][price]'] } }] },
-      current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400,
-    }) },
+    { method: 'POST', path: '/checkout/sessions', json: { id: 'cs_1', url: 'https://checkout.stripe.com/c/pay/cs_1' } },
   ]);
   try {
     const out = await stripe.createCheckoutSession(env, {
       tier: 'pro', senderId: 'snd_1', origin: 'https://cybersygn.io',
     });
-    assert.equal(out.planChanged, true);
-    assert.equal(out.from, 'solo');
-    assert.match(out.url, /^https:\/\/cybersygn\.io\/dashboard\//);
-    assert.equal(calls.filter(c => c.url.includes('/checkout/sessions')).length, 0,
-      'no hosted Checkout session, so no second subscription');
-    const post = calls.find(c => c.method === 'POST');
-    assert.equal(post.body['items[0][id]'], 'si_1');
-    assert.equal(post.body['items[0][price]'], 'price_pro');
-    assert.equal(post.body['metadata[tier]'], 'pro', 'webhook must not write the old tier back');
-    const after = await rec(env);
-    assert.equal(after.tier, 'pro');
-    assert.equal(after.stripeSubscriptionId, 'sub_1');
-    assert.equal(after.planChangedFrom, 'solo');
-  } finally { restoreFetch(); }
+    assert.ok(out && out.url, 'a checkout URL is returned');
+    assert.ok(!out.planChanged, 'no silent in-place plan change');
+    assert.equal(
+      calls.filter(c => c.method === 'POST' && /\/subscriptions\/sub_1$/.test(c.path || c.url || '')).length,
+      0,
+      'the existing subscription must NOT be mutated without a confirmation step',
+    );
+  } finally {
+    restoreFetch();
+  }
 });
 
 await t('a first-time buyer still goes through hosted Checkout', async () => {

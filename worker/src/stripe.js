@@ -875,8 +875,22 @@ function staleSubscriptionEvent(existing, sub, eventCreated, opts = {}) {
   // subscription would then drop them to free. The newest active subscription
   // is by definition the live one, so an upsert rebinds. Ordering is still
   // protected by the timestamp check below.
-  if (opts.isDelete && existing.stripeSubscriptionId && sub.id && sub.id !== existing.stripeSubscriptionId) {
-    return 'not_the_active_subscription';
+  // A sibling is any subscription other than the one currently bound.
+  const isSibling = !!(existing.stripeSubscriptionId && sub.id && sub.id !== existing.stripeSubscriptionId);
+  if (isSibling) {
+    // DELETE from a sibling: always ignore. Cancelling a superseded
+    // subscription must not wipe entitlement for a customer still paying on
+    // the live one.
+    if (opts.isDelete) return 'not_the_active_subscription';
+    // UPSERT from a sibling: rebind ONLY if the incoming subscription is
+    // actually running. The newest RUNNING subscription is by definition the
+    // customer's current plan, which is what makes an upgrade record
+    // correctly. But a sibling in any other state (canceled, incomplete,
+    // unpaid) is not a plan, and letting one through would let a dead
+    // subscription's trailing event downgrade a live paying customer.
+    // Scoping this guard to deletes alone was exactly that bug.
+    const live = sub.status === 'active' || sub.status === 'trialing';
+    if (!live) return 'not_the_active_subscription';
   }
   const seen = Number(existing.lastSubEventAt);
   // Strictly older only: Stripe stamps several events in the same second and
