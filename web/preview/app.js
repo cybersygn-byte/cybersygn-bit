@@ -38,7 +38,7 @@ import {
   declineSign,
   emailSnapshot,
 } from './api.js';
-import { getSenderId, rememberDocToken, getActiveWorkspace } from './identity.js';
+import { getSenderId, rememberDocToken, getDocToken, getActiveWorkspace } from './identity.js';
 import * as ownerMod from './owner.js';
 import * as cvDetect from './cv-detect.js';
 
@@ -4736,6 +4736,10 @@ function openSendModal() {
         if (sendResult.data.senderToken) {
           rememberDocToken(sendResult.data.docId, sendResult.data.senderToken);
         }
+        // The SERVER document id, kept apart from docState.docId (a content
+        // hash). Without it the sender has no way to ask for the canonical
+        // signed copy later and would silently fall back to a local flatten.
+        docState.serverDocId = sendResult.data.docId;
         close();
         openLinksModal(sendResult.data);
         emitEvent('doc_created', { signers: list.length });
@@ -4841,10 +4845,19 @@ function openSendModal() {
       // Falls back to the local flatten on any failure, so a document is
       // always downloadable even when the canonical build is unavailable.
       let servedCanonical = false;
-      if (allComplete && docState.serverDocId && docState.serverToken) {
+      // A signer authenticates with their own token; the sender with the one
+      // stored at send time. Either identifies a party entitled to the file,
+      // and both must resolve to the SAME bytes or the published fingerprint
+      // matches nobody.
+      const signedCred = docState.serverToken
+        ? 't=' + encodeURIComponent(docState.serverToken)
+        : (docState.serverDocId && getDocToken(docState.serverDocId)
+            ? 's=' + encodeURIComponent(getDocToken(docState.serverDocId))
+            : null);
+      if (allComplete && docState.serverDocId && signedCred) {
         try {
           const res = await fetch(
-            `/api/docs/${encodeURIComponent(docState.serverDocId)}/signed?t=${encodeURIComponent(docState.serverToken)}`,
+            `/api/docs/${encodeURIComponent(docState.serverDocId)}/signed?${signedCred}`,
           );
           if (res.ok) {
             const blob = await res.blob();
@@ -5079,6 +5092,9 @@ function openSingleSendModal(ccList = []) {
       if (sendResult.data.senderToken) {
         rememberDocToken(sendResult.data.docId, sendResult.data.senderToken);
       }
+      // Same as the multi-signer path: record the SERVER doc id so this
+      // sender can fetch the canonical signed copy rather than a local flatten.
+      docState.serverDocId = sendResult.data.docId;
       close();
       openLinksModal(sendResult.data);
       emitEvent('doc_created', { signers: 1 });
