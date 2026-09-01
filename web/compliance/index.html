@@ -97,10 +97,11 @@
 
         <h2 class="h-section">Data retention.</h2>
         <ul>
-          <li><strong>Every document</strong> carries a 30-day KV expiry, counted from the last write. That covers the unsigned PDF, the signing record, and, after completion, the signed PDF and its audit certificate. When it expires the record is gone: magic links 404 and there is no restore. Download the signed PDF and the audit certificate when a document completes.</li>
+          <li><strong>An unfinished document</strong> carries a 30-day expiry, counted from the last write, covering the uploaded PDF and the signing record. When it expires the record is gone and its magic links 404.</li>
+          <li><strong>A completed document is kept, not expired.</strong> On completion the signing record, the signed PDF, and the audit certificate are all written without an expiry. The 30-day clock applies to the original upload only.</li>
           <li><strong>Audit certificates</strong> are immutable once generated. We do not modify them in-place.</li>
           <li><strong>Verification records</strong> are permanent. On completion we store the SHA-256 fingerprint, signer count, and timestamps, with no name, email, title, or document content, so a saved PDF stays verifiable at /verify/ after the 30 days.</li>
-          <li><strong>Encrypted daily backups are written to Cloudflare R2 and retained for 35 days, then deleted automatically.</strong> Nothing is copied to secondary storage today, so there is no backup for us to restore from and none for deleted data to survive in.</li>
+          <li><strong>Encrypted daily backups are written to Cloudflare R2 and retained for 35 days, then deleted automatically.</strong> A record deleted from the live store can still exist in a dated backup file until that file ages out, so allow up to 35 days for a deletion to disappear everywhere. The backup covers the document, subscription, and free-tier records; the signed PDF and the audit certificate live in a separate store that the backup job does not read.</li>
           <li><strong>Free tier</strong> drip records retain email + name for 5 years for transactional drip. Deletable on request (see GDPR below).</li>
           <li><strong>Owner-only datasets:</strong> we retain a labeled-PDF training corpus from free-tier consent, used for improving detection. No document content; positions and types only.</li>
         </ul>

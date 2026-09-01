@@ -88,8 +88,26 @@ t('the compliance page describes retention and backups as they actually are', ()
   const html = read('web/compliance/index.html');
   assert.ok(/\bR2\b/.test(html), 'the page must disclose the R2 backup target now that one exists');
   assert.ok(/35 day|35-day/.test(html), 'and the retention window callers are told about');
-  assert.ok(!/There is no backup archive/.test(html), 'the old false claim must be gone');
-  assert.ok(!/no object store or long-term archive/.test(html), 'and its sibling claim too');
+  // Check the CLAIM, not the one sentence that happened to carry it.
+  // The first pass at this rewrote only the bolded lead of the backup bullet
+  // and left the trailing clause, so the page asserted both that daily R2
+  // backups are retained 35 days AND that "there is no backup for us to
+  // restore from". I verified by grepping the exact string I had deleted,
+  // which is why the contradiction survived a green build.
+  for (const lie of [
+    /There is no backup archive/i,
+    /no object store or long-term archive/i,
+    /no backup for us to restore from/i,
+    /Nothing is copied to secondary storage/i,
+  ]) {
+    assert.ok(!lie.test(html), `compliance page still denies the backup: ${lie}`);
+  }
+  // Completed documents are kept, not expired: docRetention() returns {} once
+  // completedAt is set, and signed:/audit: are written with no expirationTtl.
+  assert.ok(!/Every document.{0,40}30-day KV expiry/s.test(html),
+    'the page must not claim a 30-day expiry covers completed documents');
+  assert.ok(/completed document is kept/i.test(html),
+    'the page must say completed documents are retained');
 });
 
 // ---- embed / CSP ----------------------------------------------------------
