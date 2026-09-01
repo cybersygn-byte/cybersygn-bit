@@ -4991,7 +4991,13 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
         to: s.email,
         name: s.name,
         docTitle: final.title,
-        downloadUrl: `${baseUrl}/preview/?doc=${docId}&t=${s.token}`,
+        // The canonical signed bytes, NOT /preview/. A button labelled
+        // "Download signed PDF" that opens a live signing page gives the
+        // signer no file at all, and hands them an editing surface for a
+        // document they already signed. handleGetSignedPdf accepts ?t=
+        // (signer) as well as ?s= (sender), so every party resolves to the
+        // same bytes and the same hash on the audit certificate.
+        downloadUrl: `${baseUrl}/api/docs/${docId}/signed?t=${s.token}`,
         auditUrl: auditUrl ? `${baseUrl}/api/docs/${docId}/audit?t=${s.token}` : null,
       }).then(r => ({ to: s.email, role: 'signer', ...r })),
     );
@@ -4999,7 +5005,7 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     // their own; they get the first signer's read link. Post-completion that
     // token cannot mutate anything (fills/decline both reject completed docs).
     const ccList = Array.isArray(final.cc) ? final.cc : [];
-    const ccDownloadUrl = `${baseUrl}/preview/?doc=${docId}&t=${final.signers[0].token}`;
+    const ccDownloadUrl = `${baseUrl}/api/docs/${docId}/signed?t=${final.signers[0].token}`;
     const ccSends = ccList.filter(e => isValidEmail(e)).map(email =>
       sendCompletion(env, {
         to: email,

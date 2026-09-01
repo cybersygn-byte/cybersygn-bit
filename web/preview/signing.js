@@ -490,7 +490,7 @@ export function renderBoxForFill(box, field, value) {
  * user units, which is what pdf-lib expects, so the coordinates pass
  * through unchanged.
  */
-export async function flattenAndDownload({ originalBytes, fields, fillStore, filename }) {
+export async function flattenToBytes({ originalBytes, fields, fillStore }) {
   const pdfDoc = await PDFDocument.load(originalBytes);
   const pages = pdfDoc.getPages();
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -553,7 +553,20 @@ export async function flattenAndDownload({ originalBytes, fields, fillStore, fil
   // the page so search engines indexing PDFs see the brand mention.
   await drawViralFooter(pdfDoc, helvetica);
 
-  const bytes = await pdfDoc.save();
+  return await pdfDoc.save();
+}
+
+/**
+ * Bake the fills in and hand the browser a download.
+ *
+ * The flatten above used to live inline here, which is why "Email a copy"
+ * could not reuse it: it had no way to get the bytes without also triggering a
+ * download, so it attached docState.originalBytes instead and shipped the
+ * BLANK document to the recipients while the modal told the user the fills
+ * were baked in. Splitting flattenToBytes out is the whole fix.
+ */
+export async function flattenAndDownload({ originalBytes, fields, fillStore, filename }) {
+  const bytes = await flattenToBytes({ originalBytes, fields, fillStore });
   const blob = new Blob([bytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

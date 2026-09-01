@@ -16,6 +16,7 @@ import {
   openCaptureModal,
   renderBoxForFill,
   flattenAndDownload,
+  flattenToBytes,
   createFillStore,
 } from './signing.js';
 import {
@@ -3682,14 +3683,20 @@ function openEmailCopyModal() {
     sendBtn.disabled = true;
     sendBtn.textContent = 'Preparing and sending…';
     try {
-      // Flatten the PDF in browser. flattenAndDownload normally triggers
-      // a download, we want the bytes, so use the underlying flatten()
-      // by re-rendering. Simpler approach: do a hidden flatten via the
-      // same path but capture before download. flattenAndDownload doesn't
-      // return bytes today, so for this slice we use the original PDF
-      // (no fills baked in). Full bake-in arrives in a follow-up when we
-      // factor out the flatten path.
-      const pdfBytes = new Uint8Array(freshCopy(docState.originalBytes));
+      // Bake the fills in, the same way the download path does.
+      //
+      // This used to attach docState.originalBytes: the UNFILLED original. The
+      // modal above says "We flatten the PDF with whatever you've filled and
+      // attach it", and the email tells the recipient they are receiving a
+      // signed document, so the user sent a BLANK contract to a counterparty
+      // and was told it was signed. The comment here called the bake-in a
+      // follow-up "when we factor out the flatten path"; that follow-up is
+      // flattenToBytes, so this now uses it.
+      const pdfBytes = await flattenToBytes({
+        originalBytes: freshCopy(docState.originalBytes),
+        fields: docState.fields,
+        fillStore,
+      });
       const sendersList = signers.list();
       const senderName = (sendersList[0] && sendersList[0].name) || 'A CyberSygn user';
       const senderEmail = (sendersList[0] && sendersList[0].email) || '';
