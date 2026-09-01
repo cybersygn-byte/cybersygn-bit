@@ -56,8 +56,9 @@
     "test:stripeevt": "node scripts/test-stripe-events.mjs",
     "test:templatedet": "node scripts/test-template-detection.mjs",
     "check:integrity": "node scripts/check-integrity.mjs",
-    "verify": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:verifyrec && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet",
-    "test:verifyrec": "node scripts/test-verify.mjs"
+    "verify": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:observability && npm run test:verifyrec && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet",
+    "test:verifyrec": "node scripts/test-verify.mjs",
+    "test:observability": "node scripts/test-observability.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

@@ -109,3 +109,67 @@ function sanitizeContext(ctx) {
   }
   return out;
 }
+
+/**
+ * Last-resort error visibility, for when no Sentry DSN is configured.
+ *
+ * Without a DSN, reportToSentry is a no-op and an uncaught error reaches
+ * console.error and nothing else. Cloudflare's log stream is not retained and
+ * nobody is tailing it, so a production failure is effectively invisible to
+ * the one person running this. That is how a broken path survives for weeks.
+ *
+ * This keeps a small bounded ring of recent errors in KV, PII-free by
+ * construction: a message, a location, a timestamp, and a count. No request
+ * body, no headers, no email, no document content, and the URL is reduced to
+ * its pathname so a token in a query string cannot land here.
+ *
+ * Bounded and best-effort: it never throws, and a failure to record must never
+ * turn a handled error into an unhandled one.
+ */
+const ERR_KEY = 'meta:errors:recent';
+const ERR_MAX = 25;
+
+export async function recordError(env, err, context = {}) {
+  try {
+    const kv = env && env.CYBERSYGN_DOCS;
+    if (!kv || typeof kv.get !== 'function') return false;
+
+    // Reduce the URL to a pathname: query strings carry signer tokens.
+    let where = String(context.where || 'unknown');
+    if (context.url) {
+      try { where += ' ' + new URL(context.url).pathname; } catch (e) { /* keep the label alone */ }
+    }
+    const message = String((err && err.message) || err || 'unknown').slice(0, 300);
+
+    let ring = [];
+    try { ring = JSON.parse(await kv.get(ERR_KEY)) || []; } catch (e) { ring = []; }
+    if (!Array.isArray(ring)) ring = [];
+
+    // Collapse repeats rather than letting one hot loop evict everything else.
+    const match = ring.find(e => e.message === message && e.where === where);
+    if (match) {
+      match.count = (match.count || 1) + 1;
+      match.lastAt = new Date().toISOString();
+    } else {
+      ring.unshift({ message, where, count: 1, firstAt: new Date().toISOString(), lastAt: new Date().toISOString() });
+    }
+    if (ring.length > ERR_MAX) ring.length = ERR_MAX;
+
+    await kv.put(ERR_KEY, JSON.stringify(ring));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/** Read the recent-error ring for the owner panel. Never throws. */
+export async function getRecentErrors(env) {
+  try {
+    const kv = env && env.CYBERSYGN_DOCS;
+    if (!kv || typeof kv.get !== 'function') return [];
+    const ring = JSON.parse(await kv.get(ERR_KEY)) || [];
+    return Array.isArray(ring) ? ring : [];
+  } catch (e) {
+    return [];
+  }
+}

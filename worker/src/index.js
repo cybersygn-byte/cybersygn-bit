@@ -59,7 +59,7 @@ import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dat
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
-import { reportToSentry } from './sentry.js';
+import { reportToSentry, recordError, getRecentErrors } from './sentry.js';
 import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
@@ -494,6 +494,13 @@ const worker = {
 
     if (request.method === 'GET' && url.pathname === '/api/owner/funnel') {
       return await handleOwnerFunnel(request, env, url);
+    }
+
+    // Recent worker errors, PII-free, for when no Sentry DSN is configured.
+    if (request.method === 'GET' && url.pathname === '/api/owner/errors') {
+      const owner = await getOwnerForRequest(request, env, url);
+      if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+      return jsonResponse(200, { errors: await getRecentErrors(env) });
     }
 
     // Freeze or unfreeze an ambassador's payouts.
@@ -944,6 +951,10 @@ const worker = {
       // Cloudflare 1101 page. Report it, then return clean JSON for API routes
       // and a generic 500 for everything else.
       try { await reportToSentry(env, err, { where: 'fetch', url: request.url }); } catch (_) {}
+      // Also record locally. reportToSentry is a no-op with no DSN configured,
+      // and console.error is not retained anywhere a human will look, so
+      // without this an uncaught error in production is invisible.
+      try { await recordError(env, err, { where: 'fetch', url: request.url }); } catch (_) {}
       console.error('[fetch] unhandled:', (err && err.stack) || err);
       let isApi = false;
       try { isApi = new URL(request.url).pathname.startsWith('/api/'); } catch (_) {}

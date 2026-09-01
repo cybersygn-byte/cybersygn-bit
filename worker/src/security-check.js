@@ -67,6 +67,38 @@ export async function runSecurityCheck(env, opts = {}) {
       : ownerHashRaw === KNOWN_DEV_OWNER_HASH ? 'CYBERSYGN_OWNER_HASH is the PUBLIC dev value, rotate immediately'
       : 'CYBERSYGN_OWNER_HASH is not a valid 64-hex SHA-256', 'critical');
 
+  // ---- 1b. Configuration that is legally or operationally required ---------
+  //
+  // These were invisible. Four secrets were unset for the entire build and
+  // nothing anywhere said so, which is the same silence problem as a test that
+  // does not run: the capability is simply absent and the system looks fine.
+  //
+  // CAN-SPAM is the one with legal teeth. 15 U.S.C. 7704(a)(5) requires a valid
+  // physical postal address in every commercial email. email-html.js renders one
+  // ONLY when CYBERSYGN_BUSINESS_ADDRESS is set, so with it unset every drip and
+  // marketing email that goes out is non-compliant. That is a real exposure, not
+  // a nice-to-have, so it is flagged critical rather than left to a punch list.
+  add('can_spam_address_set', has('CYBERSYGN_BUSINESS_ADDRESS'),
+    'CYBERSYGN_BUSINESS_ADDRESS unset: commercial email ships with no physical postal address, which CAN-SPAM requires',
+    'critical');
+
+  // Observability. Without a DSN an uncaught worker error reaches console.error
+  // and nothing else, so a production failure is invisible to the one person
+  // running this. Not a security hole, but the reason a security hole would go
+  // unnoticed.
+  add('error_reporting_configured', has('SENTRY_DSN'),
+    'SENTRY_DSN unset: uncaught worker errors are not reported anywhere a human will see them',
+    'medium');
+
+  // Measurement. Both are the difference between knowing and guessing whether
+  // anyone is using the product.
+  add('analytics_configured', has('CYBERSYGN_GA4_ID'),
+    'CYBERSYGN_GA4_ID unset: no analytics beyond first-party counters',
+    'low');
+  add('search_console_configured', has('CYBERSYGN_GSC_TOKEN'),
+    'CYBERSYGN_GSC_TOKEN unset: Search Console unverified, so indexing problems are invisible',
+    'low');
+
   // ---- 2. KV reachability ---------------------------------------------------
   let kvOk = false;
   try { await getStorage(env).docs.get(RESULT_KEY); kvOk = true; } catch { /* fail */ }
