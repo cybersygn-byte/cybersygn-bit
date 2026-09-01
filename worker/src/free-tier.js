@@ -54,6 +54,8 @@ const FREE_LIFETIME_LIMIT = 3;
 const TOKEN_BYTES = 24;
 const KV_PREFIX_USER  = 'free:';
 const KV_PREFIX_DRIP  = 'drip:';
+// Marker proving this exact document already cost this user a credit.
+const KV_PREFIX_DOC   = 'free-doc:';
 const KV_KEY_TOTAL    = 'meta:dataset-total';
 const KV_KEY_CONTRIB  = 'meta:dataset-contributors';
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 365 * 5;  // 5 years (lifetime tier)
@@ -169,11 +171,42 @@ export async function freeSignup(env, opts) {
 // refuses past 3. Returns updated counter state for the client to render.
 // -----------------------------------------------------------------------------
 
-export async function freeConsume(env, token) {
+/**
+ * Remember that this exact document already cost this user a credit, so the
+ * other half of the download/send pair settles for free. Best-effort: failing
+ * to write the marker risks a double charge later, never a refused action.
+ */
+async function markDocConsumed(env, shaKey) {
+  if (!shaKey) return;
+  try {
+    await store(env).put(shaKey, '1', { expirationTtl: TOKEN_TTL_SECONDS });
+  } catch (e) { /* tolerated */ }
+}
+
+export async function freeConsume(env, token, docSha) {
   const resolved = await resolveFreeToken(env, token);
   if (!resolved.ok) return resolved;
   const { emailHash, record } = resolved;
   const userKey = KV_PREFIX_USER + emailHash;
+
+  // ONE DOCUMENT, ONE CREDIT.
+  //
+  // Downloading a signed PDF and sending that same PDF for signature are two
+  // calls into this function, and each one burned a credit. A free user has
+  // three for life, so doing both to a single document cost a THIRD of their
+  // lifetime allowance for one piece of work. The two paths are settled
+  // against one marker keyed by the document's SHA-256, so whichever happens
+  // first pays and the second is free.
+  const safeSha = /^[0-9a-f]{64}$/.test(String(docSha || '')) ? String(docSha) : null;
+  const shaKey = safeSha ? `${KV_PREFIX_DOC}${emailHash}:${safeSha}` : null;
+  if (shaKey) {
+    try {
+      const seen = await store(env).get(shaKey);
+      if (seen) {
+        return { ok: true, deduped: true, used: record.used || 0, cap: FREE_LIFETIME_LIMIT, emailHash };
+      }
+    } catch (e) { /* a failed dedup read must not refuse the action, only risk a recount */ }
+  }
 
   // ATOMIC PATH. The cap is the free tier's only real gate, and a plain
   // read-check-write against KV lets two concurrent sends both observe used=2
@@ -199,6 +232,7 @@ export async function freeConsume(env, token) {
       await store(env).put(userKey, JSON.stringify(record), { expirationTtl: TOKEN_TTL_SECONDS });
     } catch (e) { /* the DO is authoritative; a mirror failure must not refuse a granted send */ }
     await incrementDatasetCounter(env, atomic.used === 1).catch(() => {});
+    await markDocConsumed(env, shaKey);
     return {
       ok: true,
       used: atomic.used,
@@ -234,6 +268,7 @@ export async function freeConsume(env, token) {
   // Also bump the public dataset counter (since mandatory consent on
   // free tier means every consumed doc joins the dataset).
   await incrementDatasetCounter(env, record.used === 1).catch(() => {});
+  await markDocConsumed(env, shaKey);
 
   return {
     ok: true,

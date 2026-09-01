@@ -2694,7 +2694,10 @@ async function handleFreeConsume(request, env) {
     } catch (e) { /* fall through to the free path rather than refuse a download */ }
   }
 
-  const result = await freeConsume(env, token);
+  // The client already sends this on the download path; it is what lets a
+  // later send of the same document settle against one credit instead of two.
+  const docSha = request.headers.get('x-cybersygn-doc-sha') || '';
+  const result = await freeConsume(env, token, docSha);
   if (!result.ok) {
     const status = result.error === 'free_cap_reached' ? 402 : 401;
     return jsonResponse(status, result);
@@ -4509,7 +4512,17 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   // cap would need a Durable Object and is out of scope. If the store below
   // then fails, we refund so the user is not charged for a doc that vanished.
   if (freeGate) {
-    const consumed = await freeConsume(env, freeGate.token);
+    // Settle against the SAME identity the download path uses: the SHA-256 of
+    // the original PDF bytes, which is also how the client derives docState.docId.
+    // Computed here from the bytes we were handed rather than read from the
+    // request body, so a client cannot claim a document was already paid for.
+    //
+    // Without this, downloading a signed PDF and then sending that same document
+    // for signature burned two of a free user's three lifetime credits, so three
+    // free documents bought one complete workflow instead of three.
+    let createSha = null;
+    try { createSha = await sha256Hex(pdfBytes); } catch (e) { /* dedupe is best effort */ }
+    const consumed = await freeConsume(env, freeGate.token, createSha);
     if (!consumed.ok) {
       return jsonResponse(402, {
         error: consumed.error === 'free_cap_reached' ? 'free_cap_reached' : 'free_consume_failed',
