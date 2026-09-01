@@ -5,8 +5,7 @@
 import assert from 'node:assert';
 import {
   mintErasureToken, consumeErasureToken, eraseIdentity,
-  writeErasureReceipt, emailHashOf, normalizeEmail,
-} from '../worker/src/erasure.js';
+  writeErasureReceipt, emailHashOf, normalizeEmail, backfillOwnershipIndex} from '../worker/src/erasure.js';
 import { pruneOldBackups, BACKUP_RETENTION_DAYS } from '../worker/src/kv-backup.js';
 
 let pass = 0, fail = 0; const out = [];
@@ -421,6 +420,43 @@ await t('the KEPT R2 copies are erased, not just the KV originals', async () => 
     `the kept R2 copies must go too, left: ${[...r2.keys()]}`);
   assert.ok(r2.has('backups/2026-01-01.ndjson'),
     'the dated snapshot is NOT selectively edited: it ages out on its own, which is what /privacy/ says');
+});
+
+await t('erasure cost tracks the USER, not the size of the product', async () => {
+  // The orphan sweep listed the entire doc: namespace and read every record to
+  // check its senderId: one KV read per document PRODUCT-WIDE. Workers allow
+  // about 1000 subrequests per request, so past roughly a thousand documents a
+  // single erase request ran out mid-sweep while the page still said
+  // "Done. It is gone." doc-of:<senderId>:<docId> puts ownership in the key
+  // name so the sweep can list a sender-scoped prefix instead.
+  const kv = new Map(), pdfs = new Map();
+  for (let i = 0; i < 3000; i++) kv.set('doc:other' + i, JSON.stringify({ id: 'other' + i, senderId: 'other-' + i, signers: [] }));
+  for (const d of ['mine1', 'mine2']) kv.set('doc:' + d, JSON.stringify({ id: d, senderId: 'snd_1', signers: [{ id: 's1' }] }));
+  let reads = 0;
+  const mk = (m) => ({
+    get: async (k, o) => { reads++; const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : v; },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix, cursor, limit } = {}) => {
+      const all = [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).sort();
+      const start = cursor ? all.indexOf(cursor) + 1 : 0;
+      const page = all.slice(start, start + (limit || 1000));
+      const done = start + page.length >= all.length;
+      return { keys: page.map(name => ({ name })), list_complete: done, cursor: done ? null : page[page.length - 1] };
+    },
+  });
+  const env = { CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs) };
+
+  let r, ticks = 0;
+  do { r = await backfillOwnershipIndex(env); ticks++; } while (!r.done && ticks < 200);
+  assert.equal(r.done, true, 'the backfill must converge');
+
+  reads = 0;
+  const tally = await eraseIdentity(env, { emailHash: 'h', senderId: 'snd_1', scope: 'documents' });
+  assert.ok(reads < 50, `erasure must not read the namespace, took ${reads} reads`);
+  assert.equal(tally.scanComplete, true, 'and must be able to report a complete scan');
+  assert.equal([...kv.keys()].filter(k => k === 'doc:mine1' || k === 'doc:mine2').length, 0, 'my documents are gone');
+  assert.equal([...kv.keys()].filter(k => k.startsWith('doc:other')).length, 3000, 'nobody else is touched');
 });
 
 console.log(out.join('\n'));

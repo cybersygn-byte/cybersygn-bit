@@ -372,8 +372,104 @@ async function scrubAmbassadorRecord(kv, senderId, emailHash, tally) {
  */
 const SCAN_PAGE = 1000;
 const SCAN_MAX_PAGES = 20;
+// Workers allow ~1000 subrequests per request and KV reads count. The legacy
+// scan is one read per document PRODUCT-WIDE, so it has to stop well short of
+// that and say it stopped, rather than take the whole erasure down with it.
+const SCAN_READ_BUDGET = 400;
+
+const BACKFILL_STATE_KEY = 'meta:doc-of-backfill';
+const BACKFILL_BATCH = 200;
+
+/**
+ * Backfill doc-of:<senderId>:<docId> for documents created before that key
+ * existed, so the erasure sweep can stop scanning the whole namespace.
+ *
+ * Resumable: stores its cursor and picks up where it left off, a bounded batch
+ * per cron tick, so it never competes with a user request for subrequests.
+ * When it finishes it sets done:true, and sweepOrphanedDocs then skips the
+ * legacy scan entirely and an erasure costs reads proportional to the user's
+ * own documents rather than to the whole product.
+ */
+export async function backfillOwnershipIndex(env) {
+  const kv = env && env.CYBERSYGN_DOCS;
+  if (!kv || typeof kv.list !== 'function') return { ok: false, reason: 'kv_unavailable' };
+  let state = {};
+  try { state = JSON.parse(await kv.get(BACKFILL_STATE_KEY) || '{}') || {}; } catch (e) { state = {}; }
+  if (state.done) return { ok: true, done: true, indexed: state.indexed || 0 };
+
+  let indexed = state.indexed || 0;
+  let scanned = 0;
+  let cursor = state.cursor || undefined;
+  try {
+    const page = await kv.list({ prefix: 'doc:', limit: BACKFILL_BATCH, cursor });
+    for (const entry of (page.keys || [])) {
+      scanned += 1;
+      const docId = entry.name.slice('doc:'.length);
+      if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
+      let doc = null;
+      try { doc = await kv.get(entry.name, 'json'); } catch (e) { continue; }
+      const senderId = doc && typeof doc.senderId === 'string' ? doc.senderId.replace(/[^A-Za-z0-9_-]/g, '') : '';
+      if (!senderId) continue;
+      try { await kv.put(`doc-of:${senderId}:${docId}`, '1'); indexed += 1; } catch (e) { /* retried next tick */ }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+    const next = cursor ? { cursor, indexed } : { done: true, indexed };
+    await kv.put(BACKFILL_STATE_KEY, JSON.stringify(next));
+    return { ok: true, done: !cursor, indexed, scanned };
+  } catch (e) {
+    return { ok: false, reason: 'scan_failed', error: (e && e.message) || 'unknown', indexed };
+  }
+}
 
 async function sweepOrphanedDocs(kv, env, senderId, tally) {
+  // FAST PATH: ownership is in the key name.
+  //
+  // doc-of:<senderId>:<docId> is written at creation, so this lists a
+  // sender-scoped prefix and establishes ownership without reading anything.
+  // Cost is proportional to THIS user's documents. The legacy scan below is
+  // one read per document in the entire product, which past roughly a thousand
+  // documents exhausted the request's subrequest budget mid-sweep, so an
+  // erasure would stop partway while still printing "Done. It is gone."
+  let ownedCursor;
+  try {
+    do {
+      const ownPrefix = `doc-of:${senderId}:`;
+      const page = await kv.list({ prefix: ownPrefix, limit: SCAN_PAGE, cursor: ownedCursor });
+      for (const entry of (page.keys || [])) {
+        // NEVER TRUST THE LISTING, same rule as the legacy scan below. A list()
+        // that ignores its prefix would otherwise hand us an auth binding or a
+        // brand record, and the delete at the end of this loop would destroy
+        // it. Re-assert the namespace on the key we were actually given.
+        if (typeof entry.name !== 'string' || !entry.name.startsWith(ownPrefix)) continue;
+        const docId = entry.name.slice(ownPrefix.length);
+        if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
+        let doc = null;
+        try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) { /* delete the derived keys anyway */ }
+        // The ownership key is this sender's by construction, so a missing or
+        // unreadable doc record must not stop the artifacts being removed.
+        if (doc && doc.pdfSha256) tally.keptVerifyRecords++;
+        await eraseOneDoc(kv, env, docId, doc, tally);
+        await safeDelete(kv, entry.name, tally);
+      }
+      ownedCursor = page.list_complete ? null : page.cursor;
+    } while (ownedCursor);
+  } catch (e) {
+    return { complete: false };
+  }
+
+  // LEGACY PATH, for documents created before the ownership key existed.
+  //
+  // Skipped entirely once backfillOwnershipIndex has finished, because at that
+  // point every document has an ownership key and the pass above is complete by
+  // construction. Until then it is bounded by a real read budget: an honest
+  // incomplete answer beats blowing the subrequest limit and failing the whole
+  // request halfway through while the page says "Done. It is gone."
+  try {
+    const st = JSON.parse((await kv.get(BACKFILL_STATE_KEY)) || '{}');
+    if (st && st.done) return { complete: true };
+  } catch (e) { /* fall through to the scan */ }
+
+  let reads = 0;
   let cursor;
   let pages = 0;
   try {
@@ -391,10 +487,17 @@ async function sweepOrphanedDocs(kv, env, senderId, tally) {
         // A doc id is opaque but must not contain separators that could let a
         // crafted id address a different namespace in the derived keys below.
         if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
+        // Stop before the request runs out of subrequests. Reporting an
+        // incomplete scan lets the caller say so; running out mid-sweep would
+        // fail the request while the page claims the erasure finished.
+        if (reads >= SCAN_READ_BUDGET) return { complete: false, budgetExhausted: true };
         let doc = null;
+        reads += 1;
         try { doc = await kv.get(key, 'json'); } catch (e) { continue; }
         // Only this sender's documents. Anything else is untouched.
         if (!doc || doc.senderId !== senderId) continue;
+        // Anything the ownership pass already erased reads back as null above
+        // and is skipped by the guard, so no extra check is needed here.
 
         if (doc.pdfSha256) tally.keptVerifyRecords++;
         await safeDelete(kv, key, tally);

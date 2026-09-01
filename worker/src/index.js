@@ -77,7 +77,9 @@ import { bumpDailyMetric, readDailyMetrics, readSubsRegistry, ensureSubsBackfill
 // handleEvent for the legacy /api/event queue endpoint below.
 import { handleEvent as handleFunnelEvent, handleOwnerFunnel, countCrawler } from './events.js';
 import { AtomicCounter } from './atomic-do.js';
-import { mintErasureToken, consumeErasureToken, eraseIdentity, writeErasureReceipt, normalizeEmail, emailHashOf } from './erasure.js';
+import { mintErasureToken, consumeErasureToken, eraseIdentity, writeErasureReceipt, normalizeEmail, emailHashOf,
+  backfillOwnershipIndex,
+} from './erasure.js';
 import {
   TIERS,
   getSubscription,
@@ -1045,6 +1047,9 @@ const worker = {
     // that failed both inline attempts gets redelivered with exponential
     // backoff until it succeeds or dead-letters.
     ctx.waitUntil(cronTask(env, 'webhook-retry', () => sweepWebhookQueue(env, redeliverWebhook)));
+    // One-time, resumable backfill of the doc-of:<senderId>:<docId> ownership
+    // keys. Retires the erasure sweep's full-namespace scan; a no-op once done.
+    ctx.waitUntil(cronTask(env, 'ownership-backfill', () => backfillOwnershipIndex(env)));
     // Automated security self-check twice daily, 00:00 and 12:00 UTC
     // (06:00 / 18:00 America/Denver during MDT). Emails the owner only on
     // failure; a passing run is silent. Wrapped so it can never break the cron.
@@ -4666,6 +4671,17 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   }
   await addToActiveIndex(storage, docId);
   await addToSenderIndex(storage, senderId, docId);
+  // OWNERSHIP IN THE KEY NAME, for erasure.
+  //
+  // sender:<id>:docs is capped at 200 entries, so erasure also ran an orphan
+  // sweep that listed the ENTIRE doc: namespace and read every record to check
+  // its senderId. That is one KV read per document product-wide, not per user,
+  // so past roughly a thousand documents a single erase request exhausted its
+  // subrequest budget mid-sweep. Encoding the owner in the key lets the sweep
+  // list a sender-scoped prefix and read nothing to establish ownership.
+  try {
+    await storage.docs.put(`doc-of:${senderId}:${docId}`, '1', docRetention(docRecord));
+  } catch (e) { /* the legacy scan still covers this document */ }
   if (workspaceId) {
     await addToWorkspaceIndex(storage, workspaceId, docId);
   }
