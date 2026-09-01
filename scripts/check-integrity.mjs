@@ -120,17 +120,29 @@ const workerFiles = (await readdir('worker/src')).filter(f => f.endsWith('.js'))
 const sources = new Map();
 for (const f of workerFiles) sources.set(f, await readFile(`worker/src/${f}`, 'utf8'));
 const allWorkerSrc = [...sources.values()].join('\n');
+const testSources = [];
+for (const f of (await readdir('scripts')).filter(f => /^test-.*\.mjs$/.test(f))) {
+  testSources.push(await readFile(`scripts/${f}`, 'utf8'));
+}
 
 // (a) Every exported handler must be reachable from somewhere.
 //     This is what "the capability exists but nothing routes it" looks like
 //     before it becomes a 404 nobody sees.
 for (const [file, body] of sources) {
   if (file === 'index.js') continue;
-  for (const m of body.matchAll(/export\s+(?:async\s+)?function\s+(handle[A-Za-z0-9_]*)/g)) {
+  for (const m of body.matchAll(/export\s+(?:async\s+)?function\s+([A-Za-z0-9_]+)/g)) {
     const fn = m[1];
-    const referenced = [...sources].some(([f2, b2]) => f2 !== file && b2.includes(fn));
-    check(referenced, `${fn} (worker/src/${file}) is reachable`,
-      `worker/src/${file} exports ${fn} but no other module references it. The capability exists and nothing can reach it.`);
+    // Referenced by ANY worker module (including its own, since an internal
+    // caller is a real caller) or by a test. Restricting this to handle* used
+    // to miss every capability that is not an HTTP handler: cron entry points,
+    // engines, and helpers can all go dead just as quietly.
+    const inWorker = [...sources].some(([f2, b2]) => {
+      const stripped = b2.replace(new RegExp(`export\\s+(?:async\\s+)?function\\s+${fn}\\b`, 'g'), '');
+      return stripped.includes(fn) && (f2 !== file || stripped.includes(fn));
+    });
+    const inTests = testSources.some(b => b.includes(fn));
+    check(inWorker || inTests, `${fn} (worker/src/${file}) is reachable`,
+      `worker/src/${file} exports ${fn} but nothing in worker/src or scripts/test-* references it. Either it is dead code, or a capability lost its caller.`);
   }
 }
 
@@ -165,6 +177,13 @@ for (const b of usedAsObject) {
 const seenRoutes = new Map();
 for (const m of index.matchAll(/request\.method === '([A-Z]+)' && url\.pathname === '(\/api\/[^']+)'/g)) {
   const key = `${m[1]} ${m[2]}`;
+  seenRoutes.set(key, (seenRoutes.get(key) || 0) + 1);
+}
+// REGEX routes too. 24 of this file's routes are matched by pattern rather
+// than equality, and a duplicated pattern is just as dead as a duplicated
+// string while being harder to spot by eye.
+for (const m of index.matchAll(/url\.pathname\.match\((\/\^[^\n]*?\/)\)/g)) {
+  const key = `PATTERN ${m[1]}`;
   seenRoutes.set(key, (seenRoutes.get(key) || 0) + 1);
 }
 for (const [route, count] of seenRoutes) {

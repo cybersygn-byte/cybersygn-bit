@@ -1,13 +1,23 @@
 /**
  * Ambassador program: identity, product pass, learning progress, payouts.
  *
- * IDENTITY. An ambassador is identified by the emailHash the existing
- * magic-link auth already computes (auth.js), never by a device-local
- * senderId. That way a laptop-to-phone switch cannot orphan someone's
- * earnings, and there is exactly ONE auth system in the product: the
- * magic link. The ambassador record hangs off the affiliate code record
- * that affiliate.js already owns; this module adds the parts that make it
- * a real program rather than a counter.
+ * IDENTITY. An ambassador is resolved by senderId, via ambassadorBySender.
+ *
+ * This header used to claim identity was by emailHash "never by a device-local
+ * senderId", describing an affiliate:email:<emailHash> index. That index was
+ * never written by anything. Two functions existed to read and populate it and
+ * neither had a caller, so the whole subsystem was documentation of a design
+ * that was not built. They have been removed rather than left to look like
+ * working code.
+ *
+ * A laptop-to-phone switch is still covered, by the product's ONE auth system
+ * rather than an ambassador-specific one: the magic link in auth.js binds
+ * emailHash to senderId and restores the senderId on a new device, after which
+ * ambassadorBySender resolves normally. The dashboard's "Sign in" is that path.
+ *
+ * The ambassador record hangs off the affiliate code record that affiliate.js
+ * already owns; this module adds the parts that make it a real program rather
+ * than a counter.
  *
  * PRODUCT PASS. Ambassadors get the full product free while active. The
  * pass is a 90-day window that RENEWS on any real signal of life: opening
@@ -20,7 +30,10 @@
  * KV layout (CYBERSYGN_DOCS):
  *   affiliate:code:<code>        the ambassador record (affiliate.js owns writes)
  *   affiliate:sender:<senderId>  senderId -> code
- *   affiliate:email:<emailHash>  emailHash -> code   (identity that survives devices)
+ *
+ * (There is no affiliate:email: index. erasure.js still probes for one when
+ * deleting, which is harmless and costs one miss, so a legacy key from any
+ * earlier deployment would still be cleaned up.)
  */
 
 const KV = 'affiliate:';
@@ -151,14 +164,6 @@ async function writeCode(env, rec) {
   catch (e) { return false; }
 }
 
-/** Resolve an ambassador record from an emailHash, else null. */
-export async function ambassadorByEmailHash(env, emailHash) {
-  if (!env || !env.CYBERSYGN_DOCS || !emailHash) return null;
-  try {
-    const code = await env.CYBERSYGN_DOCS.get(`${KV}email:${emailHash}`);
-    return code ? await readCode(env, code.trim()) : null;
-  } catch (e) { return null; }
-}
 
 /** Resolve from a senderId (the legacy path), else null. */
 export async function ambassadorBySender(env, senderId) {
@@ -169,27 +174,6 @@ export async function ambassadorBySender(env, senderId) {
   } catch (e) { return null; }
 }
 
-/**
- * Bind an emailHash to an existing ambassador code so identity survives a
- * device change. First-bind-wins, mirroring auth.js's own binding rule.
- */
-export async function bindAmbassadorEmail(env, code, emailHash, email) {
-  if (!env || !env.CYBERSYGN_DOCS || !emailHash) return { ok: false, error: 'missing_email' };
-  const rec = await readCode(env, code);
-  if (!rec) return { ok: false, error: 'unknown_code' };
-  const key = `${KV}email:${emailHash}`;
-  try {
-    const existing = await env.CYBERSYGN_DOCS.get(key);
-    if (existing && existing.trim() !== code) {
-      return { ok: false, error: 'email_bound_elsewhere' };
-    }
-    await env.CYBERSYGN_DOCS.put(key, code);
-  } catch (e) { return { ok: false, error: 'kv_write_failed' }; }
-  rec.emailHash = emailHash;
-  if (email && !rec.email) rec.email = String(email).trim().slice(0, 320);
-  await writeCode(env, rec);
-  return { ok: true, code };
-}
 
 // ---- Product pass ---------------------------------------------------------
 

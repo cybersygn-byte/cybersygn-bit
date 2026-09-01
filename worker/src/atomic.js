@@ -37,9 +37,6 @@ async function call(env, name, op, body) {
   }
 }
 
-/** True when the DO binding is present, so callers can log which path ran. */
-export function atomicAvailable(env) { return OK(env); }
-
 /**
  * Atomically consume one unit against `limit`.
  * Returns { ok, used, cap } or null when the DO is unavailable.

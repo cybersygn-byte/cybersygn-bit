@@ -496,6 +496,24 @@ const worker = {
       return await handleOwnerFunnel(request, env, url);
     }
 
+    // Freeze or unfreeze an ambassador's payouts.
+    //
+    // The freeze was fully ENFORCED before it was reachable: payoutState
+    // reports owner_freeze and recordPayout refuses with payout_frozen, but
+    // setPayoutBlock had no caller, so the control could never be applied.
+    // A safety control that cannot be invoked is not a safety control.
+    if (request.method === 'POST' && url.pathname === '/api/owner/ambassadors/freeze') {
+      const owner = await getOwnerForRequest(request, env, url);
+      if (!owner) return jsonResponse(401, { error: 'unauthorized' });
+      const body = await readJsonBody(request, 4096);
+      if (body.error) return jsonResponse(400, body.error);
+      const { setPayoutBlock } = await import('./ambassador.js');
+      const code = String((body.value && body.value.code) || '').trim();
+      const blocked = body.value ? body.value.blocked !== false : true;
+      const r = await setPayoutBlock(env, code, blocked, (body.value && body.value.reason) || '');
+      return jsonResponse(r.ok ? 200 : 400, r);
+    }
+
     // Run the KV backup on demand, and read the last result. The backup fires
     // from a daily cron, so without this a failure stays invisible for a day
     // and "we have backups" is an assumption rather than a checked fact. It
