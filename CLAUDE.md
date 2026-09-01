@@ -28,10 +28,24 @@ actively broken at the time.
 runs in the gate, every script the gate calls exists, every capability is
 routed, every binding is declared, and load-bearing constants are present.
 
-**When you add a capability whose ABSENCE would be quiet, add a check there.**
-The "every test runs" half is self-maintaining because it discovers files. The
-route, binding, and constant lists are curated, so they only cover what someone
-remembered to add. That is a real limit; treat the file as a living checklist.
+Most of it is self-maintaining, because it reads the code rather than a list:
+
+- every `scripts/test-*.mjs` on disk must run in the gate
+- every exported `handle*` must be referenced by another module, so a
+  capability cannot exist with nothing able to reach it
+- every binding declared in `wrangler.jsonc` must be used, and every
+  `env.X.get(...)` style use must be declared (or listed in
+  `OPTIONAL_BINDINGS` with a reason, which is a decision, not a default)
+- no duplicate `method + /api/path`, since only the first arm can ever run
+
+Each of those was verified by deliberately breaking it and watching the check
+fail, not by reading it and assuming.
+
+What is still curated: the short list of load-bearing CONSTANTS in section 6
+(the Colorado threshold, pdf-lib `updateMetadata: false`, backup retention).
+Those cannot be discovered, because only a human knows which literal is
+load-bearing. **When you add a constant whose absence would be quiet, add it
+there.**
 
 ## 3. One gate, shared by CI and deploy
 
