@@ -162,6 +162,28 @@ function docRetention(doc) {
   return (doc && doc.completedAt) ? {} : { expirationTtl: DOC_TTL_SECONDS };
 }
 
+/**
+ * Run one cron job so its failure is VISIBLE.
+ *
+ * Every scheduled job used to end in console.error or a bare .catch(() => {}).
+ * Cloudflare does not retain console output and nobody tails it, so a cron that
+ * had been failing every hour for a month looked exactly like one that had
+ * never failed. The error ring that /api/owner/errors reads was wired only into
+ * fetch, so the entire scheduled side of the worker was invisible.
+ *
+ * Swallowing stays deliberate in one respect: one failing job must not prevent
+ * the others from running, so this never rethrows.
+ */
+function cronTask(env, name, work) {
+  return Promise.resolve()
+    .then(() => (typeof work === 'function' ? work() : work))
+    .catch(async (err) => {
+      console.error(`[cron:${name}] failed:`, (err && err.stack) || err);
+      try { await recordError(env, err, { where: `cron:${name}` }); } catch (_) {}
+      try { await reportToSentry(env, err, { where: `cron:${name}` }); } catch (_) {}
+    });
+}
+
 const worker = {
   async fetch(request, env, ctx) {
    try {
@@ -983,27 +1005,27 @@ const worker = {
     // on the first day of the month between 00:00 and 00:59 UTC. Free-
     // tier drip campaign fires daily at 14:00 UTC (~9am EST/10am EDT).
     setEmailBusinessAddress(env && env.CYBERSYGN_BUSINESS_ADDRESS);
-    ctx.waitUntil(runReminderSweep(env, event));
+    ctx.waitUntil(cronTask(env, 'reminder-sweep', () => runReminderSweep(env, event)));
     if (shouldRunMonthlyReport(event)) {
-      ctx.waitUntil(runMonthlyOwnerReport(env, event));
+      ctx.waitUntil(cronTask(env, 'monthly-owner-report', () => runMonthlyOwnerReport(env, event)));
     }
     if (shouldRunDripCampaign(event)) {
-      ctx.waitUntil(runDripCampaign(env, event));
+      ctx.waitUntil(cronTask(env, 'drip-campaign', () => runDripCampaign(env, event)));
     }
     // Ambassador mail. Monthly scoreboard on the 1st (same window as the owner
     // report), weekly digest on Mondays. Both are internally guarded so a
     // duplicate cron fire cannot double-send.
     if (shouldRunMonthlyReport(event)) {
-      ctx.waitUntil((async () => {
+      ctx.waitUntil(cronTask(env, 'ambassador-monthly', (async () => {
         const { runMonthlyScoreboard } = await import('./ambassador-email.js');
         await runMonthlyScoreboard(env, {});
-      })().catch((e) => console.error('[ambassador] monthly failed:', e && e.message)));
+      })()));
     }
     if (shouldRunAmbassadorWeekly(event)) {
-      ctx.waitUntil((async () => {
+      ctx.waitUntil(cronTask(env, 'ambassador-weekly', (async () => {
         const { runWeeklyDigest } = await import('./ambassador-email.js');
         await runWeeklyDigest(env, {});
-      })().catch((e) => console.error('[ambassador] weekly failed:', e && e.message)));
+      })()));
     }
     // Daily KV to R2 backup at 03:00 UTC (slice 100). No-op if R2
     // binding isn't configured.
@@ -1015,27 +1037,24 @@ const worker = {
       // namespace and so had no backup at all despite being the artifacts the
       // product promises to keep forever. Copy-once, so it does not rewrite
       // every signed PDF every night.
-      ctx.waitUntil(
-        runDailyKvBackup(env)
-          .then(() => backupSignedArtifacts(env))
-          .then(() => pruneOldBackups(env))
-          .catch((e) => { console.error('[cron] backup chain failed:', e && e.message); }),
-      );
+      ctx.waitUntil(cronTask(env, 'kv-backup', () => runDailyKvBackup(env)
+        .then(() => backupSignedArtifacts(env))
+        .then(() => pruneOldBackups(env))));
     }
     // Sweep the durable webhook retry queue every hour: any Studio delivery
     // that failed both inline attempts gets redelivered with exponential
     // backoff until it succeeds or dead-letters.
-    ctx.waitUntil(sweepWebhookQueue(env, redeliverWebhook).catch(() => {}));
+    ctx.waitUntil(cronTask(env, 'webhook-retry', () => sweepWebhookQueue(env, redeliverWebhook)));
     // Automated security self-check twice daily, 00:00 and 12:00 UTC
     // (06:00 / 18:00 America/Denver during MDT). Emails the owner only on
     // failure; a passing run is silent. Wrapped so it can never break the cron.
     if (shouldRunSecurityCheck(event)) {
-      ctx.waitUntil(runSecurityCheck(env, { trigger: 'cron', dispatch: selfDispatch(env, ctx) }).catch(() => {}));
+      ctx.waitUntil(cronTask(env, 'security-check', () => runSecurityCheck(env, { trigger: 'cron', dispatch: selfDispatch(env, ctx) })));
     }
     // Uptime self-probe (slice 99). Synchronous KV check is enough, if
     // the binding is up the worker can respond; if it isn't, we record
     // a failure for the day.
-    ctx.waitUntil((async () => {
+    ctx.waitUntil(cronTask(env, 'uptime-probe', (async () => {
       let ok = false;
       try {
         if (env && env.CYBERSYGN_DOCS) {
@@ -1046,7 +1065,7 @@ const worker = {
         }
       } catch (e) { ok = false; }
       await recordUptimeProbe(env, ok);
-    })());
+    })()));
   },
 };
 

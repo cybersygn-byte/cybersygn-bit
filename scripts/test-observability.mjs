@@ -106,6 +106,53 @@ await t('missing error reporting and measurement are surfaced too', async () => 
   }
 });
 
+await t('a CRON failure is recorded, not just console.error-ed', async () => {
+  // The error ring was wired only into fetch. Every scheduled job ended in
+  // console.error or a bare .catch(() => {}), and Cloudflare retains neither,
+  // so a cron failing every hour for a month looked exactly like one that had
+  // never failed. The whole scheduled side of the worker was invisible.
+  const worker = (await import('../worker/src/index.js')).default;
+  const kv = new Map();
+  const st = {
+    get: async (k, ty) => { const v = kv.get(k); if (v == null) return null; return (ty === 'json' || (ty && ty.type === 'json')) ? JSON.parse(v) : v; },
+    put: async (k, v) => { kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => kv.delete(k),
+    list: async () => ({ keys: [], list_complete: true }),
+  };
+  // Fail the reminder sweep the way a real KV outage would.
+  const broken = { ...st, get: async (k) => { if (String(k).startsWith('index:')) throw new Error('KV outage during sweep'); return null; } };
+  const waits = [];
+  await worker.scheduled({ cron: '0 * * * *', scheduledTime: Date.now() },
+    { CYBERSYGN_DOCS: broken, CYBERSYGN_PDFS: st }, { waitUntil: (p) => waits.push(p) });
+  await Promise.all(waits);
+
+  const ring = await getRecentErrors({ CYBERSYGN_DOCS: st });
+  const list = ring.errors || ring || [];
+  assert.ok(list.length >= 1, 'the failure must reach the error ring');
+  assert.ok(list.some(e => String(e.where || '').startsWith('cron:')),
+    `the entry must name the cron job, got ${JSON.stringify(list.map(e => e.where))}`);
+});
+
+await t('one failing cron job does not stop the others', async () => {
+  // Visibility must not come at the cost of the sweep: cronTask reports and
+  // resolves, it never rethrows into waitUntil.
+  const worker = (await import('../worker/src/index.js')).default;
+  const kv = new Map();
+  const st = {
+    get: async (k, ty) => { const v = kv.get(k); if (v == null) return null; return (ty === 'json' || (ty && ty.type === 'json')) ? JSON.parse(v) : v; },
+    put: async (k, v) => { kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => kv.delete(k),
+    list: async () => ({ keys: [], list_complete: true }),
+  };
+  const broken = { ...st, get: async (k) => { if (String(k).startsWith('index:')) throw new Error('boom'); return null; } };
+  const waits = [];
+  await worker.scheduled({ cron: '0 * * * *', scheduledTime: Date.now() },
+    { CYBERSYGN_DOCS: broken, CYBERSYGN_PDFS: st }, { waitUntil: (p) => waits.push(p) });
+  const settled = await Promise.allSettled(waits);
+  assert.ok(!settled.some(r => r.status === 'rejected'),
+    'no cron task may reject: one bad job must not take down the sweep');
+});
+
 console.log(out.join('\n'));
 console.log(`\nobservability: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);
