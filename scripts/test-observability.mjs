@@ -74,20 +74,33 @@ await t('a missing CAN-SPAM address is reported as CRITICAL', async () => {
   // every marketing email that goes out is non-compliant.
   const env = makeEnv({ CYBERSYGN_OWNER_HASH: 'a'.repeat(64) });
   const r = await runSecurityCheck(env, probe);
-  const f = r.failures.find(x => x.name === 'can_spam_address_set');
+  const f = r.advisories.find(x => x.name === 'can_spam_address_set');
   assert.ok(f, 'the missing address must be reported');
   assert.equal(f.severity, 'critical');
+});
+
+await t('config advisories do NOT count as security failures', async () => {
+  // They can never pass until the owner performs an account action, so
+  // counting them would make the twice-daily alert fire forever and bury a
+  // real regression. "A passing run sends no email" has to stay reachable.
+  const env = makeEnv({ CYBERSYGN_OWNER_HASH: 'a'.repeat(64) });
+  const r = await runSecurityCheck(env, probe);
+  const names = r.failures.map(f => f.name);
+  for (const n of ['can_spam_address_set', 'error_reporting_configured', 'analytics_configured', 'search_console_configured']) {
+    assert.ok(!names.includes(n), `${n} must be an advisory, not a failure that pages the owner`);
+  }
 });
 
 await t('a configured address clears the check', async () => {
   const env = makeEnv({ CYBERSYGN_OWNER_HASH: 'a'.repeat(64), CYBERSYGN_BUSINESS_ADDRESS: '1 Main St, Denver CO' });
   const r = await runSecurityCheck(env, probe);
+  assert.ok(!r.advisories.some(x => x.name === 'can_spam_address_set'));
   assert.ok(!r.failures.some(x => x.name === 'can_spam_address_set'));
 });
 
 await t('missing error reporting and measurement are surfaced too', async () => {
   const env = makeEnv({ CYBERSYGN_OWNER_HASH: 'a'.repeat(64) });
-  const names = (await runSecurityCheck(env, probe)).failures.map(f => f.name);
+  const names = (await runSecurityCheck(env, probe)).advisories.map(f => f.name);
   for (const n of ['error_reporting_configured', 'analytics_configured', 'search_console_configured']) {
     assert.ok(names.includes(n), `${n} must be reported when unset`);
   }
