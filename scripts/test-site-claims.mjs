@@ -79,11 +79,17 @@ t('the daily KV backup is described as unbound, not as running', () => {
     'the post must not still sell a nightly job');
 });
 
-t('the compliance page states the 30-day expiry and the absence of backups', () => {
+t('the compliance page describes retention and backups as they actually are', () => {
+  // This test used to assert the OPPOSITE: that the page says "There is no
+  // backup archive" and never mentions R2. That was true when written and
+  // became false the moment the R2 bucket was bound and the daily backup
+  // started running, so the test was pinning a claim into place after it had
+  // stopped being true. A test can enforce a lie as easily as a truth.
   const html = read('web/compliance/index.html');
-  assert.ok(/30-day KV expiry/.test(html), 'retention section names the 30-day expiry');
-  assert.ok(/There is no backup archive/.test(html), 'retention section names the missing backup');
-  assert.ok(!/\bR2\b/.test(html), 'no R2 mention: no bucket is bound');
+  assert.ok(/\bR2\b/.test(html), 'the page must disclose the R2 backup target now that one exists');
+  assert.ok(/35 day|35-day/.test(html), 'and the retention window callers are told about');
+  assert.ok(!/There is no backup archive/.test(html), 'the old false claim must be gone');
+  assert.ok(!/no object store or long-term archive/.test(html), 'and its sibling claim too');
 });
 
 // ---- embed / CSP ----------------------------------------------------------
