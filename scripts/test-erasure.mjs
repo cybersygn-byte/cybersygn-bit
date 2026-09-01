@@ -19,10 +19,18 @@ function makeEnv(seed = {}) {
   const kv = new Map(Object.entries(seed));
   const pdfs = new Map();
   const mk = (m) => ({
+    // Behave like REAL Workers KV, which this mock previously did not.
+    // It honoured `{ json: true }`, an option KV ignores, so erasure.js could
+    // pass a flag that does nothing in production and still read parsed
+    // objects here. Eight reads were silently returning strings on the live
+    // worker while this suite stayed green. KV parses only for the string
+    // 'json' or { type: 'json' }; anything else is text.
     get: async (k, o) => {
       const v = m.get(k);
       if (v == null) return null;
-      return (o && o.json) ? (typeof v === 'string' ? JSON.parse(v) : v) : v;
+      const wantsJson = o === 'json' || (o && o.type === 'json');
+      if (!wantsJson) return typeof v === 'string' ? v : JSON.stringify(v);
+      return typeof v === 'string' ? JSON.parse(v) : v;
     },
     put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { m.delete(k); },
@@ -159,7 +167,7 @@ await t('a sender with MORE documents than the 200-entry index cap is fully eras
   for (let i = 0; i < 10; i++) kv.set('doc:other' + i, JSON.stringify({ senderId: 'snd_OTHER', signers: [] }));
   kv.set('sender:snd_1:docs', JSON.stringify({ docs: ids.slice(0, 200) }));
   const mk = (m) => ({
-    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
     put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { m.delete(k); },
     list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
@@ -183,7 +191,7 @@ await t('the sweep ignores non-document keys even if the listing misbehaves', as
     ['doc:../../etc/passwd', JSON.stringify({ senderId: 'snd_1', signers: [] })],
   ]);
   const mk = (m) => ({
-    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
     put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { m.delete(k); },
     // Deliberately BROKEN: ignores the prefix entirely.
@@ -221,7 +229,7 @@ function fullEnv(h) {
     ['affiliate:code:abcd', JSON.stringify({ code: 'abcd', email: 'v@x.com', emailHash: h, earnedUsd: 40 })],
   ]);
   const mk = (m) => ({
-    get: async (k, o) => { const v = m.get(k); if (v == null) return null; return (o && o.json) ? JSON.parse(v) : v; },
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
     put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
     delete: async (k) => { m.delete(k); },
     list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
@@ -346,6 +354,45 @@ await t('pruning is a no-op, not a crash, with no R2 bound', async () => {
 
 await t('the retention window matches what /erase/ promises users', async () => {
   assert.equal(BACKUP_RETENTION_DAYS, 35, 'the page says up to 35 days');
+});
+
+await t('the SIGNED pdf is erased, not just the original and the cert', async () => {
+  // The signed PDF is the only artifact holding the signature image, the
+  // signer names and the full document text, and signed-pdf.js writes it with
+  // no expirationTtl. eraseOneDoc deleted pdf: and audit: and left signed:
+  // behind permanently, while reporting the erasure complete.
+  const kv = new Map(), pdfs = new Map();
+  kv.set('sender:snd_1:docs', JSON.stringify({ docs: ['d1'] }));
+  kv.set('doc:d1', JSON.stringify({ id: 'd1', senderId: 'snd_1', title: 'NDA', signers: [{ id: 's1', email: 'j@e.com' }] }));
+  pdfs.set('pdf:d1', 'ORIGINAL'); pdfs.set('audit:d1', 'CERT'); pdfs.set('signed:d1', 'SIGNATURE IMAGE + NAMES');
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  await eraseIdentity({ CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs) }, { emailHash: 'h', senderId: 'snd_1', scope: 'account' });
+  assert.deepEqual([...pdfs.keys()], [], `every PDF artifact must go, left: ${[...pdfs.keys()]}`);
+});
+
+await t('an erased founding member leaves the public Origin wall', async () => {
+  // The scrub list said originName; the field the wall publishes is
+  // originDisplayName, so an erased person stayed listed on /origin/.
+  const kv = new Map();
+  kv.set('sub:snd_1', JSON.stringify({ tier: 'founding', foundingNumber: 7, originDisplayName: 'Jane R.', originCity: 'Boulder', email: 'j@e.com', stripeCustomerId: 'cus_1' }));
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  await eraseIdentity({ CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(new Map()) }, { emailHash: 'h', senderId: 'snd_1', scope: 'account' });
+  const sub = JSON.parse(kv.get('sub:snd_1'));
+  assert.equal(sub.originDisplayName, undefined, 'the published display name must be gone');
+  assert.equal(sub.originCity, undefined, 'and the city');
+  assert.equal(sub.email, undefined, 'and the checkout email');
+  assert.ok(sub.erasedAt, 'erasedAt must be set: the wall now filters on it');
+  assert.ok(sub.stripeCustomerId, 'financial identifiers stay, Article 17(3)(b)');
 });
 
 console.log(out.join('\n'));

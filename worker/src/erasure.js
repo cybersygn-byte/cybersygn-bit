@@ -33,6 +33,13 @@ const TOKEN_TTL   = 30 * 60;            // 30 minutes
 const RECEIPT_KEY = 'erase:receipt:';
 const RECEIPT_TTL = 60 * 60 * 24 * 365; // a year, so a receipt outlives a dispute
 
+// Reads below use ns.get(key, 'json'), which is the actual Workers KV
+// contract. They used to pass { json: true }, which KV does not recognise: an
+// unknown options object falls back to type "text", so every read returned a
+// STRING. `(await kv.get(...)) || { docs: [] }` then kept the string (truthy),
+// idx.docs was undefined, and the document loop iterated nothing. Erasure
+// removed the flat keys, reported success, and deleted ZERO documents, signed
+// PDFs, audit certificates or signer fills.
 function store(env) { return env.CYBERSYGN_DOCS; }
 
 function randomToken() {
@@ -85,7 +92,7 @@ export async function resolveSenderIds(env, emailHash) {
   const found = new Set();
 
   try {
-    const bound = await kv.get(`login:email:${emailHash}`, { json: true });
+    const bound = await kv.get(`login:email:${emailHash}`, 'json');
     if (bound && bound.senderId) found.add(String(bound.senderId));
   } catch (e) {}
 
@@ -106,7 +113,7 @@ export async function resolveSenderIds(env, emailHash) {
             const v = await kv.get(key);
             if (typeof v === 'string' && v.trim().toLowerCase() === emailHash) found.add(sid);
           } else {
-            const sub = await kv.get(key, { json: true });
+            const sub = await kv.get(key, 'json');
             if (sub && typeof sub.email === 'string' && sub.email) {
               const h = await emailHashOf(sub.email);
               if (h === emailHash) found.add(sid);
@@ -184,11 +191,11 @@ export async function eraseIdentity(env, claim) {
   if (!env.CYBERSYGN_PDFS) tally.errors.push('pdfs_binding_missing');
 
   for (const senderId of senderIds) {
-    const idx = (await kv.get(`sender:${senderId}:docs`, { json: true })) || { docs: [] };
+    const idx = (await kv.get(`sender:${senderId}:docs`, 'json')) || { docs: [] };
     for (const docId of (idx.docs || [])) {
       if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(docId || ''))) continue;
       let doc = null;
-      try { doc = await kv.get(`doc:${docId}`, { json: true }); } catch (e) {}
+      try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) {}
       // Fail CLOSED on ownership, matching the sweep. A record with no
       // senderId is not provably this person's, so it is left alone.
       if (!doc || doc.senderId !== senderId) continue;
@@ -244,6 +251,14 @@ async function eraseOneDoc(kv, env, docId, doc, tally) {
     catch (e) { tally.errors.push(`pdf:${docId}`); }
     try { await env.CYBERSYGN_PDFS.delete(`audit:${docId}`); tally.deleted++; }
     catch (e) { tally.errors.push(`audit:${docId}`); }
+    // signed:<docId> too. This was missing, so the ONE artifact that actually
+    // contains the person's signature image, their name, and the full document
+    // text survived a confirmed "delete everything" erasure, and survived it
+    // permanently: signed-pdf.js writes it with no expirationTtl, unlike
+    // pdf:<docId> which at least ages out in 30 days. The erasure reported
+    // complete while the most sensitive artifact stayed in storage.
+    try { await env.CYBERSYGN_PDFS.delete(`signed:${docId}`); tally.deleted++; }
+    catch (e) { tally.errors.push(`signed:${docId}`); }
   }
   for (const sg of ((doc && doc.signers) || [])) {
     await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);
@@ -258,7 +273,7 @@ async function eraseOneDoc(kv, env, docId, doc, tally) {
  */
 async function revokeApiKeysFor(kv, senderId, tally) {
   try {
-    const idx = await kv.get(`apikeys:${senderId}`, { json: true });
+    const idx = await kv.get(`apikeys:${senderId}`, 'json');
     const hashes = (idx && (idx.keys || idx.hashes)) || [];
     for (const h of hashes) {
       const hash = typeof h === 'string' ? h : (h && h.hash);
@@ -277,14 +292,25 @@ async function revokeApiKeysFor(kv, senderId, tally) {
  */
 async function scrubBillingRecord(kv, senderId, tally) {
   try {
-    const sub = await kv.get(`sub:${senderId}`, { json: true });
+    const sub = await kv.get(`sub:${senderId}`, 'json');
     if (!sub) return;
+    if (typeof sub !== 'object') { tally.errors.push(`sub:${senderId}:unparsed`); return; }
     let touched = false;
-    for (const f of ['email', 'name', 'displayName', 'city', 'originName', 'originCity', 'handle']) {
+    // originDisplayName, NOT originName. The published field is written by
+    // stripe.js:200 as originDisplayName and read by the public wall at
+    // index.js:2145; 'originName' matched nothing, so an erased person's
+    // chosen display name stayed listed on cybersygn.io/origin/ and in the
+    // homepage proof strip, on a CORS-open, edge-cached endpoint.
+    for (const f of ['email', 'name', 'displayName', 'city', 'originName', 'originDisplayName', 'originCity', 'handle']) {
       if (sub[f] !== undefined) { delete sub[f]; touched = true; }
     }
     sub.erasedAt = new Date().toISOString();
-    if (touched || !sub.erasedAt) { await kv.put(`sub:${senderId}`, JSON.stringify(sub)); tally.deleted++; }
+    // Always persist: erasedAt is what the Origin wall now filters on, so the
+    // write has to happen even when there was nothing left to strip. The old
+    // `touched || !sub.erasedAt` could never fire its second arm, because
+    // erasedAt was assigned on the line above it.
+    await kv.put(`sub:${senderId}`, JSON.stringify(sub));
+    if (touched) tally.deleted++;
   } catch (e) { tally.errors.push(`sub:${senderId}`); }
 }
 
@@ -300,7 +326,7 @@ async function scrubAmbassadorRecord(kv, senderId, emailHash, tally) {
     if (code && typeof code === 'string') {
       const safe = code.trim();
       if (/^[a-z0-9]{1,32}$/i.test(safe)) {
-        const rec = await kv.get(`affiliate:code:${safe}`, { json: true });
+        const rec = await kv.get(`affiliate:code:${safe}`, 'json');
         if (rec) {
           delete rec.email;
           delete rec.emailHash;
@@ -343,7 +369,7 @@ async function sweepOrphanedDocs(kv, env, senderId, tally) {
         // crafted id address a different namespace in the derived keys below.
         if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
         let doc = null;
-        try { doc = await kv.get(key, { json: true }); } catch (e) { continue; }
+        try { doc = await kv.get(key, 'json'); } catch (e) { continue; }
         // Only this sender's documents. Anything else is untouched.
         if (!doc || doc.senderId !== senderId) continue;
 
@@ -353,6 +379,11 @@ async function sweepOrphanedDocs(kv, env, senderId, tally) {
         if (env.CYBERSYGN_PDFS) {
           try { await env.CYBERSYGN_PDFS.delete(`pdf:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`pdf:${docId}`); }
           try { await env.CYBERSYGN_PDFS.delete(`audit:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`audit:${docId}`); }
+          // signed: here too, for the same reason as eraseOneDoc: the sweep is
+          // the path that catches documents missing from the 200-entry index,
+          // so leaving it out would keep the signature image for exactly the
+          // heaviest users the sweep exists to serve.
+          try { await env.CYBERSYGN_PDFS.delete(`signed:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`signed:${docId}`); }
         }
         for (const sg of (doc.signers || [])) {
           await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);

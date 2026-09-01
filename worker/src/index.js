@@ -2139,6 +2139,10 @@ async function handleOriginWall(env) {
         try { rec = JSON.parse(raw); } catch (e) { continue; }
         if (!rec) continue;
         if (rec.tier !== 'founding') continue;
+        // An erased person stays off the public wall even if a future field
+        // is missed by the scrub list. Defence in depth: erasure strips the
+        // fields, and this refuses the record outright.
+        if (rec.erasedAt) continue;
         if (typeof rec.foundingNumber !== 'number' || rec.foundingNumber < 1) continue;
         members.push({
           number: rec.foundingNumber,
