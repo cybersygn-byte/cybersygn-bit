@@ -38,12 +38,13 @@
     "lint": "npm run smoke && npm run lint:css && npm run lint:emdash && npm run eval:check",
     "lint:emdash": "node tools/emdash-lint.mjs",
     "lint:emdash:dist": "node tools/emdash-lint.mjs --dist-only",
-    "deploy": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet && npx wrangler deploy",
+    "deploy": "npm run verify && npx wrangler deploy",
     "test:accuracy": "node scripts/measure-element-accuracy.mjs",
     "test:payout": "node scripts/test-payout.mjs",
     "test:events": "node scripts/test-events.mjs",
     "test:atomic": "node scripts/test-atomic.mjs",
     "test:erasure": "node scripts/test-erasure.mjs",
+    "test:verify": "node scripts/test-verify.mjs",
     "test:signed": "node scripts/test-signed-pdf.mjs",
     "check:dist": "node scripts/check-dist-pages.mjs",
     "test:cron": "node scripts/test-cron-jobs.mjs",
@@ -54,7 +55,9 @@
     "test:claims": "node scripts/test-site-claims.mjs",
     "test:stripeevt": "node scripts/test-stripe-events.mjs",
     "test:templatedet": "node scripts/test-template-detection.mjs",
-    "check:integrity": "node scripts/check-integrity.mjs"
+    "check:integrity": "node scripts/check-integrity.mjs",
+    "verify": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:verifyrec && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet",
+    "test:verifyrec": "node scripts/test-verify.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

@@ -75,6 +75,10 @@ export async function writeVerifyRecord(env, {
     signedSha256: signed,
   };
 
+  // How many records this pair is SUPPOSED to produce, decided before any
+  // write, so the result can be judged against the intent rather than against
+  // whatever happened to land.
+  const expected = (signed && signed !== pdfSha256) ? 2 : 1;
   const wrote = [];
   try {
     const storage = getStorage(env);
@@ -87,10 +91,22 @@ export async function writeVerifyRecord(env, {
       await storage.docs.put(`verify:${signed}`, { ...base, fingerprint: signed, kind: 'signed' });
       wrote.push(signed);
     }
-    return true;
   } catch (e) {
-    return wrote.length > 0;
+    console.warn('[verify] record write failed', e && e.message);
   }
+  // A HALF-WRITTEN PAIR IS A FAILURE, NOT A SUCCESS.
+  //
+  // The audit certificate prints both fingerprints and tells the holder that
+  // either one will verify. If only one record landed, that sentence is false
+  // for whichever hash is missing, and returning true would report the promise
+  // as backed when half of it is not: a failure presenting itself as a valid
+  // answer, on the one surface whose entire job is to be trustworthy.
+  //
+  // The record that did land is deliberately kept rather than rolled back. It
+  // is correct on its own terms, and a counterparty holding that file is
+  // better served by a fingerprint that resolves than by neither. The caller
+  // gets false so it can retry or log; nothing here silently pretends.
+  return wrote.length === expected;
 }
 
 /**

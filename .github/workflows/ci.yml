@@ -1,8 +1,13 @@
 name: CI
 
-# Runs on every push to main and every pull request.
-# Three gates: parse-check every JS file, lint CSS, run the worker
-# E2E + synthetic detection test suites. Any failure blocks merge.
+# CI runs the EXACT SAME gate as a deploy, via the shared `npm run verify`
+# script. That sharing is deliberate and is enforced by check:integrity.
+#
+# It used to run four hand-listed steps while the deploy gate ran nineteen, so
+# a merge could be green while the checks that actually protect the product
+# never executed. That is the same failure that let a test suite silently drop
+# out of the build: coverage that looks present and is not. One definition,
+# used by both, cannot drift.
 
 on:
   push:
@@ -12,9 +17,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  smoke:
-    name: Parse + lint
+  verify:
+    name: Verify (same gate as deploy)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,36 +32,16 @@ jobs:
           cache: npm
 
       - name: Install
-        # --omit=dev keeps the install footprint small; smoke + css-check
-        # are pure-node scripts with zero deps, so dev-deps aren't needed
-        # here.
-        run: npm install --omit=dev || npm install
-
-      - name: Smoke (parse every JS file)
-        run: npm run smoke
-
-      - name: Lint CSS
-        run: npm run lint:css
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    needs: smoke
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install
+        # Full install, not --omit=dev: the gate builds the site and runs PDF
+        # suites that need the real dependency tree.
         run: npm install
 
-      - name: Synthetic detection (10 PDFs)
-        run: npm test
+      - name: Verify
+        # lint, wiring integrity, build, dist completeness, and every test
+        # suite. Identical to what runs before a deploy.
+        run: npm run verify
 
-      - name: Worker E2E (141 tests)
-        run: npm run test:worker
+      - name: Synthetic detection corpus
+        # Not in the shared gate because it is slow and corpus-driven rather
+        # than a correctness invariant, but it should still block a merge.
+        run: npm test

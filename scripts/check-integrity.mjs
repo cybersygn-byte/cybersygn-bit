@@ -31,7 +31,8 @@ function check(cond, label, detail) {
 
 const pkg = JSON.parse(await readFile('package.json', 'utf8'));
 const scripts = pkg.scripts || {};
-const deploy = scripts.deploy || '';
+// The gate lives in `verify`; `deploy` is just verify + wrangler.
+const deploy = (scripts.verify || '') + ' && ' + (scripts.deploy || '');
 
 // ---- 1. Gate references only scripts that exist -------------------------
 for (const ref of deploy.split('&&').map(s => s.trim())) {
@@ -106,6 +107,21 @@ for (const [file, needle, what] of CONSTS) {
   check(body.includes(needle), `${file} still defines ${needle}`,
     `${what} is missing from ${file}.`);
 }
+
+// ---- 7. CI runs the SAME gate as deploy ---------------------------------
+// Without this, CI drifts back to a short hand-listed set and a merge can be
+// green while the real checks never run. That is the same "looks like
+// coverage" failure this file exists to prevent, one level up.
+let ci = '';
+try { ci = await readFile('.github/workflows/ci.yml', 'utf8'); } catch { /* reported below */ }
+check(!!ci, 'CI workflow exists', '.github/workflows/ci.yml is missing, so nothing guards a merge.');
+if (ci) {
+  check(ci.includes('npm run verify'), 'CI runs the shared verify gate',
+    'CI does not call `npm run verify`, so it can pass while the deploy gate fails.');
+}
+check((scripts.deploy || '').includes('npm run verify'),
+  'deploy runs the shared verify gate',
+  'package.json deploy no longer calls `npm run verify`, so deploy and CI can diverge.');
 
 if (problems.length) {
   console.error(`\ncheck-integrity: ${problems.length} wiring problem(s) found\n`);
