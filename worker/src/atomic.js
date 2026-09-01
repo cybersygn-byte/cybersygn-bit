@@ -10,9 +10,14 @@
  *    a far better outcome than refusing a paying-adjacent user because a
  *    binding was missing.
  *
- *  - atomicClaim returns null the same way, but its caller must treat null as
- *    DO NOT SEND. An email that goes out twice cannot be recalled, so an
- *    unprovable claim has to block.
+ *  - atomicClaim returns null the same way. Its only caller,
+ *    claimSend in ambassador-email.js, does NOT block on that: it falls back to
+ *    a narrowed KV claim, a read-then-write carrying a nonce, and re-reads to
+ *    see whose nonce won. That is weaker than the DO and stronger than a bare
+ *    get-then-put, and it is what the code actually does. This header used to
+ *    say the caller "must treat null as DO NOT SEND", which described a
+ *    contract nothing enforced: a reader trusting it would have believed a
+ *    missing binding could not produce a duplicate email, when it can.
  *
  * Neither helper ever throws. Telemetry-grade reliability is not worth taking
  * the product down for.

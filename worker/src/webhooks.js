@@ -232,7 +232,11 @@ export async function redeliverWebhook(env, queued) {
   }
 }
 
-async function logDelivery(env, senderId, entry) {
+// Exported so webhook-retry.js can record a dead-letter on the SAME surface
+// the dashboard already renders. It was writing webhook-dead:<senderId>:<id>
+// keys that nothing anywhere reads, so the one outcome an integrator most needs
+// to see, "we gave up on this delivery", was the one outcome invisible to them.
+export async function logDelivery(env, senderId, entry) {
   if (!env || !env.CYBERSYGN_DOCS) return;
   const safe = sanitizeId(senderId);
   if (!safe) return;

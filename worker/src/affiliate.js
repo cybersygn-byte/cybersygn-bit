@@ -7,7 +7,9 @@
  * client passes it as Stripe checkout metadata. When the resulting
  * subscription is created, the webhook attributes the conversion.
  *
- * Payout: $20 per converted (first-paid-month) subscription. Tracked
+ * Payout: plan-scaled, see PLAN_BOUNTY and payoutFor(): $7 to $85 before the
+ * tier multiplier. The flat $20 in this header was retired when the ladder
+ * landed and the dashboard was still quoting it. Tracked
  * in KV under affiliate:<code>:<docId> records so we never double-pay.
  *
  * Surface:

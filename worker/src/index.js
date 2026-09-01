@@ -1417,7 +1417,11 @@ async function handleOwnerLogin(request, env) {
     if (result.error === 'login_not_configured') {
       return jsonResponse(503, {
         error: 'login_not_configured',
-        message: 'OWNER_USERNAME and OWNER_PASSWORD_HASH must be set on the Worker. Run: wrangler secret put OWNER_USERNAME / OWNER_PASSWORD_SALT / OWNER_PASSWORD_HASH.',
+        // The machine-readable `error` code stays stable for the panel; the
+        // human message does not name our secrets or hand a stranger the exact
+        // command to look for. This route is unauthenticated by necessity, so
+        // its 503 body is public.
+        message: 'This deployment is not configured for owner sign-in yet.',
       });
     }
     return jsonResponse(401, { error: result.error });
@@ -1530,7 +1534,10 @@ async function handleCheckoutCreateSession(request, env, url) {
     const code = err && err.code || 'checkout_failed';
     const status = code === 'founding_full' || code === 'lifetime_full' ? 409
                  : code === 'not_configured' || code === 'missing_price' ? 503
-                 : code === 'invalid_tier' || code === 'addon_needs_plan' ? 400
+                 // 'tier_retired' is a CLIENT error: the caller asked for a SKU we no
+                 // longer sell. It fell through to 502, which says the upstream
+                 // payment provider failed and invites a retry that can never work.
+                 : code === 'invalid_tier' || code === 'addon_needs_plan' || code === 'tier_retired' ? 400
                  : 502;
     return jsonResponse(status, {
       error: code,
@@ -2633,7 +2640,7 @@ async function handleDetectVision(request, env, url) {
   if (!env || !env.ANTHROPIC_API_KEY) {
     return jsonResponse(503, {
       error: 'vision_not_configured',
-      message: 'ANTHROPIC_API_KEY not set on this Worker. Set it with wrangler secret put ANTHROPIC_API_KEY to enable Phase 2b vision detection.',
+      message: 'This feature is not enabled on this deployment.',
     });
   }
 
@@ -3868,11 +3875,19 @@ async function loadSenderBrand(env, senderId) {
 /**
  * Webhook config endpoints (slice 91). Studio-tier feature.
  */
+// Webhooks are a Studio feature. An ALLOWLIST, not a denylist.
+//
+// All four handlers used to exclude free/solo/solo_annual by name, which meant
+// every tier nobody thought to name got Studio webhooks for free: Origin at $9,
+// Lifetime at $299 and Pro at $19 all passed. A denylist silently grants each
+// new SKU the feature until someone remembers to add it.
+const WEBHOOK_TIERS = new Set(['team', 'business']);
+
 async function handleWebhookGet(request, env, senderId) {
   const owner = await getOwnerForRequest(request, env, new URL(request.url));
   if (!owner) {
     const sub = await getSubscription(env, senderId);
-    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+    if (!sub || !WEBHOOK_TIERS.has(String(sub.tier || '').replace(/_annual$/, ''))) {
       return jsonResponse(402, { error: 'studio_required', message: 'Webhooks are a Studio feature. Upgrade at /#pricing.' });
     }
   }
@@ -3895,7 +3910,7 @@ async function handleWebhookPost(request, env, url, senderId) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) {
     const sub = await getSubscription(env, senderId);
-    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+    if (!sub || !WEBHOOK_TIERS.has(String(sub.tier || '').replace(/_annual$/, ''))) {
       return jsonResponse(402, { error: 'studio_required' });
     }
   }
@@ -3921,7 +3936,7 @@ async function handleWebhookDelete(request, env, url, senderId) {
   const owner = await getOwnerForRequest(request, env, url);
   if (!owner) {
     const sub = await getSubscription(env, senderId);
-    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+    if (!sub || !WEBHOOK_TIERS.has(String(sub.tier || '').replace(/_annual$/, ''))) {
       return jsonResponse(402, { error: 'studio_required' });
     }
   }
@@ -3933,7 +3948,7 @@ async function handleWebhookLog(request, env, senderId) {
   const owner = await getOwnerForRequest(request, env, new URL(request.url));
   if (!owner) {
     const sub = await getSubscription(env, senderId);
-    if (!sub || sub.tier === 'free' || sub.tier === 'solo' || sub.tier === 'solo_annual') {
+    if (!sub || !WEBHOOK_TIERS.has(String(sub.tier || '').replace(/_annual$/, ''))) {
       return jsonResponse(402, { error: 'studio_required' });
     }
   }

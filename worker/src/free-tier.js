@@ -104,11 +104,19 @@ export async function freeSignup(env, opts) {
   const emailHash = await hashEmail(email);
   const userKey   = KV_PREFIX_USER + emailHash;
 
+  // A FAILED READ IS NOT AN ABSENT USER. Swallowing the error left `record`
+  // null, which is exactly what "no such account" looks like, so a transient KV
+  // hiccup during signup handed a returning user a brand new record and a fresh
+  // set of three free documents, silently resetting a lifetime cap.
   let record = null;
+  let readFailed = false;
   try {
     const raw = await store(env).get(userKey);
     if (raw) record = JSON.parse(raw);
-  } catch (e) {}
+  } catch (e) { readFailed = true; }
+  if (readFailed) {
+    return { ok: false, error: 'kv_read_failed' };
+  }
 
   if (record && record.token) {
     // Refresh the token->emailHash pointer on every signup, not just the

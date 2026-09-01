@@ -115,6 +115,21 @@ export const LIFETIME_CAP = 50;
  * record: { tier, status, stripeCustomerId?, stripeSubscriptionId?, ... }.
  * Free-tier is the implicit default.
  */
+/**
+ * Is this subscription entitled to paid features RIGHT NOW?
+ *
+ * Entitlement and the revenue metrics disagreed about 'trialing'. The unlimited
+ * branch in checkFreeTierAllowance required status === 'active', so a trialing
+ * customer was metered like a free user, while index.js counted them as paying.
+ * One of the two was wrong about the same person, and it was the one they could
+ * feel. stripe.js:914 already treats trialing as live, so this matches that.
+ */
+export const ENTITLED_STATUSES = new Set(['active', 'trialing']);
+
+export function isEntitled(sub) {
+  return !!(sub && sub.tier && sub.tier !== 'free' && ENTITLED_STATUSES.has(sub.status));
+}
+
 export async function getSubscription(env, senderId) {
   if (!senderId) return defaultFree();
   // Sanitize HERE, not only in the callers. This builds a KV key from a value
@@ -174,7 +189,7 @@ export async function incrementUsage(env, senderId) {
  */
 export async function checkFreeTierAllowance(env, senderId) {
   const sub = await getSubscription(env, senderId);
-  if (sub.status === 'active' && sub.tier !== 'free') {
+  if (isEntitled(sub)) {
     return { allowed: true, remaining: Infinity, tier: sub.tier, used: 0, sub };
   }
   // Ambassador product pass: active ambassadors get the full product free.

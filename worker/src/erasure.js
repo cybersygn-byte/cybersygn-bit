@@ -24,6 +24,13 @@
  * Billing records are also kept. Retention of invoices has an independent
  * lawful basis (a legal obligation to keep tax records), and Article 17(3)(b)
  * carves it out explicitly.
+ *
+ * Daily R2 snapshots also survive, and this list used to omit them. Those files
+ * hold doc:, sub:, free: and drip: keys (kv-backup.js BACKUP_PREFIXES) and age
+ * out on their own after BACKUP_RETENTION_DAYS = 35, which is what /privacy/
+ * and /erase/ promise: they are never edited selectively. The kept-forever
+ * artifact copies under artifacts/ are different, and eraseR2Artifacts deletes
+ * those directly, because nothing would ever age them out.
  */
 
 import { sha256Hex } from './audit.js';
@@ -665,15 +672,20 @@ async function sweepOrphanedDocs(kv, env, senderId, tally, handled = new Set()) 
 /**
  * Write a PII-FREE receipt. It records that an erasure happened and what it
  * touched, which is what demonstrates compliance, without re-storing the very
- * identifiers the request existed to remove. The emailHash is a one-way digest
- * and is the only linkage kept.
+ * identifiers the request existed to remove.
+ *
+ * The stored copy carries NO emailHash. An unsalted SHA-256 of an address is a
+ * stable pseudonymous identifier, not anonymised data: anyone holding the
+ * address can recompute it and confirm this person asked to be forgotten. That
+ * is the one fact the request existed to remove, kept for a year. Nothing ever
+ * queried by it, and the subject is handed receipt.id, so the linkage bought
+ * nothing. The RETURNED object keeps it for the caller's in-flight logging only.
  */
 export async function writeErasureReceipt(env, { emailHash, scope, tally }) {
   const id = randomToken().slice(0, 32);
   const receipt = {
     v: 1,
     id,
-    emailHash,
     scope,
     documents: tally.documents,
     keysDeleted: tally.deleted,
@@ -684,5 +696,7 @@ export async function writeErasureReceipt(env, { emailHash, scope, tally }) {
   try {
     await store(env).put(RECEIPT_KEY + id, JSON.stringify(receipt), { expirationTtl: RECEIPT_TTL });
   } catch (e) { /* the response still carries the receipt */ }
-  return receipt;
+  // emailHash is returned, never stored: callers use it in-flight and it must
+  // not outlive the request in the record that proves the erasure happened.
+  return { ...receipt, emailHash };
 }

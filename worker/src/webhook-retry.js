@@ -17,6 +17,8 @@
  */
 
 const QUEUE_PREFIX = 'webhook-queue:';
+import { logDelivery } from './webhooks.js';
+
 const DEAD_PREFIX = 'webhook-dead:';
 const RETRY_SCHEDULE_MIN = [0, 1, 5, 30, 120, 360];
 
@@ -34,6 +36,17 @@ export async function enqueueWebhookRetry(env, payload, attemptNum) {
         JSON.stringify({ ...payload, deadAt: new Date().toISOString(), attempts: attemptNum }),
         { expirationTtl: 60 * 60 * 24 * 30 },
       );
+      // ALSO on the surface the dashboard actually renders. The dead: key above
+      // is read by nothing, so giving up on a delivery was invisible to the one
+      // person who needs to know their endpoint stopped receiving events.
+      await logDelivery(env, payload.senderId, {
+        event: payload.event,
+        deliveredAt: null,
+        status: -1,
+        attempts: attemptNum,
+        url: payload.url || null,
+        dead: true,
+      });
     } catch (e) {}
     return;
   }
