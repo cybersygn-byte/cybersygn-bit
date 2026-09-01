@@ -32,8 +32,8 @@ const RESULT_KEY = 'meta:security-check:latest';
  */
 export async function runSecurityCheck(env, opts = {}) {
   const checks = [];
-  const add = (name, pass, detail = '', severity = 'high') =>
-    checks.push({ name, pass: !!pass, detail, severity });
+  const add = (name, pass, detail = '', severity = 'high', advisory = false) =>
+    checks.push({ name, pass: !!pass, detail, severity, advisory });
 
   const has = (k) => typeof (env && env[k]) === 'string' && env[k].length > 0;
 
@@ -79,25 +79,21 @@ export async function runSecurityCheck(env, opts = {}) {
   // marketing email that goes out is non-compliant. That is a real exposure, not
   // a nice-to-have, so it is flagged critical rather than left to a punch list.
   add('can_spam_address_set', has('CYBERSYGN_BUSINESS_ADDRESS'),
-    'CYBERSYGN_BUSINESS_ADDRESS unset: commercial email ships with no physical postal address, which CAN-SPAM requires',
-    'critical');
+    'CYBERSYGN_BUSINESS_ADDRESS unset: commercial email ships with no physical postal address, which CAN-SPAM requires', 'critical', true);
 
   // Observability. Without a DSN an uncaught worker error reaches console.error
   // and nothing else, so a production failure is invisible to the one person
   // running this. Not a security hole, but the reason a security hole would go
   // unnoticed.
   add('error_reporting_configured', has('SENTRY_DSN'),
-    'SENTRY_DSN unset: uncaught worker errors are not reported anywhere a human will see them',
-    'medium');
+    'SENTRY_DSN unset: uncaught worker errors are not reported anywhere a human will see them', 'medium', true);
 
   // Measurement. Both are the difference between knowing and guessing whether
   // anyone is using the product.
   add('analytics_configured', has('CYBERSYGN_GA4_ID'),
-    'CYBERSYGN_GA4_ID unset: no analytics beyond first-party counters',
-    'low');
+    'CYBERSYGN_GA4_ID unset: no analytics beyond first-party counters', 'low', true);
   add('search_console_configured', has('CYBERSYGN_GSC_TOKEN'),
-    'CYBERSYGN_GSC_TOKEN unset: Search Console unverified, so indexing problems are invisible',
-    'low');
+    'CYBERSYGN_GSC_TOKEN unset: Search Console unverified, so indexing problems are invisible', 'low', true);
 
   // ---- 2. KV reachability ---------------------------------------------------
   let kvOk = false;
@@ -121,7 +117,20 @@ export async function runSecurityCheck(env, opts = {}) {
   await probe(add, send, 'health_responds', `${base}/api/health`, { belowServerError: true });
   await probeHeaders(add, send, `${base}/`);
 
-  const failures = checks.filter((c) => !c.pass);
+  // SECURITY failures versus CONFIGURATION advisories.
+  //
+  // The four config checks report things that are OFF and need an account
+  // action (a GA4 property, a Sentry project, a postal address). They can never
+  // pass on their own, so counting them as failures would make the twice-daily
+  // alert fire forever and bury a real security regression in noise. The
+  // contract this file documents, "a passing run sends no email", only means
+  // something if a passing run is reachable.
+  //
+  // Advisories are still recorded, still returned, and still shown in the owner
+  // panel. They just do not page anyone twice a day about a decision already
+  // made.
+  const failures = checks.filter((c) => !c.pass && !c.advisory);
+  const advisories = checks.filter((c) => !c.pass && c.advisory);
   const result = {
     ranAt: new Date().toISOString(),
     trigger: opts.trigger || 'cron',
@@ -129,6 +138,7 @@ export async function runSecurityCheck(env, opts = {}) {
     passed: checks.length - failures.length,
     total: checks.length,
     failures: failures.map((f) => ({ name: f.name, detail: f.detail, severity: f.severity })),
+    advisories: advisories.map((f) => ({ name: f.name, detail: f.detail, severity: f.severity })),
     checks,
   };
 
@@ -144,11 +154,15 @@ export async function runSecurityCheck(env, opts = {}) {
       const lines = result.failures
         .map((f) => `- [${f.severity}] ${f.name}${f.detail ? ': ' + f.detail : ''}`)
         .join('\n');
+      const advLines = result.advisories.length
+        ? `\n\nAlso unconfigured (these do not trigger this email):\n` + result.advisories
+            .map((f) => `- [${f.severity}] ${f.name}${f.detail ? ': ' + f.detail : ''}`).join('\n')
+        : '';
       try {
         await deliver(env, {
           to,
           subject: `CyberSygn security check: ${result.failures.length} issue(s)`,
-          text: `The twice-daily security self-check found issues at ${result.ranAt}:\n\n${lines}\n\nFull report: ${base}/control/\n\nThis is automated; a passing run sends no email.`,
+          text: `The twice-daily security self-check found issues at ${result.ranAt}:\n\n${lines}${advLines}\n\nFull report: ${base}/control/\n\nThis is automated; a passing run sends no email.`,
         });
       } catch { /* email best-effort */ }
     }

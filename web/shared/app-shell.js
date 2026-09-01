@@ -201,11 +201,40 @@
   }
 
   function planLine() {
-    var ft = ls(K.freeToken) || '';
-    if (ft.indexOf('paid:') === 0) return 'Unlimited plan';
-    if (ft) return 'Free plan';
-    return 'Free plan';
+    // Every branch here used to resolve to 'Free plan' for a paying customer,
+    // because the only non-free branch keyed on a 'paid:' token prefix that
+    // nothing has ever written. Telling a subscriber they are on the free plan
+    // is worse than saying nothing, so say nothing until the real tier is known.
+    // planLineFromTier() below is called once /api/billing/subscription answers.
+    var t = window.__cybersygnTier
+      || (window.__cybersygnSub && window.__cybersygnSub.tier);
+    if (t && t !== 'free') return 'Unlimited plan';
+    if (t === 'free') return 'Free plan';
+    return '';
   }
+
+  // Resolve the real plan once. Nothing else in the shell knew the tier, which
+  // is why the label defaulted to "Free plan" for everyone including paying
+  // customers. Best-effort and silent: a failed lookup leaves the label blank
+  // rather than asserting a plan we cannot confirm.
+  function resolveTier() {
+    try {
+      if (window.__cybersygnTier) return;
+      // handleBillingSubscription reads senderId from the QUERY STRING, not a
+      // header. Sending it as a header returned the anonymous shape and the
+      // label would have stayed blank forever.
+      var sid = ls('cybersygn.senderId') || '';
+      if (!sid) return;
+      fetch('/api/billing/subscription?senderId=' + encodeURIComponent(sid))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (d && d.tier) { window.__cybersygnTier = d.tier; try { renderSheet(); } catch (e) {} }
+        })
+        .catch(function () {});
+    } catch (e) {}
+  }
+
+  try { resolveTier(); } catch (e) {}
 
   function renderSheet() {
     var email = ls(K.email);

@@ -2668,6 +2668,27 @@ async function handleFreeSignup(request, env) {
 
 async function handleFreeConsume(request, env) {
   const token = request.headers.get('x-cybersygn-free') || '';
+
+  // A PAYING CUSTOMER MUST NEVER HIT THE FREE-TIER PAYWALL.
+  //
+  // handleCreateDoc already gets this right: it bypasses the gate when the
+  // sender has a real paid tier. This path did not, and the client-side guard
+  // that was supposed to cover it keyed on a 'paid:' token prefix that is READ
+  // in three places and WRITTEN in none, so it never fired. The result was that
+  // a customer who used their three free documents and then subscribed was
+  // refused their own download, with no file at all.
+  //
+  // The subscription is the authority, not a client-supplied marker.
+  const senderId = String(request.headers.get('x-cybersygn-sender') || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (senderId) {
+    try {
+      const sub = await getSubscription(env, senderId);
+      if (sub && sub.tier && sub.tier !== 'free') {
+        return jsonResponse(200, { ok: true, unmetered: true, tier: sub.tier, reason: 'paid_plan' });
+      }
+    } catch (e) { /* fall through to the free path rather than refuse a download */ }
+  }
+
   const result = await freeConsume(env, token);
   if (!result.ok) {
     const status = result.error === 'free_cap_reached' ? 402 : 401;
@@ -5228,7 +5249,15 @@ async function handleGetDocProgress(env, docId, url) {
   };
   if (isSender && doc.completedAt) {
     response.auditUrl = `${baseUrl}/api/docs/${docId}/audit?t=${doc.signers[0].token}`;
-    response.signedPdfUrl = `${baseUrl}/api/docs/${docId}/pdf?t=${doc.signers[0].token}`;
+    // /signed, NOT /pdf. handleGetPdf returns the ORIGINAL uploaded file: its
+    // own error string says "Original PDF not found in storage", and the only
+    // writers of pdf:<docId> are the creation path and a TTL-lifting re-put of
+    // the same bytes. Signer fills are flattened into signed:<docId> instead.
+    // Pointing a control labelled "Download signed PDF" at /pdf handed the
+    // sender a BLANK document and called it signed, and its hash could never
+    // match the signedPdfSha256 printed on the audit certificate.
+    // ?s= is the sender token, which handleGetSignedPdf validates.
+    response.signedPdfUrl = `${baseUrl}/api/docs/${docId}/signed?s=${senderToken}`;
   }
   return jsonResponse(200, response);
 }

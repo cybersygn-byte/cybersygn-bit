@@ -106,7 +106,7 @@
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <span class="post__meta-item">5 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">1,034 words</span>
+          <span class="post__meta-item">1,049 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
@@ -141,7 +141,7 @@ One note worth keeping in mind: this is general information, not legal advice, s
 
 Open your dashboard, go to Settings, and open **GDPR Tools**, the same place you find the export tools. Search for the signer by email, then click **&quot;Delete this signer&#39;s data.&quot;** Here is the step that builds real trust: before anything is removed, CyberSygn shows you a clear preview that lists what will be deleted and what will be preserved as immutable evidence, meaning a record that cannot be changed afterward. So you are never guessing, because you see the exact result before you confirm it, with no surprise gaps and no accidental erasure of a contract you actually needed.
 
-Click confirm, and the deletion runs quietly in the background, completing within twenty-four hours. Does a copy linger in a backup somewhere? No, and the reason is plainer than you might like: CyberSygn runs no backup archive today, so there is no secondary copy for deleted data to survive in. Everything the platform holds sits in one encrypted Cloudflare KV store under a thirty-day timer, which means a deletion has exactly one place it needs to reach. That is a detail many competing tools skip entirely, and it is precisely the detail an auditor eventually asks about.
+Click confirm, and the deletion runs quietly in the background, completing within twenty-four hours. Does a copy linger in a backup somewhere? No, and the reason is plainer than you might like: CyberSygn runs encrypted daily backups in Cloudflare R2, retained for 35 days and then deleted automatically, so a deleted record can persist in a snapshot until that snapshot ages out. Everything else the platform holds sits in one encrypted Cloudflare KV store, which means a deletion has one live place to reach and one bounded window to age out of. That is a detail many competing tools skip entirely, and it is precisely the detail an auditor eventually asks about.
 
 That is the full picture of how you delete data CyberSygn holds: strip away whatever you can, keep only the evidence, and confirm with your eyes open, so a right-to-be-forgotten request becomes a one-minute task you can handle with genuine confidence.</p>
 <h2 class="post__h2">Document Each Deletion So You Never Have to Defend It</h2>

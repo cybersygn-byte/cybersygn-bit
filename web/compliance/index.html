@@ -75,7 +75,7 @@
         <h2 class="h-section">Data flow.</h2>
         <ul>
           <li><strong>Detection runs in your browser.</strong> The first pass of field detection executes entirely in JavaScript on the visitor's device. The PDF does not leave the page until the sender clicks Send.</li>
-          <li><strong>Storage is Cloudflare KV.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. There is no object store or long-term archive behind KV today.</li>
+          <li><strong>Storage is Cloudflare KV.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. Cloudflare R2 sits behind KV as a daily backup target, holding a rolling 35 day window and nothing older.</li>
           <li><strong>Transit is TLS 1.3.</strong> Every connection from browser to worker is encrypted in transit. We enforce HSTS.</li>
           <li><strong>Email delivery is Resend.</strong> Magic links to signers travel through Resend's infrastructure. DKIM + SPF + DMARC fully configured on cybersygn.io.</li>
         </ul>
@@ -100,7 +100,7 @@
           <li><strong>Every document</strong> carries a 30-day KV expiry, counted from the last write. That covers the unsigned PDF, the signing record, and, after completion, the signed PDF and its audit certificate. When it expires the record is gone: magic links 404 and there is no restore. Download the signed PDF and the audit certificate when a document completes.</li>
           <li><strong>Audit certificates</strong> are immutable once generated. We do not modify them in-place.</li>
           <li><strong>Verification records</strong> are permanent. On completion we store the SHA-256 fingerprint, signer count, and timestamps, with no name, email, title, or document content, so a saved PDF stays verifiable at /verify/ after the 30 days.</li>
-          <li><strong>There is no backup archive.</strong> Nothing is copied to secondary storage today, so there is no backup for us to restore from and none for deleted data to survive in.</li>
+          <li><strong>Encrypted daily backups are written to Cloudflare R2 and retained for 35 days, then deleted automatically.</strong> Nothing is copied to secondary storage today, so there is no backup for us to restore from and none for deleted data to survive in.</li>
           <li><strong>Free tier</strong> drip records retain email + name for 5 years for transactional drip. Deletable on request (see GDPR below).</li>
           <li><strong>Owner-only datasets:</strong> we retain a labeled-PDF training corpus from free-tier consent, used for improving detection. No document content; positions and types only.</li>
         </ul>

@@ -3267,6 +3267,11 @@ async function ensureFreeDownloadCredit() {
     showFreeSignupGate('Sign up first to download. Your first one\'s on us, no card needed.');
     return false;
   }
+  // The 'paid:' prefix below is VESTIGIAL: it is read here and in two other
+  // places and written by nothing, so it never once identified a paid customer.
+  // Kept only so an old token that happens to carry it still short-circuits.
+  // The real check is the sender id sent below, which the Worker resolves
+  // against the actual subscription.
   if (freeToken.indexOf('paid:') === 0) return true;
   if (_freeConsumedDocs.has(freeCreditKey())) return true;
   try {
@@ -3274,7 +3279,10 @@ async function ensureFreeDownloadCredit() {
     // Worker the PDF, so it has to name the document itself. Same hash the
     // send path carries, so a download after a send of this exact PDF (and
     // the reverse) settles against one marker and bills once.
-    const headers = { 'X-CyberSygn-Free': freeToken };
+    // Name the sender so the Worker can see a paid subscription and skip the
+    // gate. Without this a customer who subscribed after using their three
+    // free documents was refused their own download.
+    const headers = { 'X-CyberSygn-Free': freeToken, 'X-CyberSygn-Sender': getSenderId() };
     const sha = billingDocSha();
     if (sha) headers['X-CyberSygn-Doc-Sha'] = sha;
     const res = await fetch('/api/free/consume', {
