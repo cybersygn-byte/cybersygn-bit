@@ -4999,16 +4999,27 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
  * produced now are the bytes that would have been produced then.
  */
 async function handleGetSignedPdf(request, env, docId, url) {
+  // EITHER credential works, because every party to the document must end up
+  // holding the same bytes. ?t= is a signer token (the convention used by
+  // /pdf and /audit), ?s= is the sender token (the convention used by the
+  // progress and summary endpoints). Accepting only ?t= would leave the
+  // SENDER downloading their own browser's local flatten, so "every party
+  // gets the same file" would be false for the one person who sent it.
   const token = url.searchParams.get('t');
-  if (!token) return jsonResponse(400, { error: 'missing_token', message: 'A signing token is required.' });
+  const senderToken = url.searchParams.get('s');
+  if (!token && !senderToken) {
+    return jsonResponse(400, { error: 'missing_token', message: 'A signing or sender token is required.' });
+  }
 
   const storage = getStorage(env);
   const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
 
-  // Any party to the document may fetch it: they all already hold the file.
-  const signer = doc.signers.find(s => ctEqHex(s.token, token));
-  if (!signer) return jsonResponse(403, { error: 'invalid_token', message: 'Invalid signing link.' });
+  const isSigner = !!(token && (doc.signers || []).some(sg => ctEqHex(sg.token, token)));
+  const isSender = !!(senderToken && doc.senderToken && ctEqHex(senderToken, doc.senderToken));
+  if (!isSigner && !isSender) {
+    return jsonResponse(403, { error: 'invalid_token', message: 'Invalid link.' });
+  }
 
   if (!doc.completedAt) {
     return jsonResponse(409, {
