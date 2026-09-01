@@ -395,6 +395,34 @@ await t('an erased founding member leaves the public Origin wall', async () => {
   assert.ok(sub.stripeCustomerId, 'financial identifiers stay, Article 17(3)(b)');
 });
 
+await t('the KEPT R2 copies are erased, not just the KV originals', async () => {
+  // Backing the signed PDF and audit certificate up to R2 gave them a second
+  // home that outlives the 35-day snapshot window on purpose. Without this,
+  // adding that backup would have quietly broken erasure: the signature image
+  // and full document text would sit in the bucket forever after a confirmed
+  // "delete everything", while /privacy/ promises 35 days.
+  const kv = new Map(), pdfs = new Map(), r2 = new Map();
+  kv.set('sender:snd_1:docs', JSON.stringify({ docs: ['d1'] }));
+  kv.set('doc:d1', JSON.stringify({ id: 'd1', senderId: 'snd_1', signers: [{ id: 's1' }] }));
+  pdfs.set('signed:d1', 'SIG'); pdfs.set('audit:d1', 'CERT');
+  r2.set('artifacts/signed/d1', 'SIG COPY');
+  r2.set('artifacts/audit/d1', 'CERT COPY');
+  r2.set('backups/2026-01-01.ndjson', 'daily dump');
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : (typeof v === 'string' ? v : JSON.stringify(v)); },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  await eraseIdentity({ CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs), CYBERSYGN_BACKUPS: mk(r2) },
+    { emailHash: 'h', senderId: 'snd_1', scope: 'account' });
+  assert.deepEqual([...pdfs.keys()], [], 'KV artifacts gone');
+  assert.ok(!([...r2.keys()].some(k => k.startsWith('artifacts/'))),
+    `the kept R2 copies must go too, left: ${[...r2.keys()]}`);
+  assert.ok(r2.has('backups/2026-01-01.ndjson'),
+    'the dated snapshot is NOT selectively edited: it ages out on its own, which is what /privacy/ says');
+});
+
 console.log(out.join('\n'));
 console.log(`\nerasure: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

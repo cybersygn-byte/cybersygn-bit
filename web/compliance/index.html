@@ -75,7 +75,7 @@
         <h2 class="h-section">Data flow.</h2>
         <ul>
           <li><strong>Detection runs in your browser.</strong> The first pass of field detection executes entirely in JavaScript on the visitor's device. The PDF does not leave the page until the sender clicks Send.</li>
-          <li><strong>Storage is Cloudflare KV.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. Cloudflare R2 sits behind KV as a daily backup target, holding a rolling 35 day window and nothing older.</li>
+          <li><strong>Storage is Cloudflare KV.</strong> Your documents are stored only on Cloudflare, our sole infrastructure provider, encrypted at rest. No additional third party holds your document. Cloudflare R2 sits behind KV as a backup target: a rolling 35 day window of daily snapshots, plus one kept copy of each signed PDF and audit certificate, which are not on that clock because a completed document is not expired. Erasing a document deletes that kept copy too.</li>
           <li><strong>Transit is TLS 1.3.</strong> Every connection from browser to worker is encrypted in transit. We enforce HSTS.</li>
           <li><strong>Email delivery is Resend.</strong> Magic links to signers travel through Resend's infrastructure. DKIM + SPF + DMARC fully configured on cybersygn.io.</li>
         </ul>

@@ -242,6 +242,27 @@ export async function eraseIdentity(env, claim) {
 }
 
 /** Delete one document and everything derived from it. */
+/**
+ * Delete this document's PERMANENT R2 artifact copies.
+ *
+ * The daily NDJSON snapshots age out on their own in 35 days, which is what
+ * /privacy/ and /erase/ promise. The signed PDF and audit certificate are
+ * different: they are copied to R2 once and kept indefinitely, precisely
+ * because a completed document is not expired. That makes them the one place a
+ * "delete everything" could leave the signature image and the full document
+ * text sitting forever, so erasure has to reach into the bucket for them.
+ *
+ * Mirrors the key shape written by backupSignedArtifacts: artifacts/<kind>/<id>.
+ */
+async function eraseR2Artifacts(env, docId, tally) {
+  const r2 = env && env.CYBERSYGN_BACKUPS;
+  if (!r2 || typeof r2.delete !== 'function') return;
+  for (const kind of ['signed', 'audit']) {
+    try { await r2.delete(`artifacts/${kind}/${docId}`); }
+    catch (e) { tally.errors.push(`r2:artifacts/${kind}/${docId}`); }
+  }
+}
+
 async function eraseOneDoc(kv, env, docId, doc, tally) {
   if (doc && doc.pdfSha256) tally.keptVerifyRecords++;
   await safeDelete(kv, `doc:${docId}`, tally);
@@ -260,6 +281,8 @@ async function eraseOneDoc(kv, env, docId, doc, tally) {
     try { await env.CYBERSYGN_PDFS.delete(`signed:${docId}`); tally.deleted++; }
     catch (e) { tally.errors.push(`signed:${docId}`); }
   }
+  // The kept R2 copies, which outlive the 35-day snapshot window by design.
+  await eraseR2Artifacts(env, docId, tally);
   for (const sg of ((doc && doc.signers) || [])) {
     await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);
   }
@@ -384,6 +407,7 @@ async function sweepOrphanedDocs(kv, env, senderId, tally) {
           // so leaving it out would keep the signature image for exactly the
           // heaviest users the sweep exists to serve.
           try { await env.CYBERSYGN_PDFS.delete(`signed:${docId}`); tally.deleted++; } catch (e) { tally.errors.push(`signed:${docId}`); }
+          await eraseR2Artifacts(env, docId, tally);
         }
         for (const sg of (doc.signers || [])) {
           await safeDelete(kv, `signer-fills:${docId}:${sg.id}`, tally);
