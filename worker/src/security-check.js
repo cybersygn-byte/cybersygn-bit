@@ -46,6 +46,22 @@ export async function runSecurityCheck(env, opts = {}) {
   add('stripe_webhook_secret_set', has('STRIPE_WEBHOOK_SECRET'),
     'STRIPE_WEBHOOK_SECRET missing, webhooks cannot be verified', 'critical');
   add('resend_key_set', has('RESEND_API_KEY'), 'RESEND_API_KEY missing, email disabled', 'medium');
+  // THE CHECK MUST CHECK ITS OWN ALERT CHANNEL. Every finding below is
+  // delivered by one email to one address, and nothing verified that the
+  // address exists, so a run that found ten critical problems and had nowhere
+  // to send them looked exactly like a clean run.
+  add('alert_channel_configured', has('OWNER_EMAIL') || has('CYBERSYGN_OWNER_EMAIL'),
+    'neither OWNER_EMAIL nor CYBERSYGN_OWNER_EMAIL is set: this check has nowhere to send its alerts',
+    'critical');
+  // The two bindings whose absence is silent everywhere else. A missing PDFS
+  // binding makes erasure skip every signed PDF and audit certificate while
+  // still reporting success; a missing BACKUPS bucket means no backup exists.
+  add('pdfs_binding_bound', !!(env && env.CYBERSYGN_PDFS),
+    'CYBERSYGN_PDFS is not bound: signed PDFs and audit certificates cannot be written or erased',
+    'critical');
+  add('backups_binding_bound', !!(env && env.CYBERSYGN_BACKUPS),
+    'CYBERSYGN_BACKUPS is not bound: the daily backup writes nowhere',
+    'high');
 
   let ownerConfigured = has('OWNER_USERNAME') && has('OWNER_PASSWORD_HASH');
   if (!ownerConfigured) {

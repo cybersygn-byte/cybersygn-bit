@@ -231,6 +231,35 @@ await t('a failed generation costs no credit', async () => {
   } finally { globalThis.fetch = real; }
 });
 
+await t('the free tier is held to ONE signer, as advertised', async () => {
+  // llms.txt sells free as "single signer per document" and Solo on
+  // "Multi-signer routing with magic-link email delivery". Nothing enforced
+  // either half, so Solo's advertised differentiator was free to everyone.
+  const worker = (await import('../worker/src/index.js')).default;
+  const { env } = mkEnv();
+  const tok = await signup(env);
+  const pdf = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(400, 0x20), Buffer.from('\n%%EOF')]);
+  const create = (signers, senderId) => worker.fetch(new Request('https://x/api/docs', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': '7.7.7.7', 'x-cybersygn-free': tok },
+    body: JSON.stringify({
+      title: 'T', senderName: 'N', senderId, pdfBase64: pdf.toString('base64'),
+      fields: [{ id: 'f1', page: 1, x: 10, y: 10, width: 100, height: 20, type: 'signature', confidence: 0.9 }],
+      signers, assignments: { f1: signers[0].id },
+    }),
+  }), env, { waitUntil() {} });
+
+  const multi = await create([
+    { id: 'p1', name: 'A', email: 'a@example.com' },
+    { id: 'p2', name: 'B', email: 'b@example.com' },
+  ], 'snd_free');
+  assert.equal(multi.status, 402, 'a free account may not route to two signers');
+  assert.equal((await multi.json()).error, 'multi_signer_requires_paid');
+
+  const single = await create([{ id: 'p1', name: 'A', email: 'a@example.com' }], 'snd_free');
+  assert.equal(single.status, 201, 'one signer is exactly what free covers');
+});
+
 console.log(out.join('\n'));
 console.log(`\nfree billing: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

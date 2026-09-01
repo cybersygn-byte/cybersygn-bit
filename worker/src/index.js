@@ -4468,6 +4468,21 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     // Same subscription the gate just read, no extra KV round trip.
     footerless = !neverPaid;
     if (gate.tier === 'free' && neverPaid) {
+      // SINGLE SIGNER ON FREE. llms.txt sells the free tier as "single signer
+      // per document" and sells Solo on "Multi-signer routing with magic-link
+      // email delivery", and nothing enforced either half: a free account could
+      // route a document to as many signers as it liked, so Solo's advertised
+      // differentiator was free. Checked before the allowance is consumed, so a
+      // refused multi-signer send costs no credit.
+      const signerCount = Array.isArray(payload.signers) ? payload.signers.length : 0;
+      if (signerCount > 1) {
+        return jsonResponse(402, {
+          error: 'multi_signer_requires_paid',
+          message: 'The free tier covers one signer per document. Solo adds multi-signer routing with magic-link delivery.',
+          signerCount,
+          upgrade: { tiers: ['solo', 'founding', 'team'] },
+        });
+      }
       // Free tier. The durable identity is the signed-up EMAIL (hashed),
       // not the senderId: senderIds live in localStorage and can be
       // rotated at will, so a per-sender counter alone is a 3-docs-per-

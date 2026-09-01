@@ -100,9 +100,24 @@ async function takeFreeUse() {
   return _freeDispenser.token;
 }
 
+// Multi-signer routing is a PAID feature. The free tier is sold as "single
+// signer per document" and Solo is sold on multi-signer routing, and the Worker
+// enforces that now, so every multi-signer create below runs as a subscriber,
+// which is what a real one would be.
+const PAID_SENDER = 'paid_multisigner_sender';
+async function seedPaidSender() {
+  const storageModule = await import('../worker/src/storage.js');
+  const storage = storageModule.getStorage({});
+  // A STRING, the way real KV holds it: getSubscription reads without the json
+  // flag and JSON.parse()s the result, so seeding an object makes the parse
+  // throw and the sender silently reads back as free.
+  await storage.docs.put(`sub:${PAID_SENDER}`, JSON.stringify({ tier: 'pro', status: 'active' }));
+}
+
 async function main() {
   console.log('CyberSygn multi-signer end-to-end test');
   console.log('======================================\n');
+  await seedPaidSender();
 
   // 1. Status
   console.log('1. /api/status');
@@ -125,6 +140,7 @@ async function main() {
       { id: 'f2', page: 1, x: 100, y: 80,  width: 200, height: 20, type: 'signature', label: 'Client sig', confidence: 0.9 },
       { id: 'f3', page: 1, x: 100, y: 60,  width: 200, height: 20, type: 'date',      label: 'Date',       confidence: 0.9 },
     ],
+    senderId: PAID_SENDER,
     signers: [
       { id: 'p1', name: 'Artist Alice', email: 'alice@example.com' },
       { id: 'p2', name: 'Client Bob',   email: 'bob@example.com' },
@@ -697,6 +713,7 @@ async function main() {
       { id: 'f2', page: 1, x: 100, y: 80,  width: 200, height: 20, type: 'signature', label: 'S2', confidence: 0.9 },
       { id: 'f3', page: 1, x: 100, y: 60,  width: 200, height: 20, type: 'signature', label: 'S3', confidence: 0.9 },
     ],
+    senderId: PAID_SENDER,
     signers: [
       { id: 'p1', name: 'First Signer',  email: 'first@example.com'  },
       { id: 'p2', name: 'Second Signer', email: 'second@example.com' },
@@ -742,6 +759,7 @@ async function main() {
       { id: 'f1', page: 1, x: 100, y: 100, width: 200, height: 20, type: 'signature', confidence: 0.9 },
       { id: 'f2', page: 1, x: 100, y: 80,  width: 200, height: 20, type: 'signature', confidence: 0.9 },
     ],
+    senderId: PAID_SENDER,
     signers: [
       { id: 'p1', name: 'A', email: 'a@example.com' },
       { id: 'p2', name: 'B', email: 'b@example.com' },
@@ -1071,6 +1089,7 @@ async function main() {
         { id: 'ra', page: 1, x: 50, y: 90, width: 200, height: 20, type: 'signature', label: 'A', confidence: 0.9 },
         { id: 'rb', page: 1, x: 50, y: 60, width: 200, height: 20, type: 'signature', label: 'B', confidence: 0.9 },
       ],
+      senderId: PAID_SENDER,
       signers: [
         { id: 'p1', name: 'Racer A', email: 'ra@example.com' },
         { id: 'p2', name: 'Racer B', email: 'rb@example.com' },
@@ -1135,6 +1154,7 @@ async function main() {
     const vdoc = await call('POST', '/api/docs', {
       title: 'Void test', senderName: 'V', pdfBase64,
       fields: [{ id: 'vs', page: 1, x: 50, y: 50, width: 200, height: 20, type: 'signature', label: 'S', confidence: 0.9 }],
+      senderId: PAID_SENDER,
       signers: [{ id: 'p1', name: 'V One', email: 'v1@example.com' }, { id: 'p2', name: 'V Two', email: 'v2@example.com' }],
       assignments: { vs: 'p1' },
     });
