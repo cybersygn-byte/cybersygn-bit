@@ -178,6 +178,15 @@ async function createDocument(request, env, url, ctx, auth, deps) {
   if (!fields) {
     try {
       const result = await detectFields(pdfBytes);
+      // "Could not read the PDF" and "read it, found nothing" are different
+      // answers and the caller acts on them differently. detectFields RESOLVES
+      // with { fields: [], error } rather than throwing, so treating a parse
+      // failure as an empty result told an integrator their contract contains
+      // no signature fields when the truth is we never parsed it.
+      if (result && result.error) {
+        return err(503, 'detection_unavailable',
+          `Field detection could not read this PDF server-side (${String(result.error).slice(0, 120)}). Pass an explicit \`fields\` array to place them yourself.`);
+      }
       fields = (result && result.fields) || [];
     } catch (e) {
       return err(422, 'detection_failed', 'Could not read fields from the PDF.');

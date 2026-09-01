@@ -1184,6 +1184,17 @@ async function handleDetect(request) {
   let result;
   try {
     result = await withTimeout(detectFields(pdfBytes), DETECTION_TIMEOUT_MS);
+    // A resolved result carrying `error` means the PDF was never parsed. Say so
+    // with a 503, rather than returning 200 and an empty field list that reads
+    // as "this document has no signature fields".
+    if (result && result.error) {
+      return jsonResponse(503, {
+        error: 'detection_unavailable',
+        message: `Field detection could not read this PDF on the server: ${String(result.error).slice(0, 160)}`,
+        pageCount: result.pageCount || 0,
+        fields: [],
+      });
+    }
   } catch (e) {
     const code = e && e.name === 'TimeoutError' ? 504 : 422;
     return jsonResponse(code, {
