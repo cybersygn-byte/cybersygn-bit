@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Studio roles explained: Owner, Sender, and Auditor, CyberSygn</title>
-  <meta name="description" content="Studio roles explained in plain English. Owner runs the workspace, Sender sends, Auditor reads. Pick the right one for each teammate fast." />
-  <meta name="keywords" content="Studio roles, team workspace roles, CyberSygn member permissions, workspace access control, read-only audit access" />
+  <title>Studio roles: what a shared workspace actually does, CyberSygn</title>
+  <meta name="description" content="Studio has no permission roles today. What a shared CyberSygn workspace actually does, what it does not, and how to give a bookkeeper read-only access." />
+  <meta name="keywords" content="Studio roles, team workspace, shared signing workspace, workspace members, read-only contract access" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="https://cybersygn.io/blog/assigning-roles-in-studio/" />
   <meta name="color-scheme" content="light dark" />
@@ -14,8 +14,8 @@
   <link rel="icon" type="image/x-icon" href="../../brand/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" href="../../brand/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="../../brand/favicon-180.png" />
-  <meta property="og:title" content="Studio roles explained: Owner, Sender, and Auditor" />
-  <meta property="og:description" content="Studio roles explained in plain English. Owner runs the workspace, Sender sends, Auditor reads. Pick the right one for each teammate fast." />
+  <meta property="og:title" content="Studio roles: what a shared workspace actually does" />
+  <meta property="og:description" content="Studio has no permission roles today. What a shared CyberSygn workspace actually does, what it does not, and how to give a bookkeeper read-only access." />
   <meta property="og:image" content="https://cybersygn.io/brand/og-image.png" />
   <meta property="og:url" content="https://cybersygn.io/blog/assigning-roles-in-studio/" />
   <meta property="og:type" content="article" />
@@ -45,15 +45,15 @@
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "Studio roles explained: Owner, Sender, and Auditor",
+          "name": "Studio roles: what a shared workspace actually does",
           "item": "https://cybersygn.io/blog/assigning-roles-in-studio/"
         }
       ]
     },
     {
       "@type": "Article",
-      "headline": "Studio roles explained: Owner, Sender, and Auditor",
-      "description": "Studio roles explained in plain English. Owner runs the workspace, Sender sends, Auditor reads. Pick the right one for each teammate fast.",
+      "headline": "Studio roles: what a shared workspace actually does",
+      "description": "Studio has no permission roles today. What a shared CyberSygn workspace actually does, what it does not, and how to give a bookkeeper read-only access.",
       "datePublished": "2026-05-26T12:00:00Z",
       "dateModified": "2026-05-26T12:00:00Z",
       "author": {
@@ -71,7 +71,7 @@
       },
       "mainEntityOfPage": "https://cybersygn.io/blog/assigning-roles-in-studio/",
       "articleSection": "guides",
-      "keywords": "Studio roles, team workspace roles, CyberSygn member permissions, workspace access control, read-only audit access"
+      "keywords": "Studio roles, team workspace, shared signing workspace, workspace members, read-only contract access"
     }
   ]
 }
@@ -98,44 +98,38 @@
     <article class="post__article">
       <div class="container container--prose">
         <p class="post__crumb"><a href="../">Blog</a> · <span class="post__category">guides</span></p>
-        <h1 class="post__title">Studio roles explained: Owner, Sender, and Auditor</h1>
+        <h1 class="post__title">Studio roles: what a shared workspace actually does</h1>
         <div class="post__meta">
           <span class="post__meta-item post__meta-cat">guides</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
           <time class="post__meta-item" datetime="2026-05-26">May 26, 2026</time>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">4 min read</span>
+          <span class="post__meta-item">2 min read</span>
           <span class="post__meta-sep" aria-hidden="true">·</span>
-          <span class="post__meta-item">824 words</span>
+          <span class="post__meta-item">410 words</span>
         </div>
         
     <div class="post__share" aria-label="Share this article">
       <span class="post__share-label">Share</span>
-      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fassigning-roles-in-studio%2F&amp;text=Studio%20roles%20explained%3A%20Owner%2C%20Sender%2C%20and%20Auditor" target="_blank" rel="noopener" aria-label="Share on X">X</a>
+      <a class="post__share-btn" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fassigning-roles-in-studio%2F&amp;text=Studio%20roles%3A%20what%20a%20shared%20workspace%20actually%20does" target="_blank" rel="noopener" aria-label="Share on X">X</a>
       <a class="post__share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fcybersygn.io%2Fblog%2Fassigning-roles-in-studio%2F" target="_blank" rel="noopener" aria-label="Share on LinkedIn">LinkedIn</a>
       <button class="post__share-btn post__share-copy" type="button" data-copy-url="https://cybersygn.io/blog/assigning-roles-in-studio/" aria-label="Copy link to this article">Copy link</button>
     </div>
         <div class="post__body">
-          <p class="post__hook">Most permission systems make you read a chart the size of a tax form. Studio has three roles, and you can learn all of them in the next two minutes.</p>
-          <p class="post__intro">CyberSygn Studio roles are deliberately built to stay simple, because there are only three of them: Owner, Sender, and Auditor. You should never need a permission matrix to figure out who can do what, since most studios run on one Owner plus one or two Senders, while the Auditor role is reserved for someone who needs to see the contract history but should not be sending anything. This guide explains what each of the Studio roles can and cannot do, so you can match every teammate to the right access in seconds and keep your workspace running cleanly with sensible CyberSygn member permissions.</p>
-          <h2 class="post__h2">Owner: the person who runs the workspace</h2>
-<p class="post__p">Owner is full administrative control, and this is the founder or principal, which usually means you. An Owner manages billing, the member list, workspace settings, branding, and webhooks, so they can do everything a Sender can do plus the entire admin layer on top. Most workspaces keep exactly one Owner, though some keep two for redundancy, so the team is never locked out if one person goes on vacation or leaves.
+          <p class="post__hook">Studio does not have permission roles today. Here is what a shared workspace actually gives you, and what to do when you need a read-only bookkeeper.</p>
+          <p class="post__intro">This article used to describe three Studio roles, Owner, Sender, and Auditor, with a breakdown of what each one could and could not do. That was wrong: those roles were never built. The workspace stores a label for whoever created it and shows it in the member list, but nothing in CyberSygn restricts what any member can do. Rather than quietly delete the page, here is the accurate version, including the workaround for the case the old article got people excited about.</p>
+          <h2 class="post__h2">What a Studio workspace actually does</h2>
+<p class="post__p">A Studio workspace is shared visibility and shared work, not tiered access. Every member sees the workspace&#39;s active and completed documents, can send a new document, can chase a pending signer, and can download signed PDFs and audit certificates. The person who created the workspace is marked as the owner in the member list and is the one who holds billing.
 
-Here is the key detail: Owner is the only role that can demote or remove other members, and that power stays at the top on purpose. Why does that matter? Because the person who pays the bill should be the person who controls access, and you never want a teammate quietly changing roles or removing the founder, so keeping that one capability Owner-only is a simple guardrail that prevents a great many awkward situations. If you are setting up a studio, start by deciding who holds Owner, which for most small teams is one clear answer.
+That is genuinely most of the value for a team of two to five. A deal does not stall when one person is out: your teammate sees the contract sitting unsigned, sends the reminder, and closes it. That part is real and it works today.</p>
+<h2 class="post__h2">What it does not do</h2>
+<p class="post__p">There is no read-only member, and no send-but-do-not-change member. If you add someone to the workspace, they can send documents from it. We would rather say that plainly than let you find out from a contract you did not expect to go out.
 
-A quick word of caution rounds this out. Do not hand out Owner just to be generous, because every Owner can change billing and remove people, so grant it only to those who genuinely need to run the account and keep your circle of Owners small and trusted.</p>
-<h2 class="post__h2">Sender: the person doing the signing work</h2>
-<p class="post__p">Sender is the default role for your working teammates, the designers, consultants, and coaches who are actually getting contracts signed every day. A Sender can send documents, manage their own pending signers, and see every document in the workspace, and they can also download signed PDFs and audit certificates and apply your saved templates.
+The case people ask about most is the bookkeeper who needs contract history for the books without any chance of sending something by accident. Until per-member permissions exist, do not add them to the workspace. Share the signed PDF and its audit certificate with them directly: the certificate is self-contained and independently verifiable at cybersygn.io/verify, so they can confirm a document is genuine without an account and without access to anything else.</p>
+<h2 class="post__h2">Inviting people, which does work</h2>
+<p class="post__p">Open your dashboard, invite by email address, and your teammate gets a one-click acceptance link. No signup form, no password step on your end. That flow is real and takes about two minutes.
 
-Now here is the line they cannot cross: a Sender cannot change billing or workspace settings, and they cannot manage members, which is the whole point of clean team workspace roles, because your people get full sending power without ever touching the controls that keep the account safe. Think about what that means in practice, because a new consultant can run their entire client pipeline, send contracts, chase signatures, and pull certificates, all without any risk of changing your plan or removing a teammate.
-
-In other words, you hand out real responsibility while keeping the dangerous buttons out of reach, which is why Sender is the role most studios assign the most. One more advantage is worth noting: Senders can see the whole workspace, not just their own deals, and that visibility helps the team cover for each other, so when a client emails about a contract a teammate sent, any Sender can pull it up and answer.</p>
-<h2 class="post__h2">Auditor and how the three Studio roles fit together</h2>
-<p class="post__p">Auditor is the quietest role, and often the most useful one, because an Auditor gets read-only audit access that lets them see every signed document and every audit certificate in the workspace while remaining unable to send, modify, or manage anything at all. They can look, and only look.
-
-So who is this for? A bookkeeper, an accountant, or part-time legal counsel, meaning someone who needs to review your contract history but should never send a document themselves. Think of it as cheap insurance, because with clear workspace access control the wrong person never sends the wrong contract by accident, and your bookkeeper can confirm a deal closed without ever holding the power to send one.
-
-Here is the broader idea behind all three Studio roles: you give each person exactly the access their job needs and nothing more, which keeps the work fast and the account safe at the same time. Still unsure which role fits someone? Use this quick rule: if they run the business, make them an Owner; if they send contracts, make them a Sender; and if they only need to look, make them an Auditor. You are never stuck with your first guess either, because an Owner can change any role in two clicks, so start with your best guess, watch how the person works, and adjust. Match the role to what someone actually does, and you will almost never have to think about permissions again.</p>
+If per-member permissions are the thing standing between you and Studio, say so at hello@cybersygn.io. We would rather hear it than sell you a workspace that does not do what you needed.</p>
           
         </div>
 

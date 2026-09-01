@@ -39,6 +39,13 @@ async function findPages(dir, base = '') {
       out.push(...await findPages(join(dir, e.name), rel));
     } else if (e.name === 'index.html') {
       out.push(base);   // '' means the root index
+    } else if (e.name.endsWith('.html')) {
+      // NON-INDEX PAGES TOO. Discovering only index.html left four real pages
+      // invisible to this check: offline.html (the service worker's fallback),
+      // 404.html, and the dashboard's join and bulk-send pages. Any of them
+      // could stop being copied into the build and nothing would say so, which
+      // is the exact failure this file exists to prevent.
+      out.push({ file: rel });
     }
   }
   return out;
@@ -47,6 +54,10 @@ async function findPages(dir, base = '') {
 const pages = await findPages(SRC);
 const missing = [];
 for (const p of pages) {
+  if (p && typeof p === 'object' && p.file) {
+    if (!await exists(join(OUT, p.file))) missing.push('/' + p.file);
+    continue;
+  }
   const distPath = p ? join(OUT, p, 'index.html') : join(OUT, 'index.html');
   if (!await exists(distPath)) missing.push('/' + (p ? p + '/' : ''));
 }

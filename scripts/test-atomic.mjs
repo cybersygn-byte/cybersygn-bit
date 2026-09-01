@@ -4,6 +4,7 @@
  * operations against one object and asserts the invariant held.
  */
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 import { AtomicCounter } from '../worker/src/atomic-do.js';
 
 let pass = 0, fail = 0; const out = [];
@@ -14,6 +15,18 @@ async function t(name, fn) {
 
 // A Durable Object serializes requests to one id. Model that faithfully: the
 // storage is strongly consistent and handlers do not interleave.
+//
+// BE CLEAR ABOUT WHAT THIS PROVES AND WHAT IT DOES NOT. Because this stub
+// chains every call, it cannot detect a racy implementation: the arithmetic is
+// tested, the atomicity is assumed. Run the same class against a storage that
+// yields between get and put and it grants 50 of a cap of 3.
+//
+// That is not a bug. Atomicity here comes from the RUNTIME, not from this code:
+// Cloudflare's input gates hold other events while a handler awaits storage.
+// But it means the guarantee rests on a property nothing in this file checks,
+// and it breaks the moment someone awaits something that is NOT storage between
+// the read and the write, because the input gate does not cover that. The
+// source assertion at the bottom of this file is what guards that.
 function makeStub() {
   const store = new Map();
   const storage = {
@@ -92,6 +105,20 @@ await t('an unknown op is refused rather than silently succeeding', async () => 
   const call = makeStub();
   const r = await call('/nope', {});
   assert.equal(r.error, 'unknown_op');
+});
+
+await t('consume never awaits anything but storage between read and write', () => {
+  // The cap holds because Cloudflare's input gates keep other events out while
+  // a handler awaits STORAGE. That protection does not extend to any other
+  // await: a fetch, a crypto call or a timer between the read and the write
+  // reopens the gate and the counter becomes a plain read-modify-write race,
+  // which the serialized stub above would still report as passing.
+  const src = readFileSync(new URL('../worker/src/atomic-do.js', import.meta.url), 'utf8');
+  const body = src.slice(src.indexOf('async consume('), src.indexOf('async claim('));
+  const awaits = [...body.matchAll(/await\s+([^;\n]+)/g)].map(m => m[1].trim());
+  const nonStorage = awaits.filter(a => !/this\.state\.storage\./.test(a));
+  assert.deepEqual(nonStorage, [],
+    `consume() must only await storage; found: ${nonStorage.join(' | ')}`);
 });
 
 console.log(out.join('\n'));

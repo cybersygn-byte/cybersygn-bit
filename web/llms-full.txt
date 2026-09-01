@@ -32,7 +32,7 @@ Solo: $12 per month, or $10 per month billed yearly. Unlimited documents. Multi-
 
 Pro: $19 per month, or $15 per month billed yearly. Everything in Solo, plus the AI co-pilot: draft a contract from a single sentence and get plain-language summaries of any document. Also includes bulk send and priority.
 
-Studio: $29 per month, or $23 per month billed yearly, for a shared team workspace. Aggregated dashboard. Member roles. Bulk send. Webhooks for automation. Everything in Solo, for everyone in the workspace. Flat price, no per-seat billing: one workspace holds up to 25 members at the same price.
+Studio: $29 per month, or $23 per month billed yearly, for a shared team workspace. Aggregated dashboard. A shared member list showing everyone on the workspace, with the owner marked. Bulk send. Webhooks for automation. Everything in Solo, for everyone in the workspace. Flat price, no per-seat billing: one workspace holds up to 25 members at the same price.
 
 Business: $79 per month, or $65 per month billed yearly. Everything in Studio, plus a REST API, higher rate limits, and outbound webhooks. White-label and SSO are not sold: neither is enforced in the product.
 
