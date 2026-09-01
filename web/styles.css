@@ -7484,6 +7484,11 @@ details[open] > .field-list__group--toggle::after {
   outline-offset: 2px;
 }
 .is-signer-mode .decline-link { display: block; }
+/* An executed document offers no way to decline it. enterSignerMode sets this
+   when the server reports allComplete; without it a signer returning to their
+   magic link saw a live "Decline to sign" link on a finished contract. */
+.is-signed-complete .decline-link { display: none; }
+.signer-complete__download { display: inline-flex; align-items: center; justify-content: center; }
 /* Drop the "Tools & templates" disclosure altogether when only the
    snapshot button remains inside, the lone button gets promoted to
    the sidebar action zone via specific JS, but for safety hide an

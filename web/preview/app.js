@@ -5578,6 +5578,30 @@ async function enterSignerMode(docId, token) {
   updateFillUI();
   // Replace the send button HTML so the signer knows what it does.
   // Single-line, proper structure so it matches the rest of the design.
+  // AN EXECUTED DOCUMENT IS NOT A SIGNING SURFACE.
+  //
+  // The server has always returned `allComplete` (index.js:4691) and this
+  // function never read it, so a signer returning to their magic link, from a
+  // bookmark or from the completion email, was shown the unfilled original
+  // with an enabled "Submit your fields" button and a "Decline to sign" link
+  // on a contract that was already legally executed. Submitting produced a 409
+  // error toast; declining a finished document is worse than useless.
+  if (session.allComplete) {
+    signButton.disabled = true;
+    signButton.classList.remove('btn--ready');
+    signButton.innerHTML = '<span class="sign-btn__label">Signed and complete</span>';
+    if (layoutRoot) layoutRoot.classList.add('is-signed-complete');
+    const dl = document.createElement('a');
+    dl.className = 'btn btn--ready signer-complete__download';
+    dl.href = `/api/docs/${encodeURIComponent(docId)}/signed?t=${encodeURIComponent(token)}`;
+    dl.textContent = 'Download signed PDF';
+    dl.setAttribute('download', '');
+    const host = signButton.parentElement;
+    if (host && !host.querySelector('.signer-complete__download')) host.appendChild(dl);
+    showToast('This document is complete. Your signed copy is ready to download.');
+    return;
+  }
+
   signButton.disabled = false;
   signButton.classList.add('btn--ready');
   signButton.innerHTML = '<span class="sign-btn__label">Submit your fields</span>' +
