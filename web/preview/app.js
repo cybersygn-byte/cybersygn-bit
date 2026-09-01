@@ -3765,7 +3765,14 @@ async function onDeclineClick() {
     declineButton.textContent = 'Declined.';
     signButton.disabled = true;
     signButton.innerHTML = '<span class="sign-btn__label">Declined, session closed</span>';
-    showToast('You declined. The sender has been notified.');
+    // Say what actually happened. This asserted the sender had been notified
+    // no matter what the server reported, and on a single-signer document the
+    // server always reported senderNotified:false, so the claim was false
+    // every time it mattered most. If we could not reach them, the signer
+    // needs to know to say so themselves.
+    showToast(result.senderNotified
+      ? 'You declined. The sender has been notified.'
+      : 'You declined. We could not reach the sender, so let them know directly.');
     track('preview_declined', { reasonGiven: Boolean(reason) });
   } catch (err) {
     report(err, 'decline');

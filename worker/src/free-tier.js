@@ -333,6 +333,28 @@ async function incrementDatasetCounter(env, isNewContributor) {
   } catch (e) {}
 }
 
+/**
+ * Cleartext signup email for a given email hash, or null.
+ *
+ * Documents store only senderEmailHash, never the address, so nothing on the
+ * document itself can reach the sender. That is why a single-signer decline
+ * notified nobody: the notify target was picked with
+ * `signers.find(s => s.id !== signer.id)`, which in single-signer mode can
+ * never match, so senderNotified was always false while the signer was told
+ * the sender had been notified.
+ */
+export async function dripEmailForHash(env, emailHash) {
+  if (!emailHash || !env || !env.CYBERSYGN_DOCS) return null;
+  try {
+    const raw = await env.CYBERSYGN_DOCS.get(KV_PREFIX_DRIP + emailHash);
+    if (!raw) return null;
+    const rec = JSON.parse(raw);
+    return rec && typeof rec.email === 'string' && rec.email ? rec.email : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function getDatasetCount(env) {
   try {
     const [rawTotal, rawContrib] = await Promise.all([

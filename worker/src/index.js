@@ -33,7 +33,7 @@
 
 import { detectFields } from './detect.js';
 import { getStorage } from './storage.js';
-import { sendInvite, sendCompletion, sendReminder, deliver as deliverEmail } from './email.js';
+import { sendInvite, sendCompletion, sendReminder, deliverDeclineNotice, deliver as deliverEmail } from './email.js';
 import { setEmailBusinessAddress, renderErasureHtml } from './email-html.js';
 import { recordEvent, sha256Hex, renderAuditCertificate } from './audit.js';
 import { isOwnerPhrase, issueOwnerToken, validateOwnerToken, getOwnerForRequest, loginWithCredentials, createResetToken, consumeResetToken, setOwnerCredential, ownerEmail } from './owner.js';
@@ -54,6 +54,7 @@ import {
   writeFreeTokenPointer,
   getDatasetCount,
   ownerDripList,
+  dripEmailForHash,
 } from './free-tier.js';
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
@@ -5410,10 +5411,27 @@ async function handleDeclineSign(request, env, docId, token, url) {
   // sender is always signers[0] in single-signer mode; in multi-signer,
   // doc.senderName is the only hint we have. For now, email the first
   // signer with a valid email who isn't the decliner).
+  // A DECLINE THE SENDER NEVER HEARS ABOUT IS A DEAD DOCUMENT.
+  //
+  // This used to be `signers.find(s => s.id !== signer.id && ...)` alone. In
+  // single-signer mode there IS no other signer, so it never matched, nobody
+  // was emailed, and senderNotified came back false on every single-signer
+  // decline. The signing page told the signer "The sender has been notified"
+  // regardless, so both parties believed the other knew, and the sender sat
+  // waiting on a document that was never coming back.
+  //
+  // The document stores only senderEmailHash, so fall back to resolving the
+  // sender's own signup address from it.
   let senderNotified = false;
-  const notifyTarget = doc.signers.find(s =>
+  let notifyTarget = doc.signers.find(s =>
     s.id !== signer.id && isValidEmail(s.email)
   );
+  if (!notifyTarget && doc.senderEmailHash) {
+    const senderEmail = await dripEmailForHash(env, doc.senderEmailHash);
+    if (senderEmail && isValidEmail(senderEmail)) {
+      notifyTarget = { email: senderEmail, name: doc.senderName || '' };
+    }
+  }
   if (notifyTarget) {
     try {
       const baseUrl = (env && env.CYBERSYGN_APP_URL) || `${url.protocol}//${url.host}`;
