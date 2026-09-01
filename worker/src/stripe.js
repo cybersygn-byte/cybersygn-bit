@@ -1076,7 +1076,17 @@ async function onChargeReversed(env, charge, kind) {
   if (!customerId) return { applied: false, reason: 'no_customer' };
   const senderId = await senderIdForCustomer(env, customerId);
   await bumpRisk(env, kind === 'dispute' ? 'disputes' : 'refunds', senderId || null);
-  if (senderId) {
+  // RETRY, do not silently succeed. Every sibling handler returns this miss
+  // (onPaymentFailed and the two subscription handlers all do), and
+  // 'no_sender_for_customer' is in RETRYABLE_MISSES so applyStripeEvent throws
+  // and the webhook is redelivered once the customer mapping exists.
+  //
+  // Wrapping the whole body in `if (senderId)` instead meant a refund that
+  // arrived BEFORE its conversion was credited returned applied:true, was
+  // marked processed, and never came back. The clawback below then never ran,
+  // leaving an affiliate bounty paid on money that had been given back.
+  if (!senderId) return { applied: false, reason: 'no_sender_for_customer' };
+  {
     const existing = await getSubscription(env, senderId);
     const next = { ...existing, [kind === 'dispute' ? 'disputedAt' : 'refundedAt']: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await storage.put(`sub:${senderId}`, JSON.stringify(next));

@@ -7488,6 +7488,11 @@ details[open] > .field-list__group--toggle::after {
    when the server reports allComplete; without it a signer returning to their
    magic link saw a live "Decline to sign" link on a finished contract. */
 .is-signed-complete .decline-link { display: none; }
+/* A signer whose invite email did not go out. The sender is the only person who
+   can fix it, so the row says so instead of the modal claiming all were sent. */
+.send-list__row--failed { border-left: 2px solid var(--warn, #c0392b); padding-left: 8px; }
+.send-list__error { color: var(--warn, #c0392b); font-size: var(--t-xs); margin: 2px 0 0; }
+.modal-card__lede--warn { color: var(--warn, #c0392b); }
 .signer-complete__download { display: inline-flex; align-items: center; justify-content: center; }
 /* Drop the "Tools & templates" disclosure altogether when only the
    snapshot button remains inside, the lone button gets promoted to

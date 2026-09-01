@@ -190,20 +190,32 @@ export async function eraseIdentity(env, claim) {
   // there, and "complete" would be a lie without them.
   if (!env.CYBERSYGN_PDFS) tally.errors.push('pdfs_binding_missing');
 
+  // Documents this run has already erased. The sweep below re-lists ownership
+  // keys that include them, and re-reading a doc: this pass just deleted would
+  // otherwise look like an unreadable record and report the erasure unclean.
+  const handled = new Set();
   for (const senderId of senderIds) {
     const idx = (await kv.get(`sender:${senderId}:docs`, 'json')) || { docs: [] };
     for (const docId of (idx.docs || [])) {
       if (!/^[A-Za-z0-9_-]{1,128}$/.test(String(docId || ''))) continue;
       let doc = null;
-      try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) {}
+      // An unreadable record is NOT a clean erasure. signer-fills:<docId>:<id>
+      // can only be enumerated from doc.signers, so without the record those
+      // keys, which hold what each signer actually typed, stay behind. The
+      // confirm endpoint derives `clean` from tally.errors, so recording the
+      // failure is what turns "Done. It is gone." into an honest "some records
+      // could not be removed".
+      try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) { tally.errors.push(`doc:${docId}:unreadable`); }
+      if (!doc) tally.errors.push(`doc:${docId}:unreadable`);
       // Fail CLOSED on ownership, matching the sweep. A record with no
       // senderId is not provably this person's, so it is left alone.
       if (!doc || doc.senderId !== senderId) continue;
       await eraseOneDoc(kv, env, docId, doc, tally);
+      handled.add(String(docId));
     }
     await safeDelete(kv, `sender:${senderId}:docs`, tally);
 
-    const scan = await sweepOrphanedDocs(kv, env, senderId, tally);
+    const scan = await sweepOrphanedDocs(kv, env, senderId, tally, handled);
     if (!scan.complete) { tally.scanComplete = false; tally.errors.push('scan_incomplete'); }
   }
 
@@ -242,6 +254,10 @@ export async function eraseIdentity(env, claim) {
     await safeDelete(kv, `free:${emailHash}`, tally);
   }
 
+  // One entry per distinct problem. The same unreadable document is reachable
+  // from the sender index, the ownership keys and the legacy scan, and a
+  // receipt listing it four times reads like four failures.
+  tally.errors = [...new Set(tally.errors)];
   return tally;
 }
 
@@ -535,7 +551,7 @@ export async function backfillOwnershipIndex(env) {
   }
 }
 
-async function sweepOrphanedDocs(kv, env, senderId, tally) {
+async function sweepOrphanedDocs(kv, env, senderId, tally, handled = new Set()) {
   // FAST PATH: ownership is in the key name.
   //
   // doc-of:<senderId>:<docId> is written at creation, so this lists a
@@ -557,8 +573,14 @@ async function sweepOrphanedDocs(kv, env, senderId, tally) {
         if (typeof entry.name !== 'string' || !entry.name.startsWith(ownPrefix)) continue;
         const docId = entry.name.slice(ownPrefix.length);
         if (!docId || !/^[A-Za-z0-9_-]{1,128}$/.test(docId)) continue;
+        // Already erased through the sender index above: drop the ownership key
+        // and move on, without re-reading a record that is deliberately gone.
+        if (handled.has(docId)) { await safeDelete(kv, entry.name, tally); continue; }
         let doc = null;
-        try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) { /* delete the derived keys anyway */ }
+        // Same here: proceed with the derived keys, but do not report a clean
+        // sweep when the signers' typed data could not be enumerated.
+        try { doc = await kv.get(`doc:${docId}`, 'json'); } catch (e) { tally.errors.push(`doc:${docId}:unreadable`); }
+        if (!doc) tally.errors.push(`doc:${docId}:unreadable`);
         // The ownership key is this sender's by construction, so a missing or
         // unreadable doc record must not stop the artifacts being removed.
         if (doc && doc.pdfSha256) tally.keptVerifyRecords++;

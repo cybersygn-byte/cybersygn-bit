@@ -459,6 +459,44 @@ await t('erasure cost tracks the USER, not the size of the product', async () =>
   assert.equal([...kv.keys()].filter(k => k.startsWith('doc:other')).length, 3000, 'nobody else is touched');
 });
 
+await t('a corrupt record makes the erasure report UNCLEAN, a normal one does not', async () => {
+  // signer-fills:<docId>:<signerId> can only be enumerated from doc.signers, so
+  // an unreadable record leaves what each signer TYPED behind. That was
+  // swallowed and the page still said "Done. It is gone."
+  //
+  // The other half matters just as much: the sweep re-lists ownership keys for
+  // documents the index pass already deleted, so a naive "doc missing means
+  // unreadable" check reports every ordinary erasure as unclean, which is the
+  // false alarm that makes people ignore the real one.
+  const mk = (m) => ({
+    get: async (k, o) => { const v = m.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : v; },
+    put: async (k, v) => { m.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => { m.delete(k); },
+    list: async ({ prefix } = {}) => ({ keys: [...m.keys()].filter(k => !prefix || k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+  });
+  const run = async (seed) => {
+    const kv = new Map(), pdfs = new Map();
+    seed(kv);
+    return eraseIdentity({ CYBERSYGN_DOCS: mk(kv), CYBERSYGN_PDFS: mk(pdfs) },
+      { emailHash: 'h', senderId: 'snd_1', scope: 'account' });
+  };
+
+  const good = await run((kv) => {
+    kv.set('sender:snd_1:docs', JSON.stringify({ docs: ['d1'] }));
+    kv.set('doc:d1', JSON.stringify({ id: 'd1', senderId: 'snd_1', signers: [{ id: 's1' }] }));
+    kv.set('doc-of:snd_1:d1', '1');
+  });
+  assert.deepEqual(good.errors, [], 'an ordinary erasure must report clean');
+
+  const bad = await run((kv) => {
+    kv.set('sender:snd_1:docs', JSON.stringify({ docs: ['d2'] }));
+    kv.set('doc:d2', '{not json');
+    kv.set('doc-of:snd_1:d2', '1');
+  });
+  assert.deepEqual(bad.errors, ['doc:d2:unreadable'],
+    'a corrupt record must be reported once, not swallowed and not four times');
+});
+
 console.log(out.join('\n'));
 console.log(`\nerasure: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

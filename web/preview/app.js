@@ -5180,8 +5180,21 @@ function openLinksModal(payload) {
 
   const note = document.createElement('p');
   note.className = 'modal-card__lede';
-  if (payload.email === 'resend') {
+  // PER-SIGNER TRUTH. The Worker computes `sent`, `queued` and `error` for each
+  // signer and returns them in signerLinks; the client discarded all three and
+  // asserted "Each signer has been emailed their signing link" whenever the
+  // transport was Resend. A bounced address, an unverified domain or a 429 then
+  // produced a document the sender believed was in flight and a counterparty
+  // who was never contacted. The sender is the one person who can fix that, and
+  // they were the one person not told.
+  const undelivered = (payload.signerLinks || []).filter(l => l && l.email && !l.sent && !l.queued);
+  if (payload.email === 'resend' && undelivered.length === 0) {
     note.textContent = 'Each signer has been emailed their signing link. The links below are a copy in case you need to resend manually.';
+  } else if (payload.email === 'resend') {
+    const n = undelivered.length;
+    note.textContent = `${payload.signerLinks.length - n} of ${payload.signerLinks.length} signers were emailed. `
+      + `${n === 1 ? 'One link' : n + ' links'} could not be delivered, so send ${n === 1 ? 'it' : 'them'} directly using the copy button below.`;
+    note.className = 'modal-card__lede modal-card__lede--warn';
   } else if (ownerMod.isOwner()) {
     // Owner-only ops guidance. Normal users get the plain message below.
     note.innerHTML = 'Email is in <strong>dev mode</strong>. The Worker logged each message to its console; copy the links below to send them manually, or set <code>RESEND_API_KEY</code> in your Worker to deliver them automatically.';
@@ -5195,6 +5208,15 @@ function openLinksModal(payload) {
   for (const link of payload.signerLinks) {
     const li = document.createElement('li');
     li.className = 'send-list__row link-row';
+    // Mark the rows that actually failed, so "send this one yourself" points at
+    // a specific person rather than at the whole list.
+    if (link && link.email && !link.sent && !link.queued) {
+      li.classList.add('send-list__row--failed');
+      const warn = document.createElement('p');
+      warn.className = 'send-list__error';
+      warn.textContent = 'Not delivered' + (link.error ? ': ' + String(link.error).slice(0, 120) : '') + '. Copy the link and send it yourself.';
+      li.appendChild(warn);
+    }
 
     const meta = document.createElement('div');
     meta.className = 'send-list__meta';
