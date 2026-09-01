@@ -744,6 +744,18 @@ async function loadOps() {
     rows.push(opsRow('KV backup', 'unknown', 'unavailable (' + (backup && backup.__err) + ')'));
   }
 
+  // The 35-day prune. /privacy/ and /erase/ both promise deleted data ages out
+  // of the snapshots within 35 days; this is the only place that claim is
+  // checkable.
+  if (backup && !backup.__err) {
+    const pr = backup.prune;
+    rows.push(opsRow('Snapshot prune', pr ? (pr.ok ? 'ok' : 'bad') : 'unknown',
+      pr ? (opsAge(pr.ranAt) + ' · ' + (pr.pruned || 0) + ' removed'
+            + (pr.cutoff ? ' · older than ' + pr.cutoff : '')
+            + (pr.errors && pr.errors.length ? ' · ' + pr.errors.length + ' failed' : ''))
+         : 'never run'));
+  }
+
   if (uptime && !uptime.__err) {
     // uptimePct is deliberately null when there is no data, which must read as
     // "unknown" rather than as a failing number.

@@ -80,9 +80,41 @@ function randomTokenHex(byteLength = TOKEN_BYTES) {
   return Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
 }
 
+/**
+ * CANONICALIZE, then hash.
+ *
+ * The lifetime cap is enforced against this hash, so whatever it treats as two
+ * different people gets two allowances. Trimming and lowercasing alone meant
+ * a+1@gmail.com, a+2@gmail.com and a.b@gmail.com were three separate people
+ * with three free documents each, from ONE mailbox that receives all of them.
+ * The cap was per invented address, not per person.
+ *
+ * Two normalisations, both safe:
+ *   - Strip +tag from the local part. Every major provider routes it to the
+ *     same mailbox, and it is the cheapest way to mint an address.
+ *   - Drop dots in the local part for gmail/googlemail ONLY, where they are
+ *     documented as insignificant. Doing that globally would be wrong: plenty
+ *     of hosts treat a.b and ab as different people.
+ *
+ * The cleartext address in the drip record is untouched, so mail still goes to
+ * exactly what the user typed. This only decides who is the SAME person.
+ */
+const DOT_INSENSITIVE = new Set(['gmail.com', 'googlemail.com']);
+
+export function canonicalizeEmail(email) {
+  const raw = String(email || '').trim().toLowerCase();
+  const at = raw.lastIndexOf('@');
+  if (at <= 0) return raw;
+  let local = raw.slice(0, at);
+  const domain = raw.slice(at + 1);
+  const plus = local.indexOf('+');
+  if (plus > 0) local = local.slice(0, plus);
+  if (DOT_INSENSITIVE.has(domain)) local = local.replace(/\./g, '');
+  return `${local}@${domain}`;
+}
+
 async function hashEmail(email) {
-  const lower = String(email).trim().toLowerCase();
-  return sha256Hex(new TextEncoder().encode(lower));
+  return sha256Hex(new TextEncoder().encode(canonicalizeEmail(email)));
 }
 
 // -----------------------------------------------------------------------------

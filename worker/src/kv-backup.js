@@ -39,6 +39,10 @@ const PAGE_LIMIT = 1000;
 const HARD_KEY_CAP = 50_000;  // worst-case fan-out guard
 
 const RESULT_KEY = 'meta:kv-backup:latest';
+// The prune's own outcome. It used to report NOTHING: pruneOldBackups returned
+// its result to a caller that discarded it, so the 35-day deletion promise on
+// /privacy/ and /erase/ was the only unverifiable claim in the retention story.
+const PRUNE_KEY  = 'meta:kv-prune:latest';
 const RESULT_TTL_SECONDS = 60 * 60 * 24 * 40;
 
 /**
@@ -259,9 +263,33 @@ export async function pruneOldBackups(env, now = new Date()) {
       cursor = page.truncated ? page.cursor : null;
     } while (cursor);
   } catch (e) {
-    return { ok: false, reason: 'list_failed', pruned, errors };
+    return reportPrune(env, { ok: false, reason: 'list_failed', pruned, errors });
   }
-  return { ok: true, pruned, cutoff, errors };
+  // errors here mean objects we FAILED to delete, i.e. data that should have
+  // aged out and did not. That is not a clean run just because we got to the end.
+  return reportPrune(env, { ok: errors.length === 0, pruned, cutoff, errors });
+}
+
+/** Record the prune outcome where the owner panel can read it. */
+async function reportPrune(env, outcome) {
+  const rec = { ...outcome, ranAt: new Date().toISOString() };
+  if (rec.ok) console.log('[kv-prune]', JSON.stringify(rec));
+  else console.error('[kv-prune] FAILED', JSON.stringify(rec));
+  try {
+    if (env && env.CYBERSYGN_DOCS) {
+      await env.CYBERSYGN_DOCS.put(PRUNE_KEY, JSON.stringify(rec), { expirationTtl: RESULT_TTL_SECONDS });
+    }
+  } catch (e) { /* the log line is still the record */ }
+  return rec;
+}
+
+/** Last stored prune outcome, or null. */
+export async function getLatestKvPrune(env) {
+  try {
+    if (!env || !env.CYBERSYGN_DOCS) return null;
+    const raw = await env.CYBERSYGN_DOCS.get(PRUNE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
 }
 
 export function shouldRunKvBackup(event) {

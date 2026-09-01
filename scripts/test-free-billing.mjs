@@ -260,6 +260,35 @@ await t('the free tier is held to ONE signer, as advertised', async () => {
   assert.equal(single.status, 201, 'one signer is exactly what free covers');
 });
 
+await t('the lifetime cap is per PERSON, not per invented address', async () => {
+  // hashEmail trimmed and lowercased only, so a+1@gmail.com, a+2@gmail.com and
+  // a.b@gmail.com were three different people with three free documents each,
+  // out of one mailbox that receives all three. The cap was per invented
+  // address. Canonicalizing strips +tags everywhere and dots on the two
+  // providers that document them as insignificant.
+  const { env } = mkEnv();
+  const first = await freeSignup(env, { email: 'nathan@gmail.com', firstName: 'N', lastName: 'V', consent: true });
+  assert.equal(first.isReturning, false, 'the first signup is new');
+
+  for (const variant of ['nathan+free2@gmail.com', 'nat.han@gmail.com', 'NATHAN@Gmail.com']) {
+    const again = await freeSignup(env, { email: variant, firstName: 'N', lastName: 'V', consent: true });
+    assert.equal(again.isReturning, true, `${variant} is the same mailbox and must reuse the account`);
+  }
+
+  // Dots are NOT insignificant everywhere: collapsing them globally would merge
+  // two genuinely different people on most hosts.
+  const other = await freeSignup(env, { email: 'a.b@fastmail.com', firstName: 'A', lastName: 'B', consent: true });
+  assert.equal(other.isReturning, false, 'a.b@fastmail.com is its own person');
+  const other2 = await freeSignup(env, { email: 'ab@fastmail.com', firstName: 'A', lastName: 'B', consent: true });
+  assert.equal(other2.isReturning, false, 'and ab@fastmail.com is a different one');
+
+  // The cap itself still binds across the variants.
+  const tok = first.freeToken;
+  for (const c of ['a', 'b', 'c']) await freeConsume(env, tok, sha(c), { mark: true });
+  const viaVariant = await freeSignup(env, { email: 'nathan+another@gmail.com', firstName: 'N', lastName: 'V', consent: true });
+  assert.equal(viaVariant.remaining, 0, 'a +tag variant must not reset the allowance');
+});
+
 console.log(out.join('\n'));
 console.log(`\nfree billing: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

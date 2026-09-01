@@ -61,7 +61,7 @@ import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { runUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry, recordError, getRecentErrors } from './sentry.js';
-import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups, backupSignedArtifacts } from './kv-backup.js';
+import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, getLatestKvPrune, pruneOldBackups, backupSignedArtifacts } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
 import { sweepWebhookQueue } from './webhook-retry.js';
@@ -582,7 +582,13 @@ const worker = {
     if (request.method === 'GET' && url.pathname === '/api/owner/backup') {
       const owner = await getOwnerForRequest(request, env, url);
       if (!owner) return jsonResponse(401, { error: 'unauthorized' });
-      return jsonResponse(200, { latest: await getLatestKvBackup(env) });
+      // The prune's outcome too. Deleting snapshots on schedule is the half of
+      // the retention promise a user actually cares about, and it was the half
+      // with no record at all.
+      return jsonResponse(200, {
+        latest: await getLatestKvBackup(env),
+        prune: await getLatestKvPrune(env),
+      });
     }
 
     // ---- Ambassador program, owner only ------------------------------
