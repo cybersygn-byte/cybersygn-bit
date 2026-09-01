@@ -110,11 +110,22 @@ await t('email a copy actually sends, and attaches the FILLED pdf', async () => 
     };
     const env = { CYBERSYGN_DOCS: st, CYBERSYGN_PDFS: st, RESEND_API_KEY: 're_test', CYBERSYGN_FROM: 'hello@cybersygn.io' };
     const pdf = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(400, 0x20), Buffer.from('\n%%EOF')]);
-    const res = await worker.fetch(new Request('https://x/api/snapshot/email', {
-      method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' },
+    const post = (extraHeaders = {}) => worker.fetch(new Request('https://x/api/snapshot/email', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4', ...extraHeaders },
       body: JSON.stringify({ pdfBase64: pdf.toString('base64'), filename: 'nda.pdf', recipients: ['legal@example.com'], senderName: 'N', senderId: 'snd_1' }),
     }), env, { waitUntil() {} });
-    assert.equal(res.status, 200, 'the endpoint must not throw');
+
+    // This path hands the finished PDF to up to ten people, so it is gated on
+    // the free cap exactly like the download is. It used to be the way around
+    // that cap.
+    const anon = await post();
+    assert.equal(anon.status, 402, 'no account must not get the paid artifact');
+    assert.equal(sent.length, 0, 'and nothing may be emailed');
+
+    const { freeSignup } = await import('../worker/src/free-tier.js');
+    const tok = (await freeSignup(env, { email: 'a@b.com', firstName: 'A', lastName: 'B', consent: true })).freeToken;
+    const res = await post({ 'X-CyberSygn-Free': tok });
+    assert.equal(res.status, 200, 'a free account with credit must succeed');
     assert.equal(sent.length, 1, 'the copy must actually be emailed');
   } finally { globalThis.fetch = realFetch; }
 
