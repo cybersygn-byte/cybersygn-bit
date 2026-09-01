@@ -5696,6 +5696,40 @@ async function handleSnapshotEmail(request, env, url) {
     return jsonResponse(413, { error: 'pdf_too_large', message: 'PDF is over 20 MB; share a link instead of attaching.' });
   }
 
+  // FREE-TIER GATE. This path hands the finished, flattened PDF to up to ten
+  // recipients, so it is the same artifact the download path charges for. It
+  // was ungated, which meant a user with zero credits left, or who never
+  // signed up at all, could get the paid outcome from the Tools panel. The
+  // client now gates too, but a client gate is a suggestion.
+  //
+  // Settled by document sha with redeem semantics, so emailing a copy of a PDF
+  // that was already paid for does not bill a second credit.
+  if (!owner) {
+    const senderId = String(payload.senderId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+    let paid = false;
+    if (senderId) {
+      try {
+        const sub = await getSubscription(env, senderId);
+        paid = !!(sub && sub.tier && sub.tier !== 'free');
+      } catch (e) { /* fall through to the free path rather than refuse */ }
+    }
+    if (!paid) {
+      const freeToken = request.headers.get('x-cybersygn-free') || String(payload.freeToken || '');
+      let snapSha = null;
+      try { snapSha = await sha256Hex(pdfBytes); } catch (e) { /* dedupe is best effort */ }
+      const consumed = await freeConsume(env, freeToken, snapSha, { redeem: true });
+      if (!consumed.ok) {
+        return jsonResponse(402, {
+          error: consumed.error === 'free_cap_reached' ? 'free_cap_reached' : 'free_signup_required',
+          message: consumed.error === 'free_cap_reached'
+            ? 'You have used all three lifetime free documents. Upgrade to keep sending.'
+            : 'Create a free account to email a copy. No card needed.',
+          upgrade: { tiers: ['solo', 'founding', 'team'] },
+        });
+      }
+    }
+  }
+
   // Recipients.
   const recipients = Array.isArray(payload.recipients) ? payload.recipients : [];
   const cleanRecipients = [];

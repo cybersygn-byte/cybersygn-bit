@@ -225,6 +225,10 @@ export async function eraseIdentity(env, claim) {
   }
 
   await safeDelete(kv, `login:email:${emailHash}`, tally);
+  // Records keyed by something other than senderId, which every pass above
+  // missed: testimonials, founding-list signups and workspace membership all
+  // hold a cleartext address, and the signup record holds an IP too.
+  await erasePeripheralRecords(kv, env, emailHash, senderIds, tally);
   // The cleartext marketing record. Leaving it meant the drip cron kept
   // emailing someone who had just been told their data was deleted.
   await safeDelete(kv, `drip:${emailHash}`, tally);
@@ -294,16 +298,126 @@ async function eraseOneDoc(kv, env, docId, doc, tally) {
  * authenticating AS the deleted identity, so the subject deletes their account
  * while a credential that acts as them stays valid.
  */
+/**
+ * Namespaces holding cleartext personal data that erasure never reached.
+ *
+ * Each is keyed by something other than senderId, which is why the
+ * senderId-driven passes above all missed them:
+ *
+ *   testimonial:<id>          email, name, role, location   (5 year TTL)
+ *   signup:<receivedAt>-<em>  email, ip, userAgent          (NO TTL)
+ *   workspace:<id>            members[].name, members[].email
+ *
+ * Matched on the hash of the address in the record, so the cleartext email
+ * never has to be reconstructed to find them.
+ */
+async function erasePeripheralRecords(kv, env, emailHash, senderIds, tally) {
+  const senderSet = new Set(senderIds || []);
+  const matches = async (email) => {
+    if (!email || typeof email !== 'string') return false;
+    try { return (await emailHashOf(email)) === emailHash; } catch (e) { return false; }
+  };
+
+  // testimonial:<id>
+  try {
+    let cursor;
+    do {
+      const page = await kv.list({ prefix: 'testimonial:', limit: 1000, cursor });
+      for (const entry of (page.keys || [])) {
+        if (!entry.name.startsWith('testimonial:')) continue;
+        let rec = null;
+        try { rec = await kv.get(entry.name, 'json'); } catch (e) { continue; }
+        if (!rec) continue;
+        if (senderSet.has(rec.senderId) || await matches(rec.email)) {
+          await safeDelete(kv, entry.name, tally);
+        }
+      }
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+  } catch (e) { tally.errors.push('testimonials'); }
+
+  // signup:<receivedAt>-<email>. The address is IN the key, so this also
+  // removes the copy that a key listing alone would expose.
+  try {
+    let cursor;
+    do {
+      const page = await kv.list({ prefix: 'signup:', limit: 1000, cursor });
+      for (const entry of (page.keys || [])) {
+        if (!entry.name.startsWith('signup:')) continue;
+        let rec = null;
+        try { rec = await kv.get(entry.name, 'json'); } catch (e) { continue; }
+        const email = rec && rec.email;
+        if (await matches(email)) await safeDelete(kv, entry.name, tally);
+      }
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+  } catch (e) { tally.errors.push('signups'); }
+
+  // workspace:<id> membership. The workspace belongs to other people too, so
+  // the member entry is removed rather than the workspace deleted.
+  try {
+    let cursor;
+    do {
+      const page = await kv.list({ prefix: 'workspace:', limit: 1000, cursor });
+      for (const entry of (page.keys || [])) {
+        if (!entry.name.startsWith('workspace:')) continue;
+        let ws = null;
+        try { ws = await kv.get(entry.name, 'json'); } catch (e) { continue; }
+        if (!ws || !Array.isArray(ws.members)) continue;
+        const kept = [];
+        let removed = false;
+        for (const m of ws.members) {
+          if (senderSet.has(m && m.senderId) || await matches(m && m.email)) { removed = true; continue; }
+          kept.push(m);
+        }
+        if (removed) {
+          ws.members = kept;
+          try { await kv.put(entry.name, JSON.stringify(ws)); tally.deleted++; }
+          catch (e) { tally.errors.push(entry.name); }
+        }
+      }
+      cursor = page.list_complete ? null : page.cursor;
+    } while (cursor);
+  } catch (e) { tally.errors.push('workspaces'); }
+}
+
 async function revokeApiKeysFor(kv, senderId, tally) {
   try {
     const idx = await kv.get(`apikeys:${senderId}`, 'json');
-    const hashes = (idx && (idx.keys || idx.hashes)) || [];
-    for (const h of hashes) {
+    // apikeys.js writes this index as a plain ARRAY of key records
+    // (apikeys.js:96-98 does idx.push(pub), and listApiKeys asserts
+    // Array.isArray). The old read was `idx.keys || idx.hashes`, and on an
+    // array `idx.keys` resolves to Array.prototype.keys: a FUNCTION, which is
+    // truthy, so it won that || and then `for (const h of ...)` threw on a
+    // non-iterable. The catch below turned that into one tally.errors entry and
+    // NOTHING was ever revoked. A deleted account kept a live cs_live_
+    // credential that still authenticated as its senderId.
+    const entries = Array.isArray(idx)
+      ? idx
+      : (idx && (Array.isArray(idx.hashes) ? idx.hashes : (Array.isArray(idx.keys) ? idx.keys : []))) || [];
+    const partnerIds = new Set();
+    for (const h of entries) {
       const hash = typeof h === 'string' ? h : (h && h.hash);
+      if (h && h.partnerId) partnerIds.add(String(h.partnerId));
       if (!hash || !/^[a-f0-9]{64}$/.test(hash)) continue;
       await safeDelete(kv, `apikey:${hash}`, tally);
     }
     await safeDelete(kv, `apikeys:${senderId}`, tally);
+    // A key also lives in its partner's index. Leaving it there would keep a
+    // deleted person's credential listed under the partner that issued it.
+    for (const pid of partnerIds) {
+      const safePid = String(pid).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+      if (!safePid) continue;
+      try {
+        const pidx = await kv.get(`apikeys:partner:${safePid}`, 'json');
+        if (!Array.isArray(pidx)) continue;
+        const kept = pidx.filter(e => e && e.senderId !== senderId);
+        if (kept.length !== pidx.length) {
+          await kv.put(`apikeys:partner:${safePid}`, JSON.stringify(kept));
+          tally.deleted++;
+        }
+      } catch (e) { tally.errors.push(`apikeys:partner:${safePid}`); }
+    }
   } catch (e) { tally.errors.push(`apikeys:${senderId}`); }
 }
 

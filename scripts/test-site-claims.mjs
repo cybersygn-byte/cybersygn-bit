@@ -20,6 +20,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TIERS, purchasableTiers } from '../worker/src/stripe.js';
+import { PLAN_BOUNTY } from '../worker/src/affiliate.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -201,6 +202,23 @@ t('the dashboard links bulk send without the .html extension', () => {
   const html = read('web/dashboard/index.html');
   assert.ok(html.includes('href="./bulk-send"'));
   assert.ok(!html.includes('href="./bulk-send.html"'), 'the .html form costs a 307');
+});
+
+t('the affiliate panel quotes what PLAN_BOUNTY actually pays', () => {
+  // The panel said "earn $20 per first paid month". PLAN_BOUNTY has paid a
+  // per-plan ladder since it was introduced: $7 on Founding, $10 Solo, $16 Pro,
+  // $25 Team, $70 Business, $85 Lifetime. A referrer read $20, referred a Solo
+  // customer and was credited $10, and the panel's own "earned" tile then
+  // showed a number that could not be reconciled with its own headline.
+  const html = read('web/dashboard/index.html');
+  const bounties = Object.entries(PLAN_BOUNTY)
+    .filter(([k, v]) => v > 0 && !k.endsWith('_annual'))
+    .map(([, v]) => v);
+  const lo = Math.min(...bounties), hi = Math.max(...bounties);
+  assert.ok(!/earn \$?20 ?(dollars)? (each|per)/i.test(html),
+    'the flat $20 promise must be gone');
+  assert.ok(html.includes(`$${lo}`) && html.includes(`$${hi}`),
+    `the panel must quote the real range, $${lo} to $${hi}`);
 });
 
 console.log(results.join('\n'));

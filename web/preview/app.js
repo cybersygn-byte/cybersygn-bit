@@ -3348,6 +3348,13 @@ async function onSaveSnapshotClick() {
     showToast('Drop a document first.');
     return;
   }
+  // The free cap has to apply here too. ensureFreeDownloadCredit was wired to
+  // exactly one control, the send modal's Download, while this button and
+  // "Email a copy" produced the same flattened signed PDF beside it. A user
+  // with zero credits left, or who never signed up at all, got the artifact
+  // for free from the Tools panel. The helper dedupes per document, so taking
+  // a snapshot of a PDF already paid for does not bill twice.
+  if (!(await ensureFreeDownloadCredit())) return;
   const filledCount = fillStore.size();
   const totalCount = docState.fields.length;
   // ISO timestamp, condensed: 2026-06-02T15-04-22 → file-safe.
@@ -3680,6 +3687,9 @@ function openEmailCopyModal() {
       recipInput.focus();
       return;
     }
+    // Same gate as the download and snapshot paths: this hands the finished
+    // PDF to up to 10 recipients, so it cannot be the one way around the cap.
+    if (!(await ensureFreeDownloadCredit())) return;
     sendBtn.disabled = true;
     sendBtn.textContent = 'Preparing and sending…';
     try {
