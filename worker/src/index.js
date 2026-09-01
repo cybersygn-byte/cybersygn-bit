@@ -4296,6 +4296,19 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   // unmetered (partner-issued tenant keys). The public /api/docs route never
   // passes it, so this is not forgeable from outside.
   let freeGate = null; // set when this create burns a free-tier allowance
+  // FOOTER DECISION, PINNED AT CREATION.
+  //
+  // Solo and up are sold with "No footer." and every canonical signed PDF got
+  // one anyway: drawSignedFooter in signed-pdf.js has no tier check, and the
+  // browser's only gate was a localStorage flag that any free user could set
+  // and no subscription ever wrote. So paid customers got the footer they paid
+  // to remove, and free users could remove it for nothing.
+  //
+  // Decided ONCE, here, and stored on the record. Resolving the tier later
+  // inside ensureSignedPdf would mean a subscription lapsing between two
+  // builds silently changes the bytes, and those bytes are hashed and
+  // published as signedPdfSha256 on the audit certificate.
+  let footerless = !!owner || !!opts.unmetered;
   if (!owner && !opts.unmetered) {
     const gate = await checkFreeTierAllowance(env, senderId);
     // "Never paid" = no subscription record, or one whose tier reverted to
@@ -4303,6 +4316,8 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     // status (active, trialing, past_due during dunning) is a customer, not
     // an anonymous free user: they are never told to "create a free account".
     const neverPaid = !gate.sub || gate.sub.tier === 'free';
+    // Same subscription the gate just read, no extra KV round trip.
+    footerless = !neverPaid;
     if (gate.tier === 'free' && neverPaid) {
       // Free tier. The durable identity is the signed-up EMAIL (hashed),
       // not the senderId: senderIds live in localStorage and can be
@@ -4436,6 +4451,9 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     // only). Never the cleartext. Lets GDPR export verify doc ownership
     // by email without a scan.
     senderEmailHash: freeGate ? freeGate.emailHash : null,
+    // Whether the signed PDF carries the CyberSygn footer. Frozen here so the
+    // artifact and its published hash can never disagree.
+    footer: !footerless,
     senderToken,
     workspaceId,
     fields: payload.fields,

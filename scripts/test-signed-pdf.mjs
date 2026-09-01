@@ -206,6 +206,32 @@ await t('a degenerate equal-hash case cannot write a contradictory record', asyn
   assert.equal(rec.kind, 'original', 'the original write wins, no second contradictory put');
 });
 
+await t('a paid plan gets the footer-free PDF it was sold', async () => {
+  // "No footer." is sold from Solo up and drawSignedFooter was called
+  // unconditionally, so every paying customer's canonical signed PDF carried
+  // the footer and a clickable cybersygn.io annotation on every page. The
+  // browser path was no better: its only gate was a localStorage flag that
+  // nothing wrote and any free user could set.
+  const base = await PDFDocument.create();
+  base.addPage([300, 200]); base.addPage([300, 200]);
+  const orig = await base.save();
+  const build = async (footer) => buildSignedPdf({ originalBytes: orig, doc: { id: 'd', footer, signers: [], fields: [] } });
+  const countAnnots = async (bytes) => {
+    const d = await PDFDocument.load(bytes);
+    return d.getPages().reduce((n, pg) => n + ((pg.node.Annots() && pg.node.Annots().size()) || 0), 0);
+  };
+  const free = await build(true);
+  const paid = await build(false);
+  assert.ok(paid.byteLength < free.byteLength, 'the paid artifact must omit the footer');
+  assert.equal(await countAnnots(paid), 0, 'and its clickable cybersygn.io annotations');
+  assert.equal(await countAnnots(free), 2, 'while the free tier keeps one per page');
+
+  // A record written before the field existed must keep the footer: unknown
+  // tier defaults to free, which is the safe direction to be wrong in.
+  const legacy = await build(undefined);
+  assert.equal(legacy.byteLength, free.byteLength, 'legacy records keep the footer');
+});
+
 console.log(out.join('\n'));
 console.log(`\nsigned document chain: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

@@ -23,11 +23,16 @@ import { PDFDocument, rgb, StandardFonts } from '../vendor/pdf-lib.mjs';
 /**
  * Stamp a discreet "Signed with CyberSygn" line in the bottom margin of
  * every page in the PDF. Clickable URI annotation pointing to the
- * homepage. Paid users can disable this via the localStorage flag
- * 'cybersygn.viralFooter' = 'off' (the dashboard settings panel sets
- * this when the user is on Solo / Origin / Studio).
+ * homepage.
  *
- * Free-tier users cannot disable, the footer is the price of free.
+ * Gated on the RESOLVED SUBSCRIPTION, not a localStorage flag. It used to
+ * check 'cybersygn.viralFooter' === 'off', which had two problems: the
+ * dashboard settings panel described here never wrote it, so no paying
+ * customer could actually turn the footer off, and anyone on the free tier
+ * could set it by hand in a console and turn it off for nothing. The tier
+ * comes from /api/billing/subscription via the app shell.
+ *
+ * Free-tier users cannot disable it: the footer is the price of free.
  *
  * Why this is in PDF user units: pdf-lib uses the original PDF
  * coordinate system (origin bottom-left, points). 12pt from the bottom
@@ -38,9 +43,11 @@ import { PDFDocument, rgb, StandardFonts } from '../vendor/pdf-lib.mjs';
  * email often click links. A real annotation gives us the click.
  */
 async function drawViralFooter(pdfDoc, font) {
-  // Paid-tier off-switch.
+  // Paid-tier off-switch, decided by the subscription.
   try {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('cybersygn.viralFooter') === 'off') return;
+    const tier = (typeof window !== 'undefined')
+      && (window.__cybersygnTier || (window.__cybersygnSub && window.__cybersygnSub.tier));
+    if (tier && tier !== 'free') return;
   } catch (e) {}
 
   const pages = pdfDoc.getPages();

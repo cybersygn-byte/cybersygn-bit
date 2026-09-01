@@ -193,7 +193,17 @@ export async function buildSignedPdf({ originalBytes, doc }) {
     }
   }
 
-  drawSignedFooter(pdfDoc, helvetica);
+  // doc.footer is pinned when the document is created, from the sender's tier
+  // at that moment (index.js). Paid plans are sold as "No footer." and this
+  // call used to be unconditional, so every paid customer's canonical signed
+  // PDF carried it anyway. Undefined means a record written before the field
+  // existed: those keep the footer, which is the free-tier default and the
+  // safe direction to be wrong in.
+  if (doc && doc.footer === false) {
+    // no footer: this sender pays for a clean artifact
+  } else {
+    drawSignedFooter(pdfDoc, helvetica);
+  }
   return await pdfDoc.save();
 }
 
