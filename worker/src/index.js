@@ -476,11 +476,26 @@ const worker = {
       if (token) {
         const base = (env.CYBERSYGN_APP_URL || 'https://cybersygn.io').replace(/\/+$/, '');
         const link = `${base}/erase/?token=${token}`;
-        ctx.waitUntil(deliverEmail(env, {
-          to: email,
-          subject: 'Confirm you want your CyberSygn data deleted',
-          html: renderErasureHtml({ link, scope }),
-        }).catch(() => {}));
+        // A discarded outcome here is the difference between "your link is on
+        // the way" and silence. deliverEmail RETURNS { delivered:false, error }
+        // rather than throwing, so the old .catch(() => {}) was not even the
+        // mechanism that lost it: the result was simply never read. If the one
+        // email standing between a person and their Article 17 request fails,
+        // that has to be visible to the owner.
+        ctx.waitUntil((async () => {
+          let r;
+          try {
+            r = await deliverEmail(env, {
+              to: email,
+              subject: 'Confirm you want your CyberSygn data deleted',
+              html: renderErasureHtml({ link, scope }),
+            });
+          } catch (e) { r = { delivered: false, error: (e && e.message) || String(e) }; }
+          if (!r || !r.delivered) {
+            console.error('[erase] confirmation email NOT delivered:', (r && r.error) || 'unknown');
+            try { await recordError(env, new Error(`erasure confirmation not delivered: ${(r && r.error) || 'unknown'}`), { where: 'erase-confirm-email' }); } catch (e) {}
+          }
+        })());
       }
       return jsonResponse(200, {
         ok: true,
@@ -871,12 +886,16 @@ const worker = {
 
     // Outbound webhooks for Studio tier (slice 91).
     {
+      // AWAITED. `return somePromise` inside this try block returns before the
+      // promise settles, so a rejection never reaches the top-level catch and
+      // escapes as a raw Cloudflare 1101 instead of the clean 500 that catch
+      // exists to produce. Every other arm in this router awaits.
       const m = url.pathname.match(/^\/api\/sender\/([^/]+)\/webhook$/);
-      if (m && request.method === 'GET')    return handleWebhookGet(request, env, m[1]);
-      if (m && request.method === 'POST')   return handleWebhookPost(request, env, url, m[1]);
-      if (m && request.method === 'DELETE') return handleWebhookDelete(request, env, url, m[1]);
+      if (m && request.method === 'GET')    return await handleWebhookGet(request, env, m[1]);
+      if (m && request.method === 'POST')   return await handleWebhookPost(request, env, url, m[1]);
+      if (m && request.method === 'DELETE') return await handleWebhookDelete(request, env, url, m[1]);
       const lm = url.pathname.match(/^\/api\/sender\/([^/]+)\/webhook\/log$/);
-      if (lm && request.method === 'GET') return handleWebhookLog(request, env, lm[1]);
+      if (lm && request.method === 'GET') return await handleWebhookLog(request, env, lm[1]);
     }
 
     // GET /api/sender/:senderId/docs
@@ -6448,7 +6467,10 @@ async function handleDocSummary(request, env, docId, url) {
 
 async function handleListSenderDocs(env, senderId) {
   const storage = getStorage(env);
-  const safeId = String(senderId).replace(/[^a-zA-Z0-9_-]/g, '');
+  // .slice(0, 64) like every sibling sanitizer. Without the cap a long path
+  // segment became a KV key over Cloudflare's 512-byte limit, the binding threw,
+  // and an UNAUTHENTICATED GET took the worker to a 500.
+  const safeId = String(senderId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
   if (!safeId) return jsonResponse(400, { error: 'invalid_sender', message: 'senderId must be alphanumeric.' });
 
   const index = (await storage.docs.get(`sender:${safeId}:docs`, { json: true })) || { docs: [] };

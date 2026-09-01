@@ -121,7 +121,13 @@ export async function sendReminder(env, { to, name, docTitle, magicLink, senderN
     : `Reminder: ${docTitle || 'CyberSygn document'} is waiting for you.`;
 
   const opening = t === 'final'
-    ? `This is the last reminder we will send. After today the link expires and ${senderName || 'the sender'} will need to issue a new one.`
+    // "After today the link expires" was false. The final reminder fires at 168
+    // hours (REMINDER_SCHEDULE[2]) while an unfinished document carries a
+    // 30-day TTL, so the link outlives this sentence by roughly three weeks.
+    // Saying it expires today to force a signature is pressure built on a
+    // false deadline, and the signer who believes it and does nothing then
+    // finds a link that still works.
+    ? `This is the last reminder we will send. The link still works, but nobody will nudge you again, so ${senderName || 'the sender'} is waiting on you.`
     : t === 'second'
     ? `It has been a few days. ${senderName || 'The sender'} is still waiting on your signature.`
     : `${senderName || 'A CyberSygn sender'} is waiting for you to sign.`;

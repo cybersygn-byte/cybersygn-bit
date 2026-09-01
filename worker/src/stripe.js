@@ -117,8 +117,15 @@ export const LIFETIME_CAP = 50;
  */
 export async function getSubscription(env, senderId) {
   if (!senderId) return defaultFree();
+  // Sanitize HERE, not only in the callers. This builds a KV key from a value
+  // that arrives straight out of a URL path segment on several routes, and
+  // Cloudflare KV throws on a key over 512 bytes, so an unauthenticated GET
+  // with a long segment took the worker to a 500. Every id sanitizer in the
+  // codebase uses this same shape.
+  const safe = String(senderId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  if (!safe) return defaultFree();
   const storage = pickStorage(env);
-  const raw = await storage.get(`sub:${senderId}`);
+  const raw = await storage.get(`sub:${safe}`);
   if (!raw) return defaultFree();
   try {
     const parsed = JSON.parse(raw);

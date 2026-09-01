@@ -217,6 +217,35 @@ await t('the ops panel reads the shapes the endpoints actually return', async ()
     'a null uptimePct means no data, and must not render as a failing number');
 });
 
+await t('an over-long path segment cannot take the worker down', async () => {
+  // Cloudflare KV throws on a key over 512 bytes. Several routes built a KV key
+  // straight from a URL path segment, so an UNAUTHENTICATED GET with a long
+  // segment produced a 500. Two separate causes: getSubscription never
+  // sanitized the id it keys on, and four webhook arms did `return handler(...)`
+  // without await, so the rejection returned before the promise settled and
+  // never reached the top-level catch that exists to turn this into clean JSON.
+  const worker = (await import('../worker/src/index.js')).default;
+  const kv = new Map();
+  const cap = (k) => { if (String(k).length > 512) throw new Error('KV key too long'); };
+  const st = {
+    get: async (k, o) => { cap(k); const v = kv.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : v; },
+    put: async (k, v) => { cap(k); kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => kv.delete(k),
+    list: async () => ({ keys: [], list_complete: true }),
+  };
+  const env = { CYBERSYGN_DOCS: st, CYBERSYGN_PDFS: st };
+  const long = 'a'.repeat(600);
+  for (const path of [
+    `/api/sender/${long}/docs`,
+    `/api/sender/${long}/webhook`,
+    `/api/sender/${long}/webhook/log`,
+    `/api/billing/subscription?senderId=${long}`,
+  ]) {
+    const res = await worker.fetch(new Request('https://x' + path, { headers: { 'cf-connecting-ip': '1.1.1.1' } }), env, { waitUntil() {} });
+    assert.ok(res.status < 500, `${path.slice(0, 40)} returned ${res.status}; a bad id must never 500`);
+  }
+});
+
 console.log(out.join('\n'));
 console.log(`\nobservability: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

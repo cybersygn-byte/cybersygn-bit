@@ -5,7 +5,7 @@
       "channel": "SMS / iMessage",
       "label": "Text a friend",
       "public": false,
-      "body": "Hey, you still emailing PDFs back and forth to get things signed? I started using CyberSygn and it's kind of a relief. You drop in a PDF, the AI finds every signature, date, and initial spot in about 3 seconds, and the person signing doesn't have to make an account or log in to anything. First document is free, no card. If you want to try it, use my link and you get {{DISCOUNT}}: {{LINK}} (full disclosure: that's my referral link, I earn a commission if you subscribe.)",
+      "body": "Hey, you still emailing PDFs back and forth to get things signed? I started using CyberSygn and it's kind of a relief. You drop in a PDF, it reads the PDF and marks the signature, date, and initial fields it finds, usually in a couple of seconds, and the person signing doesn't have to make an account or log in to anything. First document is free, no card. If you want to try it, use my link and you get {{DISCOUNT}}: {{LINK}} (full disclosure: that's my referral link, I earn a commission if you subscribe.)",
       "whyFirst": "Send to the one friend you've personally watched wrestle with a PDF; a real memory makes it land."
     },
     {
@@ -13,7 +13,7 @@
       "channel": "DM to a peer (Slack / IG / LinkedIn DM)",
       "label": "DM a peer",
       "public": false,
-      "body": "Random, but this feels like your kind of tool. It's CyberSygn, an e-signature thing. The part that won me over: upload a PDF and its AI tags every signature, date, and initial field in ~3 seconds, so I'm not dragging boxes around by hand. And whoever I send it to signs without creating an account. Every finished doc also gets a tamper-evident SHA-256 certificate, so it holds up. Your first one is free (no card). If you end up liking it, my link gets you {{DISCOUNT}}: {{LINK}} (and yes, that's a referral link, I get a commission if you sign up.)",
+      "body": "Random, but this feels like your kind of tool. It's CyberSygn, an e-signature thing. The part that won me over: upload a PDF and its detector tags the signature, date, and initial fields it finds in ~3 seconds, so I'm not dragging boxes around by hand. And whoever I send it to signs without creating an account. Every finished doc also gets a tamper-evident SHA-256 certificate, so it holds up. Your first one is free (no card). If you end up liking it, my link gets you {{DISCOUNT}}: {{LINK}} (and yes, that's a referral link, I get a commission if you sign up.)",
       "whyFirst": "Best for a peer who signs contracts weekly; lead with the field detection, it's the part they'll feel day one."
     },
     {
@@ -21,7 +21,7 @@
       "channel": "Email to a coach / multiplier",
       "label": "Email a multiplier",
       "public": false,
-      "body": "Subject: A signing tool worth passing to your people\n\nHi [Name],\n\nYou work with a lot of operators who are still stuck emailing contracts around, so I wanted to put this in front of you.\n\nIt's called CyberSygn. Three things that actually matter:\n1. Drop in a PDF and the AI finds every signature, date, and initial field in about 3 seconds. No manual box-dragging.\n2. The person signing needs no account and no login. They just sign.\n3. Every completed document gets a tamper-evident SHA-256 certificate.\n\nThe first document is free, no card required, so anyone can test it on a real contract in a couple of minutes.\n\nIf it's useful to your group, here's my link, and it gets them {{DISCOUNT}}: {{LINK}}\n\nHappy to walk anyone through it.\n\nThanks,\n[Your name]\n\nDisclosure: that is my referral link and I earn a commission if someone subscribes through it.",
+      "body": "Subject: A signing tool worth passing to your people\n\nHi [Name],\n\nYou work with a lot of operators who are still stuck emailing contracts around, so I wanted to put this in front of you.\n\nIt's called CyberSygn. Three things that actually matter:\n1. Drop in a PDF and it reads the PDF and marks the signature, date, and initial fields it finds, usually in a couple of seconds. No manual box-dragging.\n2. The person signing needs no account and no login. They just sign.\n3. Every completed document gets a tamper-evident SHA-256 certificate.\n\nThe first document is free, no card required, so anyone can test it on a real contract in a couple of minutes.\n\nIf it's useful to your group, here's my link, and it gets them {{DISCOUNT}}: {{LINK}}\n\nHappy to walk anyone through it.\n\nThanks,\n[Your name]\n\nDisclosure: that is my referral link and I earn a commission if someone subscribes through it.",
       "whyFirst": "Coaches and community leaders are multipliers; one yes puts it in front of dozens. Give them the clean 3-point version they can forward."
     },
     {
@@ -29,7 +29,7 @@
       "channel": "LinkedIn post",
       "label": "LinkedIn post",
       "public": true,
-      "body": "I finally stopped dreading the \"can you send that over to sign\" step.\n\nSwitched to CyberSygn and three things changed:\n\n- I drop in a PDF and its AI finds every signature, date, and initial field in about 3 seconds. No more dragging boxes around by hand.\n- The people I send documents to don't create an account or log in to anything. They just sign.\n- Every completed doc gets a tamper-evident SHA-256 certificate, so it holds up later.\n\nThe first document is free, no card. If you want to try it on a real contract, my link gets you {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission)",
+      "body": "I finally stopped dreading the \"can you send that over to sign\" step.\n\nSwitched to CyberSygn and three things changed:\n\n- I drop in a PDF and its detector finds the signature, date, and initial fields it finds in about 3 seconds. No more dragging boxes around by hand.\n- The people I send documents to don't create an account or log in to anything. They just sign.\n- Every completed doc gets a tamper-evident SHA-256 certificate, so it holds up later.\n\nThe first document is free, no card. If you want to try it on a real contract, my link gets you {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission)",
       "whyFirst": "LinkedIn rewards a specific before/after story; the account-free signing is the line operators reshare."
     },
     {
@@ -37,7 +37,7 @@
       "channel": "LinkedIn comment",
       "label": "LinkedIn comment",
       "public": true,
-      "body": "If the signing part is the bottleneck, worth a look at CyberSygn. You drop in a PDF and its AI tags every signature, date, and initial field in about 3 seconds, and the person signing needs no account. First document is free (no card). Here's my link with {{DISCOUNT}} if you try it: {{LINK}} (affiliate, I earn a commission)",
+      "body": "If the signing part is the bottleneck, worth a look at CyberSygn. You drop in a PDF and its detector tags the signature, date, and initial fields it finds in about 3 seconds, and the person signing needs no account. First document is free (no card). Here's my link with {{DISCOUNT}} if you try it: {{LINK}} (affiliate, I earn a commission)",
       "whyFirst": "Drop under posts where someone's complaining about contract or paperwork friction; be helpful first, link second."
     },
     {
@@ -45,7 +45,7 @@
       "channel": "Instagram feed caption",
       "label": "Instagram caption",
       "public": true,
-      "body": "The unglamorous tool that gave me my afternoons back.\n\nCyberSygn: drop in a PDF, its AI finds every signature, date, and initial field in about 3 seconds. The person signing doesn't make an account. And every finished doc gets a tamper-evident certificate.\n\nFirst one's free, no card. Link in bio or the one below gets you {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission)",
+      "body": "The unglamorous tool that gave me my afternoons back.\n\nCyberSygn: drop in a PDF, its detector finds the signature, date, and initial fields it finds in about 3 seconds. The person signing doesn't make an account. And every finished doc gets a tamper-evident certificate.\n\nFirst one's free, no card. Link in bio or the one below gets you {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission)",
       "whyFirst": "Pair with a quick screen-record of the 3-second detection; the visual sells it, the caption closes it."
     },
     {
@@ -53,7 +53,7 @@
       "channel": "Instagram story slide",
       "label": "IG story slide",
       "public": true,
-      "body": "POV: you drop a PDF in and every signature + date field is tagged in ~3 sec. No account for whoever signs. First one free. Tap the link for {{DISCOUNT}} -> {{LINK}}\n\n(affiliate, I earn a commission)",
+      "body": "POV: you drop a PDF in and the signature + date fields it finds are tagged in ~3 sec. No account for whoever signs. First one free. Tap the link for {{DISCOUNT}} -> {{LINK}}\n\n(affiliate, I earn a commission)",
       "whyFirst": "Add a link sticker over a screen-record; stories are glance-speed, so keep it to the one wow and the offer."
     },
     {
@@ -61,7 +61,7 @@
       "channel": "Reddit comment",
       "label": "Reddit comment",
       "public": true,
-      "body": "Not affiliated with the big names, but I've been using CyberSygn for this exact thing. You upload a PDF and its AI auto-detects every signature, date, and initial field in about 3 seconds, so you're not placing fields manually. Bigger deal for me: the people I send docs to don't have to create an account to sign. Completed docs come with a tamper-evident SHA-256 certificate too. First document is free with no card, so you can test it on a real one.\n\nFull disclosure, this is my referral link and I earn a commission, and it gets you {{DISCOUNT}}: {{LINK}} (no pressure, the free doc works without it)",
+      "body": "Not affiliated with the big names, but I've been using CyberSygn for this exact thing. You upload a PDF and it auto-detects the signature, date, and initial fields it can find, usually in a couple of seconds, so you're not placing fields manually. Bigger deal for me: the people I send docs to don't have to create an account to sign. Completed docs come with a tamper-evident SHA-256 certificate too. First document is free with no card, so you can test it on a real one.\n\nFull disclosure, this is my referral link and I earn a commission, and it gets you {{DISCOUNT}}: {{LINK}} (no pressure, the free doc works without it)",
       "whyFirst": "Reddit punishes ads and rewards genuinely useful answers; disclose up front, give the honest tradeoff, make the link optional."
     },
     {
@@ -69,7 +69,7 @@
       "channel": "Facebook group post",
       "label": "Facebook group post",
       "public": true,
-      "body": "For everyone here who's still emailing contracts back and forth: I switched to CyberSygn and it's been a genuine time-saver.\n\nYou drop in a PDF and the AI finds every signature, date, and initial field in about 3 seconds. Whoever you send it to signs without making an account. And every completed doc gets a tamper-evident SHA-256 certificate.\n\nFirst document is free, no card needed, so you can try it on something real today. My link gets you {{DISCOUNT}} if you decide to keep going: {{LINK}}\n\n(affiliate, I earn a commission)",
+      "body": "For everyone here who's still emailing contracts back and forth: I switched to CyberSygn and it's been a genuine time-saver.\n\nYou drop in a PDF and it reads the PDF and marks the signature, date, and initial fields it finds, usually in a couple of seconds. Whoever you send it to signs without making an account. And every completed doc gets a tamper-evident SHA-256 certificate.\n\nFirst document is free, no card needed, so you can try it on something real today. My link gets you {{DISCOUNT}} if you decide to keep going: {{LINK}}\n\n(affiliate, I earn a commission)",
       "whyFirst": "Post in groups of solo operators and small-business owners who live in PDFs; the free-first-doc removes the risk of trying."
     },
     {
@@ -77,7 +77,7 @@
       "channel": "X / Twitter post",
       "label": "X / Twitter post",
       "public": true,
-      "body": "e-signing without the busywork:\n\ndrop in a PDF, AI tags every signature + date + initial field in ~3 sec.\nthe person signing needs no account.\nevery doc gets a tamper-evident certificate.\n\nfirst one's free, no card. {{DISCOUNT}} via my link: {{LINK}}\n\n(affiliate, I earn a commission)",
+      "body": "e-signing without the busywork:\n\ndrop in a PDF, it tags the signature + date + initial fields it finds, usually in ~3 sec.\nthe person signing needs no account.\nevery doc gets a tamper-evident certificate.\n\nfirst one's free, no card. {{DISCOUNT}} via my link: {{LINK}}\n\n(affiliate, I earn a commission)",
       "whyFirst": "X rewards a tight list of concrete claims; the no-account line is the one that gets quote-tweeted."
     },
     {
@@ -85,7 +85,7 @@
       "channel": "Short video caption (TikTok / Reels / Shorts)",
       "label": "Short-video caption",
       "public": true,
-      "body": "Watch the AI tag every signature and date field in about 3 seconds. No account for whoever signs, and the finished doc comes with a tamper-evident certificate. First one's free, no card. Link for {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission) #esignature #smallbusiness #productivity",
+      "body": "Watch the detector tag the signature and date fields it finds in about 3 seconds. No account for whoever signs, and the finished doc comes with a tamper-evident certificate. First one's free, no card. Link for {{DISCOUNT}}: {{LINK}}\n\n(affiliate, I earn a commission) #esignature #smallbusiness #productivity",
       "whyFirst": "The demo carries it; caption just names the offer. Show the real 3-second detection on screen, don't just claim it."
     },
     {
@@ -93,7 +93,7 @@
       "channel": "Reply to a DocuSign complaint",
       "label": "DocuSign complaint reply",
       "public": true,
-      "body": "Felt this. What finally got me off that treadmill was CyberSygn. Two things fixed my biggest gripes: the person signing doesn't have to create an account (that alone cut my \"why won't they just sign\" emails way down), and you drop in a PDF and its AI tags every signature and date field in about 3 seconds instead of you placing them by hand. First document is free, no card, so you can compare on a real one. My referral link gets you {{DISCOUNT}}: {{LINK}} (affiliate, I earn a commission)",
+      "body": "Felt this. What finally got me off that treadmill was CyberSygn. Two things fixed my biggest gripes: the person signing doesn't have to create an account (that alone cut my \"why won't they just sign\" emails way down), and you drop in a PDF and its detector tags the signature and date fields it finds in about 3 seconds instead of you placing them by hand. First document is free, no card, so you can compare on a real one. My referral link gets you {{DISCOUNT}}: {{LINK}} (affiliate, I earn a commission)",
       "whyFirst": "Reply only where someone is genuinely venting about DocuSign; answer their specific pain (accounts, cost, fiddly fields), not a generic pitch."
     }
   ],
@@ -101,7 +101,7 @@
     {
       "id": "track0-lesson1",
       "title": "What you actually sell",
-      "body": "You are not selling software. Nobody wants another app. What you hand people is a gift and an hour of their life back. The gift: their first real document signed on us, no card, no account for the person signing. The time saved: drop a PDF, watch AI find every signature, date, and initial field in about three seconds, then send. What used to be print, sign, scan, resend becomes one link. That is the whole pitch, and it lands because it is true. Here is the rule that makes you good at this: you cannot sell a feeling you have never felt. Before you tell one person about CyberSygn, run it on your own real contract. A lease, a client agreement, a waiver, whatever is sitting in your inbox right now. Feel the three seconds. Watch the fields appear. Get the tamper-evident certificate at the end. Once you have done it once, you stop pitching and start describing, and describing is what converts.",
+      "body": "You are not selling software. Nobody wants another app. What you hand people is a gift and an hour of their life back. The gift: their first real document signed on us, no card, no account for the person signing. The time saved: drop a PDF, watch it mark the signature, date, and initial fields it finds, usually in about three seconds, then send. What used to be print, sign, scan, resend becomes one link. That is the whole pitch, and it lands because it is true. Here is the rule that makes you good at this: you cannot sell a feeling you have never felt. Before you tell one person about CyberSygn, run it on your own real contract. A lease, a client agreement, a waiver, whatever is sitting in your inbox right now. Feel the three seconds. Watch the fields appear. Get the tamper-evident certificate at the end. Once you have done it once, you stop pitching and start describing, and describing is what converts.",
       "action": "Upload one real contract you actually need signed and run it through CyberSygn start to finish today, before you share anything."
     },
     {
