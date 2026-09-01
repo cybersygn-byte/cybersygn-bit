@@ -153,6 +153,35 @@ await t('one failing cron job does not stop the others', async () => {
     'no cron task may reject: one bad job must not take down the sweep');
 });
 
+await t('an UNDELIVERED security alert is not reported as sent', async () => {
+  // deliver() returns { delivered:false, error } instead of throwing, so the
+  // empty catch around it meant an alert that never left the building looked
+  // exactly like one that did. Of every email here, this is the one whose
+  // silent non-delivery matters most: it is the alert about things being broken.
+  const { runSecurityCheck: run } = await import('../worker/src/security-check.js');
+  const kv = new Map();
+  const st = {
+    get: async (k, o) => { const v = kv.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : v; },
+    put: async (k, v) => { kv.set(k, typeof v === 'string' ? v : JSON.stringify(v)); },
+    delete: async (k) => kv.delete(k),
+    list: async () => ({ keys: [], list_complete: true }),
+  };
+  const real = globalThis.fetch;
+  globalThis.fetch = async (u) => (String(u).includes('resend')
+    ? new Response('{"message":"API key is invalid"}', { status: 401 })
+    : new Response('{}', { status: 200 }));
+  try {
+    const env = { CYBERSYGN_DOCS: st, RESEND_API_KEY: 're_bad', CYBERSYGN_OWNER_EMAIL: 'o@e.com', CYBERSYGN_FROM: 'h@e.com' };
+    const r = await run(env, async () => ({ ok: false, status: 503 }));
+    assert.ok(r.failures.length > 0, 'the run must have something to alert about');
+    assert.equal(r.alertDelivered, false, 'a refused send must be reported as undelivered');
+    const ring = await getRecentErrors(env);
+    const list = ring.errors || ring || [];
+    assert.ok(list.some(e => String(e.where || '').includes('security-check-alert')),
+      'and must land in the error ring where a human can see it');
+  } finally { globalThis.fetch = real; }
+});
+
 console.log(out.join('\n'));
 console.log(`\nobservability: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

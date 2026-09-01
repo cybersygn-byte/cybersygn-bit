@@ -232,6 +232,26 @@ export async function ensureSignedPdf(env, doc, { force = false } = {}) {
     const original = await storage.pdfs.get(`pdf:${doc.id}`, { arrayBuffer: true });
     if (!original) return { ok: false, reason: 'no_original' };
 
+    // SELF-HEAL the original's retention.
+    //
+    // On completion the worker rewrites pdf:<docId> without a TTL, because the
+    // file is written once at creation while the document is still in flight
+    // and correctly carries a 30-day expiry. That rewrite sits behind a
+    // one-shot marker, so if its single put failed the original would still
+    // expire in 30 days while doc:, audit: and signed: are all kept forever,
+    // leaving an audit trail that points at a document that no longer exists.
+    //
+    // We are holding the bytes right now, so re-putting them is nearly free.
+    // Guarded by its own marker so a completed document pays this at most once
+    // rather than on every read.
+    try {
+      const retainedKey = `meta:pdf-retained:${doc.id}`;
+      if (!(await storage.docs.get(retainedKey))) {
+        await storage.pdfs.put(`pdf:${doc.id}`, original);
+        await storage.docs.put(retainedKey, '1');
+      }
+    } catch (e) { /* best effort: the signed build below still proceeds */ }
+
     let bytes;
     try {
       bytes = await buildSignedPdf({ originalBytes: original, doc });

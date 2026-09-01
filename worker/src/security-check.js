@@ -21,6 +21,7 @@
 
 import { getStorage } from './storage.js';
 import { deliver } from './email.js';
+import { recordError } from './sentry.js';
 import { KNOWN_DEV_OWNER_HASH } from './owner.js';
 
 const RESULT_KEY = 'meta:security-check:latest';
@@ -159,12 +160,26 @@ export async function runSecurityCheck(env, opts = {}) {
             .map((f) => `- [${f.severity}] ${f.name}${f.detail ? ': ' + f.detail : ''}`).join('\n')
         : '';
       try {
-        await deliver(env, {
+        // deliver() returns { delivered:false, error } rather than throwing, so
+        // an empty catch here meant a security alert that never left the
+        // building looked exactly like one that did. This is the one email
+        // whose non-delivery matters most.
+        const r = await deliver(env, {
           to,
           subject: `CyberSygn security check: ${result.failures.length} issue(s)`,
           text: `The twice-daily security self-check found issues at ${result.ranAt}:\n\n${lines}${advLines}\n\nFull report: ${base}/control/\n\nThis is automated; a passing run sends no email.`,
         });
-      } catch { /* email best-effort */ }
+        result.alertDelivered = !!(r && r.delivered);
+        if (!result.alertDelivered) {
+          const detail = (r && r.error) || 'unknown';
+          console.error('[security-check] ALERT NOT DELIVERED:', detail);
+          try { await recordError(env, new Error(`security alert not delivered: ${detail}`), { where: 'security-check-alert' }); } catch (e) {}
+        }
+      } catch (e) {
+        result.alertDelivered = false;
+        console.error('[security-check] alert send threw:', e && e.message);
+        try { await recordError(env, e, { where: 'security-check-alert' }); } catch (_) {}
+      }
     }
   }
   return result;

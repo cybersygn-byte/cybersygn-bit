@@ -59,7 +59,7 @@ import {
 import { exportDatasetJsonl, getDatasetStats, maybeFirePhase3Alert } from './dataset.js';
 import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
-import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
+import { runUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry, recordError, getRecentErrors } from './sentry.js';
 import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups, backupSignedArtifacts } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
@@ -1054,18 +1054,16 @@ const worker = {
     // Uptime self-probe (slice 99). Synchronous KV check is enough, if
     // the binding is up the worker can respond; if it isn't, we record
     // a failure for the day.
-    ctx.waitUntil(cronTask(env, 'uptime-probe', (async () => {
-      let ok = false;
-      try {
-        if (env && env.CYBERSYGN_DOCS) {
-          const probeKey = `uptime:probe:${Date.now()}`;
-          await env.CYBERSYGN_DOCS.put(probeKey, '1', { expirationTtl: 60 });
-          const v = await env.CYBERSYGN_DOCS.get(probeKey);
-          ok = v === '1';
-        }
-      } catch (e) { ok = false; }
-      await recordUptimeProbe(env, ok);
-    })()));
+    // Measure the REAL endpoint, not the binding.
+    //
+    // This used to inline a KV put-then-get inside the cron isolate, which is
+    // the degraded fallback branch of runUptimeProbe, and record that as the
+    // uptime number. It proves only that the KV binding answers: a worker whose
+    // routing, auth or /api/health handler was broken would still have reported
+    // 100%. runUptimeProbe with a dispatch has been written and tested this
+    // whole time; nothing called it with one.
+    ctx.waitUntil(cronTask(env, 'uptime-probe',
+      () => runUptimeProbe(env, { dispatch: selfDispatch(env, ctx) })));
   },
 };
 
@@ -5114,8 +5112,21 @@ async function handleSubmitFills(request, env, docId, token, url, ctx) {
     try {
       const pdfBytes = await storage.pdfs.get(`pdf:${docId}`, { arrayBuffer: true });
       if (pdfBytes) await storage.pdfs.put(`pdf:${docId}`, pdfBytes);
+      // Record that the original is now retained, so the self-heal on the read
+      // path knows it does not need to do this again.
+      try { await storage.docs.put(`meta:pdf-retained:${docId}`, '1'); } catch (e) {}
     } catch (err) {
+      // NOT merely logged any more. This block runs exactly once, behind
+      // meta:doc-complete-fired, so a single failed put here used to be
+      // permanent: pdf:<docId> kept its 30-day expiry while doc:, audit: and
+      // signed: were all retained forever, leaving an audit trail pointing at
+      // a document that no longer exists, and nothing would ever retry.
       console.error('[retention] could not lift PDF ttl:', err && err.message);
+      try { await recordError(env, err, { where: 'retention-lift', docId }); } catch (e) {}
+      // Drop the one-shot marker so the next writer on this document re-enters
+      // the completion block and tries again. The work inside it is idempotent:
+      // the certificate render and ensureSignedPdf both overwrite in place.
+      try { await storage.docs.delete(`meta:doc-complete-fired:${docId}`); } catch (e) {}
     }
 
     // F4: write the PII-FREE public verify record so a recipient can later

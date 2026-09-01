@@ -232,6 +232,46 @@ await t('a paid plan gets the footer-free PDF it was sold', async () => {
   assert.equal(legacy.byteLength, free.byteLength, 'legacy records keep the footer');
 });
 
+await t('a completed document self-heals its original PDF retention', async () => {
+  // On completion the worker rewrites pdf:<docId> without a TTL, behind a
+  // one-shot marker. If that single put failed, the original still expired in
+  // 30 days while doc:, audit: and signed: were kept forever, so the audit
+  // certificate would end up describing a document that no longer exists, and
+  // nothing would ever retry. ensureSignedPdf is already holding those bytes.
+  const base = await PDFDocument.create();
+  base.addPage([300, 200]);
+  const orig = await base.save();
+  const docs = new Map(), pdfs = new Map(), puts = [];
+  const env = {
+    CYBERSYGN_DOCS: {
+      get: async (k, o) => { const v = docs.get(k); if (v == null) return null; const j = o === 'json' || (o && o.type === 'json'); return j ? JSON.parse(v) : v; },
+      put: async (k, v) => { docs.set(k, v); },
+      delete: async (k) => docs.delete(k),
+      list: async () => ({ keys: [], list_complete: true }),
+    },
+    CYBERSYGN_PDFS: {
+      get: async (k) => (pdfs.has(k) ? pdfs.get(k) : null),
+      put: async (k, v, opts) => { puts.push({ k, ttl: opts && opts.expirationTtl }); pdfs.set(k, v); },
+      delete: async (k) => pdfs.delete(k),
+      list: async () => ({ keys: [], list_complete: true }),
+    },
+  };
+  pdfs.set('pdf:d1', orig.buffer);
+  const doc = { id: 'd1', completedAt: '2026-01-01T00:00:00Z', signers: [], fields: [], footer: true };
+
+  const first = await ensureSignedPdf(env, doc);
+  assert.equal(first.ok, true);
+  assert.ok(puts.some(p => p.k === 'pdf:d1' && p.ttl === undefined),
+    'the original must be re-put with NO expiry');
+  assert.equal(docs.get('meta:pdf-retained:d1'), '1', 'and marked so it happens once');
+
+  puts.length = 0;
+  pdfs.delete('signed:d1');
+  await ensureSignedPdf(env, doc);
+  assert.ok(!puts.some(p => p.k === 'pdf:d1'),
+    'a second build must NOT re-put the original: the marker makes this at most once');
+});
+
 console.log(out.join('\n'));
 console.log(`\nsigned document chain: ${pass} passed, ${fail} failed`);
 if (fail) process.exit(1);

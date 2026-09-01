@@ -16,6 +16,7 @@
 import { getDatasetStats } from './dataset.js';
 import { getFoundingCount, foundingCap } from './stripe.js';
 import { deliver } from './email.js';
+import { recordError } from './sentry.js';
 
 const KV_LOCK_PREFIX = 'meta:monthly-report:';
 const KV_LOCK_TTL_SECONDS = 60 * 60 * 25;  // 25h to safely cover the day window
@@ -101,16 +102,33 @@ export async function runMonthlyOwnerReport(env, event) {
   // Send. Use the existing Resend pipeline (sendCompletion is the
   // closest signature match: takes env + recipient + subject + text + html).
   try {
-    await deliver(env, {
+    // deliver() NEVER THROWS on a provider failure: it returns
+    // { delivered: false, error }. So awaiting it inside a try/catch and
+    // logging success afterwards asserted the report had gone out on a Resend
+    // 4xx, a revoked key, an unverified from-domain or a 429. Combined with the
+    // 25h lock and a once-a-month cron window, that month's report was simply
+    // lost, and the log said it was sent.
+    const r = await deliver(env, {
       to: recipient,
       subject: `CyberSygn monthly report. ${now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' })}.`,
       text,
       html,
     });
-    // Log that the report went out, not the recipient address.
-    console.log(`[monthly-report] ${monthKey} sent`);
+    if (r && r.delivered) {
+      // Log that the report went out, not the recipient address.
+      console.log(`[monthly-report] ${monthKey} sent`);
+    } else {
+      const detail = (r && r.error) || 'unknown';
+      console.error(`[monthly-report] ${monthKey} NOT delivered:`, detail);
+      try { await recordError(env, new Error(`monthly report not delivered: ${detail}`), { where: 'monthly-report', monthKey }); } catch (e) {}
+      // Release the lock so a later invocation in the same window can retry
+      // instead of the failure being final for the month.
+      try { await env.CYBERSYGN_DOCS.delete(lockKey); } catch (e) {}
+    }
   } catch (e) {
     console.error('[monthly-report] send failed', e && e.message ? e.message : e);
+    try { await recordError(env, e, { where: 'monthly-report', monthKey }); } catch (_) {}
+    try { await env.CYBERSYGN_DOCS.delete(lockKey); } catch (_) {}
   }
 }
 
