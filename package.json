@@ -44,7 +44,8 @@
     "test:events": "node scripts/test-events.mjs",
     "test:atomic": "node scripts/test-atomic.mjs",
     "test:erasure": "node scripts/test-erasure.mjs",
-    "test:signed": "node scripts/test-signed-pdf.mjs"
+    "test:signed": "node scripts/test-signed-pdf.mjs",
+    "check:dist": "node scripts/check-dist-pages.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",
