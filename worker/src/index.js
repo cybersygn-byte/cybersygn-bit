@@ -2802,7 +2802,7 @@ async function handleFreeConsume(request, env) {
   // The client already sends this on the download path; it is what lets a
   // later send of the same document settle against one credit instead of two.
   const docSha = request.headers.get('x-cybersygn-doc-sha') || '';
-  const result = await freeConsume(env, token, docSha);
+  const result = await freeConsume(env, token, docSha, { mark: true });
   if (!result.ok) {
     const status = result.error === 'free_cap_reached' ? 402 : 401;
     return jsonResponse(status, result);
@@ -4627,7 +4627,7 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
     // free documents bought one complete workflow instead of three.
     let createSha = null;
     try { createSha = await sha256Hex(pdfBytes); } catch (e) { /* dedupe is best effort */ }
-    const consumed = await freeConsume(env, freeGate.token, createSha);
+    const consumed = await freeConsume(env, freeGate.token, createSha, { redeem: true });
     if (!consumed.ok) {
       return jsonResponse(402, {
         error: consumed.error === 'free_cap_reached' ? 'free_cap_reached' : 'free_consume_failed',

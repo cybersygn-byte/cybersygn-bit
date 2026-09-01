@@ -42,56 +42,76 @@ async function signup(env) {
   return (await freeSignup(env, { email: 'a@b.com', firstName: 'A', lastName: 'B', consent: true })).freeToken;
 }
 
+const DL = { mark: true };      // download: reserves a settlement
+const SEND = { redeem: true };  // send: redeems one, if the download paid
+
 await t('download then send of ONE document costs ONE credit', async () => {
   const { env } = mkEnv();
   const tok = await signup(env);
-  const first = await freeConsume(env, tok, sha('a'));
+  const first = await freeConsume(env, tok, sha('a'), DL);
   assert.equal(first.used, 1);
-  assert.ok(!first.deduped, 'the first call pays');
-  const second = await freeConsume(env, tok, sha('a'));
+  assert.ok(!first.deduped, 'the download pays');
+  const second = await freeConsume(env, tok, sha('a'), SEND);
   assert.equal(second.ok, true);
-  assert.equal(second.deduped, true, 'the second call on the same document is free');
+  assert.equal(second.deduped, true, 'the send settles against it');
   assert.equal(second.used, 1, 'and must not advance the counter');
+});
+
+await t('sending the SAME document repeatedly still costs one credit each', async () => {
+  // The settlement has to be one-shot. A permanent "this sha is paid" marker
+  // would let one document be sent to counterparty after counterparty forever,
+  // so the three-document cap would never bind again: a bigger hole than the
+  // double-charge it was meant to close. The money fuzz suite caught exactly
+  // this, by posting the same payload four times.
+  const { env } = mkEnv();
+  const tok = await signup(env);
+  for (let i = 1; i <= 3; i++) {
+    const r = await freeConsume(env, tok, sha('a'), SEND);
+    assert.equal(r.ok, true, `send ${i} must be allowed`);
+    assert.equal(r.used, i, `send ${i} must cost its own credit`);
+  }
+  const fourth = await freeConsume(env, tok, sha('a'), SEND);
+  assert.equal(fourth.ok, false, 'the cap must bind on the same document too');
+  assert.equal(fourth.error, 'free_cap_reached');
 });
 
 await t('three documents still fit, and a fourth is refused', async () => {
   const { env } = mkEnv();
   const tok = await signup(env);
   for (const c of ['a', 'b', 'c']) {
-    assert.equal((await freeConsume(env, tok, sha(c))).ok, true, `document ${c} must be allowed`);
-    assert.equal((await freeConsume(env, tok, sha(c))).deduped, true, `document ${c} must settle once`);
+    assert.equal((await freeConsume(env, tok, sha(c), DL)).ok, true, `document ${c} must be allowed`);
+    assert.equal((await freeConsume(env, tok, sha(c), SEND)).deduped, true, `document ${c} must settle once`);
   }
-  const fourth = await freeConsume(env, tok, sha('d'));
+  const fourth = await freeConsume(env, tok, sha('d'), DL);
   assert.equal(fourth.ok, false, 'the cap must still hold');
   assert.equal(fourth.error, 'free_cap_reached');
   assert.equal(fourth.used, 3, 'exactly three documents were paid for');
 });
 
 await t('DIFFERENT documents are billed separately', async () => {
-  // The dedup must key on the document, not merely on "seen before".
   const { env } = mkEnv();
   const tok = await signup(env);
-  assert.equal((await freeConsume(env, tok, sha('a'))).used, 1);
-  assert.equal((await freeConsume(env, tok, sha('b'))).used, 2, 'a different document costs its own credit');
+  assert.equal((await freeConsume(env, tok, sha('a'), DL)).used, 1);
+  assert.equal((await freeConsume(env, tok, sha('b'), DL)).used, 2, 'a different document costs its own credit');
 });
 
 await t('a missing or malformed sha still bills, it never grants a free pass', async () => {
-  // Fail toward charging. An unkeyed document that deduped against a shared
-  // sentinel would let every later document download free.
+  // Fail toward charging. An unkeyed document that settled against a shared
+  // sentinel would let every later document go free.
   const { env } = mkEnv();
   const tok = await signup(env);
-  assert.equal((await freeConsume(env, tok, null)).used, 1);
-  assert.equal((await freeConsume(env, tok, null)).used, 2, 'no sha means no dedup');
-  assert.equal((await freeConsume(env, tok, 'not-a-sha')).used, 3, 'a malformed sha must not dedup either');
+  assert.equal((await freeConsume(env, tok, null, SEND)).used, 1);
+  assert.equal((await freeConsume(env, tok, null, SEND)).used, 2, 'no sha means no settlement');
+  assert.equal((await freeConsume(env, tok, 'not-a-sha', SEND)).used, 3, 'a malformed sha must not settle either');
 });
 
-await t('the marker is scoped to the user, not global', async () => {
+await t('the reservation is scoped to the user, not global', async () => {
   const { env } = mkEnv();
   const tok1 = await signup(env);
-  await freeConsume(env, tok1, sha('a'));
+  await freeConsume(env, tok1, sha('a'), DL);
   const tok2 = (await freeSignup(env, { email: 'c@d.com', firstName: 'C', lastName: 'D', consent: true })).freeToken;
-  const other = await freeConsume(env, tok2, sha('a'));
-  assert.ok(!other.deduped, 'another user signing the same document pays their own credit');
+  const other = await freeConsume(env, tok2, sha('a'), SEND);
+  assert.ok(!other.deduped, 'another user sending the same document pays their own credit');
   assert.equal(other.used, 1);
 });
 

@@ -183,29 +183,37 @@ async function markDocConsumed(env, shaKey) {
   } catch (e) { /* tolerated */ }
 }
 
-export async function freeConsume(env, token, docSha) {
+export async function freeConsume(env, token, docSha, opts = {}) {
   const resolved = await resolveFreeToken(env, token);
   if (!resolved.ok) return resolved;
   const { emailHash, record } = resolved;
   const userKey = KV_PREFIX_USER + emailHash;
 
-  // ONE DOCUMENT, ONE CREDIT.
+  // ONE DOCUMENT, ONE CREDIT, FOR THE DOWNLOAD-THEN-SEND PAIR.
   //
-  // Downloading a signed PDF and sending that same PDF for signature are two
-  // calls into this function, and each one burned a credit. A free user has
-  // three for life, so doing both to a single document cost a THIRD of their
-  // lifetime allowance for one piece of work. The two paths are settled
-  // against one marker keyed by the document's SHA-256, so whichever happens
-  // first pays and the second is free.
+  // Downloading a signed PDF and then sending that same PDF for signature are
+  // two calls into this function, and each one burned a credit, so one piece of
+  // work cost a THIRD of a free account's lifetime allowance.
+  //
+  // The settlement is DIRECTIONAL and ONE-SHOT, which matters. A symmetric,
+  // permanent "this sha is paid" marker looks tidier and is a hole: sending the
+  // SAME pdf to counterparty after counterparty would settle against one credit
+  // forever and the three-document cap would never bind again. That is a worse
+  // bug than the one being fixed, and the money fuzz suite caught it.
+  //
+  // So the download RESERVES (opts.mark) and one later send REDEEMS (opts.redeem)
+  // and clears the marker. Three separate sends of the same document are still
+  // three documents and still cost three credits.
   const safeSha = /^[0-9a-f]{64}$/.test(String(docSha || '')) ? String(docSha) : null;
   const shaKey = safeSha ? `${KV_PREFIX_DOC}${emailHash}:${safeSha}` : null;
-  if (shaKey) {
+  if (shaKey && opts.redeem) {
     try {
-      const seen = await store(env).get(shaKey);
-      if (seen) {
+      const reserved = await store(env).get(shaKey);
+      if (reserved) {
+        try { await store(env).delete(shaKey); } catch (e) { /* redeemed either way */ }
         return { ok: true, deduped: true, used: record.used || 0, cap: FREE_LIFETIME_LIMIT, emailHash };
       }
-    } catch (e) { /* a failed dedup read must not refuse the action, only risk a recount */ }
+    } catch (e) { /* a failed read must not refuse the action, only risk a recount */ }
   }
 
   // ATOMIC PATH. The cap is the free tier's only real gate, and a plain
@@ -232,7 +240,7 @@ export async function freeConsume(env, token, docSha) {
       await store(env).put(userKey, JSON.stringify(record), { expirationTtl: TOKEN_TTL_SECONDS });
     } catch (e) { /* the DO is authoritative; a mirror failure must not refuse a granted send */ }
     await incrementDatasetCounter(env, atomic.used === 1).catch(() => {});
-    await markDocConsumed(env, shaKey);
+    if (opts.mark) await markDocConsumed(env, shaKey);
     return {
       ok: true,
       used: atomic.used,
@@ -268,7 +276,7 @@ export async function freeConsume(env, token, docSha) {
   // Also bump the public dataset counter (since mandatory consent on
   // free tier means every consumed doc joins the dataset).
   await incrementDatasetCounter(env, record.used === 1).catch(() => {});
-  await markDocConsumed(env, shaKey);
+  if (opts.mark) await markDocConsumed(env, shaKey);
 
   return {
     ok: true,
