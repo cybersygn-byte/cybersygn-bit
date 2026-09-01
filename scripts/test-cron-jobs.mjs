@@ -22,7 +22,7 @@ import assert from 'node:assert/strict';
 import { checkRateLimit } from '../worker/src/rate-limit.js';
 import { runDripCampaign } from '../worker/src/drip-campaign.js';
 import { sendWeeklyDigest, runWeeklyDigest } from '../worker/src/ambassador-email.js';
-import { runDailyKvBackup, getLatestKvBackup } from '../worker/src/kv-backup.js';
+import { runDailyKvBackup, getLatestKvBackup, backupSignedArtifacts, pruneOldBackups } from '../worker/src/kv-backup.js';
 import { runUptimeProbe } from '../worker/src/uptime.js';
 
 let pass = 0, fail = 0;
@@ -382,6 +382,44 @@ await t('without a dispatcher the probe degrades to KV and labels itself', async
   const r = await runUptimeProbe(env, {});
   assert.equal(r.ok, true);
   assert.equal(r.via, 'kv', 'the weaker measurement must not claim to be a health check');
+});
+
+await t('signed PDFs and audit certs are backed up, once each', async () => {
+  // These live in CYBERSYGN_PDFS, which the daily NDJSON dump never walks, so
+  // the only artifacts the product promises to keep forever were the only ones
+  // with no backup at all. Copy-once: a signed PDF is immutable (its hash is
+  // published on the audit certificate), so re-uploading it nightly would
+  // multiply cost by days for no benefit.
+  const pdfKv = new Map([['signed:d1', 'PDF1'], ['audit:d1', 'CERT1'], ['signed:d2', 'PDF2'], ['pdf:d1', 'ORIGINAL']]);
+  const r2 = new Map();
+  const pdfs = {
+    list: async ({ prefix }) => ({ keys: [...pdfKv.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })), list_complete: true }),
+    get: async (k) => (pdfKv.has(k) ? pdfKv.get(k) : null),
+  };
+  const R2 = {
+    head: async (k) => (r2.has(k) ? { key: k } : null),
+    put: async (k, v) => { r2.set(k, v); },
+    delete: async (k) => r2.delete(k),
+    list: async ({ prefix }) => ({ objects: [...r2.keys()].filter(k => k.startsWith(prefix)).map(key => ({ key })), truncated: false }),
+  };
+  const env = { CYBERSYGN_BACKUPS: R2, CYBERSYGN_PDFS: pdfs, CYBERSYGN_DOCS: {} };
+
+  const first = await backupSignedArtifacts(env);
+  assert.equal(first.ok, true);
+  assert.equal(first.copied, 3, 'both signed PDFs and the audit certificate');
+  assert.ok(!([...r2.keys()].some(k => k.includes('pdf/d1'))),
+    'the 30-day original is deliberately not archived');
+
+  const second = await backupSignedArtifacts(env);
+  assert.equal(second.copied, 0, 'nothing is re-uploaded');
+  assert.equal(second.skipped, 3, 'they are recognised as already present');
+
+  // The 35-day prune must never reach them: they are permanent records.
+  r2.set('backups/2020-01-01.ndjson', 'old dump');
+  await pruneOldBackups(env, new Date('2026-01-01T00:00:00Z'));
+  assert.equal([...r2.keys()].filter(k => k.startsWith('artifacts/')).length, 3,
+    'artifacts must survive the retention prune');
+  assert.ok(!r2.has('backups/2020-01-01.ndjson'), 'while the dated dump is pruned');
 });
 
 loud();

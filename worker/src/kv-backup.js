@@ -67,6 +67,76 @@ export async function getLatestKvBackup(env) {
   } catch (e) { return null; }
 }
 
+/**
+ * Copy the signed PDFs and audit certificates into R2, ONCE EACH.
+ *
+ * These are the only artifacts the product promises to keep: signed-pdf.js and
+ * the audit writer both store them with no expirationTtl, and the compliance
+ * page says a completed document is kept rather than expired. They also live in
+ * CYBERSYGN_PDFS, a different namespace from everything the daily NDJSON dump
+ * walks, so the legal record was the one thing with no backup at all.
+ *
+ * Copy-once, not rewritten daily. A signed PDF is immutable by construction:
+ * its bytes are hashed and published as signedPdfSha256 on the audit
+ * certificate, so if the object already exists in R2 there is nothing to
+ * refresh. That keeps the cost proportional to the number of signed documents
+ * rather than to documents multiplied by days.
+ *
+ * Binary, so each artifact is its own R2 object rather than a line in the
+ * NDJSON dump, which holds text values.
+ */
+const ARTIFACT_PREFIXES = ['signed:', 'audit:'];
+const ARTIFACT_SCAN_CAP = 5000;   // per run; the next run resumes from the cursor
+
+export async function backupSignedArtifacts(env) {
+  const r2 = env && env.CYBERSYGN_BACKUPS;
+  const pdfs = env && env.CYBERSYGN_PDFS;
+  if (!r2 || typeof r2.put !== 'function') return { ok: false, reason: 'r2_unbound' };
+  if (!pdfs || typeof pdfs.list !== 'function') return { ok: false, reason: 'pdfs_unavailable' };
+
+  let copied = 0, skipped = 0, scanned = 0;
+  const errors = [];
+  for (const prefix of ARTIFACT_PREFIXES) {
+    let cursor;
+    while (scanned < ARTIFACT_SCAN_CAP) {
+      let listed;
+      try {
+        listed = await pdfs.list({ prefix, limit: 1000, cursor });
+      } catch (e) {
+        errors.push(`list_failed:${prefix}:${(e && e.message) || 'unknown'}`);
+        break;
+      }
+      for (const entry of listed.keys || []) {
+        if (scanned >= ARTIFACT_SCAN_CAP) break;
+        scanned += 1;
+        const objectKey = `artifacts/${entry.name.replace(':', '/')}`;
+        try {
+          const existing = await r2.head(objectKey);
+          if (existing) { skipped += 1; continue; }
+        } catch (e) { /* head failing is not proof of absence; the put below is still safe */ }
+        try {
+          const body = await pdfs.get(entry.name, { arrayBuffer: true });
+          if (body === null) continue;
+          await r2.put(objectKey, body, {
+            httpMetadata: { contentType: entry.name.startsWith('signed:') ? 'application/pdf' : 'application/octet-stream' },
+            customMetadata: { key: entry.name },
+          });
+          copied += 1;
+        } catch (e) {
+          if (errors.length < 20) errors.push(`copy_failed:${entry.name}:${(e && e.message) || 'unknown'}`);
+        }
+      }
+      if (listed.list_complete || !listed.cursor) break;
+      cursor = listed.cursor;
+    }
+  }
+  // A scan that stopped at the cap is NOT a complete pass. Say so, rather than
+  // reporting a clean run that silently covered a prefix of the namespace.
+  const truncated = scanned >= ARTIFACT_SCAN_CAP;
+  if (truncated) errors.push(`scan_cap_hit:${ARTIFACT_SCAN_CAP}`);
+  return { ok: errors.length === 0, copied, skipped, scanned, truncated, errors };
+}
+
 export async function runDailyKvBackup(env) {
   if (!env || !env.CYBERSYGN_DOCS) {
     // Nowhere to record this one; the console line is the whole report.

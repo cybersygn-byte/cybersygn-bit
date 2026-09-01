@@ -61,7 +61,7 @@ import { checkRateLimit, ipKey, rateLimitedResponse } from './rate-limit.js';
 import { maybeInjectAnalytics } from './analytics-inject.js';
 import { recordUptimeProbe, readUptimeWindow } from './uptime.js';
 import { reportToSentry, recordError, getRecentErrors } from './sentry.js';
-import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups } from './kv-backup.js';
+import { runDailyKvBackup, shouldRunKvBackup, getLatestKvBackup, pruneOldBackups, backupSignedArtifacts } from './kv-backup.js';
 import { findTemplate, listTemplates, generateTemplatePdf, sendTemplateByEmail, fetchStaticTemplatePdf, sanitizeSlug } from './templates-library.js';
 import { getWebhookConfig, saveWebhookConfig, deleteWebhookConfig, fireWebhook, getDeliveryLog, WEBHOOK_EVENTS, redeliverWebhook } from './webhooks.js';
 import { sweepWebhookQueue } from './webhook-retry.js';
@@ -1010,7 +1010,17 @@ const worker = {
     if (shouldRunKvBackup(event)) {
       // Back up, then prune. Pruning is what makes an erasure request actually
       // propagate out of the snapshots instead of living in them forever.
-      ctx.waitUntil(runDailyKvBackup(env).then(() => pruneOldBackups(env)).catch(() => {}));
+      // The NDJSON dump covers the document store. backupSignedArtifacts
+      // covers the signed PDFs and audit certificates, which live in the other
+      // namespace and so had no backup at all despite being the artifacts the
+      // product promises to keep forever. Copy-once, so it does not rewrite
+      // every signed PDF every night.
+      ctx.waitUntil(
+        runDailyKvBackup(env)
+          .then(() => backupSignedArtifacts(env))
+          .then(() => pruneOldBackups(env))
+          .catch((e) => { console.error('[cron] backup chain failed:', e && e.message); }),
+      );
     }
     // Sweep the durable webhook retry queue every hour: any Studio delivery
     // that failed both inline attempts gets redelivered with exponential
