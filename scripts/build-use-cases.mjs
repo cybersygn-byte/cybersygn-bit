@@ -120,7 +120,7 @@ function renderPage(doc, vert) {
         "headline": ${JSON.stringify(`${cap(doc.name)} e-signature for ${vert.name}`)},
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
-        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
+        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy-2x.png" } },
         "datePublished": "${CRAWLABLE_SINCE}",
         "mainEntityOfPage": "${esc(canonical)}"
       },
@@ -140,7 +140,7 @@ function renderPage(doc, vert) {
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="../../../" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="../../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">${esc(doc.name)} · ${esc(vert.name)}</span>
+        <img class="wordmark__img" src="../../../brand/lockup-navy-2x.png" alt="CYBERSYGN" /><span class="wordmark__context">${esc(doc.name)} · ${esc(vert.name)}</span>
       </a>
       <nav class="masthead__nav" aria-label="Use case">
         <a class="masthead__link" href="../../../">Home</a>
@@ -332,7 +332,7 @@ function renderHubShell({ title, description, canonical, h1, lede, body, crumbs 
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="/" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="/brand/lockup-navy@2x.png" alt="CYBERSYGN" />
+        <img class="wordmark__img" src="/brand/lockup-navy-2x.png" alt="CYBERSYGN" />
       </a>
       <nav class="masthead__nav" aria-label="Primary">
         <a class="masthead__link" href="/#pricing">Pricing</a>

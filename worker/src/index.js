@@ -266,7 +266,13 @@ const worker = {
       return Response.redirect(`https://cybersygn.io/origin/${tail}`, 301);
     }
 
-    if (request.method === 'POST' && url.pathname === '/detect') {
+    // /api/detect as well as /detect. Everything under /api/* already runs the
+    // Worker first, so the aliased path works without any routing config, and
+    // /detect itself is now listed in run_worker_first: without that the asset
+    // layer answered 405 before the Worker ever saw the request, so the
+    // endpoint this module's own header documents was unreachable in
+    // production.
+    if (request.method === 'POST' && (url.pathname === '/detect' || url.pathname === '/api/detect')) {
       // /detect is unauthenticated and runs the heaviest compute in the worker
       // (full PDF parse on up to 25MB of attacker-controlled bytes). Throttle
       // it like /api/docs so a single IP cannot exhaust CPU/duration. Generous

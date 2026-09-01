@@ -252,7 +252,7 @@ ${JSON.stringify({
       "datePublished": displayDate(post.publishDate) + 'T12:00:00Z',
       "dateModified": displayDate(post.publishDate) + 'T12:00:00Z',
       "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
-      "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
+      "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy-2x.png" } },
       "mainEntityOfPage": canonical,
       "articleSection": post.category,
       "keywords": [post.primaryKeyword, ...(post.secondaryKeywords || [])].join(', '),
@@ -269,7 +269,7 @@ ${JSON.stringify({
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="../../" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+        <img class="wordmark__img" src="../../brand/lockup-navy-2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
       </a>
       <nav class="masthead__nav" aria-label="Blog">
         <a class="masthead__link" href="../">Blog index</a>
@@ -478,7 +478,7 @@ function renderIndex(published) {
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="../" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
+        <img class="wordmark__img" src="../brand/lockup-navy-2x.png" alt="CYBERSYGN" /><span class="wordmark__context">blog</span>
       </a>
       <nav class="masthead__nav" aria-label="Blog">
         <a class="masthead__link" href="../">Home</a>

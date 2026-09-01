@@ -77,10 +77,10 @@
       + '.csx-apphome{ max-width: 720px; margin: 0 auto; padding: 28px 20px 40px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color: var(--text,#011434); }'
       + '.csx-ah-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px; }'
       + '.csx-ah-brand{ display:flex; align-items:center; }'
-      + '.csx-ah-wordmark{ height:24px; width:auto; display:block; content:url("/brand/lockup-navy@2x.png"); }'
-      + '@media (prefers-color-scheme: dark){ .csx-ah-wordmark{ content:url("/brand/lockup-white@2x.png"); } }'
-      + ':root[data-theme="dark"] .csx-ah-wordmark{ content:url("/brand/lockup-white@2x.png"); }'
-      + ':root[data-theme="light"] .csx-ah-wordmark{ content:url("/brand/lockup-navy@2x.png"); }'
+      + '.csx-ah-wordmark{ height:24px; width:auto; display:block; content:url("/brand/lockup-navy-2x.png"); }'
+      + '@media (prefers-color-scheme: dark){ .csx-ah-wordmark{ content:url("/brand/lockup-white-2x.png"); } }'
+      + ':root[data-theme="dark"] .csx-ah-wordmark{ content:url("/brand/lockup-white-2x.png"); }'
+      + ':root[data-theme="light"] .csx-ah-wordmark{ content:url("/brand/lockup-navy-2x.png"); }'
       + '.csx-ah-acct{ appearance:none; border:1px solid var(--line,rgba(1,20,52,.12)); background:var(--surface,#fff); color:var(--text,#011434); border-radius:999px; padding:10px 16px; font:inherit; font-size:14px; font-weight:600; cursor:pointer; min-height:44px; }'
       + '.csx-ah-hello{ font-size:clamp(24px,6vw,32px); letter-spacing:-0.03em; margin:0 0 6px; font-weight:750; }'
       + '.csx-ah-sub{ color:var(--text-2,#3A4258); margin:0 0 22px; font-size:16px; }'
@@ -138,7 +138,7 @@
     host.className = 'csx-apphome';
     host.innerHTML =
       '<div class="csx-ah-top">' +
-        '<span class="csx-ah-brand"><img class="csx-ah-wordmark" src="/brand/lockup-navy@2x.png" alt="CyberSygn" /></span>' +
+        '<span class="csx-ah-brand"><img class="csx-ah-wordmark" src="/brand/lockup-navy-2x.png" alt="CyberSygn" /></span>' +
         '<button class="csx-ah-acct" type="button" id="csx-ah-acct">Account</button>' +
       '</div>' +
       '<h1 class="csx-ah-hello">' + greeting() + '.</h1>' +

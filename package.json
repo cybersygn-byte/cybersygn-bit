@@ -35,7 +35,7 @@
     "lint:css": "node scripts/css-check.mjs",
     "eval:check": "node docs/evals/run-evals.mjs && node docs/evals/guardrails.test.mjs",
     "eval:run": "node docs/evals/run-evals.mjs --run",
-    "lint": "npm run smoke && npm run lint:css && npm run lint:emdash && npm run check:calls && npm run eval:check",
+    "lint": "npm run smoke && npm run lint:css && npm run lint:emdash && npm run check:calls && npm run check:csp && npm run eval:check",
     "check:calls": "node scripts/check-undefined-calls.mjs",
     "lint:emdash": "node tools/emdash-lint.mjs",
     "lint:emdash:dist": "node tools/emdash-lint.mjs --dist-only",
@@ -62,7 +62,8 @@
     "test:observability": "node scripts/test-observability.mjs",
     "test:decline": "node scripts/test-decline-notice.mjs",
     "test:freebilling": "node scripts/test-free-billing.mjs",
-    "test:detectclaims": "node scripts/test-detection-claims.mjs"
+    "test:detectclaims": "node scripts/test-detection-claims.mjs",
+    "check:csp": "node scripts/check-csp-hashes.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

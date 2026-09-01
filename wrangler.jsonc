@@ -45,7 +45,7 @@
     "directory": "./web/dist",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*", "/charter", "/charter/*", "/pricing", "/pricing/", "/", "/control.js", "/robots.txt"]
+    "run_worker_first": ["/api/*", "/detect", "/charter", "/charter/*", "/pricing", "/pricing/", "/", "/control.js", "/robots.txt"]
   },
 
   "//kv": [

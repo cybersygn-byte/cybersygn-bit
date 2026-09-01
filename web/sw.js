@@ -29,7 +29,7 @@ const PRECACHE = [
   '/shared/app-shell.css',
   '/shared/app-shell.js',
   '/brand/icon-192.png',
-  '/brand/mark-white@2x.png',
+  '/brand/mark-white-2x.png',
   '/manifest.webmanifest',
 ];
 

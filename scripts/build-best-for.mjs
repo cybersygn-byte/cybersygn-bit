@@ -113,7 +113,7 @@ function renderPage(v) {
         "headline": ${JSON.stringify(v.headline)},
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
-        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
+        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy-2x.png" } },
         "datePublished": "${CRAWLABLE_SINCE}",
         "mainEntityOfPage": ${JSON.stringify(canonical)}
       },
@@ -133,7 +133,7 @@ function renderPage(v) {
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="../../" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">for ${esc(v.name)}</span>
+        <img class="wordmark__img" src="../../brand/lockup-navy-2x.png" alt="CYBERSYGN" /><span class="wordmark__context">for ${esc(v.name)}</span>
       </a>
       <nav class="masthead__nav" aria-label="Best for">
         <a class="masthead__link" href="../../">Home</a>

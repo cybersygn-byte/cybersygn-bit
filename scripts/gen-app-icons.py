@@ -16,7 +16,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 BRAND = os.path.join(HERE, "..", "web", "brand")
 NAVY = (1, 20, 52, 255)  # #011434
-MARK = os.path.join(BRAND, "mark-white@2x.png")
+MARK = os.path.join(BRAND, "mark-white-2x.png")
 
 
 def build(size, mark_ratio, out):

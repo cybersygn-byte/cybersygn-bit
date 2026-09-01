@@ -102,10 +102,10 @@ body.has-app-shell {
   .csx-sheet.is-open { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 .csx-sheet__grip { width: 40px; height: 5px; border-radius: 3px; background: var(--shell-line); margin: 8px auto 14px; }
-.csx-sheet__wordmark { height: 20px; width: auto; display: block; margin: 0 0 12px; content: url("/brand/lockup-navy@2x.png"); }
-@media (prefers-color-scheme: dark) { .csx-sheet__wordmark { content: url("/brand/lockup-white@2x.png"); } }
-:root[data-theme="dark"] .csx-sheet__wordmark { content: url("/brand/lockup-white@2x.png"); }
-:root[data-theme="light"] .csx-sheet__wordmark { content: url("/brand/lockup-navy@2x.png"); }
+.csx-sheet__wordmark { height: 20px; width: auto; display: block; margin: 0 0 12px; content: url("/brand/lockup-navy-2x.png"); }
+@media (prefers-color-scheme: dark) { .csx-sheet__wordmark { content: url("/brand/lockup-white-2x.png"); } }
+:root[data-theme="dark"] .csx-sheet__wordmark { content: url("/brand/lockup-white-2x.png"); }
+:root[data-theme="light"] .csx-sheet__wordmark { content: url("/brand/lockup-navy-2x.png"); }
 .csx-sheet h2 { font-size: 20px; letter-spacing: -0.02em; margin: 0 0 2px; }
 .csx-sheet__sub { color: var(--shell-dim); font-size: 14px; margin: 0 0 18px; }
 .csx-row {

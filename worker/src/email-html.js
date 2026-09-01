@@ -101,8 +101,8 @@ function shell({ preheader, body, footer }) {
           <tr>
             <td align="left" style="font-family:${FONT_STACK};font-size:14px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:${NAVY};">
               <a href="https://cybersygn.io/" style="text-decoration:none;color:${NAVY};">
-                <img class="cs-logo-light" src="https://cybersygn.io/brand/lockup-navy@2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;" />
-                <img class="cs-logo-dark" src="https://cybersygn.io/brand/lockup-white@2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;display:none;" />
+                <img class="cs-logo-light" src="https://cybersygn.io/brand/lockup-navy-2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;" />
+                <img class="cs-logo-dark" src="https://cybersygn.io/brand/lockup-white-2x.png" alt="CyberSygn" height="22" style="height:22px;width:auto;border:0;outline:none;text-decoration:none;display:none;" />
               </a>
             </td>
             <td align="right" style="font-family:${FONT_STACK};font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:${MUTED};" class="cs-muted">

@@ -517,22 +517,22 @@ button { font: inherit; cursor: pointer; }
      (index, preview/index, dashboard/index, dashboard/join) load the
      same file regardless of their own depth. The dark-mode variant is
      swapped via the content overrides below. */
-  content: url("./brand/lockup-navy@2x.png");
+  content: url("./brand/lockup-navy-2x.png");
 }
 
 @media (prefers-color-scheme: dark) {
   :root .wordmark__img {
-    content: url("./brand/lockup-white@2x.png");
+    content: url("./brand/lockup-white-2x.png");
   }
 }
 /* Forced-theme mirrors: embeds set data-theme on <html>, which the
    media query above never sees. Without these a forced-dark page on a
    light OS keeps the navy lockup on a navy masthead. */
 :root[data-theme="dark"] .wordmark__img {
-  content: url("./brand/lockup-white@2x.png");
+  content: url("./brand/lockup-white-2x.png");
 }
 :root[data-theme="light"] .wordmark__img {
-  content: url("./brand/lockup-navy@2x.png");
+  content: url("./brand/lockup-navy-2x.png");
 }
 
 .wordmark:hover .wordmark__img {

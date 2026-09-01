@@ -243,7 +243,7 @@
 
     var brand = document.createElement('img');
     brand.className = 'csx-sheet__wordmark';
-    brand.src = '/brand/lockup-navy@2x.png';
+    brand.src = '/brand/lockup-navy-2x.png';
     brand.alt = 'CyberSygn';
     sheet.appendChild(brand);
 

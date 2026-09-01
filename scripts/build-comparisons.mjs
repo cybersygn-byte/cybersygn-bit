@@ -396,7 +396,7 @@ function renderPage(c) {
         "headline": ${JSON.stringify(`CyberSygn vs ${c.name}, side-by-side comparison`)},
         "description": ${JSON.stringify(description)},
         "author": { "@type": "Organization", "name": "CyberSygn", "url": "https://cybersygn.io/" },
-        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy@2x.png" } },
+        "publisher": { "@type": "Organization", "name": "CyberSygn", "logo": { "@type": "ImageObject", "url": "https://cybersygn.io/brand/lockup-navy-2x.png" } },
         "datePublished": "${CRAWLABLE_SINCE}",
         "mainEntityOfPage": ${JSON.stringify(canonical)}
       },
@@ -416,7 +416,7 @@ function renderPage(c) {
   <header class="masthead">
     <div class="container masthead__inner">
       <a class="wordmark" href="../../" aria-label="CyberSygn home">
-        <img class="wordmark__img" src="../../brand/lockup-navy@2x.png" alt="CYBERSYGN" /><span class="wordmark__context">vs ${esc(c.name)}</span>
+        <img class="wordmark__img" src="../../brand/lockup-navy-2x.png" alt="CYBERSYGN" /><span class="wordmark__context">vs ${esc(c.name)}</span>
       </a>
       <nav class="masthead__nav" aria-label="Compare">
         <a class="masthead__link" href="../../">Home</a>

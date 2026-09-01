@@ -54,7 +54,7 @@ Founded: 2026
 Location: Parker, Colorado, USA
 Contact: nathan@cybersygn.io
 
-Logo: https://cybersygn.io/brand/lockup-navy@2x.png
+Logo: https://cybersygn.io/brand/lockup-navy-2x.png
 OG image: https://cybersygn.io/brand/og-image.png
 Demo URL: https://cybersygn.io/preview/
 ```

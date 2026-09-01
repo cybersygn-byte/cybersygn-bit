@@ -96,7 +96,7 @@ cybersygn/
     brand/                     committed brand assets (logo, lockup, favicons, OG card)
       lockup-navy.png          master lockup, navy on transparent
       lockup-white.png         master lockup, white on transparent
-      lockup-*@2x.png          480px web-ready retina variants
+      lockup-*-2x.png          480px web-ready retina variants
       mark-*.png               S-mark only, both color variants
       favicon-*.png            16, 32, 180 px PNG favicons
       favicon.ico              multi-resolution ICO (16+32+48)

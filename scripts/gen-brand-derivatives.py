@@ -9,10 +9,10 @@ Inputs (must already exist):
   web/brand/lockup-white.png
 
 Outputs:
-  web/brand/lockup-navy@2x.png      (480px wide, ~120px display)
-  web/brand/lockup-white@2x.png
-  web/brand/mark-navy@2x.png        (128px square, ~64px display)
-  web/brand/mark-white@2x.png
+  web/brand/lockup-navy-2x.png      (480px wide, ~120px display)
+  web/brand/lockup-white-2x.png
+  web/brand/mark-navy-2x.png        (128px square, ~64px display)
+  web/brand/mark-white-2x.png
   web/brand/favicon-16.png
   web/brand/favicon-32.png
   web/brand/favicon-180.png         (apple-touch-icon)
@@ -119,7 +119,7 @@ def main():
     for color in ['navy', 'white']:
         src = BRAND_DIR / f'lockup-{color}.png'
         resized = resize_keep_alpha(src, 480)
-        out = BRAND_DIR / f'lockup-{color}@2x.png'
+        out = BRAND_DIR / f'lockup-{color}-2x.png'
         resized.save(out, 'PNG', optimize=True)
         print(f'  wrote {out.name}  ({resized.size[0]}x{resized.size[1]}, {out.stat().st_size}B)')
 
@@ -129,8 +129,8 @@ def main():
         master = Image.open(src).convert('RGBA')
         # 256 sq master for derivative work; 128 sq @2x display.
         sq256 = make_square(master, 256, padding=0.08)
-        sq256.save(BRAND_DIR / f'mark-{color}@2x.png', 'PNG', optimize=True)
-        print(f'  wrote mark-{color}@2x.png  (256x256)')
+        sq256.save(BRAND_DIR / f'mark-{color}-2x.png', 'PNG', optimize=True)
+        print(f'  wrote mark-{color}-2x.png  (256x256)')
 
     # 3. Favicons. Always use navy mark on transparent.
     master_navy = Image.open(BRAND_DIR / 'mark-navy.png').convert('RGBA')
