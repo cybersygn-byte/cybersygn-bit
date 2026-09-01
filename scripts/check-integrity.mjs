@@ -45,7 +45,11 @@ for (const ref of deploy.split('&&').map(s => s.trim())) {
 
 // ---- 2. Every test script on disk actually RUNS in the gate -------------
 // This is the check that would have caught test:signed disappearing.
-const testFiles = (await readdir('scripts')).filter(f => /^test-.*\.mjs$/.test(f));
+// .js as well as .mjs. Globbing only .mjs left test-docx-pipeline.js and
+// test-templates.js invisible to this whole section: both were on disk, wired
+// to nothing, and test-templates.js was FAILING, which is precisely the
+// "a test that does not run is worse than no test" case this check exists for.
+const testFiles = (await readdir('scripts')).filter(f => /^test-.*\.(mjs|js)$/.test(f));
 for (const f of testFiles) {
   const runsIt = Object.entries(scripts).some(([name, body]) =>
     body.includes(`scripts/${f}`) && (deploy.includes(`npm run ${name}`) || name === 'deploy'));
@@ -136,11 +140,26 @@ for (const [file, body] of sources) {
     // caller is a real caller) or by a test. Restricting this to handle* used
     // to miss every capability that is not an HTTP handler: cron entry points,
     // engines, and helpers can all go dead just as quietly.
+    // A REFERENCE, not a mention. The old test was
+    // `stripped.includes(fn) && (f2 !== file || stripped.includes(fn))`, whose
+    // right conjunct is implied by the left, so it reduced to a bare substring
+    // search over raw source INCLUDING COMMENTS. A function could go dead and
+    // stay "reachable" because its own doc comment, or a note explaining why it
+    // was removed, still named it. Strip comments, then require a call site, an
+    // import/export list entry, or a property-style reference.
+    // Match on the SHAPE of a reference, and do NOT try to strip comments
+    // first. Stripping needs a real JS lexer: a `/*` inside a string or a regex
+    // literal makes a naive stripper swallow everything to the next `*/`, which
+    // silently ate the dynamic-import call site for setPayoutBlock and reported
+    // a live capability as dead. Prose almost never takes these shapes, and a
+    // false BROKEN is worse than a rare missed one, because it is the failure
+    // that teaches people to distrust the gate.
+    const REF = new RegExp(`\\b${fn}\\s*\\(|\\b${fn}\\s*[,}]|\\.\\s*${fn}\\b|\\b${fn}\\s*:`);
     const inWorker = [...sources].some(([f2, b2]) => {
       const stripped = b2.replace(new RegExp(`export\\s+(?:async\\s+)?function\\s+${fn}\\b`, 'g'), '');
-      return stripped.includes(fn) && (f2 !== file || stripped.includes(fn));
+      return REF.test(stripped);
     });
-    const inTests = testSources.some(b => b.includes(fn));
+    const inTests = testSources.some(b => REF.test(b));
     check(inWorker || inTests, `${fn} (worker/src/${file}) is reachable`,
       `worker/src/${file} exports ${fn} but nothing in worker/src or scripts/test-* references it. Either it is dead code, or a capability lost its caller.`);
   }
