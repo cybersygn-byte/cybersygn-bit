@@ -134,6 +134,22 @@
       </section>
 
       <!-- ----- Tile 1: Live analytics ----- -->
+      <!-- ----- Operations: the four records you would want at 3am ----- -->
+      <section class="control-tile control-tile--ops">
+        <header class="control-tile__head">
+          <div>
+            <p class="kicker kicker--muted">Operations</p>
+            <h2 class="h-card">Is anything broken right now?</h2>
+          </div>
+          <div class="control-tile__controls">
+            <button id="ops-refresh" class="btn btn--ghost btn--sm" type="button">Refresh</button>
+          </div>
+        </header>
+        <div id="ops-body" class="control-tile__body" aria-live="polite">
+          <p class="control-tile__empty">Loading.</p>
+        </div>
+      </section>
+
       <section class="control-tile control-tile--analytics">
         <header class="control-tile__head">
           <div>

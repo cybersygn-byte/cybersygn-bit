@@ -40,7 +40,12 @@ function sourcePages() {
       const rel = relative(ROOT, p);
       if (rel.startsWith('web/dist') || rel.startsWith('web/vendor')) continue;
       if (e.isDirectory()) walk(p);
-      else if (/\.(html|txt)$/.test(e.name)) out.push(rel);
+      // .js too. The embed widget's own JSDoc header is the first thing a
+      // developer reads (it is served at /embed.js), and it carried a
+      // my-site.com example that connect-src 'self' makes impossible. Scanning
+      // only .html and .txt meant the third-party-origin test could not see the
+      // one file most likely to be copied from.
+      else if (/\.(html|txt|js)$/.test(e.name)) out.push(rel);
     }
   };
   walk(join(ROOT, 'web'));

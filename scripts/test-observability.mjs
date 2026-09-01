@@ -8,6 +8,7 @@
  * retain, so a broken production path could survive indefinitely.
  */
 import assert from 'node:assert';
+import { readFileSync } from 'node:fs';
 import { recordError, getRecentErrors } from '../worker/src/sentry.js';
 import { runSecurityCheck } from '../worker/src/security-check.js';
 
@@ -180,6 +181,40 @@ await t('an UNDELIVERED security alert is not reported as sent', async () => {
     assert.ok(list.some(e => String(e.where || '').includes('security-check-alert')),
       'and must land in the error ring where a human can see it');
   } finally { globalThis.fetch = real; }
+});
+
+await t('the ops panel reads the shapes the endpoints actually return', async () => {
+  // The AI draft page shipped reading payload.draft.body against a Worker that
+  // returns body flat, and never once rendered a draft. A read-only panel fails
+  // the same way but silently: it just shows "never" forever. So pin the field
+  // names the panel depends on against the code that produces them.
+  const panel = readFileSync(new URL('../web/control/control.js', import.meta.url), 'utf8');
+  const opsFn = panel.slice(panel.indexOf('async function loadOps'), panel.indexOf('const opsRefresh'));
+  assert.ok(opsFn.length > 200, 'loadOps must exist');
+
+  // /api/owner/errors returns { errors: [...] } and each entry is
+  // { message, where, count, firstAt, lastAt }. There is no `at`.
+  assert.ok(/errs\.errors/.test(opsFn), 'errors come back under .errors');
+  assert.ok(/lastAt/.test(opsFn), 'ring entries carry lastAt, not at');
+  assert.ok(!/\be\.at\b/.test(opsFn), 'nothing may read a nonexistent .at field');
+
+  // Prove it against a real ring rather than trusting the grep.
+  const kv = new Map();
+  const env = { CYBERSYGN_DOCS: {
+    get: async (k) => kv.get(k) ?? null,
+    put: async (k, v) => { kv.set(k, v); },
+  } };
+  await recordError(env, new Error('sample'), { where: 'cron:test' });
+  const ring = await getRecentErrors(env);
+  assert.ok(Array.isArray(ring) && ring.length === 1, 'getRecentErrors returns the array itself');
+  assert.ok(ring[0].lastAt, 'entries carry lastAt');
+  assert.equal(ring[0].at, undefined, 'and do NOT carry at');
+
+  // /api/owner/backup wraps in { latest }, /api/status/uptime returns
+  // { windowDays, uptimePct, daysOk, daysDegraded, days } with a NULLABLE pct.
+  assert.ok(/backup\.latest/.test(opsFn), 'backup comes back under .latest');
+  assert.ok(/uptimePct/.test(opsFn) && /== null/.test(opsFn),
+    'a null uptimePct means no data, and must not render as a failing number');
 });
 
 console.log(out.join('\n'));

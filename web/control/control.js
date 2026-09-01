@@ -668,7 +668,120 @@ if (ambTest) ambTest.addEventListener('click', async () => {
 });
 
 
+// ---------------------------------------------------------------------------
+// Operations tile
+//
+// The KV backup outcome, the security self-check result, the uptime window and
+// the error ring were all being WRITTEN and none of them were readable without
+// hand-crafting an authenticated request. At 3am that is the same as not having
+// them. Four reads, one card, no new endpoints.
+// ---------------------------------------------------------------------------
+
+function opsAge(iso) {
+  if (!iso) return 'never';
+  const then = Date.parse(iso);
+  if (!Number.isFinite(then)) return String(iso);
+  const mins = Math.floor((Date.now() - then) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return hrs + 'h ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
+function opsRow(label, state, detail) {
+  // state: 'ok' | 'bad' | 'unknown'
+  const dot = state === 'ok' ? '#1f9d55' : state === 'bad' ? '#c0392b' : '#8a8a8a';
+  return '<div style="display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);">' +
+    '<span style="flex:0 0 8px;height:8px;border-radius:50%;background:' + dot + ';display:inline-block;"></span>' +
+    '<span style="flex:0 0 9rem;font-weight:600;">' + escapeHtml(label) + '</span>' +
+    '<span style="font-family:var(--mono);font-size:var(--t-xs);">' + escapeHtml(detail) + '</span>' +
+    '</div>';
+}
+
+async function loadOps() {
+  const body = $('ops-body');
+  if (!body) return;
+  body.innerHTML = '<p class="control-tile__empty">Loading.</p>';
+  const hdr = { 'X-CyberSygn-Owner': readToken() };
+  const get = async (url, opts) => {
+    try {
+      const res = await fetch(url, opts);
+      if (!res.ok) return { __err: res.status };
+      return await res.json();
+    } catch (e) { return { __err: 'network' }; }
+  };
+  const [sec, backup, errs, uptime] = await Promise.all([
+    get('/api/owner/security-check', { headers: hdr }),
+    get('/api/owner/backup', { headers: hdr }),
+    get('/api/owner/errors', { headers: hdr }),
+    get('/api/status/uptime'),
+  ]);
+
+  const rows = [];
+
+  // Security self-check. An alert that failed to SEND is the case that used to
+  // be invisible, so surface alertDelivered explicitly when it is present.
+  if (sec && !sec.__err) {
+    const fails = (sec.failures && sec.failures.length) || 0;
+    const undelivered = sec.alertDelivered === false && fails > 0;
+    rows.push(opsRow('Security check', fails ? 'bad' : 'ok',
+      (sec.ranAt ? opsAge(sec.ranAt) : 'never') + ' · ' + fails + ' failing' +
+      (sec.advisories ? ' · ' + sec.advisories.length + ' advisory' : '') +
+      (undelivered ? ' · ALERT NOT DELIVERED' : '')));
+  } else {
+    rows.push(opsRow('Security check', 'unknown', 'unavailable (' + (sec && sec.__err) + ')'));
+  }
+
+  // Backup. "never ran" and "ran and failed" must not look alike.
+  if (backup && !backup.__err) {
+    const b = backup.latest || backup;
+    const ran = b && (b.ranAt || b.date);
+    rows.push(opsRow('KV backup', b && b.ok ? 'ok' : (ran ? 'bad' : 'unknown'),
+      (ran ? opsAge(ran) : 'never run') + (b && b.keyCount != null ? ' · ' + b.keyCount + ' keys' : '') +
+      (b && b.reason ? ' · ' + b.reason : '')));
+  } else {
+    rows.push(opsRow('KV backup', 'unknown', 'unavailable (' + (backup && backup.__err) + ')'));
+  }
+
+  if (uptime && !uptime.__err) {
+    // uptimePct is deliberately null when there is no data, which must read as
+    // "unknown" rather than as a failing number.
+    const pct = uptime.uptimePct;
+    rows.push(opsRow('Uptime', pct == null ? 'unknown' : (pct >= 99 ? 'ok' : 'bad'),
+      (pct == null ? 'no data' : Math.round(pct * 100) / 100 + '%') +
+      ' over ' + (uptime.windowDays || 30) + 'd · ' + (uptime.daysDegraded || 0) + ' degraded'));
+  } else {
+    rows.push(opsRow('Uptime', 'unknown', 'unavailable'));
+  }
+
+  const list = (errs && !errs.__err) ? (errs.errors || []) : null;
+  if (list) {
+    // Entries are { message, where, count, firstAt, lastAt }: there is no `at`.
+    rows.push(opsRow('Recent errors', list.length ? 'bad' : 'ok',
+      list.length ? list.length + ' distinct · newest ' + opsAge(list[0] && (list[0].lastAt || list[0].firstAt)) : 'none recorded'));
+  } else {
+    rows.push(opsRow('Recent errors', 'unknown', 'unavailable (' + (errs && errs.__err) + ')'));
+  }
+
+  let html = rows.join('');
+  if (list && list.length) {
+    html += '<div style="margin-top:10px;">' + list.slice(0, 5).map(e =>
+      '<div style="font-family:var(--mono);font-size:var(--t-xs);padding:3px 0;color:var(--ink-soft);">' +
+        escapeHtml(opsAge(e.lastAt || e.firstAt)) + ' · ' +
+        escapeHtml(String(e.where || '')) +
+        (e.count > 1 ? ' ×' + e.count : '') + ' · ' +
+        escapeHtml(String(e.message || '').slice(0, 120)) +
+      '</div>').join('') + '</div>';
+  }
+  body.innerHTML = html;
+}
+
+const opsRefresh = $('ops-refresh');
+if (opsRefresh) opsRefresh.addEventListener('click', loadOps);
+
 // Initial paint
 paint();
 loadAmbassadors();
+loadOps();
 

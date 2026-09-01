@@ -6,13 +6,20 @@
  * signing flow in a full-viewport iframe modal:
  *
  *   <script src="https://cybersygn.io/embed.js"></script>
- *   <button data-cybersygn-sign="https://my-site.com/contracts/nda.pdf"
+ *   <button data-cybersygn-sign="https://cybersygn.io/preview/?doc=DOC&t=TOKEN"
  *           data-cybersygn-source="agency-portal">
  *     Sign this NDA
  *   </button>
  *
+ * THE URL MUST BE ON cybersygn.io. The signing page fetches the document from
+ * our origin and our connect-src 'self' policy blocks a PDF served from your
+ * own domain before the request leaves the browser. There is no proxy endpoint
+ * yet, so create the document through POST /api/v1/documents and embed the
+ * signing_url it returns. This example used to read my-site.com, which cannot
+ * work and fails at launch.
+ *
  * `data-cybersygn-sign` accepts either:
- *   - a PDF URL: opens the send flow with that document preloaded, or
+ *   - a PDF URL on cybersygn.io: opens the send flow with it preloaded, or
  *   - a signing_url from POST /api/v1/documents, shaped
  *     https://cybersygn.io/preview/?doc=...&t=... : opens that signer's
  *     session directly, so API-created documents get signed in place.
