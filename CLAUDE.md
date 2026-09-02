@@ -85,3 +85,33 @@ Most JS is external, but several pages carry hashed inline scripts:
 `web/index.html` has 5, `web/templates/index.html` has 1, and `web/_headers`
 holds 23 hashes. Editing ANY inline script means recomputing its sha256 and
 updating `web/_headers`, or that page silently breaks under CSP.
+
+## 9. A test that passes in Node says nothing about the Workers runtime
+
+Server-side field detection never worked. Not once, for the life of the
+product. pdf.js loads its parser with a DYNAMIC `import()` of a runtime
+string, esbuild cannot see one, so wrangler never bundled the module and
+every server detection answered `No such module "pdf.worker.mjs"`.
+
+Node resolved that same specifier off disk, so it was green everywhere it
+was measured: 120 corpus PDFs, 502 template PDFs, the fuzz harness, the
+geometry suite. The public API reported it as `422 no_fields_detected`,
+blaming the caller's document for a defect that was ours.
+
+Two rules follow.
+
+**Bundlers only see static imports.** A `import(someVariable)` inside a
+dependency is invisible to the build and will be missing at runtime. When a
+library reaches for a second file by name, import that file statically so
+esbuild has to include it. `worker/src/detect-server.js` is the worked
+example.
+
+**Test where the code runs.** `npx wrangler dev` (workerd) and
+`npx wrangler versions upload` (a preview on the real edge, no production
+traffic) both exercise the actual runtime. Neither existed in the gate while
+this bug shipped. For anything that touches bundling, module resolution, or a
+platform API, a Node assertion is a starting point and not evidence.
+
+And keep `worker/src/detect.js` runtime-neutral: `scripts/build-web.js`
+copies it byte-for-byte into the browser bundle, so a Workers-only import
+there breaks the preview page. Server-only setup goes in `detect-server.js`.
