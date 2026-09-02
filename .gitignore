@@ -8,6 +8,7 @@ web/dist/
 web/vendor/
 
 # Wrangler local state
+.wrangler/
 worker/.wrangler/
 worker/.dev.vars
 

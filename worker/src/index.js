@@ -31,7 +31,7 @@
  * guarded, and every error path returns a useful error response.
  */
 
-import { detectFields } from './detect.js';
+import { detectFields, pdfWorkerReady } from './detect-server.js';
 import { getStorage } from './storage.js';
 import { sendInvite, sendCompletion, sendReminder, deliverDeclineNotice, deliverSnapshot, deliver as deliverEmail } from './email.js';
 import { setEmailBusinessAddress, renderErasureHtml } from './email-html.js';
@@ -1194,9 +1194,17 @@ async function handleDetect(request) {
     // with a 503, rather than returning 200 and an empty field list that reads
     // as "this document has no signature fields".
     if (result && result.error) {
+      // Two very different failures reach this line, and blaming the wrong one
+      // is how the old "no signature fields were found in this PDF" message
+      // pinned a server defect on the caller's document for months. If the
+      // pdf.js worker is not wired into the bundle then NOTHING is parseable
+      // here and the document is irrelevant, so say that instead.
+      const engineDown = !pdfWorkerReady();
       return jsonResponse(503, {
-        error: 'detection_unavailable',
-        message: `Field detection could not read this PDF on the server: ${String(result.error).slice(0, 160)}`,
+        error: engineDown ? 'detection_engine_unavailable' : 'detection_unavailable',
+        message: engineDown
+          ? 'The server-side detection engine is not available in this deployment. This is a fault on our side, not a problem with your document.'
+          : `Field detection could not read this PDF on the server: ${String(result.error).slice(0, 160)}`,
         pageCount: result.pageCount || 0,
         fields: [],
       });

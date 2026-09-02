@@ -25,7 +25,7 @@
  */
 
 import { authenticateApiKey, createApiKey, listApiKeysByPartner, revokePartnerKey } from './apikeys.js';
-import { detectFields } from './detect.js';
+import { detectFields } from './detect-server.js';
 import { getStorage } from './storage.js';
 import { listTemplates } from './templates-library.js';
 
@@ -313,6 +313,15 @@ async function detectOnly(request, env) {
   let result;
   try { result = await detectFields(bytes); }
   catch { return err(422, 'detection_failed', 'Could not read the PDF.'); }
+  // detectFields RESOLVES with { fields: [], error } for an unreadable PDF, it
+  // does not throw, so the catch above never sees that case. Without this the
+  // endpoint answered 200 {"count": 0} for a document it could not open, which
+  // reads as "this PDF has no fields" and is the exact misreport that hid
+  // server-side detection being broken in the first place.
+  if (result && result.error) {
+    return err(503, 'detection_unavailable',
+      `Field detection could not read this PDF server-side (${String(result.error).slice(0, 120)}).`);
+  }
   const fields = (result && result.fields) || [];
   return json(200, {
     count: fields.length,

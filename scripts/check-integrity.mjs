@@ -112,6 +112,62 @@ for (const [file, needle, what] of CONSTS) {
     `${what} is missing from ${file}.`);
 }
 
+// ---- 6a. pdf.js worker wiring (server-side detection) ------------------
+//
+// Server-side detection was dead for the life of the product. pdf.js parses
+// through a worker it loads with a DYNAMIC import of a runtime string, which
+// esbuild cannot see, so wrangler never bundled it and every /detect call in
+// production answered "unreadable PDF". Node hid it completely, because there
+// the same specifier resolves off disk, so the whole test suite passed.
+//
+// worker/src/detect-server.js fixes that by importing the worker STATICALLY
+// and parking its handler on globalThis.pdfjsWorker, where pdf.js looks before
+// it falls back to the dynamic import. These checks are DISCOVERY-BASED: they
+// read the imports rather than a list, so a new Worker module that reaches for
+// the raw detector tomorrow fails the gate without anyone remembering to add it.
+{
+  const shim = await readFile('worker/src/detect-server.js', 'utf8').catch(() => '');
+  check(/^import\s*\{[^}]*WorkerMessageHandler[^}]*\}\s*from\s*['"]pdfjs-dist\/legacy\/build\/pdf\.worker\.min\.mjs['"]/m.test(shim),
+    'detect-server.js statically imports pdf.worker.min.mjs',
+    'The static worker import is what makes wrangler bundle pdf.js\'s worker. Without it ' +
+    'server-side detection returns "No such module pdf.worker.mjs" for every document. ' +
+    'A dynamic import() will NOT work: esbuild cannot see it.');
+  // The worker module publishes globalThis.pdfjsWorker itself, so this
+  // assignment is not what makes detection work. It is what keeps the import
+  // above from being tree-shaken: a static import whose binding is never
+  // referenced is fair game for a bundler to drop, and dropping it restores
+  // the original bug with no other visible change.
+  check(/globalThis\.pdfjsWorker\s*\|\|=\s*\{\s*WorkerMessageHandler\s*\}/.test(shim),
+    'detect-server.js references WorkerMessageHandler so the import cannot be tree-shaken',
+    'Nothing in worker/src/detect-server.js uses the WorkerMessageHandler binding. An unused ' +
+    'static import is exactly what a bundler is allowed to drop, which would silently take ' +
+    'server-side detection back to "No such module pdf.worker.mjs".');
+
+  // detect.js is copied VERBATIM to dist/preview/detect.js by build-web.js and
+  // runs in the browser, where the bare worker specifier is unmapped (the page
+  // breaks) and where pdf.js should keep using its real off-main-thread Worker.
+  const detectSrc = await readFile('worker/src/detect.js', 'utf8').catch(() => '');
+  check(!/pdf\.worker/.test(detectSrc),
+    'detect.js stays runtime-neutral (no worker import)',
+    'worker/src/detect.js is copied byte-for-byte into the browser bundle. A pdf.worker import ' +
+    'here is an unmapped specifier that breaks the preview page, and if mapped it would replace ' +
+    'the browser\'s real Worker with the in-process fake one and freeze the UI on every parse. ' +
+    'Put Workers-only setup in worker/src/detect-server.js instead.');
+
+  // Every Worker module must go through the shim. Reaching past it silently
+  // reintroduces the original bug on that one code path.
+  const workerDir = 'worker/src';
+  for (const f of await readdir(workerDir)) {
+    if (!f.endsWith('.js') || f === 'detect.js' || f === 'detect-server.js') continue;
+    const body = await readFile(`${workerDir}/${f}`, 'utf8').catch(() => '');
+    check(!/from\s*['"]\.\/detect\.js['"]/.test(body),
+      `${f} imports the detector through detect-server.js`,
+      `worker/src/${f} imports ./detect.js directly, bypassing the pdf.js worker wiring. ` +
+      'Detection from that path will fail in the Workers runtime while passing every Node test. ' +
+      "Import { detectFields } from './detect-server.js' instead.");
+  }
+}
+
 // ---- 6b. DISCOVERED route + binding coverage ---------------------------
 //
 // The lists in sections 3 to 6 are CURATED: they only catch what someone
