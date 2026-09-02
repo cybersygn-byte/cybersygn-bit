@@ -168,32 +168,100 @@ for (const [file, needle, what] of CONSTS) {
   }
 }
 
-// ---- 6a2. Detection error codes are documented ------------------------
+// ---- 6a2. The public API error table matches the code ------------------
 //
-// The public API reported an engine that had never worked as "422
-// no_fields_detected: No signature fields were found in this PDF", which told
-// integrators their contract was empty when the truth was that we never parsed
-// it. The codes now say which of the two happened, and the developer docs have
-// to keep saying so. Rule 6: copy must be true against the code that ships.
+// The v1 error table drifted both ways at once. It documented `410 voided`
+// and `422 detection_failed`, neither of which any v1 route can return, while
+// omitting 12 codes an integrator can actually receive. Docs that invent a
+// response are as costly as docs that hide one: you write a handler that never
+// fires, and none for the failure you do get. Rule 6.
 //
-// CURATED on purpose, and narrow. 14 other api-v1 codes are undocumented for
-// reasons that predate this list; widening it is real work, not a default.
+// DISCOVERY-BASED. It reads the error codes out of worker/src/api-v1.js
+// rather than a list, so a new one added tomorrow fails the gate on its own.
+// Note the second pattern: `create_failed` is emitted through json(), not
+// err(), so an err()-only scan silently misses it.
 {
-  const devDocs = await readFile('web/developers/index.html', 'utf8').catch(() => '');
   const apiSrc = await readFile('worker/src/api-v1.js', 'utf8').catch(() => '');
-  const DETECTION_CODES = [
-    ['no_fields_detected', 'the PDF was read and has no fields'],
-    ['detection_failed', 'the detector threw'],
-    ['detection_unavailable', 'the PDF could not be parsed at all, so we claim nothing about it'],
-  ];
-  for (const [code, meaning] of DETECTION_CODES) {
-    check(apiSrc.includes(`'${code}'`), `api-v1.js still emits ${code}`,
-      `worker/src/api-v1.js no longer returns ${code} (${meaning}). If that is deliberate, ` +
-      'remove it from this list and from web/developers/index.html together.');
-    check(devDocs.includes(`<code>${code}</code>`), `${code} is documented for API callers`,
-      `web/developers/index.html never mentions ${code}, which the API can return (${meaning}). ` +
-      'An integrator cannot handle a response they are not told about.');
+  const devDocs = await readFile('web/developers/index.html', 'utf8').catch(() => '');
+
+  const emitted = new Set([
+    ...[...apiSrc.matchAll(/\berr\(\s*\d{3}\s*,\s*'([a-z_]+)'/g)].map(m => m[1]),
+    ...[...apiSrc.matchAll(/\berror:\s*'([a-z_]+)'/g)].map(m => m[1]),
+  ]);
+
+  // Only the error TABLE counts as documentation. Prose mentions a code in
+  // passing all over the page, and matching those would let a code look
+  // documented because it appears in an unrelated sentence.
+  const tableRows = [...devDocs.matchAll(
+    /<tr><td>(\d{3})<\/td><td><code>([a-z_]+)<\/code><\/td>/g,
+  )].map(m => ({ status: Number(m[1]), code: m[2] }));
+  const documented = new Set(tableRows.map(r => r.code));
+
+  // Codes api-v1.js contains but deliberately does not document, each with the
+  // reason it cannot reach a caller. A DECISION, not a default: to add one here
+  // you have to state why the guard is unreachable. Verified 2026-09-01 by
+  // reading every path, then adversarially re-checked.
+  const UNREACHABLE = new Map([
+    ['detection_failed',
+      'defensive catch around detectFields, which contractually never throws ' +
+      '(worker/src/detect.js resolves { fields: [], error } on every failure)'],
+    ['mint_failed',
+      'createApiKey returns null only when the KV store or the sender id is missing, ' +
+      'and both are guaranteed present by the time /api/v1/keys reaches it'],
+    ['no_token',
+      'every signer is minted with a token in handleCreateDoc and nothing ever clears it, ' +
+      'so a stored document with signers always has one'],
+    ['create_failed',
+      'the 502 fallback needs a sub-400 response from handleCreateDoc carrying no docId, ' +
+      'and its only sub-400 return is a 201 that always includes one'],
+  ]);
+
+  // Codes the table documents that api-v1.js does not contain because they are
+  // passed through from a delegated handler in worker/src/index.js.
+  const PASSTHROUGH = new Map([
+    ['multi_signer_requires_paid', 'handleCreateDoc free-tier gate, passed through by createDocument'],
+    ['free_tier_limit', 'handleCreateDoc monthly allowance gate, passed through by createDocument'],
+    ['pdf_missing', 'handleGetPdf, when the stored PDF has passed its retention window'],
+    ['render_failed', 'handleGetAudit, when the audit certificate cannot be rendered'],
+    ['internal_error', 'the top-level fetch handler catch in worker/src/index.js'],
+  ]);
+
+  for (const code of [...emitted].sort()) {
+    if (UNREACHABLE.has(code)) {
+      check(!documented.has(code), `${code} is left undocumented on purpose`,
+        `web/developers/index.html documents ${code}, but check-integrity lists it as unreachable ` +
+        `(${UNREACHABLE.get(code)}). One of the two is wrong: either the code is reachable now and ` +
+        'should come off the UNREACHABLE list, or the table row should go.');
+      continue;
+    }
+    check(documented.has(code), `${code} appears in the API error table`,
+      `worker/src/api-v1.js can return ${code}, but web/developers/index.html never lists it. ` +
+      'An integrator cannot handle a response they are not told about. Add a row, or add it to ' +
+      'UNREACHABLE in this file with the guard that makes it impossible.');
   }
+
+  // PASSTHROUGH codes are not in `emitted`, so the loop above never sees them.
+  // Without this they could be deleted from the table and nothing would notice,
+  // which is exactly what happened when this check was first written.
+  for (const [code, source] of PASSTHROUGH) {
+    check(documented.has(code), `passthrough code ${code} appears in the API error table`,
+      `A v1 caller can receive ${code} (${source}), but web/developers/index.html never lists it. ` +
+      'It reaches the caller through a delegated handler, so it never appears in api-v1.js and ' +
+      'nothing but this check will catch its removal.');
+  }
+
+  for (const { code } of tableRows) {
+    if (emitted.has(code) || PASSTHROUGH.has(code)) continue;
+    check(false, `documented code ${code} is really returned by the API`,
+      `web/developers/index.html documents ${code}, but no /api/v1 path emits it and it is not ` +
+      'listed as PASSTHROUGH from a delegated handler. This is how 410 voided sat in the table ' +
+      'for months describing a response the v1 API cannot produce.');
+  }
+
+  // The table is the contract, so it must not be empty or half-parsed.
+  check(tableRows.length >= 20, 'the API error table still parses',
+    `only ${tableRows.length} rows matched the error-table pattern in web/developers/index.html. ` +
+    'If the markup changed, this whole section silently stops checking anything.');
 }
 
 // ---- 6b. DISCOVERED route + binding coverage ---------------------------
