@@ -168,6 +168,34 @@ for (const [file, needle, what] of CONSTS) {
   }
 }
 
+// ---- 6a2. Detection error codes are documented ------------------------
+//
+// The public API reported an engine that had never worked as "422
+// no_fields_detected: No signature fields were found in this PDF", which told
+// integrators their contract was empty when the truth was that we never parsed
+// it. The codes now say which of the two happened, and the developer docs have
+// to keep saying so. Rule 6: copy must be true against the code that ships.
+//
+// CURATED on purpose, and narrow. 14 other api-v1 codes are undocumented for
+// reasons that predate this list; widening it is real work, not a default.
+{
+  const devDocs = await readFile('web/developers/index.html', 'utf8').catch(() => '');
+  const apiSrc = await readFile('worker/src/api-v1.js', 'utf8').catch(() => '');
+  const DETECTION_CODES = [
+    ['no_fields_detected', 'the PDF was read and has no fields'],
+    ['detection_failed', 'the detector threw'],
+    ['detection_unavailable', 'the PDF could not be parsed at all, so we claim nothing about it'],
+  ];
+  for (const [code, meaning] of DETECTION_CODES) {
+    check(apiSrc.includes(`'${code}'`), `api-v1.js still emits ${code}`,
+      `worker/src/api-v1.js no longer returns ${code} (${meaning}). If that is deliberate, ` +
+      'remove it from this list and from web/developers/index.html together.');
+    check(devDocs.includes(`<code>${code}</code>`), `${code} is documented for API callers`,
+      `web/developers/index.html never mentions ${code}, which the API can return (${meaning}). ` +
+      'An integrator cannot handle a response they are not told about.');
+  }
+}
+
 // ---- 6b. DISCOVERED route + binding coverage ---------------------------
 //
 // The lists in sections 3 to 6 are CURATED: they only catch what someone

@@ -301,7 +301,7 @@ console.log(doc.id, doc.signers[0].signing_url);</code></pre>
   "status_url": "https://cybersygn.io/api/v1/documents/doc_abc123",
   "webhook_note": "Subscribe to doc.completed via your account webhook to be notified when all signers finish."
 }</code></pre>
-              <div class="dev-note"><strong>Field detection.</strong> When you omit <code>fields</code>, <code>detected_fields</code> is <code>true</code> in the response. If the PDF has no detectable signature fields you get <code>422 no_fields_detected</code>: pass an explicit <code>fields</code> array to place them yourself.</div>
+              <div class="dev-note"><strong>Field detection.</strong> When you omit <code>fields</code>, <code>detected_fields</code> is <code>true</code> in the response. Two different failures are reported differently, because you act on them differently: <code>422 no_fields_detected</code> means we read the PDF and it genuinely has no signature fields, while <code>503 detection_unavailable</code> means we could not parse it at all and are not claiming anything about its contents. Either way you can pass an explicit <code>fields</code> array to place them yourself.</div>
             </section>
 
             <!-- GET -->
@@ -609,7 +609,8 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
                   <tr><td>410</td><td><code>voided</code></td><td>The document was voided and can no longer be acted on.</td></tr>
                   <tr><td>413</td><td><code>payload_too_large</code></td><td>The PDF exceeds the 25 MB limit.</td></tr>
                   <tr><td>422</td><td><code>detection_failed</code></td><td>The PDF could not be read for field detection.</td></tr>
-                  <tr><td>422</td><td><code>no_fields_detected</code></td><td>No signature fields were found. Pass an explicit <code>fields</code> array.</td></tr>
+                  <tr><td>422</td><td><code>no_fields_detected</code></td><td>The PDF was read successfully and contains no signature fields. Pass an explicit <code>fields</code> array.</td></tr>
+                  <tr><td>503</td><td><code>detection_unavailable</code></td><td>The PDF could not be parsed server-side, so we cannot say what it contains. Retry, or pass an explicit <code>fields</code> array.</td></tr>
                 </tbody>
               </table>
               <div class="dev-note"><strong>API access needs a paid plan.</strong> Keys are issued by hand today: email <a href="mailto:hello@cybersygn.io">hello@cybersygn.io</a> from your account email and we will issue your key. <a href="../#pricing">See pricing</a>.</div>
