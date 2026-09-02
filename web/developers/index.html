@@ -595,9 +595,30 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
 
             <!-- ERRORS -->
             <section id="errors">
+              <h2>Rate limits <a class="dev-anchor" href="#rate-limits" aria-label="Link to this section">#</a></h2>
+              <p>Limits are charged to the <strong>account</strong> behind the key, not to the key and not to your IP address. Minting a second key does not buy more budget, and calling from many machines does not spread the cost. Partner tenant keys each sit in their own account namespace, so one of your tenants can never spend another tenant's budget.</p>
+              <p>Budgets are weighted by what a route costs us, and each tier has its own bucket. A burst of status polls cannot lock you out of sending a document.</p>
+              <table class="dev-table">
+                <thead><tr><th>Routes</th><th>Standard key</th><th>Partner (unmetered) key</th></tr></thead>
+                <tbody>
+                  <tr><td><code>POST /documents</code>, <code>POST /detect</code>. Each runs a full PDF parse.</td><td>20 / min, 300 / hour</td><td>60 / min, 1500 / hour</td></tr>
+                  <tr><td><code>GET /documents/:id/download</code> and <code>/audit</code>. May render a certificate.</td><td>60 / min, 600 / hour</td><td>180 / min, 3000 / hour</td></tr>
+                  <tr><td>Everything else, such as <code>GET /me</code> and <code>GET /templates</code>.</td><td>120 / min, 2000 / hour</td><td>360 / min, 6000 / hour</td></tr>
+                </tbody>
+              </table>
+              <p>An unmetered partner key gets a higher ceiling but is still limited. <code>unmetered</code> means you are not billed per document, not that capacity is unbounded.</p>
+              <p>Requests that fail authentication are limited separately, 30 per minute and 200 per hour per IP address, so a wrong key is throttled without affecting anyone who holds a valid one.</p>
+              <p>Every response tells you where you stand:</p>
+<pre><code>RateLimit-Limit: 20
+RateLimit-Remaining: 14
+RateLimit-Reset: 37
+Retry-After: 37          # on a 429 only
+
+{ "error": "rate_limited", "message": "Too many requests to /api/v1/detect. Try again in 37 seconds.", "retryAfterSec": 37 }</code></pre>
+              <p>Back off using <code>Retry-After</code> rather than retrying immediately. If our counter store is unreachable the limiter fails closed and returns <code>429</code>, so a retry loop with no delay will stay blocked.</p>
+
               <h2>Error codes <a class="dev-anchor" href="#errors" aria-label="Link to this section">#</a></h2>
               <p>Errors come back as JSON with a stable <code>error</code> code and a human <code>message</code>. Switch on the code, show the message.</p>
-              <p>One exception, called out so you do not switch on a field that is not there: <code>DELETE /api/v1/keys</code> answers an unknown <code>key_id</code> with <code>404</code> and the body <code>{ "revoked": false }</code>, which carries no <code>error</code> or <code>message</code>. Every other error on this page uses the envelope above.</p>
 <pre><code>{ "error": "not_completed", "message": "The document is not fully signed yet." }</code></pre>
               <table class="dev-table">
                 <thead><tr><th>HTTP</th><th>Code</th><th>Meaning</th></tr></thead>
@@ -619,12 +640,14 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
                   <tr><td>403</td><td><code>forbidden</code></td><td>The document belongs to a different account, or the key lacks partner provisioning rights on <code>/api/v1/keys</code>.</td></tr>
                   <tr><td>404</td><td><code>not_found</code></td><td>No document with that id, or no such <code>/api/v1</code> route.</td></tr>
                   <tr><td>404</td><td><code>template_not_found</code></td><td>No template matches that slug, or the template is empty.</td></tr>
+                  <tr><td>404</td><td><code>key_not_found</code></td><td>No tenant key matches that <code>key_id</code>. <code>DELETE /api/v1/keys</code> only.</td></tr>
                   <tr><td>404</td><td><code>pdf_missing</code></td><td>The stored PDF passed its 30 day retention and is gone. <code>/download</code> only.</td></tr>
                   <tr><td>405</td><td><code>method_not_allowed</code></td><td>That method is not allowed on that path.</td></tr>
                   <tr><td>409</td><td><code>not_completed</code></td><td>Download or audit requested before every signer has finished. A voided document also reports this, because voiding never marks it complete.</td></tr>
                   <tr><td>409</td><td><code>already_completed</code></td><td>A completed document cannot be voided.</td></tr>
                   <tr><td>413</td><td><code>payload_too_large</code></td><td>The decoded PDF exceeds the 25 MB limit.</td></tr>
                   <tr><td>422</td><td><code>no_fields_detected</code></td><td>The PDF was read successfully and contains no signature fields. Pass an explicit <code>fields</code> array.</td></tr>
+                  <tr><td>429</td><td><code>rate_limited</code></td><td>The account behind the key has passed a rate limit. The response carries <code>Retry-After</code> and <code>RateLimit-*</code> headers, and <code>retryAfterSec</code> in the body. See the limits below.</td></tr>
                   <tr><td>500</td><td><code>internal_error</code></td><td>Unexpected server error, for example a storage failure while saving the document.</td></tr>
                   <tr><td>500</td><td><code>render_failed</code></td><td>The audit certificate could not be rendered. Most often a document title or signer name carrying characters outside Latin-1. <code>/audit</code> only.</td></tr>
                   <tr><td>503</td><td><code>detection_unavailable</code></td><td>The PDF could not be parsed server-side, so we cannot say what it contains. Retry, or pass an explicit <code>fields</code> array.</td></tr>

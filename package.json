@@ -57,7 +57,7 @@
     "test:stripeevt": "node scripts/test-stripe-events.mjs",
     "test:templatedet": "node scripts/test-template-detection.mjs",
     "check:integrity": "node scripts/check-integrity.mjs",
-    "verify": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:observability && npm run test:decline && npm run test:freebilling && npm run test:routesmoke && npm run test:docx && npm run test:detectclaims && npm run test:pdfworker && npm run build:templates && npm run test:templates && npm run test:verifyrec && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet",
+    "verify": "npm run lint && npm run check:integrity && npm run build && npm run check:dist && npm run test:worker && npm run test:payout && npm run test:events && npm run test:atomic && npm run test:erasure && npm run test:signed && npm run test:observability && npm run test:decline && npm run test:freebilling && npm run test:routesmoke && npm run test:apicontract && npm run test:docx && npm run test:detectclaims && npm run test:pdfworker && npm run build:templates && npm run test:templates && npm run test:verifyrec && npm run test:stripe && npm run test:cron && npm run test:geometry && npm run test:multi && npm run test:contracts && npm run test:seometa && npm run test:claims && npm run test:stripeevt && npm run test:templatedet",
     "test:verifyrec": "node scripts/test-verify.mjs",
     "test:observability": "node scripts/test-observability.mjs",
     "test:decline": "node scripts/test-decline-notice.mjs",
@@ -65,7 +65,8 @@
     "test:detectclaims": "node scripts/test-detection-claims.mjs",
     "test:pdfworker": "node scripts/test-pdf-worker.mjs",
     "check:csp": "node scripts/check-csp-hashes.mjs",
-    "test:routesmoke": "node scripts/test-route-smoke.mjs"
+    "test:routesmoke": "node scripts/test-route-smoke.mjs",
+    "test:apicontract": "node scripts/test-api-contract.mjs"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.0.20",

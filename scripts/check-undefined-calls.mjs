@@ -33,9 +33,88 @@ function walk(dir) {
 }
 for (const r of ROOTS) { try { walk(join(REPO, r)); } catch (e) {} }
 
-// Strip line and block comments only. Strings are left alone on purpose: the
-// names we look for are distinctive exported function names.
-const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/[^\n]*/g, '$1 ');
+// Strip line and block comments. Strings are left alone on purpose: the names
+// we look for are distinctive exported function names.
+//
+// This is a single left-to-right pass, NOT two independent regexes, and that
+// matters. The old version stripped block comments first and line comments
+// second, so a `//` comment that merely MENTIONED a path like /api/v1/* was
+// read as opening a block comment, and everything up to the next `*​/`
+// anywhere in the file was deleted. In worker/src/api-v1.js that silently ate
+// 200+ lines including a function definition, and the checker then reported
+// that function's own definition line as an undefined call.
+//
+// The failure mode is the dangerous direction: a swallowed region is not
+// scanned at all, so this check can go quietly blind over most of a file. That
+// is the "a test that does not run is worse than no test" shape from CLAUDE.md
+// rule 2, which is why this scans rather than pattern-matches. Whichever
+// delimiter opens FIRST wins, which is what a real lexer does.
+function decomment(src) {
+  let out = '';
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    const c = src[i];
+    const d = src[i + 1];
+    // Line comment, unless it is the // in a URL scheme (http://…).
+    if (c === '/' && d === '/' && src[i - 1] !== ':') {
+      while (i < n && src[i] !== '\n') i++;
+      out += ' ';
+      continue;
+    }
+    if (c === '/' && d === '*') {
+      i += 2;
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++;
+      i += 2;
+      out += ' ';
+      continue;
+    }
+    // String and template literals are preserved verbatim, but must be walked
+    // so a comment delimiter inside one cannot start a comment.
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      out += c; i++;
+      while (i < n) {
+        if (src[i] === '\\') { out += src[i] + (src[i + 1] || ''); i += 2; continue; }
+        out += src[i];
+        if (src[i] === quote) { i++; break; }
+        i++;
+      }
+      continue;
+    }
+    out += c;
+    i++;
+  }
+  return out;
+}
+
+// Self-check. decomment has silently broken three times, always by treating a
+// delimiter inside a comment or string as real, and always in the direction
+// that deletes code and blinds the scan. It runs here rather than in a
+// scripts/test-*.mjs so it cannot drift out of the gate.
+{
+  const cases = [
+    ['// mentions /api/v1/* in prose\nfunction keep(){}\nconst z = 1; /* later */',
+      'keep', 'a glob path in a line comment, with a real block comment later in the file'],
+    ['/* real block */\nfunction keep(){}', 'keep', 'a genuine block comment'],
+    ['const s = "/* not a comment */";\nfunction keep(){}', 'keep', 'a block delimiter inside a string'],
+    ['const u = "http://x";\nfunction keep(){}', 'keep', 'a URL scheme in a string'],
+    ['// a stray */ alone\nfunction keep(){}', 'keep', 'an unmatched close delimiter'],
+    ['const t = `a ${1} // b`;\nfunction keep(){}', 'keep', 'a line delimiter inside a template'],
+  ];
+  for (const [src, name, why] of cases) {
+    if (!new RegExp(`\\bfunction\\s+${name}`).test(decomment(src))) {
+      console.error(`check:undefined-calls SELF-CHECK FAILED\n\n  decomment() ate real code: ${why}.\n` +
+        '  The scan would go blind over the rest of that file and report definitions as undefined calls.\n');
+      process.exit(1);
+    }
+  }
+  // And it must still actually remove comments, or everything looks declared.
+  if (/function\s+gone/.test(decomment('// function gone(){}'))) {
+    console.error('check:undefined-calls SELF-CHECK FAILED\n\n  decomment() no longer strips line comments.\n');
+    process.exit(1);
+  }
+}
 
 // name -> module that exports it
 const exportedBy = new Map();

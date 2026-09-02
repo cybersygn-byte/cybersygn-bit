@@ -26,10 +26,70 @@
 
 import { authenticateApiKey, createApiKey, listApiKeysByPartner, revokePartnerKey } from './apikeys.js';
 import { detectFields } from './detect-server.js';
+import { checkRateLimit, ipKey } from './rate-limit.js';
 import { getStorage } from './storage.js';
 import { listTemplates } from './templates-library.js';
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
+
+// ---- Rate limiting -----------------------------------------------------------
+//
+// /api/v1/* ran with no ceiling of any kind. That was survivable only while
+// server-side detection was broken and every parse failed instantly. It now
+// works, so POST /documents and POST /detect each run a real pdf.js parse,
+// and one key could drive them flat out.
+//
+// SUBJECT: auth.senderId, not the key id and not the IP.
+//   - Per IP is wrong for a server-to-server API. One customer behind one
+//     egress address would throttle themselves, and a distributed caller
+//     would not be limited at all.
+//   - Per key id would let one account mint more keys to buy more budget.
+//   - senderId is the account, and it already isolates partner tenants: each
+//     tenant key is provisioned under its own `p-<partner>-<tenant>` namespace
+//     (see provisionTenantKey below), so one tenant cannot spend another's.
+//
+// UNMETERED KEYS ARE STILL LIMITED, at a higher ceiling. `unmetered` is a
+// BILLING flag ("this partner is not charged per document"), not a statement
+// about capacity. An unmetered key that runs away burns exactly the same CPU
+// and would degrade the Worker for every other account, so exempting it would
+// aim the limiter away from the only keys allowed unlimited volume.
+//
+// Budgets are cost-weighted, because the routes are not equally expensive.
+const RL_HEAVY = 'heavy';   // full pdf.js parse, roughly half a CPU second
+const RL_MEDIUM = 'medium'; // reads stored bytes, may render an audit PDF
+const RL_LIGHT = 'light';   // a KV read or a static list
+
+const RL_POLICIES = {
+  [RL_HEAVY]:  { metered: [{ windowSec: 60, max: 20 },  { windowSec: 3600, max: 300 }],
+                 unmetered: [{ windowSec: 60, max: 60 },  { windowSec: 3600, max: 1500 }] },
+  [RL_MEDIUM]: { metered: [{ windowSec: 60, max: 60 },  { windowSec: 3600, max: 600 }],
+                 unmetered: [{ windowSec: 60, max: 180 }, { windowSec: 3600, max: 3000 }] },
+  [RL_LIGHT]:  { metered: [{ windowSec: 60, max: 120 }, { windowSec: 3600, max: 2000 }],
+                 unmetered: [{ windowSec: 60, max: 360 }, { windowSec: 3600, max: 6000 }] },
+};
+
+// Failed auth gets its own per-IP ceiling. A well-formed but wrong key costs a
+// hash plus a KV read, so an unauthenticated flood is still work we pay for.
+// A malformed key is rejected by a regex before any KV read (apikeys.js), so
+// this only has to cover the well-formed-but-wrong case.
+const RL_AUTHFAIL = [{ windowSec: 60, max: 30 }, { windowSec: 3600, max: 200 }];
+
+function costTier(method, path) {
+  if (method === 'POST' && (path === '/api/v1/documents' || path === '/api/v1/detect')) return RL_HEAVY;
+  if (method === 'GET' && /^\/api\/v1\/documents\/[a-zA-Z0-9_-]+\/(download|audit)$/.test(path)) return RL_MEDIUM;
+  return RL_LIGHT;
+}
+
+// Same body shape as rateLimitedResponse in rate-limit.js so a client sees one
+// error contract across the whole product, but routed through this module's
+// json() so the v1 security headers ride along too.
+function rateLimited(verdict, endpoint) {
+  return json(429, {
+    error: 'rate_limited',
+    message: `Too many requests${endpoint ? ` to ${endpoint}` : ''}. Try again in ${verdict.retryAfterSec} seconds.`,
+    retryAfterSec: verdict.retryAfterSec,
+  }, verdict.headers);
+}
 
 function json(status, obj, extraHeaders) {
   return new Response(JSON.stringify(obj), {
@@ -378,7 +438,15 @@ async function revokeTenantKey(request, env, auth) {
   const keyId = String(body.key_id || body.keyId || '').trim();
   if (!keyId) return err(400, 'missing_key_id', 'key_id is required.');
   const okRevoke = await revokePartnerKey(env, auth.partnerId || 'partner', keyId);
-  return json(okRevoke ? 200 : 404, { revoked: okRevoke });
+  // The 404 carries the standard error envelope. This endpoint used to answer
+  // an unknown key_id with `{ "revoked": false }` and no `error` field, so a
+  // client switching on `error` (which is the documented contract for every
+  // other route) read undefined and could not tell a miss from a success.
+  // The status was always 404, so status-based handling is unaffected.
+  if (!okRevoke) {
+    return err(404, 'key_not_found', `No tenant key with key_id "${keyId.slice(0, 80)}".`);
+  }
+  return json(200, { revoked: true });
 }
 
 // ---- router ----------------------------------------------------------------
@@ -395,10 +463,25 @@ export async function routeApiV1(request, env, url, ctx, deps) {
   // Everything under v1 requires a valid API key.
   const auth = await authenticateApiKey(request, env);
   if (!auth) {
+    // Throttle the failure path per IP. Without this an attacker can spend our
+    // KV read budget forever on well-formed keys that resolve to nothing.
+    const bad = await checkRateLimit(env, `v1auth:${ipKey(request)}`, RL_AUTHFAIL);
+    if (!bad.ok) return rateLimited(bad, '/api/v1');
     return err(401, 'unauthorized', 'Provide a valid API key as `Authorization: Bearer cs_live_…` or `X-API-Key`.');
   }
 
   const method = request.method;
+
+  // Cost-weighted ceiling, charged to the account behind the key. Runs before
+  // any route dispatch so the expensive work is never started, and buckets per
+  // tier so a burst of cheap status polls cannot lock out a document send.
+  const tier = costTier(method, path);
+  const rl = await checkRateLimit(
+    env,
+    `v1:${tier}:${auth.senderId}`,
+    RL_POLICIES[tier][auth.unmetered ? 'unmetered' : 'metered'],
+  );
+  if (!rl.ok) return rateLimited(rl, path);
 
   if (path === '/api/v1/me' && method === 'GET') {
     return json(200, { ok: true, account: auth.senderId, key_id: auth.keyId, mode: auth.mode });
