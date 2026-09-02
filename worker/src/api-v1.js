@@ -443,6 +443,14 @@ async function revokeTenantKey(request, env, auth) {
   // client switching on `error` (which is the documented contract for every
   // other route) read undefined and could not tell a miss from a success.
   // The status was always 404, so status-based handling is unaffected.
+  //
+  // DELIBERATE: `revoked: false` is NOT kept alongside the error fields for
+  // backward compatibility. An error body carrying a success-shaped field is
+  // how the confusion started: a caller reads `revoked` and never notices
+  // there is an `error` next to it. Dropping it makes the two shapes
+  // disjoint, so a failure cannot be mistaken for a quiet no-op. The blast
+  // radius is one integrator at most: this route is partner-master-only
+  // (canProvision, checked above) and keys are issued by hand.
   if (!okRevoke) {
     return err(404, 'key_not_found', `No tenant key with key_id "${keyId.slice(0, 80)}".`);
   }
