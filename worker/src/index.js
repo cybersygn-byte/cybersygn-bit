@@ -966,7 +966,7 @@ const worker = {
     // the /api/ 404 fallthrough; routeApiV1 returns null for non-v1 paths so
     // nothing else is affected.
     if (url.pathname.startsWith('/api/v1')) {
-      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit });
+      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf });
       if (v1) return v1;
     }
 

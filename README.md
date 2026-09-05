@@ -19,7 +19,7 @@ For deployment, see [DEPLOY.md](./DEPLOY.md).
 
 1. **Start.** Pick a contract template from the curated library at `/templates/`, or upload your own PDF or Word document. The template library ships generic, jurisdiction-neutral starting points (NDA, Independent Contractor Agreement, Services Agreement) written in CyberSygn voice. Every template carries a "not legal advice" disclaimer and is rebuilt from primary sources, not from any third-party template provider.
 
-2. **Detect.** Upload a PDF or Word document. The shared detection module (`worker/src/detect.js`, also used server-side) walks the PDF operators and locates every signature line, initial mark, date placeholder, checkbox, and text field. Word documents are converted to PDF in the browser via mammoth.js before detection, so the entire pipeline post-upload is PDF-native. The detector currently passes 10/10 synthetic test PDFs and 37/37 real-world contracts.
+2. **Detect.** Upload a PDF or Word document. The shared detection module (`worker/src/detect.js`, also used server-side) walks the PDF operators and locates every signature line, initial mark, date placeholder, checkbox, and text field. Word documents are converted to PDF in the browser via mammoth.js before detection, so the entire pipeline post-upload is PDF-native. The detector currently finds at least one field in 115 of 120 synthetic corpus PDFs and 497 of 499 real-world documents. Those two figures are asserted by `npm run test:detectclaims`, so they cannot drift out of date without failing the build.
 
 3. **Sign.** Click any detected field to fill it. Signatures and initials open a smooth-stroke signature pad (mouse, trackpad, or touch). Dates open a date picker. Text fields open a text input. Checkboxes toggle inline. Filled fields render in place. pdf-lib flattens the captures back into the original PDF for download.
 
@@ -60,7 +60,7 @@ Without bindings, the Worker falls back to an in-memory KV store and console ema
 ```bash
 npm test                # synthetic PDF detection regression
 npm run test:real       # real-document detection regression
-npm run test:worker     # end-to-end Worker tests (141 assertions)
+npm run test:worker     # end-to-end Worker tests (285 assertions)
 npm run test:docx       # docx ingestion pipeline (mammoth + pdf-lib synthesis)
 npm run test:templates  # every shipped template round-trips through the detector
 npm run build:templates # regenerate templates/generated/*.docx from source modules
@@ -160,11 +160,11 @@ The shipping prototype currently passes:
 
 | Suite                  | Result                |
 | ---------------------- | --------------------- |
-| Synthetic detection    | 10/10                 |
-| Real-document detection| 37/37 (100%)          |
-| End-to-end Worker      | 141/141 assertions    |
-| Docx ingestion         | 9/9 assertions        |
-| Template round-trip    | 3/3 templates         |
+| Synthetic detection     | 115/120 corpus PDFs        |
+| Real-document detection | 497/499 documents (99.6%)  |
+| End-to-end Worker       | 285 assertions             |
+| Docx ingestion          | 9/9 assertions             |
+| Template round-trip     | 3/3 templates              |
 
 ---
 

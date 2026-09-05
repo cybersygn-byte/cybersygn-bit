@@ -641,7 +641,7 @@ Retry-After: 37          # on a 429 only
                   <tr><td>404</td><td><code>not_found</code></td><td>No document with that id, or no such <code>/api/v1</code> route.</td></tr>
                   <tr><td>404</td><td><code>template_not_found</code></td><td>No template matches that slug, or the template is empty.</td></tr>
                   <tr><td>404</td><td><code>key_not_found</code></td><td>No tenant key matches that <code>key_id</code>. <code>DELETE /api/v1/keys</code> only.</td></tr>
-                  <tr><td>404</td><td><code>pdf_missing</code></td><td>The stored PDF passed its 30 day retention and is gone. <code>/download</code> only.</td></tr>
+                  <tr><td>409</td><td><code>signed_unavailable</code></td><td>The document is complete but the canonical signed copy could not be produced, for example because the original bytes passed their retention window. <code>/download</code> only.</td></tr>
                   <tr><td>405</td><td><code>method_not_allowed</code></td><td>That method is not allowed on that path.</td></tr>
                   <tr><td>409</td><td><code>not_completed</code></td><td>Download or audit requested before every signer has finished. A voided document also reports this, because voiding never marks it complete.</td></tr>
                   <tr><td>409</td><td><code>already_completed</code></td><td>A completed document cannot be voided.</td></tr>

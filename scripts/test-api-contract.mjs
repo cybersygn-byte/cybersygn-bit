@@ -49,8 +49,11 @@ function mkEnv() {
 let created = 0;
 const deps = {
   handleCreateDoc: async () => { created++; return new Response(JSON.stringify({ docId: 'd1', signerLinks: [] }), { status: 201, headers: { 'content-type': 'application/json' } }); },
-  handleGetPdf: async () => new Response('pdf', { status: 200 }),
+  // ORIGINAL uploaded bytes. /download must never serve these.
+  handleGetPdf: async () => new Response('ORIGINAL-UNSIGNED-BYTES', { status: 200 }),
   handleGetAudit: async () => new Response('audit', { status: 200 }),
+  // The flattened, executed document. This is what /download owes the caller.
+  handleGetSignedPdf: async () => new Response('SIGNED-FLATTENED-BYTES', { status: 200 }),
 };
 
 const call = (env, method, path, opts = {}) => {
@@ -240,6 +243,45 @@ await t('the limiter fails CLOSED when its counter store is unreachable', async 
   };
   const r = await call(env, 'POST', '/api/v1/detect', { key, body: '{}' });
   assert.equal(r.status, 429, 'an unreadable counter must not hand out unlimited requests');
+});
+
+// ---- /download serves the SIGNED document --------------------------------
+//
+// This shipped wrong. downloadDocument called handleGetPdf, which reads
+// `pdf:<id>`, the ORIGINAL uploaded bytes, while the developer docs promise
+// "the flattened, signed PDF bytes, the same document a signer receives".
+// A paying integrator polled until completed, downloaded the executed
+// contract, and received the blank original. For an e-signature API that is
+// the core deliverable being wrong.
+
+await t('GET /documents/:id/download returns the SIGNED bytes, never the original', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-download');
+  // Seed a completed document owned by this account.
+  await env.CYBERSYGN_DOCS.put('doc:doc-signed-1', {
+    senderId: 'acct-download',
+    completedAt: '2026-01-01T00:00:00.000Z',
+    signers: [{ id: 's1', name: 'A', email: 'a@b.com', token: 'tok-signer-1' }],
+  });
+  const r = await call(env, 'GET', '/api/v1/documents/doc-signed-1/download', { key });
+  assert.equal(r.status, 200);
+  const body = await r.text();
+  assert.equal(body, 'SIGNED-FLATTENED-BYTES',
+    `/download must serve the flattened signed document, got: ${body}`);
+  assert.notEqual(body, 'ORIGINAL-UNSIGNED-BYTES', 'the unsigned original must never be served here');
+});
+
+await t('GET /documents/:id/audit still serves the audit certificate', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-audit');
+  await env.CYBERSYGN_DOCS.put('doc:doc-signed-2', {
+    senderId: 'acct-audit',
+    completedAt: '2026-01-01T00:00:00.000Z',
+    signers: [{ id: 's1', name: 'A', email: 'a@b.com', token: 'tok-signer-2' }],
+  });
+  const r = await call(env, 'GET', '/api/v1/documents/doc-signed-2/audit', { key });
+  assert.equal(r.status, 200);
+  assert.equal(await r.text(), 'audit');
 });
 
 // ---- The error envelope ------------------------------------------------------

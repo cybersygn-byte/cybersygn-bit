@@ -162,7 +162,13 @@ async function main() {
   console.log(`\nWrote per-document results to ${OUT_PATH}`);
 
   const rate = total === 0 ? 0 : passing / total;
-  console.log(`\nSignature-block detection: ${passing} of ${total} documents (${Math.round(rate * 100)} percent).`);
+  // Never round a non-perfect score up to a perfect one. Math.round turned
+  // 497/499 (99.6 percent) into the string "100 percent", so the tool reported
+  // a clean sweep it had not measured. Only an exact pass prints 100.
+  const pct = total === 0 ? '0'
+    : passing === total ? '100'
+    : Math.min(99.9, Math.round(rate * 1000) / 10).toFixed(1);
+  console.log(`\nSignature-block detection: ${passing} of ${total} documents (${pct} percent).`);
 
   const bar = 0.8;
   if (rate >= bar) {

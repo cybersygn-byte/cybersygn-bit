@@ -73,6 +73,33 @@ await t('the published synthetic numbers match the measurement', () => {
   }
 });
 
+await t('the README numbers match the measurement too', () => {
+  assert.ok(measured, 'measurement must have run');
+  const { total, ok } = measured;
+  const readme = read('README.md');
+
+  // README was outside this check's scope, which is exactly why it went stale:
+  // it advertised "10/10 synthetic" and "37/37 (100%)" long after the corpus
+  // had grown to 120 and 499 files. It is the first document a reader opens,
+  // so its numbers matter more than most, not less.
+  assert.ok(readme.includes(`${ok} of ${total} synthetic`) || readme.includes(`${ok}/${total}`),
+    `README.md must carry the measured synthetic figure ${ok}/${total}`);
+
+  // The real-document corpus is too slow to detect on every gate run, so assert
+  // the SIZE it claims against the files actually on disk. That is what went
+  // wrong before: the rate was stale because the corpus had grown underneath it.
+  const realCount = readdirSync(join(ROOT, 'real-pdfs')).filter(f => f.toLowerCase().endsWith('.pdf')).length;
+  assert.ok(readme.includes(String(realCount)),
+    `README.md cites a real-document corpus size that is not ${realCount}, the number of PDFs in real-pdfs/`);
+
+  // No perfect-score claim for the real corpus. scripts/run-real-detection.js
+  // used Math.round, which printed 497/499 as "100 percent", and that number
+  // was copied into the README as "37/37 (100%)".
+  for (const lie of [/\(100%\)/, /100 percent/, /100% of real/]) {
+    assert.ok(!lie.test(readme), `README.md claims a perfect real-document score: ${lie}`);
+  }
+});
+
 await t('the category count matches the generator', () => {
   // The copy said 12; scripts/generate-comprehensive-pdfs.py builds 10.
   const dirs = readdirSync(join(ROOT, 'test-pdfs'))

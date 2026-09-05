@@ -338,9 +338,17 @@ async function downloadDocument(request, env, url, docId, auth, deps, kind) {
   u.searchParams.set('t', token);
   // Reuse the token-gated handlers verbatim so the bytes + headers match
   // exactly what a signer would receive.
+  //
+  // /download MUST serve the flattened SIGNED document. It used to call
+  // handleGetPdf, which reads `pdf:<id>`, the ORIGINAL uploaded bytes. So a
+  // paying integrator polled until completed, downloaded what the docs call
+  // "the flattened, signed PDF bytes, the same document a signer receives",
+  // and got back the blank unsigned original. For an e-signature API that is
+  // the product's core deliverable being wrong, not a cosmetic mismatch.
+  // handleGetSignedPdf accepts the same ?t= signer token built above.
   return kind === 'audit'
     ? deps.handleGetAudit(request, env, docId, u)
-    : deps.handleGetPdf(request, env, docId, u);
+    : deps.handleGetSignedPdf(request, env, docId, u);
 }
 
 async function voidDocument(env, url, docId, auth, deps) {
@@ -462,7 +470,8 @@ async function revokeTenantKey(request, env, auth) {
 /**
  * Entry point. Returns a Response for any /api/v1/* path, or null if the path
  * is not a v1 path (so index.js can fall through to its other routes).
- * `deps` = { handleCreateDoc, handleGetPdf, handleGetAudit } from index.js.
+ * `deps` = { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf }
+ * from index.js.
  */
 export async function routeApiV1(request, env, url, ctx, deps) {
   const path = url.pathname;
