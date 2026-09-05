@@ -194,6 +194,27 @@ const worker = {
     setEmailBusinessAddress(env && env.CYBERSYGN_BUSINESS_ADDRESS);
     const url = new URL(request.url);
 
+    // Plain HTTP answered 200, for the site AND the API. Two consequences.
+    //
+    // The Strict-Transport-Security header was being sent over HTTP, where
+    // RFC 6797 requires browsers to ignore it, so HSTS was never actually
+    // installed on a first visit however long the max-age said.
+    //
+    // Worse for the API: a partner who configures http:// as their base URL
+    // sent `Authorization: Bearer cs_live_...` in cleartext and got a 200 back,
+    // so nothing ever told them their key was on the wire.
+    //
+    // 301 rather than 302 so the upgrade is cached, and before every other arm
+    // so no handler can answer over an insecure transport. Localhost is exempt
+    // because `wrangler dev` serves http and has no certificate.
+    const isLocalHost = url.hostname === 'localhost'
+      || url.hostname === '127.0.0.1'
+      || url.hostname.endsWith('.localhost');
+    if (url.protocol === 'http:' && !isLocalHost) {
+      url.protocol = 'https:';
+      return Response.redirect(url.toString(), 301);
+    }
+
     // Dedicated owner-panel hosts. control/admin/owner.cybersygn.io all serve
     // the same /control/ panel: their root and ./control.js map into the
     // /control/ asset subtree. Everything else the panel loads (/styles.css,
@@ -5572,6 +5593,18 @@ async function handleGetDocProgress(env, docId, url) {
 
   const senderToken = url && url.searchParams.get('s');
   const isSender = senderToken && doc.senderToken && ctEqHex(senderToken, doc.senderToken);
+  // A signer holds a token for this document, so they may see who else is on
+  // it. Anyone else may not.
+  const signerToken = url && url.searchParams.get('t');
+  const isSigner = !!(signerToken && (doc.signers || []).some(sg => ctEqHex(sg.token, signerToken)));
+  // Every signer's NAME and EMAIL used to be returned to anyone who knew the
+  // docId, with no token of any kind. The docId is not a secret: it travels in
+  // every signing URL, so one counterparty could harvest the addresses of all
+  // the others, and so could anyone who saw a forwarded link, a screenshot, or
+  // a referrer log. Only the magic link was gated. The counts below stay open,
+  // because the signing UI and the progress poll rely on them and they identify
+  // nobody.
+  const maySeeIdentities = isSender || isSigner;
   const baseUrl = (url && `${url.protocol}//${url.host}`) || '';
 
   const progress = doc.signers.map(s => {
@@ -5579,8 +5612,7 @@ async function handleGetDocProgress(env, docId, url) {
     const filled = Object.keys(s.fills || {}).length;
     const row = {
       signerId: s.id,
-      name: s.name,
-      email: s.email,
+      ...(maySeeIdentities ? { name: s.name, email: s.email } : {}),
       owned,
       filled,
       complete: !!s.completedAt,

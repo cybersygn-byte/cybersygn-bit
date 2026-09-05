@@ -432,6 +432,17 @@ async function main() {
   ok(publicProg.status === 200, 'returns 200');
   ok(!publicProg.json.progress[0].magicLink, 'no magicLink without senderToken');
   ok(!publicProg.json.auditUrl, 'no auditUrl without senderToken');
+  // Every signer's name and email used to come back here with no token at all.
+  // The docId travels in every signing URL, so one counterparty could harvest
+  // the addresses of all the others, as could anyone who saw a forwarded link.
+  ok(publicProg.json.progress[0].name === undefined,
+     'no signer name without a token');
+  ok(publicProg.json.progress[0].email === undefined,
+     'no signer email without a token');
+  ok(typeof publicProg.json.progress[0].filled === 'number',
+     'non-identifying progress stays public, the signing UI needs it');
+  ok(senderProg.json.progress[0].email,
+     'the sender still sees signer identities');
 
   // 23. Bad senderToken silently degrades to public view (no 403, so
   //     a leaked docId never reveals whether a token exists).
