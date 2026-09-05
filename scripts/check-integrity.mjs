@@ -221,6 +221,7 @@ for (const [file, needle, what] of CONSTS) {
   const PASSTHROUGH = new Map([
     ['multi_signer_requires_paid', 'handleCreateDoc free-tier gate, passed through by createDocument'],
     ['free_tier_limit', 'handleCreateDoc monthly allowance gate, passed through by createDocument'],
+    ['subscription_inactive', 'handleCreateDoc entitlement gate for a lapsed subscription, passed through by createDocument'],
     ['signed_unavailable', 'handleGetSignedPdf, when the canonical signed copy cannot be produced'],
     ['render_failed', 'handleGetAudit, when the audit certificate cannot be rendered'],
     ['internal_error', 'the top-level fetch handler catch in worker/src/index.js'],

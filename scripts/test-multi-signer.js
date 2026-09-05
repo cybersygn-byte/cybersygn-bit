@@ -1017,6 +1017,35 @@ async function main() {
     await storage.docs.put('sub:paid-cap-tester', JSON.stringify({ tier: 'solo', status: 'active' }));
     const paid = await call('POST', '/api/docs', { ...mini, senderId: 'paid-cap-tester' }, { 'x-cybersygn-free': '' });
     ok(paid.status === 201, `paid sender creates with no token (got ${paid.status})`);
+ 
+    // A LAPSED subscription must not keep the paid product.
+    //
+    // The gate used to read `neverPaid`, which stays false for past_due and
+    // unpaid because those keep their tier, so the entire cap was skipped the
+    // moment a card declined. Under Stripe's default dunning that is about
+    // three weeks of unlimited product at zero revenue, every billing cycle.
+    await storage.docs.put('sub:lapsed-tester', JSON.stringify({ tier: 'solo', status: 'past_due' }));
+    let lapsedStatuses = [];
+    for (let i = 0; i < 5; i++) {
+      const r = await call('POST', '/api/docs', { ...mini, senderId: 'lapsed-tester' }, { 'x-cybersygn-free': '' });
+      lapsedStatuses.push(r.status);
+      if (r.status === 402) {
+        ok(r.json && r.json.error === 'subscription_inactive',
+          `a lapsed payer is told their subscription is inactive, not to sign up (got ${r.json && r.json.error})`);
+        break;
+      }
+    }
+    ok(lapsedStatuses.includes(402),
+      `a past_due subscriber hits the free cap instead of unlimited sending (got ${lapsedStatuses.join(',')})`);
+
+    // And the other direction: an ACTIVE subscriber must stay uncapped.
+    await storage.docs.put('sub:active-tester', JSON.stringify({ tier: 'solo', status: 'active' }));
+    let activeAll201 = true;
+    for (let i = 0; i < 5; i++) {
+      const r = await call('POST', '/api/docs', { ...mini, senderId: 'active-tester' }, { 'x-cybersygn-free': '' });
+      if (r.status !== 201) { activeAll201 = false; break; }
+    }
+    ok(activeAll201, 'an active subscriber is never capped');
   }
 
   // ---- GDPR export: email-confirmed, index-backed ---------------------------

@@ -81,10 +81,30 @@
     rafId = 0;
   }
 
+  // The hero video is 8.2 MB, about 91 percent of the homepage payload, and it
+  // used to carry preload="auto" plus autoplay, so every visitor downloaded all
+  // of it before anything else could use the connection. On a 4G profile that
+  // is roughly 40 seconds of bandwidth spent on decoration.
+  //
+  // It is now preload="none" with no autoplay attribute, and this decides
+  // whether to fetch it at all. Skipping degrades to markFailed(), which drops
+  // the video element and pins the logo, the same path a missing file takes,
+  // so the hero still resolves to a finished composition.
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  const saveData = conn.saveData === true;
+  const slowLink = /(^|-)(slow-)?2g$/.test(String(conn.effectiveType || ''));
+  if (reduced || saveData || slowLink) {
+    // Reduced motion previously still downloaded the whole file to show one
+    // static frame. The poster is the same picture for none of the bytes.
+    markFailed();
+    return;
+  }
+
   video.addEventListener('loadedmetadata', markReady, { once: true });
   video.addEventListener('canplay', markReady, { once: true });
   video.addEventListener('error', markFailed, { once: true });
   video.addEventListener('ended', handleEnded, { once: true });
+  try { video.load(); } catch (e) { markFailed(); }
   setTimeout(() => { if (!videoReady) markFailed(); }, 4000);
 
   function tickLogo() {

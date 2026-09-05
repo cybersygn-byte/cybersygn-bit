@@ -327,16 +327,69 @@ function buildSignatureCapture(body, footer, field, currentValue, close) {
   const canvasWrap = el('div', 'sigpad');
   const canvas = document.createElement('canvas');
   canvas.className = 'sigpad__canvas';
+  // The canvas is an input surface, so it has to be described as one. It was a
+  // bare element: no label, no role, not focusable.
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label',
+    field.type === 'initial' ? 'Your drawn initials' : 'Your drawn signature');
   canvasWrap.appendChild(canvas);
 
+  const isInitial = field.type === 'initial';
   const hint = textEl('p', 'sigpad__hint',
-    field.type === 'initial'
-      ? 'Draw your initials in the box. Mouse, trackpad, or touch.'
-      : 'Sign in the box below. Mouse, trackpad, or touch.');
+    isInitial
+      ? 'Draw your initials, or type them below.'
+      : 'Sign in the box, or type your name below.');
   body.appendChild(hint);
   body.appendChild(canvasWrap);
 
   const pad = new SignaturePad(canvas);
+
+  // TYPED FALLBACK.
+  //
+  // Drawing was the only way to sign, and the pad binds pointer events only.
+  // That made the product's single core action impossible with a keyboard,
+  // switch access, or a screen reader: WCAG 2.1.1 Level A, on the one task a
+  // signer cannot skip. Signers do not choose to be here, so "use a mouse" is
+  // not an answer. Typing renders into the SAME canvas, so everything
+  // downstream (toDataURL, flattening, the audit trail) is unchanged.
+  const typedWrap = el('div', 'sigpad__typed');
+  const typedId = `sigpad-typed-${Math.random().toString(36).slice(2, 9)}`;
+  const typedLabel = textEl('label', 'sigpad__typed-label',
+    isInitial ? 'Or type your initials' : 'Or type your full name');
+  typedLabel.setAttribute('for', typedId);
+  const typedInput = document.createElement('input');
+  typedInput.type = 'text';
+  typedInput.id = typedId;
+  typedInput.className = 'sigpad__typed-input';
+  typedInput.autocomplete = isInitial ? 'off' : 'name';
+  typedInput.maxLength = isInitial ? 8 : 60;
+  typedInput.placeholder = isInitial ? 'AB' : 'Alex Baker';
+  typedWrap.appendChild(typedLabel);
+  typedWrap.appendChild(typedInput);
+  body.appendChild(typedWrap);
+
+  function renderTyped(text) {
+    const value = String(text || '').trim();
+    pad.clear();
+    if (!value) return;
+    const ctx = pad.ctx;
+    const w = pad._cssW;
+    const h = pad._cssH;
+    // Shrink to fit rather than overflow the box on a long name.
+    let size = Math.floor(h * 0.5);
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#111';
+    do {
+      ctx.font = `${size}px "Snell Roundhand", "Apple Chancery", "Segoe Script", "Brush Script MT", cursive`;
+      if (ctx.measureText(value).width <= w * 0.88 || size <= 12) break;
+      size -= 2;
+    } while (size > 12);
+    ctx.fillText(value, w / 2, h / 2);
+    // Mark it non-empty so Save accepts it, exactly as a drawn stroke would.
+    pad.dirty = true;
+  }
+  typedInput.addEventListener('input', () => renderTyped(typedInput.value));
   if (currentValue && currentValue.kind === 'signature') {
     // Re-load existing signature for editing.
     const img = new Image();
@@ -348,7 +401,7 @@ function buildSignatureCapture(body, footer, field, currentValue, close) {
   }
 
   const clearBtn = button('Clear', 'btn btn--ghost btn--sm');
-  clearBtn.addEventListener('click', () => pad.clear());
+  clearBtn.addEventListener('click', () => { pad.clear(); typedInput.value = ''; });
 
   const cancelBtn = button('Cancel', 'btn btn--ghost');
   cancelBtn.addEventListener('click', () => close(null));

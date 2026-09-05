@@ -4507,13 +4507,23 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
   if (!owner && !opts.unmetered) {
     const gate = await checkFreeTierAllowance(env, senderId);
     // "Never paid" = no subscription record, or one whose tier reverted to
-    // free (a fully canceled account). A sender with a real paid tier in ANY
-    // status (active, trialing, past_due during dunning) is a customer, not
-    // an anonymous free user: they are never told to "create a free account".
+    // free (a fully canceled account). This decides the MESSAGE only. A sender
+    // with a real paid tier in any status is a customer, not an anonymous free
+    // user, and is never told to "create a free account".
     const neverPaid = !gate.sub || gate.sub.tier === 'free';
-    // Same subscription the gate just read, no extra KV round trip.
-    footerless = !neverPaid;
-    if (gate.tier === 'free' && neverPaid) {
+    // ENTITLEMENT, not billing history. checkFreeTierAllowance has already
+    // applied isEntitled(), so gate.tier is non-free only for an active,
+    // trialing, or ambassador-pass sender.
+    //
+    // Both of these lines used to key off `neverPaid`, which stays FALSE for a
+    // past_due or unpaid subscription because those keep their tier. So the
+    // whole gate below was skipped and footerless stayed on the moment a card
+    // declined: unlimited documents and the paid unbranded output for the full
+    // dunning window, repeatable every billing cycle. The only revenue gate in
+    // the product stopped applying exactly when someone stopped paying.
+    const entitled = gate.tier !== 'free';
+    footerless = entitled;
+    if (!entitled) {
       // SINGLE SIGNER ON FREE. llms.txt sells the free tier as "single signer
       // per document" and sells Solo on "Multi-signer routing with magic-link
       // email delivery", and nothing enforced either half: a free account could
@@ -4537,7 +4547,11 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
       // email-hash record. API-keyed calls (v1) skip the token: keys are
       // owner/partner-minted identities whose senderId cannot be rotated,
       // so the monthly per-sender cap below is already binding for them.
-      if (!opts.apiKeyed) {
+      // The signup token proves an anonymous browser user has an account. A
+      // lapsed customer already has one, so requiring it would tell them to
+      // "create a free account" they are already paying for. They skip this
+      // branch and are still bound by the monthly cap below.
+      if (!opts.apiKeyed && neverPaid) {
         const freeToken = request.headers.get('x-cybersygn-free') || String(payload.freeToken || '');
         const peek = await freePeek(env, freeToken);
         if (!peek.ok) {
@@ -4559,8 +4573,10 @@ async function handleCreateDoc(request, env, url, ctx, opts = {}) {
       }
       if (!gate.allowed) {
         return jsonResponse(402, {
-          error: 'free_tier_limit',
-          message: `You have used all ${gate.cap} free documents this month. Upgrade to keep signing.`,
+          error: neverPaid ? 'free_tier_limit' : 'subscription_inactive',
+          message: neverPaid
+            ? `You have used all ${gate.cap} free documents this month. Upgrade to keep signing.`
+            : 'Your subscription is not active, so this account is on the free monthly allowance and has used it up. Update your payment method to restore unlimited sending.',
           usage: { used: gate.used, cap: gate.cap, remaining: 0 },
           upgrade: { tiers: ['solo', 'founding', 'team'] },
         });

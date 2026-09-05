@@ -5659,6 +5659,34 @@ body[data-add-mode="true"] .page-shell::after {
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
 }
+/* Typed signature fallback. The drawn pad is pointer-only, so this is the
+   keyboard and assistive-technology path to the same signature. It is a real
+   equal alternative, not a hidden affordance, so it is always visible. */
+.sigpad__typed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+.sigpad__typed-label {
+  font-size: 0.85rem;
+  color: var(--ink-soft, #55606b);
+}
+.sigpad__typed-input {
+  /* 16px minimum so iOS does not zoom the viewport on focus. */
+  font-size: 16px;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line, #d6dbe0);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink, #10161c);
+  min-height: 44px;
+}
+.sigpad__typed-input:focus-visible {
+  outline: 2px solid var(--accent, #2f6df6);
+  outline-offset: 2px;
+}
+
 .sigpad__canvas--shake {
   animation: sigpad-shake 380ms var(--ease);
   border-color: var(--danger, #d04141);

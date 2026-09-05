@@ -636,6 +636,7 @@ Retry-After: 37          # on a 429 only
                   <tr><td>400</td><td><code>payload_too_large</code></td><td>The whole JSON request body exceeds 36 MB. Usually a large <code>fields</code> array on top of a large PDF. Distinct from the 413 below, which is about the PDF alone.</td></tr>
                   <tr><td>401</td><td><code>unauthorized</code></td><td>Missing, malformed, or revoked API key. A revoked key is not reported separately.</td></tr>
                   <tr><td>402</td><td><code>multi_signer_requires_paid</code></td><td>More than one signer while the account behind the key is on the free tier, for example after a subscription lapses.</td></tr>
+                  <tr><td>402</td><td><code>subscription_inactive</code></td><td>The subscription behind the key is not active, for example a failed payment in dunning, so the account is on the free monthly allowance and has used it up. Update the payment method to restore unlimited sending.</td></tr>
                   <tr><td>402</td><td><code>free_tier_limit</code></td><td>The free monthly document allowance is used up. Same lapsed-plan case as above.</td></tr>
                   <tr><td>403</td><td><code>forbidden</code></td><td>The document belongs to a different account, or the key lacks partner provisioning rights on <code>/api/v1/keys</code>.</td></tr>
                   <tr><td>404</td><td><code>not_found</code></td><td>No document with that id, or no such <code>/api/v1</code> route.</td></tr>

@@ -1078,15 +1078,25 @@ document.addEventListener('keydown', e => {
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (t && t.closest && t.closest('.modal-card, .add-type-chooser')) return;
 
+  // Single-character shortcuts must not fire while focus is on a control, or
+  // typing lands somewhere the user did not intend (WCAG 2.1.4).
+  if (t && t.closest && t.closest('a[href], button, [role="button"], select, [tabindex]')) return;
   if ((e.key === 'e' || e.key === 'E') && !e.metaKey && !e.ctrlKey && !e.altKey) {
     e.preventDefault();
     if (editToggle) editToggle.click();
     return;
   }
-  if (e.key === 'Tab') {
+  // Tab is deliberately NOT intercepted. It used to be preventDefault()ed on
+  // every loaded document, which meant a keyboard user could never reach the
+  // toolbar, "Sign and send", or the decline link: WCAG 2.1.2, on the page
+  // every signer lands on. Field boxes carry tabindex now, so native Tab walks
+  // them and then continues out of the document into the rest of the page.
+  // Arrow keys stay as the quick field-to-field jump.
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight'
+   || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
     if (!docState.fields.length) return;
     e.preventDefault();
-    navigateFields(e.shiftKey ? -1 : +1);
+    navigateFields((e.key === 'ArrowDown' || e.key === 'ArrowRight') ? +1 : -1);
   }
 });
 
@@ -1144,6 +1154,10 @@ function focusFieldAtIndex(idx) {
   // Move focus highlight: remove from any other box, add to this one.
   fieldElements.forEach(el => el.classList.remove('is-focused'));
   box.classList.add('is-focused');
+  // Actually move focus. This used to set a CSS class and nothing else, so a
+  // screen reader announced nothing and the keyboard never went anywhere.
+  // preventScroll because the smooth scroll below owns the scrolling.
+  try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); }
   // Scroll the page-shell (parent of the overlay) into view so the
   // field lands in the middle of the viewport.
   const pageShell = box.closest('.page-shell');
@@ -2230,6 +2244,13 @@ function drawFieldBox(overlay, field, viewport, pageNum, revealIndex = 0, stepMs
   box.className = 'field-box';
   box.dataset.type = field.type;
   box.dataset.fieldId = idFor(field);
+  // A field is an interactive control, so it has to be one to assistive tech
+  // and to the keyboard. Without this the boxes were plain divs: not focusable,
+  // not announced, and not reachable, which made signing a mouse-only task.
+  box.tabIndex = 0;
+  box.setAttribute('role', 'button');
+  box.setAttribute('aria-label',
+    `${field.label ? String(field.label) + ' ' : ''}${field.type} field${field.page ? `, page ${field.page}` : ''}. Press Enter to fill it.`);
   // CV-detected fields carry source 'cv-line' / 'cv-underscore' /
   // 'cv-checkbox'. We surface this on the box dataset so the CSS can
   // mark them with a small "AI" indicator and the user knows what came
@@ -2523,6 +2544,14 @@ function attachDragResize(box, field, shell) {
       delete box.dataset.justMoved;
       return;
     }
+    onFieldBoxClick(field);
+  });
+
+  // Keyboard activation. role="button" promises Enter and Space work, so they
+  // must, and they route through the same handler the pointer path uses.
+  box.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    e.preventDefault();
     onFieldBoxClick(field);
   });
 }
