@@ -1352,7 +1352,7 @@ function renderSignerRow(doc, s) {
     remindBtn.addEventListener('click', async () => {
       remindBtn.disabled = true;
       remindBtn.textContent = 'Sending.';
-      const r = await remindSigner(doc.docId, s.signerId);
+      const r = await remindSigner(doc.docId, s.signerId, doc.senderToken || getDocToken(doc.docId));
       if (!r.ok) {
         remindBtn.textContent = 'Try again';
         remindBtn.disabled = false;

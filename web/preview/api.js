@@ -151,8 +151,9 @@ export async function fetchSignerPdf(docId, token) {
 /**
  * Sender-triggered reminder for a single pending signer.
  */
-export async function remindSigner(docId, signerId) {
-  return jsonCall(`/api/docs/${docId}/remind/${signerId}`, { method: 'POST' });
+export async function remindSigner(docId, signerId, senderToken) {
+  const q = senderToken ? `?s=${encodeURIComponent(senderToken)}` : '';
+  return jsonCall(`/api/docs/${docId}/remind/${signerId}${q}`, { method: 'POST' });
 }
 
 /**

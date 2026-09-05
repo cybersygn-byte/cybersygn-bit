@@ -391,6 +391,13 @@ const worker = {
     }
 
     if (request.method === 'POST' && url.pathname === '/api/event') {
+      // /api/e next door validates against a fixed event allowlist and applies
+      // a per-IP ceiling before doing any work. This route accepted any event
+      // name from anyone at any rate, and every accepted call writes to
+      // Analytics Engine. Same ceiling, so one public write path is not an
+      // unmetered hole beside a metered one.
+      const rl = await checkRateLimit(env, `event:${ipKey(request)}`, [{ windowSec: 60, max: 120 }]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/event' });
       return await handleEvent(request, env, url);
     }
     // The canonical 11-step funnel. Separate from /api/event: this one also
@@ -716,6 +723,14 @@ const worker = {
       return await handleTestimonialSubmit(request, env, url);
     }
     if (request.method === 'GET' && url.pathname === '/api/testimonials') {
+      // Each call walks the approved list and reads them one key at a time, so
+      // an unauthenticated GET fans out into up to ~100 KV reads. The same
+      // shape next door on /api/origin/wall has always been capped.
+      const rl = await checkRateLimit(env, `testimonials:${ipKey(request)}`, [
+        { windowSec: 60, max: 30 },
+        { windowSec: 3600, max: 300 },
+      ]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/testimonials' });
       return await handleTestimonialsList(env);
     }
     if (request.method === 'POST' && url.pathname === '/api/draft/generate') {
@@ -967,6 +982,13 @@ const worker = {
     const contactsMatch = url.pathname.match(/^\/api\/sender\/([^/]+)\/contacts$/);
     if (contactsMatch) {
       if (request.method === 'GET')    return handleListContacts(env, contactsMatch[1]);
+      // A caller-named KV key with no expiry and no ceiling: unbounded writes
+      // into the namespace that also holds documents.
+      const rlContacts = await checkRateLimit(env, `contacts:${ipKey(request)}`, [
+        { windowSec: 600, max: 30 },
+        { windowSec: 86400, max: 200 },
+      ]);
+      if (!rlContacts.ok) return rateLimitedResponse(rlContacts, { endpoint: '/api/sender/:id/contacts' });
       if (request.method === 'POST')   return handleUpsertContact(request, env, contactsMatch[1]);
       if (request.method === 'DELETE') return handleRemoveContact(request, env, contactsMatch[1]);
     }
@@ -1010,7 +1032,7 @@ const worker = {
     // the /api/ 404 fallthrough; routeApiV1 returns null for non-v1 paths so
     // nothing else is affected.
     if (url.pathname.startsWith('/api/v1')) {
-      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf, removeFromActiveIndex });
+      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf, removeFromActiveIndex, loadDocMerged });
       if (v1) return v1;
     }
 
@@ -5683,13 +5705,27 @@ const REMINDER_LOCK_STALE_MS = REMINDER_LOCK_TTL_SECONDS * 1000;
  * one manual reminder per hour, regardless of the cron schedule.
  */
 async function handleRemind(request, env, docId, signerId, url) {
-  // Unauthenticated email-sending endpoint, IP-limit to blunt abuse by anyone
-  // who learns a docId. (Full sender-token auth is a tracked follow-up.)
+  // This is an email-sending endpoint, and it used to accept anyone who had
+  // learned a docId. The comment here called full sender-token auth a tracked
+  // follow-up, which meant an unauthenticated party could make us mail a third
+  // party on repeat: harassment sent from our verified domain, in the sender's
+  // name. The IP limit blunted the volume, never the capability.
+  //
+  // The sender token is the same credential handleGetDocProgress already
+  // requires before it will reveal a magic link, so this adds no new concept.
   const rl = await checkRateLimit(env, `remind:${ipKey(request)}`, [{ windowSec: 3600, max: 20 }]);
   if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs/remind' });
   const storage = getStorage(env);
   const doc = await loadDocMerged(storage, docId);
   if (!doc) return jsonResponse(404, { error: 'not_found', message: 'Document not found.' });
+
+  const senderToken = url && url.searchParams.get('s');
+  if (!senderToken || !doc.senderToken || !ctEqHex(senderToken, doc.senderToken)) {
+    return jsonResponse(403, {
+      error: 'invalid_token',
+      message: 'A sender token is required to send a reminder.',
+    });
+  }
 
   const signer = doc.signers.find(s => s.id === signerId);
   if (!signer) return jsonResponse(404, { error: 'no_signer', message: 'Signer not found on this document.' });

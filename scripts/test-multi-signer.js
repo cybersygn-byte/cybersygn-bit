@@ -153,6 +153,7 @@ async function main() {
   ok(create.json && Array.isArray(create.json.signerLinks) && create.json.signerLinks.length === 2, 'returns 2 signer links');
 
   const docId = create.json.docId;
+  const senderTok = create.json.senderToken;
   const link1 = create.json.signerLinks.find(l => l.signerId === 'p1');
   const link2 = create.json.signerLinks.find(l => l.signerId === 'p2');
   ok(link1 && link1.token.length === 64, 'signer 1 token is 64-char hex');
@@ -317,25 +318,31 @@ async function main() {
   });
   ok(create2.status === 201, `second doc created (got ${create2.status})`);
   const docId2 = create2.json.docId;
+  const sTok2 = create2.json.senderToken;
   const link2_p1 = create2.json.signerLinks[0];
 
+  // A reminder is an email we send to a third party in the sender's name, so
+  // it must not be triggerable by anyone who merely learned the docId.
+  const remindNoTok = await call('POST', `/api/docs/${docId2}/remind/p1`);
+  ok(remindNoTok.status === 403, `reminder without a sender token is refused (got ${remindNoTok.status})`);
+
   // Manual reminder.
-  const remind = await call('POST', `/api/docs/${docId2}/remind/p1`);
+  const remind = await call('POST', `/api/docs/${docId2}/remind/p1?s=${sTok2}`);
   ok(remind.status === 200, `manual reminder returns 200 (got ${remind.status})`);
   ok(remind.json && remind.json.delivered === true, 'reminder reports delivered');
   ok(remind.json && remind.json.tone === 'first', `first reminder tone is "first" (got "${remind.json && remind.json.tone}")`);
   ok(remind.json && remind.json.reminderCount === 1, `count is 1 (got ${remind.json && remind.json.reminderCount})`);
 
   // Rate limit: second immediate call rejected.
-  const remindAgain = await call('POST', `/api/docs/${docId2}/remind/p1`);
+  const remindAgain = await call('POST', `/api/docs/${docId2}/remind/p1?s=${sTok2}`);
   ok(remindAgain.status === 429, `rate-limited 1-minute wall returns 429 (got ${remindAgain.status})`);
 
   // Reminder for non-existent signer.
-  const noSigner = await call('POST', `/api/docs/${docId2}/remind/nope`);
+  const noSigner = await call('POST', `/api/docs/${docId2}/remind/nope?s=${sTok2}`);
   ok(noSigner.status === 404, `unknown signer returns 404 (got ${noSigner.status})`);
 
   // Reminder for the already-completed Alice (from doc 1) should be 409.
-  const completedRemind = await call('POST', `/api/docs/${docId}/remind/p1`);
+  const completedRemind = await call('POST', `/api/docs/${docId}/remind/p1?s=${senderTok}`);
   ok(completedRemind.status === 409, `reminder for completed signer returns 409 (got ${completedRemind.status})`);
 
   // Cron sweep: should skip docs whose schedule has not elapsed yet (just sent one minute ago).

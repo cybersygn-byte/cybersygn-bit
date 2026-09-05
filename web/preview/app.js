@@ -5305,7 +5305,7 @@ function openLinksModal(payload) {
       remindBtn.disabled = true;
       remindBtn.textContent = 'Sending.';
       try {
-        const res = await remindSigner(payload.docId, link.signerId);
+        const res = await remindSigner(payload.docId, link.signerId, getDocToken(payload.docId));
         if (!res.ok) throw new Error(res.error || 'remind failed');
         const tone = res.data && res.data.tone;
         const count = res.data && res.data.reminderCount;
