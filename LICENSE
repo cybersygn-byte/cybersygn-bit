@@ -1,0 +1,41 @@
+Copyright (c) 2026 Nathan Vogt. All rights reserved.
+
+CyberSygn and the contents of this repository are proprietary and confidential.
+
+No licence, express or implied, is granted to any person obtaining a copy of
+this software or its associated documentation to use, copy, modify, merge,
+publish, distribute, sublicense, or sell any part of it, except under a
+separate written agreement signed by the copyright holder.
+
+Unauthorised copying, distribution, or disclosure of any part of this
+repository, by any means, is prohibited.
+
+SCOPE
+
+One directory is deliberately excluded from the terms above:
+
+  docs/opensource/cybersygn-detect/
+
+That directory contains a standalone snapshot of an earlier version of the
+field-detection module, and it carries its own MIT licence in
+docs/opensource/cybersygn-detect/LICENSE. The MIT grant applies to the
+contents of that directory only. It does not extend to worker/src/detect.js
+or any other file in this repository, which have diverged from that snapshot
+and remain proprietary under the terms above. As of this writing the snapshot
+has not been published to any package registry.
+
+THIRD-PARTY COMPONENTS
+
+This software depends on third-party open-source packages, each governed by
+its own licence. See package.json for the dependency list and node_modules for
+the licence text shipped with each package. Nothing in this file alters those
+licences or claims ownership of those components.
+
+NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

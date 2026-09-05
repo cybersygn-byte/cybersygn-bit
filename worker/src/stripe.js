@@ -434,7 +434,7 @@ export async function createCheckoutSession(env, { tier, senderId, email, succes
 //
 // If single-subscription upgrades are wanted, they need a confirmation step
 // (a Stripe Billing Portal flow, or a preview-then-confirm endpoint), which is
-// a product decision, not a bug fix. See HANDOFF.md.
+// a product decision, not a bug fix.
 async function maybeChangePlanInPlace(env, { tier, tierConf, priceId, senderId, origin, source }) {
   if (!senderId || !origin) return null;
   if (tierConf.addon || tierConf.oneTime) return null;

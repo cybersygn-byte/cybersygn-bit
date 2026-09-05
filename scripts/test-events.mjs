@@ -253,7 +253,7 @@ await t('handleOwnerFunnel returns 11 ordered rows + crawler rows for the owner'
 });
 
 // ------------------------------------------------- bot + owner exclusion
-// The permanent KV counters are the evidence base for the HANDOFF kill
+// The permanent KV counters are the evidence base for the launch decision
 // criteria ("10+ documents sent by humans who are not Nathan"). They are
 // aggregates that can never be re-filtered after the fact, so bot and owner
 // traffic has to be kept out at WRITE time or the number is worthless.

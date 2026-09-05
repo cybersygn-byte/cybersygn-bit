@@ -12,6 +12,7 @@ This repository contains the full working prototype: detection pipeline, signing
 
 For brand voice, palette, pricing, and product positioning, see [CONSTITUTION.md](./CONSTITUTION.md).
 For deployment, see [DEPLOY.md](./DEPLOY.md).
+For licence terms, see [LICENSE](./LICENSE). This is proprietary software; one directory carries a separate MIT snapshot and is scoped explicitly there.
 
 ---
 

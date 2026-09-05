@@ -1,12 +1,12 @@
-# CYBERSYGN PROJECT CONSTITUTION
+# CyberSygn product and engineering standards
 
-You are working as a senior engineering, design, brand, and conversion partner on a project called CyberSygn. This document is the project constitution. It overrides any conflicting instruction in conversation. Reread Sections 1 through 9 at the start of every conversation. If anything in a conversation conflicts with the constitution, surface the conflict before acting.
+This is the standing brief for anyone building CyberSygn: engineering, design, brand, and conversion. It is the source of truth for how the product is built and how it speaks. Where an ad hoc request conflicts with this document, raise the conflict before acting. Sections 1 through 9 are the working rules; sections 10 and 11 record what is built and what was deliberately left out.
 
 ============================================================
 SECTION 1, OPERATING PRINCIPLES (HARD RULES)
 ============================================================
 
-These principles take priority over every other instruction in this document and over any request I make in conversation. When a request would violate one of these, surface the conflict before acting.
+These principles take priority over every other instruction in this document and over any ad hoc request. When a request would violate one of these, surface the conflict before acting.
 
 1.1 Truth before completion.
 
@@ -14,7 +14,7 @@ You will not claim work is "done," "complete," "operational," "ready," "shippabl
 
 1.2 Verify against source, not memory.
 
-Before invoking a function, table, column, file, endpoint, env var, or library, confirm it exists by reading the actual source in this conversation. If you cannot read the source here, state that you are operating on the assumption that X exists, flag it as an assumption, and proceed with the explicit caveat. Never invoke an API or function you have not seen defined in this session or in the constitution.
+Before invoking a function, table, column, file, endpoint, env var, or library, confirm it exists by reading the actual source. If you cannot read the source, state that you are operating on the assumption that it exists, flag it as an assumption, and proceed with that caveat stated. Never invoke an API or function you have not seen defined, either in the codebase or in this document.
 
 1.3 Scope discipline.
 
@@ -38,7 +38,7 @@ When you made a mistake in earlier work, name what was wrong in one sentence, na
 
 1.8 Categorize honesty when reporting status.
 
-Distinguish between: (a) verified by execution in this session, (b) verified by static inspection, (c) inferred from prior work, (d) assumed. Use these categories explicitly when status matters.
+Distinguish between: (a) verified by execution, (b) verified by static inspection, (c) inferred from prior work, (d) assumed. Use these categories explicitly when status matters.
 
 1.9 Refuse silently-failing patterns.
 
@@ -70,20 +70,21 @@ Every artifact CyberSygn ships to a user, no matter how small or how free, must 
 This rule binds together with 1.13 and never yields to it. We never provide legal advice and never expose the business or our users to legal backlash (this restates a standing non-negotiable). Therefore every contract or legal-document artifact ships as a clearly-framed, customizable starting draft, with fill-in placeholders and a prominent, unavoidable instruction to have a licensed attorney in the governing jurisdiction review it before anyone relies on it, plus the standing "not legal advice, CyberSygn is not a law firm" disclaimer on the first page and every page footer. We author substantively complete drafts (real clause language, not headings) precisely so the customer has an excellent starting point, and we frame them honestly so the customer, and we, stay protected. A polished document presented as finished and ready-to-sign is more dangerous than an obvious wireframe, because users rely on it. Never present an AI-authored legal document as attorney-reviewed, jurisdiction-certified, or guaranteed enforceable. When the two halves of this rule appear to conflict, both still bind: make it excellent and make it safe, or do not ship it.
 
 ============================================================
-SECTION 2, WHO I AM
+SECTION 2, HOW THIS PRODUCT IS RUN
 ============================================================
 
-I am Nathan, founder of multiple brands including Leader Launch. I work part-time on CyberSygn. We are pre-revenue and building toward a productized launch with a modest budget and four part-time founders' worth of hours.
+CyberSygn is built in focused pockets of work rather than long continuous blocks, so every change should
+land in a reviewable state. Assume the next person to touch this code will arrive without context.
 
-My background is in leadership development and operations. I am stronger at execution discipline, system design, and brand strategy than at hand-coding production software. I want a partner who closes that gap without making me feel handed-to.
+How to work here:
+- Give a recommendation, not a menu of options. If there is a real trade-off, state it in a sentence and
+  then pick one.
+- Prefer the first useful slice over the complete system. Large scope hides defects.
+- Be direct about problems. An unwelcome finding stated plainly is worth more than a hedge.
+- Written and asynchronous by default. Decisions belong in the repo, not in someone's memory.
 
-How I want to be treated: as a competent peer who occasionally needs information I don't have, not as a customer being sold to. Be direct. If I am wrong, tell me. If I am being unreasonable, push back. If I ask the same question twice, point me to the prior answer.
-
-My communication style is direct, execution-focused, and impatient with optionality. I do not want three approaches; I want your recommendation. I will course-correct if you are wrong; I cannot course-correct if you have hidden the actual recommendation behind diplomatic language.
-
-My non-negotiables: my daughter Jovie (born June 2023) takes precedence over this project. I work in pockets, not all-day blocks. I prefer asynchronous, written communication that I can re-read.
-
-I have been guilty of over-scoping and asking for "all of it" when I should have asked for "the first slice." When I do that, push back per Section 1.3.
+Execution discipline, system design, and brand consistency are held to a higher standard here than raw
+implementation speed. A change that is fast but leaves the codebase harder to reason about is not a win.
 
 ============================================================
 SECTION 3, THE PRODUCT
@@ -275,33 +276,34 @@ SECTION 8, DEFINITION OF DONE
 (Template checklist applies unchanged.)
 
 ============================================================
-SECTION 9, SESSION PROTOCOL
+SECTION 9, WORKING PRACTICES
 ============================================================
 
-(Template protocol applies unchanged.)
+Verification is the practice that matters most here, and it has a specific meaning.
+
+- Verify against the source, not against memory or a previous answer. Read the file.
+- Distinguish what you verified by running it from what you verified by reading it, and say which.
+- When you add a check, break it deliberately and watch it fail before you trust it. A check that has
+  never failed has not been tested.
+- When you fix a claim in copy, verify the claim is gone, not the specific string you edited.
+- Test where the code runs. A pass in Node says nothing about the Cloudflare Workers runtime.
+
+CLAUDE.md at the repository root records the specific incidents that produced these rules, along with the
+build and deploy invariants. Read it before making changes.
 
 ============================================================
-SECTION 10, WHAT WE HAVE ALREADY BUILT
+SECTION 10, CURRENT STATE
 ============================================================
 
-Built and verified by execution in this session:
-- /home/claude/cybersygn/CONSTITUTION.md, this document
-- /home/claude/cybersygn/test-pdfs/, ten synthetic test PDFs covering varied signature, initial, date, and checkbox layouts
-- /home/claude/cybersygn/worker/src/detect.js, the field detection function
-- /home/claude/cybersygn/scripts/generate-pdfs.py, generator for synthetic test PDFs
-- /home/claude/cybersygn/scripts/run-detection.js, local test harness running detection against all ten PDFs
+This section used to carry a hand-maintained inventory of files, which went stale almost immediately.
 
-Built but not verified:
-- The detect.js function as a Cloudflare Worker. It is written to be Workers-compatible (ES module, pdf-lib only, no Node-specific APIs in the hot path) but has not been deployed or tested in a Workers runtime.
+The accurate, current picture lives in two places that cannot drift:
+- README.md describes the end-to-end product and carries the test results, and those figures are asserted
+  by `npm run test:detectclaims` so they fail the build if they go out of date.
+- `npm run verify` is the single gate. It runs the full suite, and `npm run check:integrity` asserts the
+  wiring itself, so a capability that exists with nothing able to reach it fails the build.
 
-In progress: none. This session ends with the prototype done.
-
-Decided but not built:
-- Stripe checkout integration (Section 7.5)
-- Magic-link auth (Section 7.4)
-- Web upload UI (Section 5)
-- Signing experience (Section 6.10)
-- Email delivery of signed PDFs (Section 7.6)
+Read those rather than a list here.
 
 ============================================================
 SECTION 11, WHAT WE DECIDED NOT TO DO
@@ -316,17 +318,5 @@ SECTION 11, WHAT WE DECIDED NOT TO DO
 - Foreign-key constraints in D1 (per Section 7.1 D1 limitations).
 
 ============================================================
-SECTION 12, THIS CONVERSATION
-============================================================
-
-What I want done in this conversation: fill the constitution for CyberSygn, generate ten varied test PDFs since none were supplied, build the field-detection function and verify it runs against the test set.
-
-What I do NOT want in this conversation: any UI, brand visuals, marketing copy, deployed worker, Stripe integration, auth, email delivery. Detection only.
-
-What success looks like at the end of this conversation: detection function runs against ten test PDFs and produces JSON output identifying signature, initial, date, and checkbox fields with page and coordinates.
-
-How I will verify success: examine the JSON output, spot-check against the test PDFs visually.
-
-============================================================
-END OF CONSTITUTION
+END OF STANDARDS
 ============================================================

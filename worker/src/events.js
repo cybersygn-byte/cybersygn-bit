@@ -81,7 +81,7 @@ export const CRAWLERS = Object.freeze([
 const RATE_POLICIES = [{ windowSec: 60, max: 120 }];
 
 // Generic bot sniff for the PERMANENT counters only. The lifetime KV numbers
-// are the evidence base for the HANDOFF kill criteria ("10+ documents sent by
+// are the evidence base for the launch decision criteria ("10+ documents sent by
 // humans who are not Nathan"), and they are aggregates that can never be
 // re-filtered after the fact, so bots and the owner must be kept out at write
 // time. Analytics Engine still records every point (it carries its own bot
