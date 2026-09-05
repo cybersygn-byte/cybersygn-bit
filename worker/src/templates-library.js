@@ -138,7 +138,21 @@ export function findTemplate(slug) {
 }
 
 export function listTemplates() {
-  return TEMPLATES.map(t => ({ slug: t.slug, title: t.title, short: t.short }));
+  // TEMPLATES is the legacy hand-written registry: 17 entries. The library
+  // shipped today is the generated catalog in template-titles.json, 502 of
+  // them, and every one has a rendered PDF under web/templates-pdf/. Listing
+  // only the legacy registry meant both the browser endpoint and the public
+  // API advertised about 3 percent of what a caller can actually use.
+  //
+  // The legacy entries carry a hand-written `short` blurb the catalog has no
+  // equivalent for, so they win on title and keep their blurb.
+  const legacy = new Map(TEMPLATES.map(t => [t.slug, t]));
+  return Object.keys(TEMPLATE_TITLES).sort().map(slug => {
+    const l = legacy.get(slug);
+    const row = { slug, title: (l && l.title) || TEMPLATE_TITLES[slug] };
+    if (l && l.short) row.short = l.short;
+    return row;
+  });
 }
 
 /**

@@ -348,6 +348,33 @@ await t('tenant ids that would share a namespace are refused', async () => {
   assert.equal(good.status, 201, 'a conforming tenant_id still provisions');
 });
 
+await t('RateLimit headers ride on a SUCCESS response, not only on the 429', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-hdr-success');
+  const r = await call(env, 'GET', '/api/v1/me', { key });
+  assert.equal(r.status, 200);
+  // The docs tell a client to read its remaining budget from any response. If
+  // these only appeared on a 429, the documented way to stay under the limit
+  // would be to exceed it first and read the rejection.
+  assert.ok(r.headers.get('ratelimit-limit'), 'RateLimit-Limit on a 200');
+  assert.ok(r.headers.get('ratelimit-remaining'), 'RateLimit-Remaining on a 200');
+  assert.ok(r.headers.get('ratelimit-reset'), 'RateLimit-Reset on a 200');
+  assert.equal(r.headers.get('retry-after'), null, 'Retry-After belongs only on a rejection');
+});
+
+await t('the full template library is listed, not just the legacy registry', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-tpl');
+  const r = await call(env, 'GET', '/api/v1/templates', { key });
+  assert.equal(r.status, 200);
+  const body = await r.json();
+  assert.ok(body.count > 400,
+    `the library has 500+ rendered templates; the API advertised ${body.count}`);
+  assert.equal(body.count, body.templates.length, 'count matches the array');
+  assert.ok(!('group' in body.templates[0]),
+    'the always-null group field is gone rather than shipped as noise');
+});
+
 // ---- The error envelope ------------------------------------------------------
 //
 // The docs promise "errors come back as JSON with a stable `error` code and a

@@ -405,9 +405,11 @@ async function voidDocument(env, url, docId, auth, deps) {
 async function listTemplatesV1(env, url) {
   let items = [];
   try { items = await listTemplates(env); } catch { items = []; }
-  const list = (items || []).map(t => ({
-    slug: t.slug, title: t.title, group: t.group || t.groupLabel || null,
-  }));
+  // `group` used to be emitted here as `t.group || t.groupLabel || null`, and
+  // no template carries either field, so it was null on every row of every
+  // response. A field that is always null is not data, it is noise a caller has
+  // to write code around.
+  const list = (items || []).map(t => ({ slug: t.slug, title: t.title }));
   return json(200, { count: list.length, templates: list });
 }
 
@@ -530,7 +532,30 @@ async function revokeTenantKey(request, env, auth) {
  * `deps` = { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf }
  * from index.js.
  */
+/**
+ * Entry point for /api/v1. Returns null for non-v1 paths so index.js falls
+ * through to its other routes.
+ *
+ * The dispatcher does the work; this wrapper exists so the RateLimit-* headers
+ * appear on EVERY response. They used to be attached only when building a 429,
+ * while the developer docs said a client could read its remaining budget from
+ * any response, so the documented way to stay under the limit was to hit it
+ * first and read the rejection.
+ */
 export async function routeApiV1(request, env, url, ctx, deps) {
+  let limitHeaders = null;
+  const res = await dispatchApiV1(request, env, url, ctx, deps, (h) => { limitHeaders = h; });
+  if (!res || !limitHeaders) return res;
+  // Rebuild rather than mutate: a Response from a delegated handler may carry
+  // immutable headers.
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(limitHeaders)) {
+    try { out.headers.set(k, v); } catch (e) { /* never fail a good response over a header */ }
+  }
+  return out;
+}
+
+async function dispatchApiV1(request, env, url, ctx, deps, onLimit) {
   const path = url.pathname;
   if (!path.startsWith('/api/v1/') && path !== '/api/v1') return null;
 
@@ -556,6 +581,9 @@ export async function routeApiV1(request, env, url, ctx, deps) {
     RL_POLICIES[tier][auth.unmetered ? 'unmetered' : 'metered'],
   );
   if (!rl.ok) return rateLimited(rl, path);
+  // Hand the allowed-case headers back to the wrapper so they ride on every
+  // response, not only the 429.
+  if (typeof onLimit === 'function') onLimit(rl.headers);
 
   if (path === '/api/v1/me' && method === 'GET') {
     return json(200, { ok: true, account: auth.senderId, key_id: auth.keyId, mode: auth.mode });
