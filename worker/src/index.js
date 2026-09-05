@@ -246,7 +246,7 @@ const worker = {
     // handler here or the status page shows a false "degraded".
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return await handleHealth(env);
+      return await handleHealthPublic(request, env);
     }
 
     // 301 redirects: Origin tier rename. Anyone with a /charter/* link
@@ -756,6 +756,14 @@ const worker = {
     // Create a document: persist PDF + signers + assignments, mint per-signer
     // tokens, and email each signer their magic link.
     if (request.method === 'POST' && url.pathname === '/api/docs/bulk') {
+      // One call mints up to 200 documents and 200 emails, so this is strictly
+      // more expensive than /api/docs directly below, which has been capped
+      // since it shipped. This route sat next to it with no ceiling at all.
+      const rl = await checkRateLimit(env, `bulk:${ipKey(request)}`, [
+        { windowSec: 600, max: 5 },
+        { windowSec: 86400, max: 30 },
+      ]);
+      if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/docs/bulk' });
       return await handleBulkSend(request, env, url);
     }
     if (request.method === 'POST' && url.pathname === '/api/docs') {
@@ -846,6 +854,21 @@ const worker = {
     //   returns: { inviteId, inviteUrl }
     const wsInviteMatch = url.pathname.match(/^\/api\/workspaces\/([^/]+)\/invites$/);
     if (request.method === 'POST' && wsInviteMatch) {
+      // Every accepted call sends mail to a caller-chosen address from our
+      // verified domain. The MEMBER_HARD_CAP inside counts ACCEPTED members,
+      // never invites sent, so it rises only when someone joins and therefore
+      // never bounded sending at all. Capped per IP and per workspace, because
+      // either one alone is trivially rotated around.
+      const rlIp = await checkRateLimit(env, `wsinvite:${ipKey(request)}`, [
+        { windowSec: 3600, max: 20 },
+        { windowSec: 86400, max: 60 },
+      ]);
+      if (!rlIp.ok) return rateLimitedResponse(rlIp, { endpoint: '/api/workspaces/:id/invites' });
+      const rlWs = await checkRateLimit(env, `wsinvite-ws:${wsInviteMatch[1]}`, [
+        { windowSec: 3600, max: 25 },
+        { windowSec: 86400, max: 75 },
+      ]);
+      if (!rlWs.ok) return rateLimitedResponse(rlWs, { endpoint: '/api/workspaces/:id/invites' });
       return await handleCreateInvite(request, env, wsInviteMatch[1], url);
     }
 
@@ -2431,6 +2454,55 @@ async function handleOriginProfile(request, env, url) {
 //   - cron uptime monitors (every minute, expect 200 + ok:true)
 //   - quick CLI debugging during a deploy ("did the secret upload?")
 //   - rendering on the owner dashboard's diagnostic strip
+
+/**
+ * The public face of /api/health.
+ *
+ * handleHealth below authenticates against Resend, Stripe and Anthropic with
+ * the live keys and round-trips a KV write, so one unauthenticated GET became
+ * three vendor calls on our own rate-limit budgets plus a KV write, at roughly
+ * half a second of Worker time. Resend's account limit is shared with every
+ * signing invitation and reminder we send, so sustained polling here could
+ * push real transactional mail into 429.
+ *
+ * handleStatus already caches these probes for 60s, with a comment saying that
+ * anonymous polling must not amplify external API calls. That reasoning always
+ * applied to this route too; it just never got the cache or the ceiling.
+ *
+ * The cron self-check calls handleHealth directly and so still gets a live
+ * reading.
+ */
+async function handleHealthPublic(request, env) {
+  const rl = await checkRateLimit(env, `health:${ipKey(request)}`, [
+    { windowSec: 60, max: 6 },
+    { windowSec: 3600, max: 60 },
+  ]);
+  if (!rl.ok) return rateLimitedResponse(rl, { endpoint: '/api/health' });
+
+  const kv = env && env.CYBERSYGN_DOCS;
+  if (kv) {
+    try {
+      const cached = await kv.get('health:probes');
+      if (cached) {
+        return new Response(cached, {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'cache-control': 'public, max-age=30',
+            'x-cybersygn-cache': 'hit',
+          },
+        });
+      }
+    } catch (e) { /* a cold cache must never fail the health check */ }
+  }
+
+  const res = await handleHealth(env);
+  try {
+    const body = await res.clone().text();
+    if (kv) await kv.put('health:probes', body, { expirationTtl: 60 });
+  } catch (e) { /* answering matters more than remembering the answer */ }
+  return res;
+}
 
 async function handleHealth(env) {
   const startedAt = Date.now();

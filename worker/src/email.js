@@ -343,6 +343,22 @@ export async function sendOriginWelcome(env, { to, name, foundingNumber, appUrl 
   return deliver(env, { to, subject, text, html });
 }
 
+/**
+ * A mail header cannot contain a line break. Every subject in this module
+ * interpolates caller-supplied text: a workspace name, a document title, a
+ * signer name, a filename. Sanitising at this single boundary covers all nine
+ * subject builders and any added later, rather than trusting each call site to
+ * remember. Workspace names in particular reach a subject line after only
+ * `.trim().slice(0, 80)`, which does not touch control characters.
+ */
+function headerSafe(value, max = 200) {
+  return String(value == null ? '' : value)
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .trim()
+    .slice(0, max);
+}
+
 export async function deliver(env, { to, subject, text, html, attachments }) {
   const apiKey = env && env.RESEND_API_KEY;
   if (!apiKey) {
@@ -364,8 +380,8 @@ export async function deliver(env, { to, subject, text, html, attachments }) {
   const resendBody = {
     from: env.CYBERSYGN_FROM || FROM_DEFAULT,
     reply_to: env.CYBERSYGN_REPLY_TO || REPLY_TO_DEFAULT,
-    to: [to],
-    subject,
+    to: [headerSafe(to, 320)],
+    subject: headerSafe(subject),
     text,
   };
   if (html) resendBody.html = html;

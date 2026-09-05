@@ -51,6 +51,19 @@ export async function atomicConsume(env, name, limit) {
 }
 
 /**
+ * Evaluate every rate-limit policy for one subject inside a single Durable
+ * Object, so the read-modify-write cannot race. All policies go in one call:
+ * that is one round trip rather than one per window, and it keeps the whole
+ * verdict consistent.
+ *
+ * Returns { ok, retryAfterSec?, hits } or null when the DO is unavailable, in
+ * which case the caller falls back to the KV counter.
+ */
+export async function atomicRate(env, subject, policies) {
+  return await call(env, `rate:${subject}`, '/rate', { policies, nowMs: Date.now() });
+}
+
+/**
  * Atomically claim a one-shot token.
  * Returns { claimed: boolean } or null when the DO is unavailable.
  */

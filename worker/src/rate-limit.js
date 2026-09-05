@@ -26,6 +26,8 @@
  * sees `Retry-After` and `RateLimit-*` semantically.
  */
 
+import { atomicRate } from './atomic.js';
+
 const PREFIX = 'ratelimit:';
 
 /* Counter of last resort, used only when no KV namespace is bound.
@@ -74,6 +76,28 @@ const memoryStore = {
  * response.
  */
 export async function checkRateLimit(env, key, policies) {
+  if (!Array.isArray(policies) || policies.length === 0) {
+    return { ok: true, hits: [], headers: {} };
+  }
+
+  // PREFERRED PATH: the Durable Object. KV has no compare-and-set, so the
+  // fallback below is a read-modify-write that N concurrent requests all win:
+  // they read the same counter, and all write the same value, so the bucket
+  // advances by about one however many arrived. Measured against production,
+  // 40 concurrent requests went through a limit of 30 with 38 allowed. The
+  // object serializes the increment, which is the only way this is a real
+  // ceiling rather than a ceiling per sequential caller.
+  //
+  // atomicRate returns null when ATOMIC is unbound (local dev, the node test
+  // harness), and only then do we fall through to the KV counter.
+  const viaDo = await atomicRate(env, key, policies);
+  if (viaDo && Array.isArray(viaDo.hits) && viaDo.hits.length > 0) {
+    return viaDo.ok ? allowed(viaDo.hits) : refused(viaDo.hits, viaDo.retryAfterSec);
+  }
+
+  // Only now does KV matter. Resolving the store above meant the "counting
+  // in-process" warning fired even when the object had served the request,
+  // which described a fallback that had not been taken.
   let store = env && env.CYBERSYGN_DOCS;
   if (!store) {
     // Once per isolate. The binding is either there or it is not, so one line
@@ -85,9 +109,6 @@ export async function checkRateLimit(env, key, policies) {
       console.warn('[rate-limit] KV unbound, counting in-process', String(key || '').split(':')[0] || 'unknown');
     }
     store = memoryStore;
-  }
-  if (!Array.isArray(policies) || policies.length === 0) {
-    return { ok: true, hits: [], headers: {} };
   }
 
   const now = Math.floor(Date.now() / 1000);
@@ -175,6 +196,34 @@ export async function checkRateLimit(env, key, policies) {
       'RateLimit-Remaining': String(tightest.remaining),
       'RateLimit-Reset': String(tightest.resetSec),
     } : {},
+  };
+}
+
+function refused(hits, retryAfterSec) {
+  const tightest = hits.reduce((m, h) => Math.min(m, h.remaining), Infinity);
+  return {
+    ok: false,
+    retryAfterSec,
+    hits,
+    headers: {
+      'Retry-After': String(retryAfterSec),
+      'RateLimit-Limit': String(hits[0].max),
+      'RateLimit-Remaining': String(Number.isFinite(tightest) ? tightest : 0),
+      'RateLimit-Reset': String(retryAfterSec),
+    },
+  };
+}
+
+function allowed(hits) {
+  const tightest = hits.reduce((acc, h) => (h.remaining < acc.remaining ? h : acc), hits[0]);
+  return {
+    ok: true,
+    hits,
+    headers: {
+      'RateLimit-Limit': String(tightest.max),
+      'RateLimit-Remaining': String(tightest.remaining),
+      'RateLimit-Reset': String(tightest.resetSec),
+    },
   };
 }
 
