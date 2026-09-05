@@ -989,7 +989,7 @@ const worker = {
     // the /api/ 404 fallthrough; routeApiV1 returns null for non-v1 paths so
     // nothing else is affected.
     if (url.pathname.startsWith('/api/v1')) {
-      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf });
+      const v1 = await routeApiV1(request, env, url, ctx, { handleCreateDoc, handleGetPdf, handleGetAudit, handleGetSignedPdf, removeFromActiveIndex });
       if (v1) return v1;
     }
 
@@ -6023,6 +6023,11 @@ export async function runReminderSweep(env) {
       const doc = await storage.docs.get(`doc:${docId}`, { json: true });
       if (!doc) continue; // expired or deleted; drop from index
       if (doc.completedAt) continue; // completed; drop from index
+      // Voided documents were never checked here, so cancelling a document
+      // stopped nothing: its pending signers kept receiving the full escalating
+      // chase (24h, 72h, 7d) for a contract that had been withdrawn. Not pushed
+      // to stillActive, so it also falls out of the active index.
+      if (doc.voidedAt) continue;
       // Owner-created docs: demo/testing work. Reminders to real-looking
       // test emails would be spammy. Keep them in the index so the
       // dashboard still shows them, just skip the reminder logic.

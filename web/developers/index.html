@@ -553,14 +553,27 @@ const me = await res.json(); // { ok, account, key_id, mode }</code></pre>
               </table>
               <h3>Payload</h3>
 <pre><code>{
+  "id": "evt_9f2c1ab47d3e8065",
   "event": "doc.completed",
-  "document": {
-    "id": "doc_abc123",
-    "status": "completed",
+  "senderId": "snd_abc123",
+  "createdAt": "2026-06-13T17:20:00.000Z",
+  "data": {
+    "docId": "doc_abc123",
     "title": "Mutual NDA",
-    "completed_at": "2026-06-13T17:20:00.000Z"
+    "completedAt": "2026-06-13T17:20:00.000Z",
+    "signerCount": 2
   }
 }</code></pre>
+                <p>Every event uses that envelope. Only <code>data</code> changes.</p>
+                <table class="dev-table">
+                  <thead><tr><th>Event</th><th><code>data</code> fields</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>doc.created</code></td><td><code>docId</code>, <code>title</code>, <code>signerCount</code>, <code>mode</code></td></tr>
+                    <tr><td><code>signer.completed</code></td><td><code>docId</code>, <code>title</code>, <code>signerId</code>, <code>signerEmail</code>, <code>completedAt</code></td></tr>
+                    <tr><td><code>doc.completed</code></td><td><code>docId</code>, <code>title</code>, <code>completedAt</code>, <code>signerCount</code></td></tr>
+                  </tbody>
+                </table>
+                <p>Each delivery carries <code>x-cybersygn-event</code> and <code>x-cybersygn-signature</code>, the latter formatted <code>t=&lt;unix seconds&gt;,v1=&lt;hex&gt;</code>. The signature is an HMAC-SHA256 of <code>&lt;t&gt;.&lt;raw body&gt;</code> keyed with your webhook secret, so verify it against the raw bytes before parsing the JSON.</p>
               <p>On <code>doc.completed</code>, call <a href="#download">GET /:id/download</a> and <a href="#audit">GET /:id/audit</a> to retrieve the signed PDF and certificate.</p>
               <div class="dev-note"><strong>No webhook? Just poll.</strong> The simplest integration skips webhooks entirely: after you create a document, poll <a href="#get">GET /api/v1/documents/:id</a> on an interval until <code>status</code> is <code>completed</code>, then download. Webhooks are the efficient option, not a requirement.</div>
             </section>
@@ -625,12 +638,15 @@ Retry-After: 37          # on a 429 only
                 <tbody>
                   <tr><td>400</td><td><code>invalid_json</code></td><td>The request body was not valid JSON.</td></tr>
                   <tr><td>400</td><td><code>invalid_pdf</code></td><td><code>pdf_base64</code> did not decode to bytes.</td></tr>
+                  <tr><td>400</td><td><code>duplicate_signer_id</code></td><td>Two signers in the same request share an <code>id</code>. Ids must be unique, because each signer's completed fields are keyed by it.</td></tr>
+                  <tr><td>400</td><td><code>invalid_assignments</code></td><td><code>assignments</code> is an array rather than an object, references a field id that is not in the document, or routes a field to a signer id that does not exist.</td></tr>
                   <tr><td>400</td><td><code>invalid_signer_email</code></td><td>A signer entry has a missing or malformed <code>email</code>.</td></tr>
                   <tr><td>400</td><td><code>invalid_template</code></td><td><code>template</code> is not a valid slug.</td></tr>
                   <tr><td>400</td><td><code>missing_source</code></td><td>Neither <code>pdf_base64</code> nor <code>template</code> was supplied.</td></tr>
                   <tr><td>400</td><td><code>missing_pdf</code></td><td><code>pdf_base64</code> is missing, or it is present but carries no payload, for example a bare <code>data:</code> prefix or only whitespace. On <code>POST /api/v1/documents</code> an empty payload usually surfaces as <code>503 detection_unavailable</code> first, and reaches this code only when you also pass an explicit <code>fields</code> array.</td></tr>
                   <tr><td>400</td><td><code>missing_signers</code></td><td>At least one signer <code>{ name, email }</code> is required.</td></tr>
                   <tr><td>400</td><td><code>too_many_signers</code></td><td>More than 20 signers on one document.</td></tr>
+                  <tr><td>400</td><td><code>invalid_tenant</code></td><td><code>tenant_id</code> must be 1 to 48 characters of letters, digits, underscore, or hyphen. Anything else is refused rather than stripped, because stripping could merge two of your tenants into one account namespace. <code>POST /api/v1/keys</code> only.</td></tr>
                   <tr><td>400</td><td><code>missing_tenant</code></td><td><code>tenant_id</code> is required. <code>POST /api/v1/keys</code> only.</td></tr>
                   <tr><td>400</td><td><code>missing_key_id</code></td><td><code>key_id</code> is required. <code>DELETE /api/v1/keys</code> only.</td></tr>
                   <tr><td>400</td><td><code>payload_too_large</code></td><td>The whole JSON request body exceeds 36 MB. Usually a large <code>fields</code> array on top of a large PDF. Distinct from the 413 below, which is about the PDF alone.</td></tr>

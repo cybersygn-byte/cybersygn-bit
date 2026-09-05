@@ -284,6 +284,70 @@ await t('GET /documents/:id/audit still serves the audit certificate', async () 
   assert.equal(await r.text(), 'audit');
 });
 
+// ---- Input validation that protects document integrity --------------------
+
+await t('duplicate signer ids are refused', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-dupe');
+  const r = await call(env, 'POST', '/api/v1/documents', { key, body: JSON.stringify({
+    pdf_base64: 'JVBERi0=',
+    fields: [{ id: 'f1', type: 'signature', page: 1, x: 1, y: 1, width: 10, height: 10 }],
+    signers: [
+      { id: 'dup', name: 'A', email: 'a@b.com' },
+      { id: 'dup', name: 'B', email: 'b@b.com' },
+    ],
+  }) });
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).error, 'duplicate_signer_id',
+    'two signers sharing an id let a two-party document complete on one signature');
+});
+
+await t('the default signer id cannot collide with a caller-supplied one', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-dupe2');
+  // Signer 1 claims "s2"; signer 2 would otherwise be defaulted to "s2".
+  const r = await call(env, 'POST', '/api/v1/documents', { key, body: JSON.stringify({
+    pdf_base64: 'JVBERi0=',
+    fields: [{ id: 'f1', type: 'signature', page: 1, x: 1, y: 1, width: 10, height: 10 }],
+    signers: [{ id: 's2', name: 'A', email: 'a@b.com' }, { name: 'B', email: 'b@b.com' }],
+  }) });
+  assert.equal(r.status, 400);
+  assert.equal((await r.json()).error, 'duplicate_signer_id');
+});
+
+await t('assignments must be an object, and must reference real ids', async () => {
+  const env = mkEnv();
+  const key = await mkKey(env, 'acct-assign');
+  const base = {
+    pdf_base64: 'JVBERi0=',
+    fields: [{ id: 'f1', type: 'signature', page: 1, x: 1, y: 1, width: 10, height: 10 }],
+    signers: [{ id: 's1', name: 'A', email: 'a@b.com' }],
+  };
+  for (const [label, assignments] of [
+    ['an array', ['s1']],
+    ['an unknown field id', { nope: 's1' }],
+    ['an unknown signer id', { f1: 'ghost' }],
+  ]) {
+    const r = await call(env, 'POST', '/api/v1/documents', { key, body: JSON.stringify({ ...base, assignments }) });
+    assert.equal(r.status, 400, label);
+    assert.equal((await r.json()).error, 'invalid_assignments', label);
+  }
+});
+
+await t('tenant ids that would share a namespace are refused', async () => {
+  const env = mkEnv();
+  const partner = await mkKey(env, 'acct-partner-tenant', { canProvision: true });
+  // These five all used to collapse to one senderId, and ownership is checked
+  // by senderId, so the tenants could read each other's documents.
+  for (const tenantId of ['acme:eu', 'acme.eu', 'acme eu', 'acme/eu']) {
+    const r = await call(env, 'POST', '/api/v1/keys', { key: partner, body: JSON.stringify({ tenant_id: tenantId }) });
+    assert.equal(r.status, 400, tenantId);
+    assert.equal((await r.json()).error, 'invalid_tenant', tenantId);
+  }
+  const good = await call(env, 'POST', '/api/v1/keys', { key: partner, body: JSON.stringify({ tenant_id: 'acme-eu' }) });
+  assert.equal(good.status, 201, 'a conforming tenant_id still provisions');
+});
+
 // ---- The error envelope ------------------------------------------------------
 //
 // The docs promise "errors come back as JSON with a stable `error` code and a

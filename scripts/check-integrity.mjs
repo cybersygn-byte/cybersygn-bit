@@ -104,6 +104,10 @@ const CONSTS = [
   ['worker/src/signed-pdf.js', 'updateMetadata: false', 'pdf-lib determinism (without it every rebuilt hash differs)'],
   ['worker/src/kv-backup.js', 'BACKUP_RETENTION_DAYS', 'backup rotation that makes erasure propagate'],
   ['worker/src/verify.js', 'signedSha256', 'dual-hash verify lookup'],
+  // Its absence is silent in exactly the way this list exists for: nothing
+  // errors, the sweep just keeps chasing signers of a cancelled document
+  // through the full 24h, 72h and 7d escalation.
+  ['worker/src/index.js', 'if (doc.voidedAt) continue;', 'the reminder sweep skipping voided documents'],
 ];
 for (const [file, needle, what] of CONSTS) {
   let body = '';

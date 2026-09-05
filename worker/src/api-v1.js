@@ -232,6 +232,20 @@ async function createDocument(request, env, url, ctx, auth, deps) {
       return err(400, 'invalid_signer_email', `Signer "${s.name}" needs a valid email.`);
     }
   }
+  // Signer ids must be unique. The document model keys each signer's fills by
+  // id, so two signers sharing one id wrote into the same slot and the document
+  // reported itself fully executed after a single signature: a two-party
+  // contract complete with one party's mark on it. This needs no malicious
+  // caller either, since an explicit id of "s2" collides with the default
+  // handed to the second signer.
+  const seenSignerIds = new Set();
+  for (const s of signers) {
+    if (seenSignerIds.has(s.id)) {
+      return err(400, 'duplicate_signer_id',
+        `Two signers share the id "${s.id}". Signer ids must be unique within a document.`);
+    }
+    seenSignerIds.add(s.id);
+  }
 
   // Fields: caller-supplied, or auto-detected from the PDF.
   let fields = Array.isArray(body.fields) && body.fields.length ? body.fields : null;
@@ -261,7 +275,28 @@ async function createDocument(request, env, url, ctx, auth, deps) {
   // Assignments: caller-supplied (fieldId -> signerId), or default every field
   // to the first signer. Multi-party routing should pass explicit assignments.
   let assignments = (body.assignments && typeof body.assignments === 'object') ? body.assignments : null;
-  if (!assignments) {
+  if (assignments) {
+    // `typeof [] === 'object'`, so an array used to be accepted here and then
+    // silently routed nothing. Values were never checked against the signer list
+    // either, so a typo in a signer id produced a document whose fields belonged
+    // to nobody: it could never reach allDone and so never completed, with no
+    // error at any point to say why.
+    if (Array.isArray(assignments)) {
+      return err(400, 'invalid_assignments',
+        'assignments must be an object mapping field id to signer id, not an array.');
+    }
+    const fieldIds = new Set(fields.map(f => f.id));
+    for (const [fieldId, signerId] of Object.entries(assignments)) {
+      if (!fieldIds.has(fieldId)) {
+        return err(400, 'invalid_assignments',
+          `assignments references a field id that is not in this document: "${fieldId}".`);
+      }
+      if (!seenSignerIds.has(String(signerId))) {
+        return err(400, 'invalid_assignments',
+          `assignments routes field "${fieldId}" to an unknown signer id: "${signerId}".`);
+      }
+    }
+  } else {
     assignments = {};
     for (const f of fields) assignments[f.id] = signers[0].id;
   }
@@ -358,6 +393,12 @@ async function voidDocument(env, url, docId, auth, deps) {
   if (doc.voidedAt) return json(200, publicDoc(doc, url.origin));
   doc.voidedAt = new Date().toISOString();
   try { await storage.docs.put(`doc:${docId}`, doc); } catch { /* best effort */ }
+  // Drop it from the active index now rather than waiting for the hourly sweep
+  // to notice. The sweep skips voided documents too, so this is belt and
+  // braces: without either, cancelling a document stopped no reminders at all.
+  if (deps && typeof deps.removeFromActiveIndex === 'function') {
+    try { await deps.removeFromActiveIndex(storage, docId); } catch { /* best effort */ }
+  }
   return json(200, publicDoc(doc, url.origin));
 }
 
@@ -414,7 +455,23 @@ async function provisionTenantKey(request, env, auth) {
   if (!tenantId) return err(400, 'missing_tenant', 'tenant_id is required (your end-customer id).');
   const partnerId = auth.partnerId || 'partner';
   // Each tenant gets its own senderId namespace so its documents stay isolated.
-  const senderId = `p-${partnerId}-${tenantId}`.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  //
+  // That isolation was the opposite of what the code did. Stripping every
+  // character outside [A-Za-z0-9_-] collapsed distinct tenants onto one
+  // namespace: "acme:eu", "acme.eu", "acme eu", "acme/eu" and "acmeeu" all
+  // became p-<partner>-acmeeu. Ownership in this API is checked by senderId,
+  // so those tenants could read and void each other's documents. The 64
+  // character truncation did the same to any two ids sharing a long prefix.
+  //
+  // Reject rather than mangle. A partner gets a clear 400 naming the rule
+  // instead of a silently shared namespace they cannot detect.
+  if (!/^[A-Za-z0-9_-]{1,48}$/.test(tenantId)) {
+    return err(400, 'invalid_tenant',
+      'tenant_id must be 1 to 48 characters of letters, digits, underscore, or hyphen. ' +
+      'Other characters were previously stripped, which could silently merge two tenants ' +
+      'into one account namespace.');
+  }
+  const senderId = `p-${partnerId}-${tenantId}`;
   const made = await createApiKey(env, senderId, {
     label: String(body.label || `${partnerId}:${tenantId}`).slice(0, 80),
     unmetered: true,     // partner-issued tenant keys get full open access
