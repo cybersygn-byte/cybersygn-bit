@@ -34,6 +34,31 @@ body.has-app-shell {
   padding-bottom: calc(var(--shell-h) + env(safe-area-inset-bottom, 0px)) !important;
 }
 
+/* ---- Fixed page UI has to clear the bar too ---- */
+/* The padding above only moves IN-FLOW content clear of the bar. An element
+   with `position: fixed; bottom: 0` is out of flow, so it sat UNDERNEATH a bar
+   carrying z-index 2147483000 and could not be reached at all.
+
+   That is not cosmetic on the preview page: its bottom sheet holds the primary
+   action, so on a phone the main button was behind the nav, and a tap where the
+   button appeared to be switched tabs instead. The homepage sticky CTA had the
+   same collision.
+
+   Each selector is scoped to the width at which that element actually becomes
+   fixed (768px for the preview sheet, 880px for the homepage CTA), so neither
+   is touched at widths where it is static or sticky. Both are below the 900px
+   at which the bar hides itself, so there is no window where this over-lifts. */
+@media (max-width: 768px) {
+  body.has-app-shell .sidebar {
+    bottom: calc(var(--shell-h) + env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (max-width: 880px) {
+  body.has-app-shell .sticky-cta {
+    bottom: calc(var(--shell-h) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ---- Bottom tab bar ---- */
 .csx-tabbar {
   position: fixed;
